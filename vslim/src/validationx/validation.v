@@ -3,18 +3,18 @@ module validationx
 import strconv
 import vphp
 
-@[php_class: 'VSlim\\Validate\\Validator']
+@[vphp.PhpExportClass(name: 'VSlim\\Validate\\Validator')]
 @[heap]
 pub struct VSlimValidator {
 mut:
-	input_data     map[string]vphp.DynValue @[php_prop: inputData]
-	rule_map       map[string][]string      @[php_prop: ruleMap]
-	error_map      map[string][]string      @[php_prop: errorMap]
-	validated_data map[string]vphp.DynValue @[php_prop: validatedData]
-	validation_ran bool                     @[php_prop: validationRan]
+	input_data     map[string]vphp.DynValue @[vphp.PhpProperty; vphp.PhpProperty_name: 'inputData']
+	rule_map       map[string][]string      @[vphp.PhpProperty; vphp.PhpProperty_name: 'ruleMap']
+	error_map      map[string][]string      @[vphp.PhpProperty; vphp.PhpProperty_name: 'errorMap']
+	validated_data map[string]vphp.DynValue @[vphp.PhpProperty; vphp.PhpProperty_name: 'validatedData']
+	validation_ran bool                     @[vphp.PhpProperty; vphp.PhpProperty_name: 'validationRan']
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimValidator.make(data vphp.PhpValue, rules vphp.PhpArray) &VSlimValidator {
 	mut validator := &VSlimValidator{}
 	validator.construct()
@@ -23,7 +23,7 @@ pub fn VSlimValidator.make(data vphp.PhpValue, rules vphp.PhpArray) &VSlimValida
 	return validator
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) construct() &VSlimValidator {
 	validator.input_data = map[string]vphp.DynValue{}
 	validator.rule_map = map[string][]string{}
@@ -33,7 +33,7 @@ pub fn (mut validator VSlimValidator) construct() &VSlimValidator {
 	return &validator
 }
 
-@[php_method: 'setData']
+@[vphp.PhpExportMethod(name: 'setData')]
 pub fn (mut validator VSlimValidator) set_data(data vphp.PhpValue) &VSlimValidator {
 	validator.input_data = validator_extract_input(data)
 	validator.validation_ran = false
@@ -42,7 +42,7 @@ pub fn (mut validator VSlimValidator) set_data(data vphp.PhpValue) &VSlimValidat
 	return &validator
 }
 
-@[php_method: 'setRules']
+@[vphp.PhpExportMethod(name: 'setRules')]
 pub fn (mut validator VSlimValidator) set_rules(rules vphp.PhpArray) &VSlimValidator {
 	validator.rule_map = validator_extract_rules(rules)
 	validator.validation_ran = false
@@ -51,7 +51,7 @@ pub fn (mut validator VSlimValidator) set_rules(rules vphp.PhpArray) &VSlimValid
 	return &validator
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) validate() &VSlimValidator {
 	validator.error_map = map[string][]string{}
 	validator.validated_data = map[string]vphp.DynValue{}
@@ -103,31 +103,31 @@ pub fn (mut validator VSlimValidator) validate() &VSlimValidator {
 	return &validator
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) passes() bool {
 	validator.ensure_validated()
 	return validator.error_map.len == 0
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) fails() bool {
 	validator.ensure_validated()
 	return validator.error_map.len > 0
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) errors() vphp.PhpValue {
 	validator.ensure_validated()
 	return validator_errors_value(validator.error_map)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) validated() vphp.PhpValue {
 	validator.ensure_validated()
 	return validator_dyn_map_value(validator.validated_data)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) data() vphp.PhpValue {
 	return validator_dyn_map_value(validator.input_data)
 }

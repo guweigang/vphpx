@@ -238,9 +238,9 @@ namespace VSlim {
         public function __construct(object $app) {}
         public function app(): object {}
         public function json(string $body, int $status): \Psr\Http\Message\ResponseInterface {}
-        public function redirect(string $location, int $status): \Psr\Http\Message\ResponseInterface {}
-        public function redirectTo(string $name, mixed $params, int $status): \Psr\Http\Message\ResponseInterface {}
-        public function redirectToQuery(string $name, mixed $params, mixed $query, int $status): \Psr\Http\Message\ResponseInterface {}
+        public function redirect(string $location, int $status = 302): \Psr\Http\Message\ResponseInterface {}
+        public function redirectTo(string $name, mixed $params, int $status = 302): \Psr\Http\Message\ResponseInterface {}
+        public function redirectToQuery(string $name, mixed $params, mixed $query, int $status = 302): \Psr\Http\Message\ResponseInterface {}
         public function render(string $template, mixed $data): \Psr\Http\Message\ResponseInterface {}
         public function renderWithLayout(string $template, string $layout, mixed $data): \Psr\Http\Message\ResponseInterface {}
         public function setApp(object $app): \VSlim\Controller {}
@@ -340,6 +340,18 @@ namespace VSlim {
         public function setAssetsPrefix(string $prefix): \VSlim\View {}
         public function setBasePath(string $basePath): \VSlim\View {}
         public function setCacheEnabled(bool $enabled): \VSlim\View {}
+    }
+}
+
+namespace VSlim\App\Feishu {
+    #[\VHttpd\Attribute\Dispatchable('websocket_upstream')]
+    final class BotApp
+    {
+        private readonly \VSlim\App\Feishu\BotHandler $handler;
+        public function __construct(\VSlim\App\Feishu\BotHandler $handler) {}
+        public function handle(array $frame): array {}
+        public function handleWebSocketUpstream(array $frame): array {}
+        public function handle_websocket_upstream(array $frame): array {}
     }
 }
 

@@ -2,7 +2,7 @@ module httpx
 
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut r VSlimPsr7ServerRequest) construct() &VSlimPsr7ServerRequest {
 	r.method = 'GET'
 	r.request_target = ''
@@ -40,13 +40,13 @@ pub fn (mut r VSlimPsr7ServerRequest) construct() &VSlimPsr7ServerRequest {
 	return &r
 }
 
-@[php_method: 'getProtocolVersion']
+@[vphp.PhpExportMethod(name: 'getProtocolVersion')]
 pub fn (r &VSlimPsr7ServerRequest) get_protocol_version() string {
 	return normalize_protocol_version(r.protocol_version)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_method: 'withProtocolVersion']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportMethod(name: 'withProtocolVersion')]
 pub fn (r &VSlimPsr7ServerRequest) with_protocol_version(version vphp.PhpValue) &VSlimPsr7ServerRequest {
 	return r.clone_with(r.method, r.request_target,
 		normalize_protocol_version(version.to_string()), r.headers, r.header_names, r.body_or_empty(),
@@ -54,29 +54,29 @@ pub fn (r &VSlimPsr7ServerRequest) with_protocol_version(version vphp.PhpValue) 
 		r.query_params_ref, r.uploaded_files_ref, r.parsed_body_ref, r.attributes_ref)
 }
 
-@[php_method: 'getHeaders']
+@[vphp.PhpExportMethod(name: 'getHeaders')]
 pub fn (r &VSlimPsr7ServerRequest) get_headers() map[string][]string {
 	return materialize_psr7_headers(r.headers, r.header_names)
 }
 
-@[php_method: 'hasHeader']
+@[vphp.PhpExportMethod(name: 'hasHeader')]
 pub fn (r &VSlimPsr7ServerRequest) has_header(name vphp.PhpValue) bool {
 	return normalize_header_name(name.to_string()) in r.headers
 }
 
-@[php_method: 'getHeader']
+@[vphp.PhpExportMethod(name: 'getHeader')]
 pub fn (r &VSlimPsr7ServerRequest) get_header(name vphp.PhpValue) []string {
 	key := normalize_header_name(name.to_string())
 	return clone_header_list(r.headers[key] or { []string{} })
 }
 
-@[php_method: 'getHeaderLine']
+@[vphp.PhpExportMethod(name: 'getHeaderLine')]
 pub fn (r &VSlimPsr7ServerRequest) get_header_line(name vphp.PhpValue) string {
 	return r.get_header(name).join(', ')
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_method: 'withHeader']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportMethod(name: 'withHeader')]
 pub fn (r &VSlimPsr7ServerRequest) with_header(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7ServerRequest {
 	raw_name := name.to_string()
 	original_name := raw_name.trim_space()
@@ -104,8 +104,8 @@ pub fn (r &VSlimPsr7ServerRequest) with_header(name vphp.PhpValue, value vphp.Ph
 		r.parsed_body_ref, r.attributes_ref)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_method: 'withAddedHeader']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportMethod(name: 'withAddedHeader')]
 pub fn (r &VSlimPsr7ServerRequest) with_added_header(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7ServerRequest {
 	raw_name := name.to_string()
 	original_name := raw_name.trim_space()
@@ -137,8 +137,8 @@ pub fn (r &VSlimPsr7ServerRequest) with_added_header(name vphp.PhpValue, value v
 		r.parsed_body_ref, r.attributes_ref)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_method: 'withoutHeader']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportMethod(name: 'withoutHeader')]
 pub fn (r &VSlimPsr7ServerRequest) without_header(name vphp.PhpValue) &VSlimPsr7ServerRequest {
 	mut headers := clone_header_values(r.headers)
 	mut header_names := clone_header_names(r.header_names)
@@ -151,9 +151,9 @@ pub fn (r &VSlimPsr7ServerRequest) without_header(name vphp.PhpValue) &VSlimPsr7
 		r.parsed_body_ref, r.attributes_ref)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\StreamInterface']
-@[php_method: 'getBody']
-@[php_borrowed_return]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\StreamInterface')]
+@[vphp.PhpExportMethod(name: 'getBody')]
+@[vphp.PhpBorrowedReturn]
 pub fn (r &VSlimPsr7ServerRequest) get_body() &VSlimPsr7Stream {
 	if r.body_ref == unsafe { nil } {
 		unsafe {
@@ -164,9 +164,9 @@ pub fn (r &VSlimPsr7ServerRequest) get_body() &VSlimPsr7Stream {
 	return r.body_ref
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_arg_type: 'body=Psr\\Http\\Message\\StreamInterface']
-@[php_method: 'withBody']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpArgType(v_name: 'body', php_type: 'Psr\\Http\\Message\\StreamInterface')]
+@[vphp.PhpExportMethod(name: 'withBody')]
 pub fn (r &VSlimPsr7ServerRequest) with_body(body vphp.PhpValue) &VSlimPsr7ServerRequest {
 	return r.clone_with(r.method, r.request_target, r.protocol_version,
 		r.headers, r.header_names,
@@ -189,7 +189,7 @@ pub fn (mut r VSlimPsr7ServerRequest) cleanup() {
 	// generic_free_raw handles the wrappers automatically.
 }
 
-@[php_method: 'getRequestTarget']
+@[vphp.PhpExportMethod(name: 'getRequestTarget')]
 pub fn (r &VSlimPsr7ServerRequest) get_request_target() string {
 	target := r.request_target.trim_space()
 	if target != '' {
@@ -198,9 +198,9 @@ pub fn (r &VSlimPsr7ServerRequest) get_request_target() string {
 	return build_psr7_request_target(r.uri_or_default())
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_arg_name: 'request_target=requestTarget']
-@[php_method: 'withRequestTarget']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpArgName(v_name: 'request_target', php_name: 'requestTarget')]
+@[vphp.PhpExportMethod(name: 'withRequestTarget')]
 pub fn (r &VSlimPsr7ServerRequest) with_request_target(request_target vphp.PhpValue) &VSlimPsr7ServerRequest {
 	target := validate_request_target_or_throw(request_target.to_string()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
@@ -216,13 +216,13 @@ pub fn (r &VSlimPsr7ServerRequest) with_request_target(request_target vphp.PhpVa
 		r.attributes_ref)
 }
 
-@[php_method: 'getMethod']
+@[vphp.PhpExportMethod(name: 'getMethod')]
 pub fn (r &VSlimPsr7ServerRequest) get_method() string {
 	return normalize_method(r.method)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_method: 'withMethod']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportMethod(name: 'withMethod')]
 pub fn (r &VSlimPsr7ServerRequest) with_method(method vphp.PhpValue) &VSlimPsr7ServerRequest {
 	next_method := validate_method_or_throw(method.to_string()) or {
 		return r.clone_with(r.method, r.request_target, r.protocol_version,
@@ -238,9 +238,9 @@ pub fn (r &VSlimPsr7ServerRequest) with_method(method vphp.PhpValue) &VSlimPsr7S
 		r.attributes_ref)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\UriInterface']
-@[php_method: 'getUri']
-@[php_borrowed_return]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\UriInterface')]
+@[vphp.PhpExportMethod(name: 'getUri')]
+@[vphp.PhpBorrowedReturn]
 pub fn (r &VSlimPsr7ServerRequest) get_uri() &VSlimPsr7Uri {
 	if r.uri_ref == unsafe { nil } {
 		unsafe {
@@ -251,10 +251,10 @@ pub fn (r &VSlimPsr7ServerRequest) get_uri() &VSlimPsr7Uri {
 	return r.uri_ref
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_arg_type: 'uri=Psr\\Http\\Message\\UriInterface']
+@[vphp.PhpReturnType('Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpArgType(v_name: 'uri', php_type: 'Psr\\Http\\Message\\UriInterface')]
 @[vphp.PhpBoolParam('preserve_host', php_name: 'preserveHost', default_value: false, optional: true)]
-@[php_method: 'withUri']
+@[vphp.PhpExportMethod(name: 'withUri')]
 pub fn (r &VSlimPsr7ServerRequest) with_uri(uri vphp.PhpValue, preserve_host bool) &VSlimPsr7ServerRequest {
 	next_uri := VSlimPsr7Uri.from_value(uri)
 	mut headers := clone_header_values(r.headers)
@@ -269,20 +269,20 @@ pub fn (r &VSlimPsr7ServerRequest) with_uri(uri vphp.PhpValue, preserve_host boo
 		r.attributes_ref)
 }
 
-@[php_method: 'getServerParams']
-@[php_return_type: 'array']
+@[vphp.PhpExportMethod(name: 'getServerParams')]
+@[vphp.PhpReturnType(php_type: 'array')]
 pub fn (r &VSlimPsr7ServerRequest) get_server_params() vphp.PhpArray {
 	return psr7_persistent_array(r.server_params_ref)
 }
 
-@[php_method: 'getCookieParams']
-@[php_return_type: 'array']
+@[vphp.PhpExportMethod(name: 'getCookieParams')]
+@[vphp.PhpReturnType(php_type: 'array')]
 pub fn (r &VSlimPsr7ServerRequest) get_cookie_params() vphp.PhpArray {
 	return psr7_persistent_array(r.cookie_params_ref)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_method: 'withCookieParams']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportMethod(name: 'withCookieParams')]
 pub fn (r &VSlimPsr7ServerRequest) with_cookie_params(cookies vphp.PhpArray) &VSlimPsr7ServerRequest {
 	return r.clone_with(r.method, r.request_target, r.protocol_version,
 		r.headers, r.header_names,
@@ -291,14 +291,14 @@ pub fn (r &VSlimPsr7ServerRequest) with_cookie_params(cookies vphp.PhpArray) &VS
 		r.attributes_ref)
 }
 
-@[php_method: 'getQueryParams']
-@[php_return_type: 'array']
+@[vphp.PhpExportMethod(name: 'getQueryParams')]
+@[vphp.PhpReturnType(php_type: 'array')]
 pub fn (r &VSlimPsr7ServerRequest) get_query_params() vphp.PhpArray {
 	return psr7_persistent_array(r.query_params_ref)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_method: 'withQueryParams']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportMethod(name: 'withQueryParams')]
 pub fn (r &VSlimPsr7ServerRequest) with_query_params(query vphp.PhpArray) &VSlimPsr7ServerRequest {
 	return r.clone_with(r.method, r.request_target, r.protocol_version,
 		r.headers, r.header_names,
@@ -307,15 +307,15 @@ pub fn (r &VSlimPsr7ServerRequest) with_query_params(query vphp.PhpArray) &VSlim
 		r.attributes_ref)
 }
 
-@[php_method: 'getUploadedFiles']
-@[php_return_type: 'array']
+@[vphp.PhpExportMethod(name: 'getUploadedFiles')]
+@[vphp.PhpReturnType(php_type: 'array')]
 pub fn (r &VSlimPsr7ServerRequest) get_uploaded_files() vphp.PhpArray {
 	return psr7_persistent_array(r.uploaded_files_ref)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_arg_name: 'uploaded_files=uploadedFiles']
-@[php_method: 'withUploadedFiles']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpArgName(v_name: 'uploaded_files', php_name: 'uploadedFiles')]
+@[vphp.PhpExportMethod(name: 'withUploadedFiles')]
 pub fn (r &VSlimPsr7ServerRequest) with_uploaded_files(uploaded_files vphp.PhpArray) &VSlimPsr7ServerRequest {
 	return r.clone_with(r.method, r.request_target, r.protocol_version,
 		r.headers, r.header_names,
@@ -325,14 +325,14 @@ pub fn (r &VSlimPsr7ServerRequest) with_uploaded_files(uploaded_files vphp.PhpAr
 		r.attributes_ref)
 }
 
-@[php_method: 'getParsedBody']
+@[vphp.PhpExportMethod(name: 'getParsedBody')]
 pub fn (r &VSlimPsr7ServerRequest) get_parsed_body() vphp.PhpValue {
 	return r.parsed_body_ref.to_request_owned()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_arg_name: 'parsed_body=parsedBody']
-@[php_method: 'withParsedBody']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpArgName(v_name: 'parsed_body', php_name: 'parsedBody')]
+@[vphp.PhpExportMethod(name: 'withParsedBody')]
 pub fn (r &VSlimPsr7ServerRequest) with_parsed_body(parsed_body vphp.PhpValue) &VSlimPsr7ServerRequest {
 	if !is_valid_psr7_parsed_body_value(parsed_body) {
 		vphp.PhpException.raise_class('InvalidArgumentException',
@@ -350,14 +350,14 @@ pub fn (r &VSlimPsr7ServerRequest) with_parsed_body(parsed_body vphp.PhpValue) &
 		parsed_body, r.attributes_ref)
 }
 
-@[php_method: 'getAttributes']
-@[php_return_type: 'array']
+@[vphp.PhpExportMethod(name: 'getAttributes')]
+@[vphp.PhpReturnType(php_type: 'array')]
 pub fn (r &VSlimPsr7ServerRequest) get_attributes() vphp.PhpArray {
 	return psr7_persistent_array_value(r.attributes_ref)
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_method: 'getAttribute']
+@[vphp.PhpArgName(v_name: 'default_value', php_name: 'defaultValue')]
+@[vphp.PhpExportMethod(name: 'getAttribute')]
 pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.PhpValue, default_value ?vphp.PhpValue) vphp.PhpValue {
 	key := name.to_string()
 	if key == '' {
@@ -372,8 +372,8 @@ pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.PhpValue, default_val
 	})
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_method: 'withAttribute']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportMethod(name: 'withAttribute')]
 pub fn (r &VSlimPsr7ServerRequest) with_attribute(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7ServerRequest {
 	key := name.to_string()
 	return r.clone_with_owned_attrs(r.method, r.request_target, r.protocol_version,
@@ -383,8 +383,8 @@ pub fn (r &VSlimPsr7ServerRequest) with_attribute(name vphp.PhpValue, value vphp
 		persistent_value_assoc_with_value(r.attributes_ref, key, value))
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_method: 'withoutAttribute']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportMethod(name: 'withoutAttribute')]
 pub fn (r &VSlimPsr7ServerRequest) without_attribute(name vphp.PhpValue) &VSlimPsr7ServerRequest {
 	key := name.to_string()
 	return r.clone_with_owned_attrs(r.method, r.request_target, r.protocol_version,
@@ -394,7 +394,7 @@ pub fn (r &VSlimPsr7ServerRequest) without_attribute(name vphp.PhpValue) &VSlimP
 		persistent_value_assoc_without_key(r.attributes_ref, key))
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimPsr7ServerRequest) str() string {
 	return 'VSlim\\Psr7\\ServerRequest(method=${r.get_method()}, target=${r.get_request_target()})'
 }

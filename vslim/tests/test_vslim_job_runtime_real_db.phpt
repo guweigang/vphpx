@@ -74,15 +74,28 @@ $path = sys_get_temp_dir() . '/vslim_job_runtime_' . getmypid() . '.out';
 $db->executeParams('DELETE FROM vslim_failed_jobs WHERE queue = ?', [$queue]);
 $db->executeParams('DELETE FROM vslim_jobs WHERE queue = ?', [$queue]);
 
-$dispatcher = (new VSlim\Job\Dispatcher())->setManager($db);
-$jobId = $dispatcher->dispatch(VSlimJobRuntimePhptJob::class, [
+$app = (new VSlim\App())->setDatabase(database: $db);
+$dispatcher = $app->jobDispatcher();
+$worker = $app->jobWorker();
+if ($dispatcher->manager() !== $db || $app->jobDispatcher() !== $dispatcher || $app->jobWorker() !== $worker) {
+    throw new RuntimeException('Unexpected app job services');
+}
+$run = new ReflectionMethod($worker, 'run');
+$params = [];
+foreach ($run->getParameters() as $parameter) {
+    $params[$parameter->getName()] = (string) $parameter->getType();
+}
+if ($run->getNumberOfRequiredParameters() !== 4 || (string) $run->getReturnType() !== 'int'
+    || $params !== ['queue' => 'string', 'maxJobs' => 'int', 'sleepMs' => 'int', 'stopWhenEmpty' => 'bool']) {
+    throw new RuntimeException('Unexpected job worker run signature');
+}
+$jobId = $dispatcher->dispatch(maxAttempts: 2, delaySeconds: 0, queue: $queue, payload: [
     'message' => 'queued-ok',
     'path' => $path,
-], $queue, 0, 2);
+], jobClass: VSlimJobRuntimePhptJob::class);
 
-$worker = (new VSlim\Job\Worker())
-    ->setManager($db)
-    ->setWorkerId('phpt-worker')
+$worker
+    ->setWorkerId(workerId: 'phpt-worker')
     ->setRetryDelaySeconds(0);
 
 $ran = $worker->runOnce($queue);
@@ -108,7 +121,7 @@ $secondId = $dispatcher->dispatch(VSlimJobRuntimePhptJob::class, [
     'message' => 'loop-b',
     'path' => $path,
 ], $queue, 0, 2);
-$loopRan = $worker->run($queue, 10, 0, true);
+$loopRan = $worker->run(stopWhenEmpty: true, sleepMs: 0, maxJobs: 10, queue: $queue);
 $loopRows = $db->queryParams('SELECT status FROM vslim_jobs WHERE id IN (?, ?) ORDER BY id ASC', [(string) $firstId, (string) $secondId]);
 
 echo "loop-ran={$loopRan}\n";

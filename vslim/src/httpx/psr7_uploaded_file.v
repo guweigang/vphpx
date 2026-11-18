@@ -2,8 +2,8 @@ module httpx
 
 import vphp
 
-@[php_arg_name: 'default_stream=defaultStream,default_size=defaultSize,default_error=defaultError,default_client_filename=defaultClientFilename,default_client_media_type=defaultClientMediaType']
-@[php_method]
+@[vphp.PhpArgNames(names: 'default_stream=defaultStream,default_size=defaultSize,default_error=defaultError,default_client_filename=defaultClientFilename,default_client_media_type=defaultClientMediaType')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut u VSlimPsr7UploadedFile) construct(default_stream vphp.PhpValue, default_size ?int, default_error int, default_client_filename ?string, default_client_media_type ?string) &VSlimPsr7UploadedFile {
 	u.stream_ref = VSlimPsr7Stream.from_value(default_stream)
 	u.size_hint = uploaded_file_size_hint(default_size, u.stream_ref)
@@ -15,8 +15,8 @@ pub fn (mut u VSlimPsr7UploadedFile) construct(default_stream vphp.PhpValue, def
 	return &u
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\StreamInterface']
-@[php_method: 'getStream']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\StreamInterface')]
+@[vphp.PhpExportMethod(name: 'getStream')]
 pub fn (u &VSlimPsr7UploadedFile) get_stream() &VSlimPsr7Stream {
 	if u.moved {
 		vphp.PhpException.raise_class('RuntimeException',
@@ -37,8 +37,8 @@ pub fn (u &VSlimPsr7UploadedFile) get_stream() &VSlimPsr7Stream {
 	return u.stream_ref
 }
 
-@[php_arg_name: 'target_path=targetPath']
-@[php_method: 'moveTo']
+@[vphp.PhpArgName(v_name: 'target_path', php_name: 'targetPath')]
+@[vphp.PhpExportMethod(name: 'moveTo')]
 pub fn (u &VSlimPsr7UploadedFile) move_to(target_path vphp.PhpValue) {
 	path := value_subject(target_path).log_message().trim_space()
 	if path == '' {
@@ -55,7 +55,11 @@ pub fn (u &VSlimPsr7UploadedFile) move_to(target_path vphp.PhpValue) {
 			'cannot move uploaded file with upload error', 0)
 		return
 	}
-	stream := if u.stream_ref == unsafe { nil } { VSlimPsr7Stream.from_content('') } else { u.stream_ref }
+	stream := if u.stream_ref == unsafe { nil } {
+		VSlimPsr7Stream.from_content('')
+	} else {
+		u.stream_ref
+	}
 	content := stream.stream_string()
 	size := if u.size_hint >= 0 { u.size_hint } else { content.len }
 	mut path_arg := vphp.PhpString.of(path)
@@ -82,7 +86,7 @@ pub fn (u &VSlimPsr7UploadedFile) move_to(target_path vphp.PhpValue) {
 	}
 }
 
-@[php_method: 'getSize']
+@[vphp.PhpExportMethod(name: 'getSize')]
 pub fn (u &VSlimPsr7UploadedFile) get_size() ?int {
 	if u.size_hint >= 0 {
 		return u.size_hint
@@ -93,12 +97,12 @@ pub fn (u &VSlimPsr7UploadedFile) get_size() ?int {
 	return none
 }
 
-@[php_method: 'getError']
+@[vphp.PhpExportMethod(name: 'getError')]
 pub fn (u &VSlimPsr7UploadedFile) get_error() int {
 	return normalize_uploaded_file_error(u.error_code)
 }
 
-@[php_method: 'getClientFilename']
+@[vphp.PhpExportMethod(name: 'getClientFilename')]
 pub fn (u &VSlimPsr7UploadedFile) get_client_filename() ?string {
 	if u.client_filename.trim_space() == '' {
 		return none
@@ -106,7 +110,7 @@ pub fn (u &VSlimPsr7UploadedFile) get_client_filename() ?string {
 	return u.client_filename
 }
 
-@[php_method: 'getClientMediaType']
+@[vphp.PhpExportMethod(name: 'getClientMediaType')]
 pub fn (u &VSlimPsr7UploadedFile) get_client_media_type() ?string {
 	if u.client_media_type.trim_space() == '' {
 		return none
@@ -114,7 +118,7 @@ pub fn (u &VSlimPsr7UploadedFile) get_client_media_type() ?string {
 	return u.client_media_type
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (u &VSlimPsr7UploadedFile) str() string {
 	return 'VSlim\\Psr7\\UploadedFile(filename=${u.client_filename}, error=${u.error_code}, moved=${u.moved})'
 }

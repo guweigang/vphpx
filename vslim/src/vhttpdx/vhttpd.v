@@ -4,40 +4,39 @@ import net.unix
 import time
 import vphp
 
-@[php_class: 'VSlim\\VHttpd\\Client']
+@[vphp.PhpExportClass(name: 'VSlim\\VHttpd\\Client')]
 @[heap]
 pub struct VSlimVhttpdClient {
 mut:
-	socket_path             string @[php_prop: socketPath]
-	connect_timeout_seconds f64 = 2.0 @[php_prop: connectTimeoutSeconds]
+	socket_path             string    @[vphp.PhpProperty; vphp.PhpProperty_name: 'socketPath']
+	connect_timeout_seconds f64 = 2.0 @[vphp.PhpProperty: 'connectTimeoutSeconds']
 }
 
-@[php_method]
-@[php_arg_name: 'socket_path=socketPath,connect_timeout_seconds=connectTimeoutSeconds']
+@[vphp.PhpExportMethod(name: '')]
+@[vphp.PhpArgNames(names: 'socket_path=socketPath,connect_timeout_seconds=connectTimeoutSeconds')]
 pub fn (mut c VSlimVhttpdClient) construct(socket_path string, connect_timeout_seconds f64) &VSlimVhttpdClient {
 	c.socket_path = socket_path.trim_space()
 	c.connect_timeout_seconds = normalize_vhttpd_client_timeout(connect_timeout_seconds)
 	return &c
 }
 
-@[php_method: 'socketPath']
+@[vphp.PhpExportMethod(name: 'socketPath')]
 pub fn (c &VSlimVhttpdClient) socket_path() string {
 	return c.socket_path
 }
 
-@[php_method: 'connectTimeoutSeconds']
+@[vphp.PhpExportMethod(name: 'connectTimeoutSeconds')]
 pub fn (c &VSlimVhttpdClient) connect_timeout_seconds() f64 {
 	return c.connect_timeout_seconds
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimVhttpdClient) request(payload vphp.PhpArray) vphp.PhpArray {
 	return c.request_frames(payload, none)
 }
 
-@[php_method: 'requestFrames']
-@[php_arg_default: 'frames=[]']
-@[php_arg_optional: 'frames']
+@[vphp.PhpExportMethod(name: 'requestFrames')]
+@[vphp.PhpArgDefault(v_name: 'frames', default_value: '[]')]
 pub fn (c &VSlimVhttpdClient) request_frames(payload vphp.PhpArray, frames ?vphp.PhpArray) vphp.PhpArray {
 	if c.socket_path.trim_space() == '' {
 		vphp.PhpException.raise_class('RuntimeException', 'socket path must not be empty', 0)

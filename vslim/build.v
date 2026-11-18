@@ -1,5 +1,6 @@
 import os
 import strings
+import v.cmdexec
 import vphp.compiler
 
 struct FixedArrayConstPatch {
@@ -7,105 +8,70 @@ struct FixedArrayConstPatch {
 	init_block  string
 }
 
-fn sanitize_ldflags(ldflags string) string {
-	mut kept := []string{}
-	for token in ldflags.split(' ') {
-		t := token.trim_space()
-		if t == '' {
-			continue
-		}
-		if t.starts_with('-L') && t.len > 2 {
-			path := t[2..]
-			if !os.exists(path) {
-				continue
-			}
-		}
-		kept << t
-	}
-	return kept.join(' ')
-}
-
-fn dedupe_link_flags(flags string) string {
-	mut kept := []string{}
-	mut seen := map[string]bool{}
-	for token in flags.split(' ') {
-		t := token.trim_space()
-		if t == '' {
-			continue
-		}
-		if t in seen {
-			continue
-		}
-		seen[t] = true
-		kept << t
-	}
-	return kept.join(' ')
-}
-
-fn shell_trim(cmd string) string {
-	res := os.execute(cmd)
+fn query_tool(args []string) string {
+	res := os.exec(args)
 	if res.exit_code != 0 {
 		return ''
 	}
 	return res.output.trim_space()
 }
 
-fn detect_cjson_flags() (string, string) {
-	pkg_cflags := shell_trim('pkg-config --cflags libcjson')
-	pkg_libs := shell_trim('pkg-config --libs libcjson')
+fn detect_cjson_flags() !([]string, []string) {
+	pkg_cflags := query_tool(['pkg-config', '--cflags', 'libcjson'])
+	pkg_libs := query_tool(['pkg-config', '--libs', 'libcjson'])
 	if pkg_libs != '' {
-		return pkg_cflags, pkg_libs
+		return os.split_args(pkg_cflags)!, os.split_args(pkg_libs)!
 	}
 
-	brew_prefix := shell_trim('brew --prefix cjson')
+	brew_prefix := query_tool(['brew', '--prefix', 'cjson'])
 	if brew_prefix != '' {
-		return '-I${brew_prefix}/include', '-L${brew_prefix}/lib -lcjson'
+		return ['-I${brew_prefix}/include'], ['-L${brew_prefix}/lib', '-lcjson']
 	}
 
 	if os.exists('/opt/homebrew/include') && os.exists('/opt/homebrew/lib') {
-		return '-I/opt/homebrew/include', '-L/opt/homebrew/lib -lcjson'
+		return ['-I/opt/homebrew/include'], ['-L/opt/homebrew/lib', '-lcjson']
 	}
 
-	return '', '-lcjson'
+	return []string{}, ['-lcjson']
 }
 
-fn detect_openssl_cflags() string {
-	pkg_cflags := shell_trim('pkg-config --cflags openssl')
+fn detect_openssl_cflags() ![]string {
+	pkg_cflags := query_tool(['pkg-config', '--cflags', 'openssl'])
 	if pkg_cflags != '' {
-		return pkg_cflags
+		return os.split_args(pkg_cflags)
 	}
 
-	brew_prefix := shell_trim('brew --prefix openssl@3')
+	brew_prefix := query_tool(['brew', '--prefix', 'openssl@3'])
 	if brew_prefix != '' {
-		return '-I${brew_prefix}/include'
+		return ['-I${brew_prefix}/include']
 	}
 
 	if os.exists('/opt/homebrew/opt/openssl@3/include') {
-		return '-I/opt/homebrew/opt/openssl@3/include'
+		return ['-I/opt/homebrew/opt/openssl@3/include']
 	}
 
-	return ''
+	return []
 }
 
-fn detect_mysql_flags() (string, string) {
+fn detect_mysql_flags() !([]string, []string) {
 	for pkg in ['mysqlclient', 'mariadb', 'libmariadb'] {
-		pkg_cflags := shell_trim('pkg-config --cflags ${pkg}')
-		pkg_libs := shell_trim('pkg-config --libs ${pkg}')
+		pkg_cflags := query_tool(['pkg-config', '--cflags', pkg])
+		pkg_libs := query_tool(['pkg-config', '--libs', pkg])
 		if pkg_cflags != '' || pkg_libs != '' {
-			return pkg_cflags, pkg_libs
+			return os.split_args(pkg_cflags)!, os.split_args(pkg_libs)!
 		}
 	}
-	brew_prefix := shell_trim('brew --prefix mysql')
+	brew_prefix := query_tool(['brew', '--prefix', 'mysql'])
 	if brew_prefix != '' {
-		return '-I${brew_prefix}/include/mysql', '-L${brew_prefix}/lib -lmysqlclient'
+		return ['-I${brew_prefix}/include/mysql'], ['-L${brew_prefix}/lib', '-lmysqlclient']
 	}
-	return '', ''
+	return []string{}, []string{}
 }
 
-fn detect_v_root_include_flags() string {
+fn detect_v_root_include_flags() []string {
 	v_root := os.dir(os.real_path(@VEXE))
 	if v_root == '' {
-		return ''
+		return []
 	}
 	mut flags := []string{}
 	// Generated C can pull V's compress module, which includes miniz.h from V's tree.
@@ -113,7 +79,7 @@ fn detect_v_root_include_flags() string {
 	if os.exists(zip_include) {
 		flags << '-I${zip_include}'
 	}
-	return flags.join(' ')
+	return flags
 }
 
 fn detect_v_module_path() string {
@@ -129,7 +95,7 @@ fn detect_v_gc_mode() string {
 	gc_mode := os.getenv_opt('VPHP_V_GC') or { '' }
 	mode := gc_mode.trim_space()
 	if mode == '' || mode == 'auto' {
-		res := os.execute('pkg-config --exists bdw-gc')
+		res := os.exec(['pkg-config', '--exists', 'bdw-gc'])
 		if res.exit_code == 0 {
 			return 'boehm'
 		}
@@ -149,14 +115,13 @@ fn detect_v_c_compiler() string {
 	return ''
 }
 
-fn pkg_config_flags(args string) string {
-	cmd := 'pkg-config ${args}'
-	res := os.execute(cmd)
+fn pkg_config_flags(option string) ![]string {
+	args := ['pkg-config', option, 'bdw-gc']
+	res := os.exec(args)
 	if res.exit_code != 0 {
-		eprintln('❌ 执行 `${cmd}` 失败: ${res.output.trim_space()}')
-		exit(1)
+		return error('pkg-config ${option} bdw-gc failed: ${res.output.trim_space()}')
 	}
-	return res.output.trim_space()
+	return os.split_args(res.output)
 }
 
 fn run_v_transpile(prod_mode bool, gc_mode string, module_path string, output_path string, source_dir string) ! {
@@ -384,20 +349,6 @@ fn patch_windows_generated_fixed_array_consts(path string) ! {
 	println('🩹 Windows fixed array workaround patched ${patches.len} const definitions.')
 }
 
-fn detect_gc_compile_flags(gc_mode string) string {
-	return match gc_mode {
-		'boehm' { '${pkg_config_flags('--cflags bdw-gc')} -DGC_THREADS=1 -include gc/gc.h' }
-		else { '' }
-	}
-}
-
-fn detect_gc_link_flags(gc_mode string) string {
-	return match gc_mode {
-		'boehm' { pkg_config_flags('--libs bdw-gc') }
-		else { '' }
-	}
-}
-
 fn main() {
 	project_root := os.dir(os.real_path(@FILE))
 	source_dir := os.join_path(project_root, 'src')
@@ -452,18 +403,6 @@ fn main() {
 		exit(1)
 	}
 
-	is_macos := os.user_os() == 'macos' || os.user_os() == 'darwin'
-	mut disabled_warnings := '-Wno-pointer-to-int-cast -Wno-incompatible-pointer-types -Wno-unused-value -Wno-pointer-sign'
-	if is_macos {
-		disabled_warnings += ' -Wno-initializer-overrides'
-	} else {
-		disabled_warnings += ' -Wno-override-init'
-	}
-	cjson_cflags, cjson_libs := detect_cjson_flags()
-	openssl_cflags := detect_openssl_cflags()
-	mysql_cflags, mysql_libs := detect_mysql_flags()
-	v_root_cflags := detect_v_root_include_flags()
-
 	transpiled_c := os.join_path(project_root, '${ext_name}_generated.c')
 	legacy_transpiled_c := os.join_path(project_root, 'vphp_ext_${ext_name}.c')
 	configured_output := (os.getenv_opt('VSLIM_OUTPUT') or { '' }).trim_space()
@@ -477,8 +416,6 @@ fn main() {
 		os.join_path(project_root, '${ext_name}.so')
 	}
 	gc_mode := detect_v_gc_mode()
-	gc_compile_flags := detect_gc_compile_flags(gc_mode)
-	gc_link_flags := detect_gc_link_flags(gc_mode)
 	println('🛠️  2. 转译 V 逻辑为 C -> ${transpiled_c}')
 	println('   使用 V GC 模式: ${gc_mode}')
 	os.rm(output_so) or {}
@@ -504,39 +441,8 @@ fn main() {
 	}
 
 	println('🛠️  3. GCC 最终链接...')
-	native_inputs := compiler.native_link_inputs(transpiled_c + '.flags') or {
-		eprintln('❌ 无法读取 V 的链接输入: ${err}')
-		exit(1)
-	}
-	php_config := (os.getenv_opt('VPHP_PHP_CONFIG') or { 'php-config' }).trim_space()
-	php_inc := os.execute('${php_config} --includes').output.trim_space()
-	php_ldflags := sanitize_ldflags(os.execute('${php_config} --ldflags').output.trim_space())
-	php_libs := os.execute('${php_config} --libs').output.replace('-lzip', '').trim_space()
-
-	mut platform_link_flags := '-fvisibility=default'
-	mut extra_link_flags := ''
-	if is_macos {
-		platform_link_flags = '-undefined dynamic_lookup -fvisibility=default'
-		extra_link_flags += ' -L/opt/homebrew/lib -L/usr/local/lib'
-	}
-	mut extra_compile_flags := ''
-	if gc_compile_flags != '' {
-		extra_compile_flags = '${gc_compile_flags} '
-	}
-	if gc_link_flags != '' {
-		extra_link_flags += ' ${gc_link_flags}'
-	}
-
-	extension_cc := (os.getenv_opt('VSLIM_EXTENSION_CC') or { 'gcc' }).trim_space()
-	gcc_cmd := '${extension_cc} -shared -fPIC ${disabled_warnings} -D_GNU_SOURCE -DCOMPILE_DL_${ext_name.to_upper()}=1 ' +
-		'${cjson_cflags} ${openssl_cflags} ${mysql_cflags} ${v_root_cflags} ${extra_compile_flags}-DcJSON_GetErrorPos=cJSON_GetErrorPtr ' +
-		'${php_inc} ${transpiled_c} php_bridge.c ../vphp/v_bridge.c ${native_inputs.map(os.quoted_path(it)).join(" ")} -o ${output_so} ' +
-		'-I../vphp ' +
-		dedupe_link_flags('${php_ldflags} ${php_libs} ${cjson_libs} ${mysql_libs}${extra_link_flags} ${platform_link_flags}')
-
-	println('执行命令: ${gcc_cmd}')
-	if os.system(gcc_cmd) != 0 {
-		eprintln('❌ GCC 编译失败')
+	link_extension(ext_name, transpiled_c, output_so, gc_mode) or {
+		eprintln('❌ GCC 编译失败: ${err.msg()}')
 		exit(1)
 	}
 
@@ -546,4 +452,56 @@ fn main() {
 	}
 
 	println('✅ 构建成功！${output_so} 已就绪。')
+}
+
+fn link_extension(ext_name string, transpiled_c string, output_so string, gc_mode string) ! {
+	is_macos := os.user_os() == 'macos' || os.user_os() == 'darwin'
+	native_inputs := compiler.native_link_inputs(transpiled_c + '.flags')!
+	php_config := (os.getenv_opt('VPHP_PHP_CONFIG') or { 'php-config' }).trim_space()
+	php := compiler.php_link_flags(php_config)!
+	cjson_cflags, cjson_libs := detect_cjson_flags()!
+	mysql_cflags, mysql_libs := detect_mysql_flags()!
+	extension_cc := (os.getenv_opt('VSLIM_EXTENSION_CC') or { 'gcc' }).trim_space()
+	mut args := if os.is_file(extension_cc) { [extension_cc] } else { os.split_args(extension_cc)! }
+	if args.len == 0 {
+		return error('missing extension compiler command')
+	}
+	args << ['-shared', '-fPIC', '-Wno-pointer-to-int-cast', '-Wno-incompatible-pointer-types',
+		'-Wno-unused-value', '-Wno-pointer-sign']
+	args << if is_macos { '-Wno-initializer-overrides' } else { '-Wno-override-init' }
+	args << ['-D_GNU_SOURCE', '-DCOMPILE_DL_${ext_name.to_upper()}=1']
+	args << cjson_cflags
+	args << detect_openssl_cflags()!
+	args << mysql_cflags
+	args << detect_v_root_include_flags()
+	if gc_mode == 'boehm' {
+		args << pkg_config_flags('--cflags')!
+		args << ['-DGC_THREADS=1', '-include', 'gc/gc.h']
+	}
+	args << '-DcJSON_GetErrorPos=cJSON_GetErrorPtr'
+	args << php.includes
+	args << [transpiled_c, 'php_bridge.c', '../vphp/v_bridge.c']
+	args << native_inputs
+	args << ['-o', output_so, '-I../vphp']
+
+	mut libs := php.ldflags.clone()
+	libs << php.libs
+	libs << cjson_libs
+	libs << mysql_libs
+	if is_macos {
+		libs << ['-L/opt/homebrew/lib', '-L/usr/local/lib']
+	}
+	if gc_mode == 'boehm' {
+		libs << pkg_config_flags('--libs')!
+	}
+	args << libs
+	if is_macos {
+		args << ['-undefined', 'dynamic_lookup']
+	}
+	args << '-fvisibility=default'
+	println('执行命令: ${cmdexec.display(args[0], args[1..])}')
+	code := os.system_args(args)
+	if code != 0 {
+		return error('${args[0]} exited with code ${code}')
+	}
 }

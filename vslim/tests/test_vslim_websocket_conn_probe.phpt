@@ -30,7 +30,7 @@ final class ProbeWsHandler
 
 $app = new VSlim\App();
 $handler = new ProbeWsHandler();
-$handlerProbe = VSlim\Debug\ObjectProbe::probe($handler, ProbeWsHandler::class, 'handleWebSocket');
+$handlerProbe = VSlim\Debug\ObjectProbe::probe(methodName: 'handleWebSocket', className: ProbeWsHandler::class, obj: $handler);
 $connProbe = VSlim\Debug\ObjectProbe::probe(new ProbeConnSink(), ProbeConnSink::class, 'setMeta');
 echo 'handler.method_exists=', $handlerProbe['method_exists'] ?? 'missing', PHP_EOL;
 echo 'handler.is_instance_of=', $handlerProbe['is_instance_of'] ?? 'missing', PHP_EOL;

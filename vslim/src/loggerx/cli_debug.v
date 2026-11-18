@@ -42,7 +42,7 @@ fn cli_debug_enabled() bool {
 	return os.getenv('VSLIM_CLI_DEBUG').trim_space().to_lower() in ['1', 'true', 'yes', 'on']
 }
 
-pub fn cli_debug_log(message string) {
+fn cli_debug_file() string {
 	mut debug_file := ''
 	unsafe {
 		if vslim_cli_debug_override_inited {
@@ -52,6 +52,15 @@ pub fn cli_debug_log(message string) {
 	if debug_file == '' {
 		debug_file = os.getenv('VSLIM_CLI_DEBUG_FILE').trim_space()
 	}
+	return debug_file
+}
+
+pub fn cli_debug_active() bool {
+	return cli_debug_file() != '' || cli_debug_enabled()
+}
+
+pub fn cli_debug_log(message string) {
+	debug_file := cli_debug_file()
 	if debug_file == '' && !cli_debug_enabled() {
 		return
 	}

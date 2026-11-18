@@ -80,7 +80,7 @@ fn job_worker_manager_or_throw(worker &VSlimJobWorker) ?&databasex.VSlimDatabase
 	return worker.manager_ref
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut dispatcher VSlimJobDispatcher) construct() &VSlimJobDispatcher {
 	return &dispatcher
 }
@@ -92,19 +92,19 @@ pub fn VSlimJobDispatcher.from_manager(manager &databasex.VSlimDatabaseManager) 
 	return dispatcher
 }
 
-@[php_method: 'setManager']
+@[vphp.PhpExportMethod(name: 'setManager')]
 pub fn (mut dispatcher VSlimJobDispatcher) set_manager(manager &databasex.VSlimDatabaseManager) &VSlimJobDispatcher {
 	dispatcher.manager_ref = manager
 	return &dispatcher
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (dispatcher &VSlimJobDispatcher) manager() &databasex.VSlimDatabaseManager {
 	return dispatcher.manager_ref
 }
 
-@[php_arg_name: 'job_class=jobClass,delay_seconds=delaySeconds,max_attempts=maxAttempts']
-@[php_method]
+@[vphp.PhpArgNames(names: 'job_class=jobClass,delay_seconds=delaySeconds,max_attempts=maxAttempts')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut dispatcher VSlimJobDispatcher) dispatch(job_class string, payload vphp.PhpValue, queue string, delay_seconds int, max_attempts int) i64 {
 	clean_class := job_class.trim_space()
 	if clean_class == '' {
@@ -136,7 +136,7 @@ pub fn (mut dispatcher VSlimJobDispatcher) dispatch(job_class string, payload vp
 	return db.last_insert_id_value()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut worker VSlimJobWorker) construct() &VSlimJobWorker {
 	worker.worker_id = job_now_worker_id()
 	return &worker
@@ -149,32 +149,32 @@ pub fn VSlimJobWorker.from_manager(manager &databasex.VSlimDatabaseManager) &VSl
 	return worker
 }
 
-@[php_method: 'setManager']
+@[vphp.PhpExportMethod(name: 'setManager')]
 pub fn (mut worker VSlimJobWorker) set_manager(manager &databasex.VSlimDatabaseManager) &VSlimJobWorker {
 	worker.manager_ref = manager
 	return &worker
 }
 
-@[php_arg_name: 'worker_id=workerId']
-@[php_method: 'setWorkerId']
+@[vphp.PhpArgName(v_name: 'worker_id', php_name: 'workerId')]
+@[vphp.PhpExportMethod(name: 'setWorkerId')]
 pub fn (mut worker VSlimJobWorker) set_worker_id(worker_id string) &VSlimJobWorker {
 	clean := worker_id.trim_space()
 	worker.worker_id = if clean == '' { job_now_worker_id() } else { clean }
 	return &worker
 }
 
-@[php_method: 'workerId']
+@[vphp.PhpExportMethod(name: 'workerId')]
 pub fn (worker &VSlimJobWorker) worker_id_value() string {
 	return worker.worker_id
 }
 
-@[php_method: 'setRetryDelaySeconds']
+@[vphp.PhpExportMethod(name: 'setRetryDelaySeconds')]
 pub fn (mut worker VSlimJobWorker) set_retry_delay_seconds(seconds int) &VSlimJobWorker {
 	worker.retry_delay_seconds = if seconds < 0 { 0 } else { seconds }
 	return &worker
 }
 
-@[php_method: 'setReserveTimeoutSeconds']
+@[vphp.PhpExportMethod(name: 'setReserveTimeoutSeconds')]
 pub fn (mut worker VSlimJobWorker) set_reserve_timeout_seconds(seconds int) &VSlimJobWorker {
 	worker.reserve_timeout_secs = if seconds <= 0 { 300 } else { seconds }
 	return &worker
@@ -290,14 +290,14 @@ fn dispatch_job_class(job_class string, payload vphp.PhpValue) !vphp.PhpValue {
 	return instance_obj.call_method('handle', payload)
 }
 
-@[php_method: 'runOnce']
+@[vphp.PhpExportMethod(name: 'runOnce')]
 pub fn (mut worker VSlimJobWorker) run_once(queue string) int {
 	reserved := worker.reserve(queue) or { return 0 }
 	return if worker.perform(reserved) { 1 } else { 0 }
 }
 
-@[php_arg_name: 'max_jobs=maxJobs,sleep_ms=sleepMs,stop_when_empty=stopWhenEmpty']
-@[php_method]
+@[vphp.PhpArgNames(names: 'max_jobs=maxJobs,sleep_ms=sleepMs,stop_when_empty=stopWhenEmpty')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut worker VSlimJobWorker) run(queue string, max_jobs int, sleep_ms int, stop_when_empty bool) int {
 	mut processed := 0
 	delay := if sleep_ms < 0 { 0 } else { sleep_ms }

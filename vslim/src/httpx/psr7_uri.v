@@ -2,10 +2,8 @@ module httpx
 
 import vphp
 
-@[php_arg_name: 'default_uri=defaultUri']
-@[php_arg_default: 'default_uri=""']
-@[php_arg_optional: 'default_uri']
-@[php_method]
+@[vphp.PhpStringParam('default_uri', php_name: 'defaultUri', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut u VSlimPsr7Uri) construct(default_uri string) &VSlimPsr7Uri {
 	parsed := VSlimPsr7Uri.parse(default_uri)
 	u.scheme = parsed.scheme
@@ -19,22 +17,22 @@ pub fn (mut u VSlimPsr7Uri) construct(default_uri string) &VSlimPsr7Uri {
 	return &u
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (u &VSlimPsr7Uri) str() string {
 	return build_psr7_uri_string(u)
 }
 
-@[php_method: 'getScheme']
+@[vphp.PhpExportMethod(name: 'getScheme')]
 pub fn (u &VSlimPsr7Uri) get_scheme() string {
 	return normalize_scheme(u.scheme)
 }
 
-@[php_method: 'getAuthority']
+@[vphp.PhpExportMethod(name: 'getAuthority')]
 pub fn (u &VSlimPsr7Uri) get_authority() string {
 	return build_psr7_authority(u)
 }
 
-@[php_method: 'getUserInfo']
+@[vphp.PhpExportMethod(name: 'getUserInfo')]
 pub fn (u &VSlimPsr7Uri) get_user_info() string {
 	if u.user == '' {
 		return ''
@@ -45,12 +43,12 @@ pub fn (u &VSlimPsr7Uri) get_user_info() string {
 	return '${u.user}:${u.password}'
 }
 
-@[php_method: 'getHost']
+@[vphp.PhpExportMethod(name: 'getHost')]
 pub fn (u &VSlimPsr7Uri) get_host() string {
 	return normalize_host(u.host)
 }
 
-@[php_method: 'getPort']
+@[vphp.PhpExportMethod(name: 'getPort')]
 pub fn (u &VSlimPsr7Uri) get_port() ?int {
 	port := normalize_port(u.port)
 	if port <= 0 {
@@ -65,69 +63,68 @@ pub fn (u &VSlimPsr7Uri) get_port() ?int {
 	return port
 }
 
-@[php_method: 'getPath']
+@[vphp.PhpExportMethod(name: 'getPath')]
 pub fn (u &VSlimPsr7Uri) get_path() string {
 	return u.path
 }
 
-@[php_method: 'getQuery']
+@[vphp.PhpExportMethod(name: 'getQuery')]
 pub fn (u &VSlimPsr7Uri) get_query() string {
 	return normalize_query(u.query)
 }
 
-@[php_method: 'getFragment']
+@[vphp.PhpExportMethod(name: 'getFragment')]
 pub fn (u &VSlimPsr7Uri) get_fragment() string {
 	return normalize_fragment(u.fragment)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\UriInterface']
-@[php_method: 'withScheme']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\UriInterface')]
+@[vphp.PhpExportMethod(name: 'withScheme')]
 pub fn (u &VSlimPsr7Uri) with_scheme(scheme vphp.PhpValue) &VSlimPsr7Uri {
 	return u.clone_with(scheme.to_string(), u.user, u.password, u.host, u.port, u.path,
 		u.query, u.fragment)
 }
 
-@[php_arg_name: 'default_password=defaultPassword']
-@[php_return_type: 'Psr\\Http\\Message\\UriInterface']
-@[php_arg_default: 'default_password=""']
-@[php_arg_optional: 'default_password']
-@[php_method: 'withUserInfo']
+@[vphp.PhpArgName(v_name: 'default_password', php_name: 'defaultPassword')]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\UriInterface')]
+@[vphp.PhpArgDefault(v_name: 'default_password', default_value: '""')]
+@[vphp.PhpExportMethod(name: 'withUserInfo')]
 pub fn (u &VSlimPsr7Uri) with_user_info(user vphp.PhpValue, default_password vphp.PhpValue) &VSlimPsr7Uri {
 	return u.clone_with(u.scheme, user.to_string(), default_password.to_string(), u.host,
 		u.port, u.path, u.query, u.fragment)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\UriInterface']
-@[php_method: 'withHost']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\UriInterface')]
+@[vphp.PhpExportMethod(name: 'withHost')]
 pub fn (u &VSlimPsr7Uri) with_host(host vphp.PhpValue) &VSlimPsr7Uri {
 	return u.clone_with(u.scheme, u.user, u.password, host.to_string(), u.port, u.path,
 		u.query, u.fragment)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\UriInterface']
-@[php_method: 'withPort']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\UriInterface')]
+@[vphp.PhpExportMethod(name: 'withPort')]
 pub fn (u &VSlimPsr7Uri) with_port(port vphp.PhpValue) &VSlimPsr7Uri {
 	next_port := value_subject(port).psr7_port()
 	return u.clone_with(u.scheme, u.user, u.password, u.host, next_port, u.path, u.query,
 		u.fragment)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\UriInterface']
-@[php_method: 'withPath']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\UriInterface')]
+@[vphp.PhpExportMethod(name: 'withPath')]
 pub fn (u &VSlimPsr7Uri) with_path(path vphp.PhpValue) &VSlimPsr7Uri {
 	return u.clone_with(u.scheme, u.user, u.password, u.host, u.port, path.to_string(),
 		u.query, u.fragment)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\UriInterface']
-@[php_method: 'withQuery']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\UriInterface')]
+@[vphp.PhpExportMethod(name: 'withQuery')]
 pub fn (u &VSlimPsr7Uri) with_query(query vphp.PhpValue) &VSlimPsr7Uri {
 	return u.clone_with(u.scheme, u.user, u.password, u.host, u.port, u.path,
 		query.to_string(), u.fragment)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\UriInterface']
-@[php_method: 'withFragment']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\UriInterface')]
+@[vphp.PhpExportMethod(name: 'withFragment')]
 pub fn (u &VSlimPsr7Uri) with_fragment(fragment vphp.PhpValue) &VSlimPsr7Uri {
 	return u.clone_with(u.scheme, u.user, u.password, u.host, u.port, u.path, u.query,
 		fragment.to_string())
@@ -193,8 +190,8 @@ pub fn VSlimPsr7Uri.from_value(value vphp.PhpValue) &VSlimPsr7Uri {
 		if object.method_exists('__toString') {
 			return object.with_method_result[vphp.PhpString, &VSlimPsr7Uri]('__toString',
 				fn (raw vphp.PhpString) &VSlimPsr7Uri {
-				return VSlimPsr7Uri.from_string(raw.value())
-			}) or { VSlimPsr7Uri.from_string(value_subject(value).log_message()) }
+					return VSlimPsr7Uri.from_string(raw.value())
+				}) or { VSlimPsr7Uri.from_string(value_subject(value).log_message()) }
 		}
 	}
 	return VSlimPsr7Uri.from_string(value_subject(value).log_message())

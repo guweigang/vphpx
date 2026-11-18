@@ -18,8 +18,11 @@ $payload = $client->payload([
     ],
     'body' => '',
 ]);
-$textPlan = $client->upstreamPlan($payload, 'text')->toArray();
-$ssePlan = $client->upstreamPlan($payload, 'sse')->toArray();
+$textPlan = $client->upstreamPlan(outputMode: 'text', payload: $payload)->toArray();
+$ssePlan = $client->upstreamPlan($payload)->toArray();
+$request = ['query' => ['prompt' => 'hello'], 'body' => ''];
+$requestSse = $client->upstreamPlanFromRequest(requestPayload: $request)->toArray();
+$requestText = $client->upstreamPlanFromRequest(outputMode: 'text', requestPayload: $request)->toArray();
 
 echo $textPlan['transport'], PHP_EOL;
 echo $textPlan['method'], PHP_EOL;
@@ -34,6 +37,13 @@ echo ($ssePlan['mapper'] ?? ''), PHP_EOL;
 echo ($ssePlan['output_stream_type'] ?? ''), PHP_EOL;
 echo ($ssePlan['meta']['sse_event'] ?? ''), PHP_EOL;
 echo ($ssePlan['meta']['provider'] ?? ''), PHP_EOL;
+foreach (['upstreamPlan', 'upstreamPlanFromRequest'] as $name) {
+    $method = new ReflectionMethod($client, $name);
+    $mode = $method->getParameters()[1];
+    echo $method->getNumberOfRequiredParameters(), '|', $mode->getName(), '|', $mode->getType(), '|',
+        $mode->getDefaultValue(), PHP_EOL;
+}
+echo $requestSse['output_stream_type'], '|', $requestText['output_stream_type'], PHP_EOL;
 ?>
 --EXPECT--
 http
@@ -49,3 +59,6 @@ ndjson_sse_field
 sse
 token
 ollama
+1|outputMode|string|sse
+1|outputMode|string|sse
+sse|text

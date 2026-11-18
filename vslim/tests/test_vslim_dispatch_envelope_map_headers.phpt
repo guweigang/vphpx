@@ -100,7 +100,7 @@ namespace {
     use Psr\Http\Server\RequestHandlerInterface;
 
     $app = new VSlim\App();
-    $app->before(new class implements MiddlewareInterface {
+    $app->before(handler: new class implements MiddlewareInterface {
         public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
         {
             $uri = new VSlim\Psr7\Uri('https://phase.local/hello/codex?trace_id=phase-100');

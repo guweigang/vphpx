@@ -146,7 +146,7 @@ fn (app &VSlimApp) resolve_clock() vphp.PhpObject {
 	}
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimApp.demo() &VSlimApp {
 	return &VSlimApp{
 		not_found_handler: vphp.PhpCallable.invalid()

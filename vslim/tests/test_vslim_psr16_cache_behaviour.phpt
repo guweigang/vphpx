@@ -38,7 +38,7 @@ namespace {
     var_dump($cache->set('nullish', null));
     var_dump($cache->has('nullish'));
     var_dump($cache->get('nullish', 'fallback'));
-    var_dump($cache->get('missing', 'fallback'));
+    var_dump($cache->get(defaultValue: 'fallback', key: 'missing'));
 
     var_dump($cache->setMultiple([
         'one' => 1,
@@ -51,7 +51,7 @@ namespace {
         'iter-a' => 'A',
         'iter-b' => 'B',
     ])));
-    $iterMany = $cache->getMultiple(new ArrayIterator(['iter-a', 'iter-b', 'iter-c']), 'na');
+    $iterMany = $cache->getMultiple(defaultValue: 'na', keys: new ArrayIterator(['iter-a', 'iter-b', 'iter-c']));
     var_dump($iterMany['iter-a'], $iterMany['iter-b'], $iterMany['iter-c']);
 
     var_dump($cache->deleteMultiple(['one', 'iter-a']));

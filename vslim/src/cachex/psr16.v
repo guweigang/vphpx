@@ -6,7 +6,7 @@ import vphp
 
 const psr_cache_reserved_key_chars = ['{', '}', '(', ')', '/', '\\', '@', ':']
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut cache VSlimPsr16Cache) construct() &VSlimPsr16Cache {
 	cache.ensure()
 	return &cache
@@ -20,30 +20,30 @@ pub fn VSlimPsr16Cache.from_clock_and_config(clock vphp.PhpObject, config &cfgx.
 	return cache
 }
 
-@[php_method: 'setNamespace']
+@[vphp.PhpExportMethod(name: 'setNamespace')]
 pub fn (mut cache VSlimPsr16Cache) set_namespace(prefix string) &VSlimPsr16Cache {
 	cache.namespace_prefix = psr_cache_normalize_namespace(prefix)
 	return &cache
 }
 
-@[php_method: 'namespace']
+@[vphp.PhpExportMethod(name: 'namespace')]
 pub fn (cache &VSlimPsr16Cache) namespace() string {
 	return cache.namespace_prefix
 }
 
-@[php_method: 'setDefaultTtlSeconds']
+@[vphp.PhpExportMethod(name: 'setDefaultTtlSeconds')]
 pub fn (mut cache VSlimPsr16Cache) set_default_ttl_seconds(seconds int) &VSlimPsr16Cache {
 	cache.default_ttl_seconds = if seconds <= 0 { 0 } else { seconds }
 	return &cache
 }
 
-@[php_method: 'defaultTtlSeconds']
+@[vphp.PhpExportMethod(name: 'defaultTtlSeconds')]
 pub fn (cache &VSlimPsr16Cache) default_ttl_seconds_value() int {
 	return if cache.default_ttl_seconds <= 0 { 0 } else { cache.default_ttl_seconds }
 }
 
-@[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
-@[php_method: 'setClock']
+@[vphp.PhpArgType(v_name: 'clock', php_type: 'Psr\\Clock\\ClockInterface')]
+@[vphp.PhpExportMethod(name: 'setClock')]
 pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.PhpObject) &VSlimPsr16Cache {
 	cache.ensure()
 	if !supportx.psr20_clock_is_valid(clock) {
@@ -57,8 +57,8 @@ pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.PhpObject) &VSlimPsr16Ca
 	return &cache
 }
 
-@[php_return_type: 'Psr\\Clock\\ClockInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\Clock\\ClockInterface')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut cache VSlimPsr16Cache) clock() vphp.PhpObject {
 	cache.ensure()
 	return cache.clock_ref.to_request_owned()
@@ -78,8 +78,8 @@ fn psr16_ttl_value_or_null(ttl ?vphp.PhpValue) vphp.PhpValue {
 	return vphp.PhpValue.null()
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'default_value', php_name: 'defaultValue')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut cache VSlimPsr16Cache) get(key string, default_value ?vphp.PhpValue) vphp.PhpValue {
 	cache.ensure()
 	normalized := psr_cache_validate_key_or_throw(key) or {
@@ -92,7 +92,7 @@ pub fn (mut cache VSlimPsr16Cache) get(key string, default_value ?vphp.PhpValue)
 	return entry.value.to_request_owned()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.PhpValue, ttl ?vphp.PhpValue) bool {
 	cache.ensure()
 	normalized := psr_cache_validate_key_or_throw(key) or {
@@ -112,7 +112,7 @@ pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.PhpValue, ttl ?vph
 	return true
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut cache VSlimPsr16Cache) delete(key string) bool {
 	cache.ensure()
 	normalized := psr_cache_validate_key_or_throw(key) or {
@@ -123,16 +123,16 @@ pub fn (mut cache VSlimPsr16Cache) delete(key string) bool {
 	return true
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut cache VSlimPsr16Cache) clear() bool {
 	cache.ensure()
 	cache.clear_entries()
 	return true
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_method: 'getMultiple']
-@[php_return_type: 'iterable']
+@[vphp.PhpArgName(v_name: 'default_value', php_name: 'defaultValue')]
+@[vphp.PhpExportMethod(name: 'getMultiple')]
+@[vphp.PhpReturnType(php_type: 'iterable')]
 pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.PhpIterable, default_value ?vphp.PhpValue) vphp.PhpArray {
 	cache.ensure()
 	mut out := vphp.PhpArray.new()
@@ -147,7 +147,7 @@ pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.PhpIterable, default_v
 	return out
 }
 
-@[php_method: 'setMultiple']
+@[vphp.PhpExportMethod(name: 'setMultiple')]
 pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.PhpIterable, ttl ?vphp.PhpValue) bool {
 	cache.ensure()
 	expires_at := psr_cache_resolve_relative_ttl_or_throw(cache.clock_ref,
@@ -174,7 +174,7 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.PhpIterable, ttl ?vp
 	return true
 }
 
-@[php_method: 'deleteMultiple']
+@[vphp.PhpExportMethod(name: 'deleteMultiple')]
 pub fn (mut cache VSlimPsr16Cache) delete_multiple(keys vphp.PhpIterable) bool {
 	cache.ensure()
 	for key_name in psr16_iterable_key_list(keys) or {
@@ -186,7 +186,7 @@ pub fn (mut cache VSlimPsr16Cache) delete_multiple(keys vphp.PhpIterable) bool {
 	return true
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut cache VSlimPsr16Cache) has(key string) bool {
 	cache.ensure()
 	normalized := psr_cache_validate_key_or_throw(key) or {

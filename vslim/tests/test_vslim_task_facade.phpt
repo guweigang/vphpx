@@ -12,10 +12,18 @@ echo is_array($tasks) ? "list-array\n" : "list-miss\n";
 echo count($tasks) . PHP_EOL;
 
 $hits = 0;
-$handle = VSlim\Task::spawn(function (string $label, int $count) use (&$hits) {
+$spawn = new ReflectionMethod(VSlim\Task::class, 'spawn');
+[$target, $params] = $spawn->getParameters();
+if (!$spawn->isStatic() || $spawn->getNumberOfRequiredParameters() !== 2
+    || $target->getName() !== 'target' || (string) $target->getType() !== 'mixed'
+    || $params->getName() !== 'params' || (string) $params->getType() !== 'array'
+    || (string) $spawn->getReturnType() !== VSlim\TaskHandle::class) {
+    throw new RuntimeException('Unexpected Task::spawn signature');
+}
+$handle = VSlim\Task::spawn(params: ['alpha', 2], target: function (string $label, int $count) use (&$hits) {
     $hits++;
     return [$label, $count, $hits];
-}, ['alpha', 2]);
+});
 $first = $handle->wait();
 $second = $handle->wait();
 echo $hits . PHP_EOL;

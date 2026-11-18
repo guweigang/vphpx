@@ -61,6 +61,15 @@ if [ "${#TESTS[@]}" -eq 0 ]; then
     exit 1
 fi
 
+if [ "$#" -eq 0 ]; then
+    echo "Running VSlim architecture boundary scan"
+    if [ "${OS:-}" = "Windows_NT" ]; then
+        v -cc msvc test tests/boundary_scan_test.v
+    else
+        v test tests/boundary_scan_test.v
+    fi
+fi
+
 cleanup_generated_test_artifacts
 trap cleanup_generated_test_artifacts EXIT
 

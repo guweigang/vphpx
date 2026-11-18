@@ -49,7 +49,7 @@ $cfg = (new VSlim\Database\Config())
     ->setDatabase((string) getenv('VSLIM_DB_NAME'));
 
 $db = (new VSlim\Database\Manager())->setConfig($cfg);
-$pending = $db->queryAsync('SELECT 1 AS ok');
+$pending = $db->queryAsync(query: 'SELECT 1 AS ok');
 $rows = $pending->wait();
 
 echo ($pending instanceof VSlim\Database\PendingResult ? "pending-ok\n" : "pending-bad\n");

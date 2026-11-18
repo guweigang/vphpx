@@ -1,39 +1,40 @@
 module sessionx
 
 import containerx
+import vphp
 
-@[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
-@[php_class: 'VSlim\\Session\\StartMiddleware']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Server\\MiddlewareInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Session\\StartMiddleware')]
 @[heap]
 pub struct VSlimSessionStartMiddleware {
 mut:
-	container_ref &containerx.VSlimContainer = unsafe { nil } @[php_ignore]
+	container_ref &containerx.VSlimContainer = unsafe { nil } @[vphp.PhpIgnoreField]
 }
 
-@[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
-@[php_class: 'VSlim\\Auth\\RequireAuthMiddleware']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Server\\MiddlewareInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Auth\\RequireAuthMiddleware')]
 @[heap]
 pub struct VSlimAuthRequireMiddleware {
 mut:
-	container_ref &containerx.VSlimContainer = unsafe { nil } @[php_ignore]
-	redirect_path string                     @[php_prop: redirectPath]
+	container_ref &containerx.VSlimContainer = unsafe { nil } @[vphp.PhpIgnoreField]
+	redirect_path string @[vphp.PhpProperty; vphp.PhpProperty_name: 'redirectPath']
 }
 
-@[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
-@[php_class: 'VSlim\\Auth\\GuestMiddleware']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Server\\MiddlewareInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Auth\\GuestMiddleware')]
 @[heap]
 pub struct VSlimAuthGuestMiddleware {
 mut:
-	container_ref &containerx.VSlimContainer = unsafe { nil } @[php_ignore]
-	redirect_path string                     @[php_prop: redirectPath]
+	container_ref &containerx.VSlimContainer = unsafe { nil } @[vphp.PhpIgnoreField]
+	redirect_path string @[vphp.PhpProperty; vphp.PhpProperty_name: 'redirectPath']
 }
 
-@[php_implements: 'Psr\\Http\\Server\\MiddlewareInterface']
-@[php_class: 'VSlim\\Auth\\RequireAbilityMiddleware']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Server\\MiddlewareInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Auth\\RequireAbilityMiddleware')]
 @[heap]
 pub struct VSlimAuthRequireAbilityMiddleware {
 mut:
-	container_ref &containerx.VSlimContainer = unsafe { nil } @[php_ignore]
+	container_ref &containerx.VSlimContainer = unsafe { nil } @[vphp.PhpIgnoreField]
 	ability       string
 	status        int = 403
 	message       string

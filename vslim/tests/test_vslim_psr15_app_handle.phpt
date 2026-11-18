@@ -138,7 +138,7 @@ namespace {
         ->withUri(new VSlim\Psr7\Uri('https://example.com/api/hello/world?trace_id=query-trace'))
         ->withAttribute('trace_id', 'attr-trace');
 
-    $response = $app->handle($request);
+    $response = $app->handle(request: $request);
 
     echo ($app instanceof RequestHandlerInterface ? 'handler' : 'no'), PHP_EOL;
     echo get_class($response), PHP_EOL;

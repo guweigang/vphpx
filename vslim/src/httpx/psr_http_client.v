@@ -22,7 +22,7 @@ mut:
 	header_names     map[string]string
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut client VSlimPsr18Client) construct() &VSlimPsr18Client {
 	if client.timeout_seconds <= 0 {
 		client.timeout_seconds = 30
@@ -37,7 +37,7 @@ pub fn VSlimPsr18Client.from_config(config &configx.VSlimConfig) &VSlimPsr18Clie
 	return client
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut client VSlimPsr18Client) timeout(seconds int) &VSlimPsr18Client {
 	client.timeout_seconds = if seconds <= 0 { 30 } else { seconds }
 	return &client
@@ -52,8 +52,8 @@ pub fn (mut client VSlimPsr18Client) configure_defaults(config &configx.VSlimCon
 	}
 }
 
-@[php_arg_name: 'err_no=errNo,err_str=errStr,err_file=errFile,err_line=errLine']
-@[php_method: 'ignorePhpWarning']
+@[vphp.PhpArgNames(names: 'err_no=errNo,err_str=errStr,err_file=errFile,err_line=errLine')]
+@[vphp.PhpExportMethod(name: 'ignorePhpWarning')]
 pub fn VSlimPsr18Client.ignore_warning(err_no int, err_str string, err_file string, err_line int) bool {
 	_ = err_no
 	_ = err_str
@@ -62,14 +62,14 @@ pub fn VSlimPsr18Client.ignore_warning(err_no int, err_str string, err_file stri
 	return true
 }
 
-@[php_method: 'timeoutSecondsValue']
+@[vphp.PhpExportMethod(name: 'timeoutSecondsValue')]
 pub fn (client &VSlimPsr18Client) timeout_seconds_value() int {
 	return if client.timeout_seconds <= 0 { 30 } else { client.timeout_seconds }
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'sendRequest']
+@[vphp.PhpArgType(v_name: 'request', php_type: 'Psr\\Http\\Message\\RequestInterface')]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'sendRequest')]
 pub fn (client &VSlimPsr18Client) send_request(request vphp.PhpObject) &VSlimPsr7Response {
 	outbound := normalize_psr18_request(request) or {
 		throw_psr18_request_exception(err.msg(), request)
@@ -108,29 +108,29 @@ pub fn (client &VSlimPsr18Client) send_request(request vphp.PhpObject) &VSlimPsr
 	}
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
-@[php_method: 'attachRequest']
+@[vphp.PhpArgType(v_name: 'request', php_type: 'Psr\\Http\\Message\\RequestInterface')]
+@[vphp.PhpExportMethod(name: 'attachRequest')]
 pub fn (mut e VSlimPsr18RequestException) attach_request(request vphp.PhpObject) {
 	_ = e
 	psr18_exception_store_request(request)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
-@[php_method: 'getRequest']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\RequestInterface')]
+@[vphp.PhpExportMethod(name: 'getRequest')]
 pub fn (e &VSlimPsr18RequestException) get_request() vphp.PhpObject {
 	_ = e
 	return psr18_exception_load_request()
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
-@[php_method: 'attachRequest']
+@[vphp.PhpArgType(v_name: 'request', php_type: 'Psr\\Http\\Message\\RequestInterface')]
+@[vphp.PhpExportMethod(name: 'attachRequest')]
 pub fn (mut e VSlimPsr18NetworkException) attach_request(request vphp.PhpObject) {
 	_ = e
 	psr18_exception_store_request(request)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
-@[php_method: 'getRequest']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\RequestInterface')]
+@[vphp.PhpExportMethod(name: 'getRequest')]
 pub fn (e &VSlimPsr18NetworkException) get_request() vphp.PhpObject {
 	_ = e
 	return psr18_exception_load_request()
@@ -179,8 +179,13 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 	target_raw := request.with_method_result[vphp.PhpString, string]('getRequestTarget', fn (z vphp.PhpString) string {
 		return z.value()
 	}) or { '' }
-	request_target := if target_raw.trim_space() == '' { build_psr7_request_target(&uri) } else { validate_request_target_or_throw(target_raw) or {
-			''} }
+	request_target := if target_raw.trim_space() == '' {
+		build_psr7_request_target(&uri)
+	} else {
+		validate_request_target_or_throw(target_raw) or {
+			''
+		}
+	}
 	if request_target == '' {
 		return error('request target must be a non-empty string without whitespace')
 	}

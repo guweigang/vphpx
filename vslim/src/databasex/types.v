@@ -4,7 +4,7 @@ import db.mysql
 import vhttpdx
 import vphp
 
-@[php_class: 'VSlim\\Database\\Config']
+@[vphp.PhpExportClass(name: 'VSlim\\Database\\Config')]
 @[heap]
 pub struct VSlimDatabaseConfig {
 mut:
@@ -15,28 +15,28 @@ mut:
 	username        string
 	password        string
 	database        string
-	pool_size       int    = 5    @[php_prop: poolSize]
-	pool_name       string = 'default' @[php_prop: poolName]
-	timeout_ms      int    = 1000    @[php_prop: timeoutMs]
-	upstream_socket string @[php_prop: upstreamSocket]
+	pool_size       int    = 5         @[vphp.PhpProperty; vphp.PhpProperty_name: 'poolSize']
+	pool_name       string = 'default' @[vphp.PhpProperty; vphp.PhpProperty_name: 'poolName']
+	timeout_ms      int    = 1000      @[vphp.PhpProperty; vphp.PhpProperty_name: 'timeoutMs']
+	upstream_socket string             @[vphp.PhpProperty; vphp.PhpProperty_name: 'upstreamSocket']
 }
 
-@[php_class: 'VSlim\\Database\\Manager']
+@[vphp.PhpExportClass(name: 'VSlim\\Database\\Manager')]
 @[heap]
 pub struct VSlimDatabaseManager {
 mut:
-	config_ref          &VSlimDatabaseConfig      = unsafe { nil }      @[php_ignore]
-	vhttpd_client_ref   &vhttpdx.VSlimVhttpdClient = unsafe { nil } @[php_ignore]
-	mysql_pool          mysql.ConnectionPool      @[php_ignore]
-	mysql_connected     bool                      @[php_ignore]
-	mysql_tx_conn       mysql.DB                  @[php_ignore]
-	mysql_tx_active     bool                      @[php_ignore]
-	upstream_connected  bool                      @[php_ignore]
-	upstream_tx_active  bool                      @[php_ignore]
-	upstream_session_id string                    @[php_ignore]
-	last_affected_rows  u64                       @[php_prop: lastAffectedRows]
-	last_insert_id      i64                       @[php_prop: lastInsertId]
-	last_error          string                    @[php_prop: lastError]
+	config_ref          &VSlimDatabaseConfig       = unsafe { nil } @[vphp.PhpIgnoreField]
+	vhttpd_client_ref   &vhttpdx.VSlimVhttpdClient = unsafe { nil } @[vphp.PhpIgnoreField]
+	mysql_pool          mysql.ConnectionPool                        @[vphp.PhpIgnoreField]
+	mysql_connected     bool     @[vphp.PhpIgnoreField]
+	mysql_tx_conn       mysql.DB @[vphp.PhpIgnoreField]
+	mysql_tx_active     bool     @[vphp.PhpIgnoreField]
+	upstream_connected  bool     @[vphp.PhpIgnoreField]
+	upstream_tx_active  bool     @[vphp.PhpIgnoreField]
+	upstream_session_id string   @[vphp.PhpIgnoreField]
+	last_affected_rows  u64      @[vphp.PhpProperty; vphp.PhpProperty_name: 'lastAffectedRows']
+	last_insert_id      i64      @[vphp.PhpProperty; vphp.PhpProperty_name: 'lastInsertId']
+	last_error          string   @[vphp.PhpProperty; vphp.PhpProperty_name: 'lastError']
 }
 
 enum VSlimDatabaseAsyncKind {
@@ -52,18 +52,18 @@ mut:
 	params []string
 }
 
-@[php_class: 'VSlim\\Database\\PendingResult']
+@[vphp.PhpExportClass(name: 'VSlim\\Database\\PendingResult')]
 @[heap]
 pub struct VSlimDatabasePendingResult {
 mut:
-	async_ref      &VSlimAsyncHandle = unsafe { nil } @[php_ignore]
+	async_ref      &VSlimAsyncHandle = unsafe { nil } @[vphp.PhpIgnoreField]
 	active         bool
 	resolved       bool
 	kind           VSlimDatabaseAsyncKind = .query
-	affected_rows  u64           @[php_prop: affectedRows]
-	last_insert_id i64           @[php_prop: lastInsertId]
-	last_error     string        @[php_prop: lastError]
-	result_box     vphp.PhpValue = vphp.PhpValue.invalid() @[php_ignore]
+	affected_rows  u64    @[vphp.PhpProperty; vphp.PhpProperty_name: 'affectedRows']
+	last_insert_id i64    @[vphp.PhpProperty; vphp.PhpProperty_name: 'lastInsertId']
+	last_error     string @[vphp.PhpProperty; vphp.PhpProperty_name: 'lastError']
+	result_box     vphp.PhpValue = vphp.PhpValue.invalid() @[vphp.PhpIgnoreField]
 }
 
 pub enum VSlimDatabaseQueryKind {
@@ -79,54 +79,54 @@ struct VSlimDatabaseWhereClause {
 	value  string
 }
 
-@[php_class: 'VSlim\\Database\\Query']
+@[vphp.PhpExportClass(name: 'VSlim\\Database\\Query')]
 @[heap]
 pub struct VSlimDatabaseQuery {
 mut:
-	manager_ref     &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
-	table_name      string                @[php_prop: tableName]
+	manager_ref     &VSlimDatabaseManager = unsafe { nil } @[vphp.PhpIgnoreField]
+	table_name      string @[vphp.PhpProperty; vphp.PhpProperty_name: 'tableName']
 	kind            VSlimDatabaseQueryKind = .select_
-	select_columns  []string                   @[php_ignore]
-	where_clauses   []VSlimDatabaseWhereClause @[php_ignore]
-	order_clauses   []string                   @[php_ignore]
-	limit_count     int = -1                        @[php_prop: limitCount]
-	offset_count    int = -1                        @[php_prop: offsetCount]
-	mutation_values map[string]string          @[php_ignore]
+	select_columns  []string                   @[vphp.PhpIgnoreField]
+	where_clauses   []VSlimDatabaseWhereClause @[vphp.PhpIgnoreField]
+	order_clauses   []string                   @[vphp.PhpIgnoreField]
+	limit_count     int = -1                   @[vphp.PhpProperty; vphp.PhpProperty_name: 'limitCount']
+	offset_count    int = -1                   @[vphp.PhpProperty; vphp.PhpProperty_name: 'offsetCount']
+	mutation_values map[string]string          @[vphp.PhpIgnoreField]
 }
 
-@[php_class: 'VSlim\\Database\\Model']
+@[vphp.PhpExportClass(name: 'VSlim\\Database\\Model')]
 @[heap]
 pub struct VSlimDatabaseModel {
 mut:
-	manager_ref  &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
-	table_name   string                @[php_prop: tableName]
-	primary_key  string = 'id'                @[php_prop: primaryKey]
-	attributes   map[string]string     @[php_ignore]
-	exists_in_db bool                  @[php_prop: existsInDb]
+	manager_ref  &VSlimDatabaseManager = unsafe { nil } @[vphp.PhpIgnoreField]
+	table_name   string            @[vphp.PhpProperty; vphp.PhpProperty_name: 'tableName']
+	primary_key  string = 'id'     @[vphp.PhpProperty; vphp.PhpProperty_name: 'primaryKey']
+	attributes   map[string]string @[vphp.PhpIgnoreField]
+	exists_in_db bool              @[vphp.PhpProperty; vphp.PhpProperty_name: 'existsInDb']
 }
 
-@[php_class: 'VSlim\\Database\\Migration']
+@[vphp.PhpExportClass(name: 'VSlim\\Database\\Migration')]
 @[heap]
 pub struct VSlimDatabaseMigration {
 mut:
-	manager_ref &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
+	manager_ref &VSlimDatabaseManager = unsafe { nil } @[vphp.PhpIgnoreField]
 	name        string
 }
 
-@[php_class: 'VSlim\\Database\\Seeder']
+@[vphp.PhpExportClass(name: 'VSlim\\Database\\Seeder')]
 @[heap]
 pub struct VSlimDatabaseSeeder {
 mut:
-	manager_ref &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
+	manager_ref &VSlimDatabaseManager = unsafe { nil } @[vphp.PhpIgnoreField]
 	name        string
 }
 
-@[php_class: 'VSlim\\Database\\Migrator']
+@[vphp.PhpExportClass(name: 'VSlim\\Database\\Migrator')]
 @[heap]
 pub struct VSlimDatabaseMigrator {
 mut:
-	manager_ref     &VSlimDatabaseManager = unsafe { nil } @[php_ignore]
-	migrations_path string                = 'database/migrations'                @[php_prop: migrationsPath]
-	seeds_path      string                = 'database/seeds'                @[php_prop: seedsPath]
-	table_name      string                = 'vslim_migrations'                @[php_prop: tableName]
+	manager_ref     &VSlimDatabaseManager = unsafe { nil }        @[vphp.PhpIgnoreField]
+	migrations_path string                = 'database/migrations' @[vphp.PhpProperty; vphp.PhpProperty_name: 'migrationsPath']
+	seeds_path      string                = 'database/seeds'      @[vphp.PhpProperty; vphp.PhpProperty_name: 'seedsPath']
+	table_name      string                = 'vslim_migrations'    @[vphp.PhpProperty; vphp.PhpProperty_name: 'tableName']
 }

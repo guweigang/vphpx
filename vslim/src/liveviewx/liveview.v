@@ -5,74 +5,74 @@ import httpx
 import viewx
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut live VSlimLiveView) construct() &VSlimLiveView {
 	live.sockets = map[string]&VSlimLiveSocket{}
 	return &live
 }
 
-@[php_method: 'setContainer']
+@[vphp.PhpExportMethod(name: 'setContainer')]
 pub fn (mut live VSlimLiveView) set_container(container &containerx.VSlimContainer) &VSlimLiveView {
 	live.host.set_container_ref(container)
 	return &live
 }
 
-@[php_method: 'setView']
+@[vphp.PhpExportMethod(name: 'setView')]
 pub fn (mut live VSlimLiveView) set_view(view &viewx.VSlimView) &VSlimLiveView {
 	live.host.set_view_ref(view)
 	return &live
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut live VSlimLiveView) view() &viewx.VSlimView {
 	return live.host.view()
 }
 
-@[php_method: 'setTemplate']
+@[vphp.PhpExportMethod(name: 'setTemplate')]
 pub fn (mut live VSlimLiveView) set_template(template string) &VSlimLiveView {
 	live.host.set_template_name(template)
 	return &live
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (live &VSlimLiveView) template() string {
 	return live.host.template_name()
 }
 
-@[php_method: 'setLayout']
+@[vphp.PhpExportMethod(name: 'setLayout')]
 pub fn (mut live VSlimLiveView) set_layout(layout string) &VSlimLiveView {
 	live.host.set_layout_name(layout)
 	return &live
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (live &VSlimLiveView) layout() string {
 	return live.host.layout_name()
 }
 
-@[php_arg_name: 'root_id=rootId']
-@[php_method: 'setRootId']
+@[vphp.PhpArgName(v_name: 'root_id', php_name: 'rootId')]
+@[vphp.PhpExportMethod(name: 'setRootId')]
 pub fn (mut live VSlimLiveView) set_root_id(root_id string) &VSlimLiveView {
 	live.root_id = root_id.trim_space()
 	return &live
 }
 
-@[php_method: 'rootId']
+@[vphp.PhpExportMethod(name: 'rootId')]
 pub fn (live &VSlimLiveView) root_id() string {
 	return live.root_id
 }
 
-@[php_method: 'liveMarker']
+@[vphp.PhpExportMethod(name: 'liveMarker')]
 pub fn (live &VSlimLiveView) live_marker() bool {
 	return true
 }
 
-@[php_method: 'attrPrefix']
+@[vphp.PhpExportMethod(name: 'attrPrefix')]
 pub fn (live &VSlimLiveView) attr_prefix() string {
 	return 'vphp'
 }
 
-@[php_method: 'attrName']
+@[vphp.PhpExportMethod(name: 'attrName')]
 pub fn (live &VSlimLiveView) attr_name(name string) string {
 	suffix := name.trim_space().trim('-')
 	if suffix == '' {
@@ -81,18 +81,18 @@ pub fn (live &VSlimLiveView) attr_name(name string) string {
 	return 'vphp-${suffix}'
 }
 
-@[php_method: 'runtimeAsset']
+@[vphp.PhpExportMethod(name: 'runtimeAsset')]
 pub fn (mut live VSlimLiveView) runtime_asset() string {
 	mut view := live.view()
 	return view.asset('vphp_live.js')
 }
 
-@[php_method: 'runtimeScriptTag']
+@[vphp.PhpExportMethod(name: 'runtimeScriptTag')]
 pub fn (mut live VSlimLiveView) runtime_script_tag() string {
 	return '<script defer src="' + viewx.escape_html_text(live.runtime_asset()) + '"></script>'
 }
 
-@[php_method: 'bootstrapAttrs']
+@[vphp.PhpExportMethod(name: 'bootstrapAttrs')]
 pub fn (live &VSlimLiveView) bootstrap_attrs(socket &VSlimLiveSocket, endpoint string) string {
 	ws_path := normalize_target(endpoint)
 	target := socket.target()
@@ -108,40 +108,40 @@ pub fn (live &VSlimLiveView) bootstrap_attrs(socket &VSlimLiveSocket, endpoint s
 		viewx.escape_html_text(root_id) + '"'
 }
 
-@[php_method: 'renderTemplate']
+@[vphp.PhpExportMethod(name: 'renderTemplate')]
 pub fn (mut live VSlimLiveView) render_template(template string, data vphp.PhpValue) string {
 	return live.host.render_template_data(template, data)
 }
 
-@[php_method: 'renderTemplateWithLayout']
+@[vphp.PhpExportMethod(name: 'renderTemplateWithLayout')]
 pub fn (mut live VSlimLiveView) render_template_with_layout(template string, layout string, data vphp.PhpValue) string {
 	return live.host.render_template_with_layout_data(template, layout, data)
 }
 
-@[php_method: 'renderSocket']
+@[vphp.PhpExportMethod(name: 'renderSocket')]
 pub fn (mut live VSlimLiveView) render_socket(template string, socket &VSlimLiveSocket) string {
 	return live.host.render_map_template(template, socket.assigns.clone())
 }
 
-@[php_method: 'renderSocketWithLayout']
+@[vphp.PhpExportMethod(name: 'renderSocketWithLayout')]
 pub fn (mut live VSlimLiveView) render_socket_with_layout(template string, layout string, socket &VSlimLiveSocket) string {
 	return live.host.render_map_template_with_layout(template, layout, socket.assigns.clone())
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut live VSlimLiveView) html(socket &VSlimLiveSocket) string {
 	return live.host.html_map(socket.assigns.clone())
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut live VSlimLiveView) response(socket &VSlimLiveSocket) &httpx.VSlimPsr7Response {
 	body := live.html(socket)
 	return (*httpx.VSlimResponse.live_html(body)).to_psr7_response()
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut live VSlimLiveView) patch(socket &VSlimLiveSocket, target_id string) &VSlimLiveSocket {
 	body := live.html(socket)
 	unsafe {
@@ -150,8 +150,8 @@ pub fn (mut live VSlimLiveView) patch(socket &VSlimLiveSocket, target_id string)
 	}
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method: 'patchTemplate']
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: 'patchTemplate')]
 pub fn (mut live VSlimLiveView) patch_template(socket &VSlimLiveSocket, target_id string, template string) &VSlimLiveSocket {
 	body := live.render_socket(template, socket)
 	unsafe {
@@ -160,70 +160,70 @@ pub fn (mut live VSlimLiveView) patch_template(socket &VSlimLiveSocket, target_i
 	}
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut component VSlimLiveComponent) construct() &VSlimLiveComponent {
 	component.assigns = map[string]string{}
 	component.socket_ref = unsafe { nil }
 	return &component
 }
 
-@[php_method: 'setContainer']
+@[vphp.PhpExportMethod(name: 'setContainer')]
 pub fn (mut component VSlimLiveComponent) set_container(container &containerx.VSlimContainer) &VSlimLiveComponent {
 	component.host.set_container_ref(container)
 	return &component
 }
 
-@[php_method: 'setView']
+@[vphp.PhpExportMethod(name: 'setView')]
 pub fn (mut component VSlimLiveComponent) set_view(view &viewx.VSlimView) &VSlimLiveComponent {
 	component.host.set_view_ref(view)
 	return &component
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut component VSlimLiveComponent) view() &viewx.VSlimView {
 	return component.host.view()
 }
 
-@[php_method: 'setTemplate']
+@[vphp.PhpExportMethod(name: 'setTemplate')]
 pub fn (mut component VSlimLiveComponent) set_template(template string) &VSlimLiveComponent {
 	component.host.set_template_name(template)
 	return &component
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (component &VSlimLiveComponent) template() string {
 	return component.host.template_name()
 }
 
-@[php_method: 'setLayout']
+@[vphp.PhpExportMethod(name: 'setLayout')]
 pub fn (mut component VSlimLiveComponent) set_layout(layout string) &VSlimLiveComponent {
 	component.host.set_layout_name(layout)
 	return &component
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (component &VSlimLiveComponent) layout() string {
 	return component.host.layout_name()
 }
 
-@[php_method: 'setId']
+@[vphp.PhpExportMethod(name: 'setId')]
 pub fn (mut component VSlimLiveComponent) set_id(id string) &VSlimLiveComponent {
 	component.id = id.trim_space()
 	return &component
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (component &VSlimLiveComponent) id() string {
 	return component.id
 }
 
-@[php_method: 'bindSocket']
+@[vphp.PhpExportMethod(name: 'bindSocket')]
 pub fn (mut component VSlimLiveComponent) bind_socket(socket &VSlimLiveSocket) &VSlimLiveComponent {
 	component.socket_ref = socket
 	return &component
 }
 
-@[php_method: 'hasSocket']
+@[vphp.PhpExportMethod(name: 'hasSocket')]
 pub fn (component &VSlimLiveComponent) has_socket() bool {
 	return !isnil(component.socket_ref)
 }
@@ -235,7 +235,7 @@ fn (component &VSlimLiveComponent) bound_socket() ?&VSlimLiveSocket {
 	return component.socket_ref
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (component &VSlimLiveComponent) state() &VSlimLiveComponentState {
 	return &VSlimLiveComponentState{
 		component_id: component.id.trim_space()
@@ -243,7 +243,7 @@ pub fn (component &VSlimLiveComponent) state() &VSlimLiveComponentState {
 	}
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut component VSlimLiveComponent) assign(key string, value vphp.PhpValue) &VSlimLiveComponent {
 	name := key.trim_space()
 	if name == '' {
@@ -262,7 +262,7 @@ fn (mut component VSlimLiveComponent) assign_string(key string, value vphp.PhpSt
 	return &component
 }
 
-@[php_method: 'assignMany']
+@[vphp.PhpExportMethod(name: 'assignMany')]
 pub fn (mut component VSlimLiveComponent) assign_many(values vphp.PhpArray) &VSlimLiveComponent {
 	for key in values.assoc_keys() {
 		component.assign(key, values.value_at(key))
@@ -270,28 +270,28 @@ pub fn (mut component VSlimLiveComponent) assign_many(values vphp.PhpArray) &VSl
 	return &component
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (component &VSlimLiveComponent) assigns() map[string]string {
 	return component.assigns.clone()
 }
 
-@[php_method: 'clearAssigns']
+@[vphp.PhpExportMethod(name: 'clearAssigns')]
 pub fn (mut component VSlimLiveComponent) clear_assigns() &VSlimLiveComponent {
 	component.assigns = map[string]string{}
 	return &component
 }
 
-@[php_method: 'renderTemplate']
+@[vphp.PhpExportMethod(name: 'renderTemplate')]
 pub fn (mut component VSlimLiveComponent) render_template(template string, data vphp.PhpValue) string {
 	return component.host.render_template_data(template, data)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut component VSlimLiveComponent) html() string {
 	return component.host.html_map(component.assigns.clone())
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut component VSlimLiveComponent) patch(socket &VSlimLiveSocket) &VSlimLiveSocket {
 	body := component.html()
 	target_id := component.id.trim_space()
@@ -304,7 +304,7 @@ pub fn (mut component VSlimLiveComponent) patch(socket &VSlimLiveSocket) &VSlimL
 	}
 }
 
-@[php_method: 'patchBound']
+@[vphp.PhpExportMethod(name: 'patchBound')]
 pub fn (mut component VSlimLiveComponent) patch_bound() &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.patch(socket)
@@ -312,13 +312,13 @@ pub fn (mut component VSlimLiveComponent) patch_bound() &VSlimLiveSocket {
 	return VSlimLiveSocket.bound_result()
 }
 
-@[php_method: 'componentMarker']
+@[vphp.PhpExportMethod(name: 'componentMarker')]
 pub fn (mut component VSlimLiveComponent) component_marker() bool {
 	return true
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method: 'appendTo']
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: 'appendTo')]
 pub fn (mut component VSlimLiveComponent) append_to(socket &VSlimLiveSocket, target_id string) &VSlimLiveSocket {
 	body := component.html()
 	id := target_id.trim_space()
@@ -331,8 +331,8 @@ pub fn (mut component VSlimLiveComponent) append_to(socket &VSlimLiveSocket, tar
 	}
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method: 'appendToBound']
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: 'appendToBound')]
 pub fn (mut component VSlimLiveComponent) append_to_bound(target_id string) &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.append_to(socket, target_id)
@@ -340,8 +340,8 @@ pub fn (mut component VSlimLiveComponent) append_to_bound(target_id string) &VSl
 	return VSlimLiveSocket.bound_result()
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method: 'prependTo']
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: 'prependTo')]
 pub fn (mut component VSlimLiveComponent) prepend_to(socket &VSlimLiveSocket, target_id string) &VSlimLiveSocket {
 	body := component.html()
 	id := target_id.trim_space()
@@ -354,8 +354,8 @@ pub fn (mut component VSlimLiveComponent) prepend_to(socket &VSlimLiveSocket, ta
 	}
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method: 'prependToBound']
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: 'prependToBound')]
 pub fn (mut component VSlimLiveComponent) prepend_to_bound(target_id string) &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.prepend_to(socket, target_id)
@@ -363,7 +363,7 @@ pub fn (mut component VSlimLiveComponent) prepend_to_bound(target_id string) &VS
 	return VSlimLiveSocket.bound_result()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut component VSlimLiveComponent) remove(socket &VSlimLiveSocket) &VSlimLiveSocket {
 	target_id := component.id.trim_space()
 	if target_id == '' {
@@ -375,7 +375,7 @@ pub fn (mut component VSlimLiveComponent) remove(socket &VSlimLiveSocket) &VSlim
 	}
 }
 
-@[php_method: 'removeBound']
+@[vphp.PhpExportMethod(name: 'removeBound')]
 pub fn (mut component VSlimLiveComponent) remove_bound() &VSlimLiveSocket {
 	if socket := component.bound_socket() {
 		return component.remove(socket)
@@ -383,7 +383,7 @@ pub fn (mut component VSlimLiveComponent) remove_bound() &VSlimLiveSocket {
 	return VSlimLiveSocket.bound_result()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut state VSlimLiveComponentState) set(field string, value vphp.PhpValue) &VSlimLiveComponentState {
 	if isnil(state.socket_ref) {
 		return &state
@@ -395,7 +395,7 @@ pub fn (mut state VSlimLiveComponentState) set(field string, value vphp.PhpValue
 	return &state
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (state &VSlimLiveComponentState) get(field string) string {
 	if isnil(state.socket_ref) {
 		return ''
@@ -403,13 +403,13 @@ pub fn (state &VSlimLiveComponentState) get(field string) string {
 	return state.socket_ref.component_state(state.component_id, field)
 }
 
-@[php_method: 'getOr']
+@[vphp.PhpExportMethod(name: 'getOr')]
 pub fn (state &VSlimLiveComponentState) get_or(field string, fallback string) string {
 	value := state.get(field)
 	return if value == '' { fallback } else { value }
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut state VSlimLiveComponentState) clear(field string) &VSlimLiveComponentState {
 	if isnil(state.socket_ref) {
 		return &state
@@ -421,7 +421,7 @@ pub fn (mut state VSlimLiveComponentState) clear(field string) &VSlimLiveCompone
 	return &state
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (state &VSlimLiveComponentState) available() bool {
 	return !isnil(state.socket_ref) && state.component_id != ''
 }

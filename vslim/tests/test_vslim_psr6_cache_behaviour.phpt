@@ -64,10 +64,16 @@ namespace {
     var_dump($pool->getItem('beta')->get());
     var_dump($pool->commit());
 
-    $many = $pool->getItems(['alpha', 'beta', 'missing']);
+    $signature = new ReflectionMethod($pool, 'getItems');
+    $keys = $signature->getParameters()[0];
+    if ($signature->getNumberOfRequiredParameters() !== 0 || $keys->getName() !== 'keys'
+        || (string) $keys->getType() !== 'array' || $keys->getDefaultValue() !== [] || $pool->getItems() !== []) {
+        throw new RuntimeException('Unexpected getItems signature or default');
+    }
+    $many = $pool->getItems(keys: ['alpha', 'beta', 'missing']);
     var_dump($many['alpha']->get(), $many['beta']->get(), $many['missing']->isHit());
 
-    $ttl = $pool->getItem('ttl')->set('soon')->expiresAfter(1);
+    $ttl = $pool->getItem('ttl')->set('soon')->expiresAfter(timeValue: 1);
     var_dump($pool->save($ttl));
     var_dump($pool->hasItem('ttl'));
     sleep(2);

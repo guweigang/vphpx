@@ -25,7 +25,7 @@ namespace {
     $ifExpr3 = $probe->freshProviderFromIfExpr(false);
     $ifAlias1 = $probe->freshProviderFromIfExprAlias(true);
     $ifAlias2 = $probe->freshProviderFromIfExprAlias(false);
-    $matchExpr1 = $probe->freshProviderFromMatchExpr(true);
+    $matchExpr1 = $probe->freshProviderFromMatchExpr(useAlias: true);
     $matchExpr2 = $probe->freshProviderFromMatchExpr(false);
     $matchAlias1 = $probe->freshProviderFromMatchExprAlias(true);
     $matchAlias2 = $probe->freshProviderFromMatchExprAlias(false);

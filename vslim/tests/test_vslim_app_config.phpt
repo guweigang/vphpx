@@ -29,6 +29,14 @@ echo count($hosts) . ':' . $hosts[0] . ':' . $hosts[1] . PHP_EOL;
 $cfgFromContainer = $app->container()->get('config');
 echo get_class($cfgFromContainer) . PHP_EOL;
 echo $cfgFromContainer->getString('app.name', 'x') . PHP_EOL;
+
+foreach (['getString' => 'defaultValue', 'getJson' => 'defaultJson'] as $name => $label) {
+    $method = new ReflectionMethod($cfg, $name);
+    $parameter = $method->getParameters()[1];
+    echo $method->getNumberOfRequiredParameters(), '|', $parameter->getName(), '|', $parameter->getType(), '|',
+        (int) ($parameter->getDefaultValue() === ''), '|', $cfg->$name(key: 'missing'),
+        '|', $cfg->$name(...[$label => 'fallback', 'key' => 'missing']), PHP_EOL;
+}
 ?>
 --EXPECT--
 no
@@ -39,3 +47,5 @@ debug-on
 2:a:b
 VSlim\Config
 demo
+1|defaultValue|string|1||fallback
+1|defaultJson|string|1||fallback

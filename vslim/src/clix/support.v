@@ -1,5 +1,6 @@
 module clix
 
+import registrationx
 import os
 import strconv
 import vphp
@@ -516,8 +517,20 @@ fn (spec CliCommandOptionSpec) deprecation_warning() string {
 }
 
 pub fn command_definition(runtime vphp.PhpValue) !CliCommandDefinition {
-	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists('definition') {
+	if !command_has_definition(runtime) {
 		return error('command has no CLI definition')
+	}
+	return read_command_definition(runtime)
+}
+
+fn command_has_definition(runtime vphp.PhpValue) bool {
+	return runtime.is_valid() && runtime.is_object() && runtime.method_exists('definition')
+}
+
+fn read_command_definition(runtime vphp.PhpValue) !CliCommandDefinition {
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
 	}
 	mut definition_z := runtime.call_method('definition')
 	defer {
@@ -541,6 +554,10 @@ pub fn runtime_string_list_method(runtime vphp.PhpValue, method_name string) []s
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return []string{}
 	}
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
+	}
 	mut value_z := runtime.call_method(method_name)
 	defer {
 		value_z.release()
@@ -551,6 +568,10 @@ pub fn runtime_string_list_method(runtime vphp.PhpValue, method_name string) []s
 pub fn runtime_bool_method(runtime vphp.PhpValue, method_name string, fallback bool) bool {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return fallback
+	}
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
 	}
 	mut value_z := runtime.call_method(method_name)
 	defer {

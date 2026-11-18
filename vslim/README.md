@@ -200,7 +200,9 @@ VSlim 的 runtime 集成测试需要 `vhttpd` checkout。默认目录布局是�
 make test
 ```
 
-这条命令只覆盖轻量 PHPT，不包含依赖 `vhttpd`、`httpd` 或 `worker` 进程链路的重集成测试。
+默认回归使用 PATH 中的 V 运行架构边界扫描，并执行轻量 PHPT。要同时运行全部 PHPT，可在准备好运行时依赖后执行 `VSLIM_INCLUDE_RUNTIME_TESTS=1 make test`。
+
+涉及 VSlim 或 VPHP 的 PR 和 `main` 分支推送会在 VSlim CI 矩阵中运行边界扫描和 PHPT 冒烟测试。
 
 需要跑完整 runtime 集成回归时，使用：
 
@@ -321,7 +323,7 @@ extension=vslim/vslim.so
   `withMethod()` / `createRequest()` / `createServerRequest()` 不再默默吞掉空 method；
   `withRequestTarget()` 现在会拒绝带空白的非法 target；
   `ServerRequest` 的 `serverParams` / `cookieParams` / `queryParams` 会保留数组结构，不再先被压平成字符串 map
-- `PSR-14` 这轮顺手补齐了 `vphp` 的 `php_return_type` 编译能力，让 `dispatch(object): object`、`getListenersForEvent(object): iterable` 这一类接口能按官方签名导出到 PHP
+- `PSR-14` 使用 `@[vphp.PhpReturnType(php_type: 'object')]` 和 `@[vphp.PhpReturnType(php_type: 'iterable')]`，按官方签名导出 `dispatch(object): object` 和 `getListenersForEvent(object): iterable`
 - `PSR-16` 现在已经有一版可回归的 simple cache：`null|int|DateInterval` TTL、`iterable` keys / values、invalid key / invalid iterable key 异常路径都已按 contract 收口；当前边界明确是“单实例 / 单 worker 内存缓存”，还不是跨 worker 共享存储
 - `PSR-6` 现在也已经接上了完整的 cache item / item pool contract：`CacheItemInterface` / `CacheItemPoolInterface` 的 first-touch 绑定、`static` fluent return、`iterable getItems()`、`saveDeferred()` / `commit()` 和绝对/相对过期时间都已回归；当前边界同样明确是“单实例 / 单 worker 内存缓存”
 - `PSR-18` 已经不只是 first-touch `instanceof` 绿了；异常对象现在也有稳定的 request identity contract，可直接回归 `attachRequest()` / `getRequest()` 和 `sendRequest()` 的签名元数据

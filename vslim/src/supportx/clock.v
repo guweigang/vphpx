@@ -5,18 +5,18 @@ import vphp
 pub const service_clock = 'clock'
 pub const service_psr_clock = 'Psr\\Clock\\ClockInterface'
 
-@[php_implements: 'Psr\\Clock\\ClockInterface']
-@[php_class: 'VSlim\\Psr20\\Clock']
+@[vphp.PhpImplements(names: 'Psr\\Clock\\ClockInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr20\\Clock')]
 @[heap]
 pub struct VSlimPsr20Clock {}
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut clock VSlimPsr20Clock) construct() &VSlimPsr20Clock {
 	return &clock
 }
 
-@[php_return_type: 'DateTimeImmutable']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'DateTimeImmutable')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (clock &VSlimPsr20Clock) now() vphp.PhpObject {
 	_ = clock
 	now := vphp.PhpClass.named('DateTimeImmutable').construct() or {

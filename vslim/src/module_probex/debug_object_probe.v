@@ -29,13 +29,13 @@ fn probe_object_info(obj vphp.PhpObject, class_name string, method_name string) 
 	return out.take_value()
 }
 
-@[php_arg_name: 'class_name=className,method_name=methodName']
-@[php_method]
+@[vphp.PhpArgNames(names: 'class_name=className,method_name=methodName')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimDebugObjectProbe.probe(obj vphp.PhpObject, class_name string, method_name string) vphp.PhpValue {
 	return probe_object_info(obj, class_name, method_name)
 }
 
-@[php_method: 'psr7LifecycleCounters']
+@[vphp.PhpExportMethod(name: 'psr7LifecycleCounters')]
 pub fn VSlimDebugObjectProbe.psr7_lifecycle_counters(rounds int) string {
 	total_rounds := if rounds <= 0 { 1 } else { rounds }
 	before := vphp.runtime_counters()

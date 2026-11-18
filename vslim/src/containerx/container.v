@@ -1,29 +1,30 @@
 module containerx
 
+import registrationx
 import vphp
 
 #include "php_bridge.h"
 
-@[php_implements: 'Psr\\Container\\ContainerExceptionInterface']
-@[php_class: 'VSlim\\Container\\ContainerException']
-@[php_extends: 'Exception']
+@[vphp.PhpImplements(names: 'Psr\\Container\\ContainerExceptionInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Container\\ContainerException')]
+@[vphp.PhpExtends(name: 'Exception')]
 @[heap]
 pub struct VSlimContainerException {}
 
-@[php_implements: 'Psr\\Container\\NotFoundExceptionInterface']
-@[php_extends: 'VSlim\\Container\\ContainerException']
-@[php_class: 'VSlim\\Container\\NotFoundException']
+@[vphp.PhpImplements(names: 'Psr\\Container\\NotFoundExceptionInterface')]
+@[vphp.PhpExtends(name: 'VSlim\\Container\\ContainerException')]
+@[vphp.PhpExportClass(name: 'VSlim\\Container\\NotFoundException')]
 @[heap]
 pub struct VSlimContainerNotFoundException {}
 
-@[php_implements: 'Psr\\Container\\ContainerInterface']
-@[php_class: 'VSlim\\Container']
+@[vphp.PhpImplements(names: 'Psr\\Container\\ContainerInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Container')]
 @[heap]
 pub struct VSlimContainer {
 mut:
-	entries   map[string]vphp.PhpValue    @[php_ignore]
-	factories map[string]vphp.PhpCallable @[php_ignore]
-	resolved  map[string]vphp.PhpValue    @[php_ignore]
+	entries   map[string]vphp.PhpValue    @[vphp.PhpIgnoreField]
+	factories map[string]vphp.PhpCallable @[vphp.PhpIgnoreField]
+	resolved  map[string]vphp.PhpValue    @[vphp.PhpIgnoreField]
 }
 
 pub struct ContainerResolvedService {
@@ -56,31 +57,7 @@ fn container_release_factory_map(mut values map[string]vphp.PhpCallable) {
 	values.clear()
 }
 
-fn (mut c VSlimContainer) release_entry_key(id string) {
-	if id in c.entries {
-		mut entry := c.entries[id] or { vphp.PhpValue.invalid() }
-		entry.release()
-		c.entries.delete(id)
-	}
-}
-
-fn (mut c VSlimContainer) release_factory_key(id string) {
-	if id in c.factories {
-		mut factory := c.factories[id] or { vphp.PhpCallable.invalid() }
-		factory.release()
-		c.factories.delete(id)
-	}
-}
-
-fn (mut c VSlimContainer) release_resolved_key(id string) {
-	if id in c.resolved {
-		mut resolved := c.resolved[id] or { vphp.PhpValue.invalid() }
-		resolved.release()
-		c.resolved.delete(id)
-	}
-}
-
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimContainer) construct() &VSlimContainer {
 	container_release_map(mut c.entries)
 	container_release_factory_map(mut c.factories)
@@ -91,23 +68,18 @@ pub fn (mut c VSlimContainer) construct() &VSlimContainer {
 	return &c
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimContainer) set(id string, value vphp.PhpValue) &VSlimContainer {
-	c.release_entry_key(id)
-	c.entries[id] = value.retain()
-	c.release_factory_key(id)
-	c.release_resolved_key(id)
+	c.replace_registration(id, .registration, ContainerRegistration{ entry: value.retain() })
 	return &c
 }
 
 pub fn (mut c VSlimContainer) set_object(id string, value vphp.PhpObject) &VSlimContainer {
-	c.release_entry_key(id)
-	mut retained := value.retain()
-	c.entries[id] = retained.to_value()
-	retained.release()
-	c.release_factory_key(id)
-	c.release_resolved_key(id)
-	return &c
+	mut boxed := value.to_value()
+	defer {
+		boxed.release()
+	}
+	return c.set(id, boxed)
 }
 
 pub fn (mut c VSlimContainer) set_borrowed_object[T](id string, object &T) &VSlimContainer {
@@ -124,21 +96,18 @@ pub fn (mut c VSlimContainer) set_owned_object[T](id string, object &T) &VSlimCo
 	return &c
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimContainer) factory(id string, callable vphp.PhpCallable) &VSlimContainer {
-	c.release_factory_key(id)
-	c.factories[id] = callable.retain()
-	c.release_entry_key(id)
-	c.release_resolved_key(id)
+	c.replace_registration(id, .registration, ContainerRegistration{ factory: callable.retain() })
 	return &c
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimContainer) has(id string) bool {
 	return id in c.entries || id in c.factories || id in c.resolved
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimContainer) get(id string) vphp.PhpValue {
 	return c.get_value_or_throw(id)
 }
@@ -146,23 +115,40 @@ pub fn (mut c VSlimContainer) get(id string) vphp.PhpValue {
 pub fn (mut c VSlimContainer) get_value(id string) !vphp.PhpValue {
 	if id in c.resolved {
 		resolved := c.resolved[id] or { return error('entry "${id}" not found') }
+		track_service_state(resolved)
 		return resolved.owned()
 	}
 	if id in c.entries {
 		entry := c.entries[id] or { return error('entry "${id}" not found') }
+		track_service_state(entry)
 		return entry.owned()
 	}
 	if id in c.factories {
 		factory_owned := c.factories[id] or { return error('entry "${id}" not found') }
-		mut res := factory_owned.invoke()
+		mut res := c.invoke_container_factory(factory_owned)
+		defer {
+			res.release()
+		}
+		if vphp.has_exception() {
+			return error('factory "${id}" threw an exception')
+		}
 		if !res.is_valid() {
 			return error('factory "${id}" returned invalid value')
 		}
-		c.release_resolved_key(id)
-		c.resolved[id] = res.retain()
+		c.replace_registration(id, .resolution, ContainerRegistration{ resolved: res.retain() })
+		track_service_state(res)
 		return res.owned()
 	}
 	return error('entry "${id}" not found')
+}
+
+fn (c &VSlimContainer) invoke_container_factory(factory vphp.PhpCallable) vphp.PhpValue {
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
+	}
+	c.snapshot_services(mut scope)
+	return factory.invoke()
 }
 
 pub fn (mut c VSlimContainer) resolve_or_autowire_class(id string) !ContainerResolvedService {
@@ -175,12 +161,10 @@ pub fn (mut c VSlimContainer) resolve_or_autowire_class(id string) !ContainerRes
 			created: false
 		}
 	}
-	if !vphp.PhpClass.named(id).exists() {
-		return error('container service not found')
+	if vphp.has_exception() {
+		return error('container service resolution failed')
 	}
-	mut created_obj := vphp.PhpClass.named(id).construct() or {
-		return error('class "${id}" could not be instantiated')
-	}
+	mut created_obj := instantiate_container_service(id)!
 	mut created_value := created_obj.take_value()
 	c.set(id, created_value)
 	out := created_value.owned()
@@ -191,12 +175,33 @@ pub fn (mut c VSlimContainer) resolve_or_autowire_class(id string) !ContainerRes
 	}
 }
 
+fn instantiate_container_service(id string) !vphp.PhpObject {
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
+	}
+	class := vphp.PhpClass.named(id)
+	if !class.exists() {
+		return error('container service not found')
+	}
+	mut instance := class.construct() or {
+		return error('class "${id}" could not be instantiated')
+	}
+	if vphp.has_exception() {
+		instance.release()
+		return error('class "${id}" constructor threw an exception')
+	}
+	return instance
+}
+
 pub fn (mut c VSlimContainer) get_value_or_throw(id string) vphp.PhpValue {
 	return c.get_value(id) or {
-		if err.msg().contains('not found') {
-			throw_not_found(id)
-		} else {
-			throw_container_exception(err.msg())
+		if !vphp.has_exception() {
+			if err.msg().contains('not found') {
+				throw_not_found(id)
+			} else {
+				throw_container_exception(err.msg())
+			}
 		}
 		vphp.PhpValue.null()
 	}

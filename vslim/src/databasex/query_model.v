@@ -2,7 +2,7 @@ module databasex
 
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) construct() &VSlimDatabaseQuery {
 	query.kind = .select_
 	query.table_name = ''
@@ -15,18 +15,18 @@ pub fn (mut query VSlimDatabaseQuery) construct() &VSlimDatabaseQuery {
 	return &query
 }
 
-@[php_method: 'setManager']
+@[vphp.PhpExportMethod(name: 'setManager')]
 pub fn (mut query VSlimDatabaseQuery) set_manager(manager &VSlimDatabaseManager) &VSlimDatabaseQuery {
 	query.manager_ref = manager
 	return &query
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (query &VSlimDatabaseQuery) manager() &VSlimDatabaseManager {
 	return query.manager_ref
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) reset() &VSlimDatabaseQuery {
 	manager := query.manager_ref
 	query.construct()
@@ -34,20 +34,20 @@ pub fn (mut query VSlimDatabaseQuery) reset() &VSlimDatabaseQuery {
 	return &query
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) table(name string) &VSlimDatabaseQuery {
 	query.table_name = database_quote_identifier(name)
 	return &query
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) select(columns vphp.PhpValue) &VSlimDatabaseQuery {
 	query.kind = .select_
 	query.select_columns = value_subject(columns).database_columns()
 	return &query
 }
 
-@[php_method: 'where']
+@[vphp.PhpExportMethod(name: 'where')]
 pub fn (mut query VSlimDatabaseQuery) where_eq(column string, value vphp.PhpValue) &VSlimDatabaseQuery {
 	return query.where_op(column, '=', value)
 }
@@ -61,7 +61,7 @@ fn (mut query VSlimDatabaseQuery) where_eq_string(column string, value vphp.PhpS
 	return &query
 }
 
-@[php_method: 'whereOp']
+@[vphp.PhpExportMethod(name: 'whereOp')]
 pub fn (mut query VSlimDatabaseQuery) where_op(column string, op string, value vphp.PhpValue) &VSlimDatabaseQuery {
 	query.where_clauses << VSlimDatabaseWhereClause{
 		column: database_quote_identifier(column)
@@ -71,58 +71,58 @@ pub fn (mut query VSlimDatabaseQuery) where_op(column string, op string, value v
 	return &query
 }
 
-@[php_method: 'orderBy']
+@[vphp.PhpExportMethod(name: 'orderBy')]
 pub fn (mut query VSlimDatabaseQuery) order_by(column string, direction string) &VSlimDatabaseQuery {
 	query.order_clauses << '${database_quote_identifier(column)} ${database_normalize_direction(direction)}'
 	return &query
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) limit(limit int) &VSlimDatabaseQuery {
 	query.limit_count = if limit < 0 { -1 } else { limit }
 	return &query
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) offset(offset int) &VSlimDatabaseQuery {
 	query.offset_count = if offset < 0 { -1 } else { offset }
 	return &query
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) insert(values vphp.PhpValue) &VSlimDatabaseQuery {
 	query.kind = .insert
 	query.mutation_values = value_subject(values).database_string_map()
 	return &query
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) update(values vphp.PhpValue) &VSlimDatabaseQuery {
 	query.kind = .update
 	query.mutation_values = value_subject(values).database_string_map()
 	return &query
 }
 
-@[php_method: 'delete']
+@[vphp.PhpExportMethod(name: 'delete')]
 pub fn (mut query VSlimDatabaseQuery) delete_query() &VSlimDatabaseQuery {
 	query.kind = .delete_
 	query.mutation_values = map[string]string{}
 	return &query
 }
 
-@[php_method: 'toSql']
+@[vphp.PhpExportMethod(name: 'toSql')]
 pub fn (query &VSlimDatabaseQuery) to_sql() string {
 	built_sql, _ := query.build()
 	return built_sql
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (query &VSlimDatabaseQuery) params() vphp.PhpValue {
 	_, params := query.build()
 	return database_params_value(params)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) get() vphp.PhpValue {
 	mut manager := query.manager_ref
 	if manager == unsafe { nil } {
@@ -141,7 +141,7 @@ pub fn (mut query VSlimDatabaseQuery) get() vphp.PhpValue {
 	return manager.query_params(built_sql, params_value)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) first() vphp.PhpValue {
 	mut first_query := query.clone()
 	if first_query.limit_count < 0 {
@@ -164,7 +164,7 @@ pub fn (mut query VSlimDatabaseQuery) first() vphp.PhpValue {
 	return manager.query_one_params(built_sql, params_value)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut query VSlimDatabaseQuery) run() vphp.PhpValue {
 	mut manager := query.manager_ref
 	if manager == unsafe { nil } {
@@ -183,7 +183,7 @@ pub fn (mut query VSlimDatabaseQuery) run() vphp.PhpValue {
 	return manager.execute_params(built_sql, params_value)
 }
 
-@[php_method: 'insertGetId']
+@[vphp.PhpExportMethod(name: 'insertGetId')]
 pub fn (mut query VSlimDatabaseQuery) insert_get_id() i64 {
 	if query.kind != .insert {
 		vphp.PhpException.raise_class('InvalidArgumentException',
@@ -203,7 +203,7 @@ pub fn (mut query VSlimDatabaseQuery) insert_get_id() i64 {
 	return manager.last_insert_id_value()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut model VSlimDatabaseModel) construct() &VSlimDatabaseModel {
 	if model.primary_key.trim_space() == '' {
 		model.primary_key = 'id'
@@ -214,35 +214,35 @@ pub fn (mut model VSlimDatabaseModel) construct() &VSlimDatabaseModel {
 	return &model
 }
 
-@[php_method: 'setManager']
+@[vphp.PhpExportMethod(name: 'setManager')]
 pub fn (mut model VSlimDatabaseModel) set_manager(manager &VSlimDatabaseManager) &VSlimDatabaseModel {
 	model.manager_ref = manager
 	return &model
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (model &VSlimDatabaseModel) manager() &VSlimDatabaseManager {
 	return model.manager_ref
 }
 
-@[php_method: 'setTable']
+@[vphp.PhpExportMethod(name: 'setTable')]
 pub fn (mut model VSlimDatabaseModel) set_table(name string) &VSlimDatabaseModel {
 	model.table_name = name.trim_space()
 	return &model
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (model &VSlimDatabaseModel) table() string {
 	return model.table_name
 }
 
-@[php_method: 'setPrimaryKey']
+@[vphp.PhpExportMethod(name: 'setPrimaryKey')]
 pub fn (mut model VSlimDatabaseModel) set_primary_key(name string) &VSlimDatabaseModel {
 	model.primary_key = if name.trim_space() == '' { 'id' } else { name.trim_space() }
 	return &model
 }
 
-@[php_method: 'primaryKey']
+@[vphp.PhpExportMethod(name: 'primaryKey')]
 pub fn (model &VSlimDatabaseModel) primary_key_name() string {
 	if model.primary_key.trim_space() == '' {
 		return 'id'
@@ -250,7 +250,7 @@ pub fn (model &VSlimDatabaseModel) primary_key_name() string {
 	return model.primary_key
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut model VSlimDatabaseModel) fill(values vphp.PhpValue) &VSlimDatabaseModel {
 	model.construct()
 	for key, value in value_subject(values).database_string_map() {
@@ -259,13 +259,13 @@ pub fn (mut model VSlimDatabaseModel) fill(values vphp.PhpValue) &VSlimDatabaseM
 	return &model
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (model &VSlimDatabaseModel) attributes() vphp.PhpValue {
 	return database_result_value_from_dyn(vphp.DynValue.array_from_map(database_dyn_map_from_string_map(model.attributes)))
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'default_value', php_name: 'defaultValue')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (model &VSlimDatabaseModel) get(key string, default_value vphp.PhpValue) vphp.PhpValue {
 	if value := model.attributes[key] {
 		mut result := vphp.PhpString.of(value)
@@ -274,19 +274,19 @@ pub fn (model &VSlimDatabaseModel) get(key string, default_value vphp.PhpValue) 
 	return default_value.to_request_owned()
 }
 
-@[php_method: 'set']
+@[vphp.PhpExportMethod(name: 'set')]
 pub fn (mut model VSlimDatabaseModel) set_attr(key string, value vphp.PhpValue) &VSlimDatabaseModel {
 	model.construct()
 	model.attributes[key] = value_subject(value).database_param()
 	return &model
 }
 
-@[php_method: 'exists']
+@[vphp.PhpExportMethod(name: 'exists')]
 pub fn (model &VSlimDatabaseModel) exists_in_database() bool {
 	return model.exists_in_db
 }
 
-@[php_method: 'newQuery']
+@[vphp.PhpExportMethod(name: 'newQuery')]
 pub fn (mut model VSlimDatabaseModel) new_query() &VSlimDatabaseQuery {
 	mut manager := model.require_manager() or {
 		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
@@ -304,19 +304,19 @@ pub fn (mut model VSlimDatabaseModel) new_query() &VSlimDatabaseQuery {
 	return manager.table_query(table)
 }
 
-@[php_method: 'allQuery']
+@[vphp.PhpExportMethod(name: 'allQuery')]
 pub fn (mut model VSlimDatabaseModel) all_query() &VSlimDatabaseQuery {
 	return model.new_query()
 }
 
-@[php_method: 'findQuery']
+@[vphp.PhpExportMethod(name: 'findQuery')]
 pub fn (mut model VSlimDatabaseModel) find_query(id vphp.PhpValue) &VSlimDatabaseQuery {
 	mut query := model.new_query()
 	query.where_eq(model.primary_key_name(), id)
 	return query
 }
 
-@[php_method: 'saveQuery']
+@[vphp.PhpExportMethod(name: 'saveQuery')]
 pub fn (mut model VSlimDatabaseModel) save_query() &VSlimDatabaseQuery {
 	mut manager := model.require_manager() or {
 		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
@@ -363,7 +363,7 @@ pub fn (mut model VSlimDatabaseModel) save_query() &VSlimDatabaseQuery {
 	return query
 }
 
-@[php_method: 'deleteQuery']
+@[vphp.PhpExportMethod(name: 'deleteQuery')]
 pub fn (mut model VSlimDatabaseModel) delete_query() &VSlimDatabaseQuery {
 	mut manager := model.require_manager() or {
 		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
@@ -395,19 +395,19 @@ pub fn (mut model VSlimDatabaseModel) delete_query() &VSlimDatabaseQuery {
 	return query
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut model VSlimDatabaseModel) all() vphp.PhpValue {
 	mut query := model.all_query()
 	return query.get()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut model VSlimDatabaseModel) find(id vphp.PhpValue) vphp.PhpValue {
 	mut query := model.find_query(id)
 	return query.first()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut model VSlimDatabaseModel) save() &VSlimDatabaseModel {
 	mut query := model.save_query()
 	if model.exists_in_db {
@@ -423,7 +423,7 @@ pub fn (mut model VSlimDatabaseModel) save() &VSlimDatabaseModel {
 	return &model
 }
 
-@[php_method: 'delete']
+@[vphp.PhpExportMethod(name: 'delete')]
 pub fn (mut model VSlimDatabaseModel) delete_model() bool {
 	mut query := model.delete_query()
 	mut result := query.run()

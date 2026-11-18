@@ -12,16 +12,16 @@ fn (view &VSlimView) render_template_path_with_slots(path string, scalars map[st
 	return view.render_nodes(program.nodes, scalars, lists, objects, depth, slots, path)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'renderResponse']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'renderResponse')]
 pub fn (view &VSlimView) render_response(template string, data vphp.PhpValue) &httpx.VSlimPsr7Response {
 	body := view.render(template, data)
 	res := httpx.VSlimResponse.html(200, body)
 	return httpx.VSlimPsr7Response.from_vslim_response(res)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'renderResponseWithLayout']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'renderResponseWithLayout')]
 pub fn (view &VSlimView) render_response_with_layout(template string, layout string, data vphp.PhpValue) &httpx.VSlimPsr7Response {
 	body := view.render_with_layout(template, layout, data)
 	res := httpx.VSlimResponse.html(200, body)
@@ -188,15 +188,32 @@ fn (view &VSlimView) render_for_node(node TemplateNode, scalars map[string]strin
 	} else {
 		parse_for_items(template_scalar_value_with_lists(node.name, scalars, lists))
 	}
+	if items.len == 0 {
+		return ''
+	}
+	fields := if items.any(is_numeric_path_segment(it)) {
+		indexed_loop_fields(node.name, scalars)
+	} else {
+		map[string][]TemplateLoopField{}
+	}
+	mut local_scalars := scalars.clone()
 	for idx, item in items {
-		mut local_scalars := scalars.clone()
 		local_scalars['index'] = '${idx}'
 		local_scalars['item'] = item
-		if item != '' && is_numeric_path_segment(item) {
-			populate_indexed_item_fields(node.name, item, scalars, mut local_scalars)
+		row := fields[item] or { []TemplateLoopField{} }
+		for field in row {
+			local_scalars[field.key] = field.value
 		}
 		out.write_string(view.render_nodes(node.children, local_scalars, lists, objects, depth,
 			slots, template_path))
+		// Restore outer bindings that the row shadowed before applying the next one.
+		for field in row {
+			if outer := scalars[field.key] {
+				local_scalars[field.key] = outer
+			} else {
+				local_scalars.delete(field.key)
+			}
+		}
 	}
 	return out.str()
 }

@@ -134,8 +134,8 @@ namespace {
     });
 
     $api = $app->group('/api');
-    $api->before(GroupBeforePhaseMiddleware::class);
-    $api->after(['phase.after', 'process']);
+    $app->groupBefore(handler: GroupBeforePhaseMiddleware::class, prefix: '/api');
+    $app->groupAfter(handler: ['phase.after', 'process'], prefix: '/api');
     $api->get('/users/:id', new class implements RequestHandlerInterface {
         public function handle(ServerRequestInterface $request): ResponseInterface
         {

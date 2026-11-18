@@ -2,14 +2,14 @@ module httpx
 
 import vphp
 
-@[php_arg_type: 'response=Psr\\Http\\Message\\ResponseInterface']
-@[php_return_type: 'VSlim\\VHttpd\\Response']
-@[php_method: 'toVSlimResponse']
+@[vphp.PhpArgType(v_name: 'response', php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpReturnType(php_type: 'VSlim\\VHttpd\\Response')]
+@[vphp.PhpExportMethod(name: 'toVSlimResponse')]
 pub fn VSlimPsr7Adapter.to_vslim_response(response vphp.PhpValue) &VSlimResponse {
 	return VSlimPsr7Response.from_value(response).to_vslim_response().boxed_snapshot()
 }
 
-@[php_method: 'toVSlimRequest']
+@[vphp.PhpExportMethod(name: 'toVSlimRequest')]
 pub fn VSlimPsr7Adapter.to_vslim_request(request vphp.PhpValue) &VSlimRequest {
 	method := adapter_read_string(request, 'getMethod', 'method', 'GET')
 	target := adapter_read_request_target(request)
@@ -55,7 +55,7 @@ pub fn VSlimPsr7Adapter.to_vslim_request(request vphp.PhpValue) &VSlimRequest {
 	return out
 }
 
-@[php_method: 'toWorkerEnvelope']
+@[vphp.PhpExportMethod(name: 'toWorkerEnvelope')]
 pub fn VSlimPsr7Adapter.to_worker_envelope(request vphp.PhpValue) vphp.PhpArray {
 	vreq := VSlimPsr7Adapter.to_vslim_request(request)
 	mut out := vphp.PhpArray.new()

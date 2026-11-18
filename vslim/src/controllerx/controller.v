@@ -67,27 +67,28 @@ pub fn register_convention_controller(mut container containerx.VSlimContainer, c
 	return true
 }
 
-@[php_borrowed_return; php_method]
+@[vphp.PhpBorrowedReturn]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimController) construct(app vphp.PhpObject) &VSlimController {
 	c.bind_app_object(app)
 	return &c
 }
 
-@[php_method: 'setApp']
-@[php_borrowed_return]
+@[vphp.PhpExportMethod(name: 'setApp')]
+@[vphp.PhpBorrowedReturn]
 pub fn (mut c VSlimController) set_app(app vphp.PhpObject) &VSlimController {
 	c.bind_app_object(app)
 	return &c
 }
 
-@[php_method: 'setView']
-@[php_borrowed_return]
+@[vphp.PhpExportMethod(name: 'setView')]
+@[vphp.PhpBorrowedReturn]
 pub fn (mut c VSlimController) set_view(view &viewx.VSlimView) &VSlimController {
 	c.view_ref = view
 	return &c
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimController) app() vphp.PhpObject {
 	app := c.app_object() or {
 		vphp.PhpException.raise_class('RuntimeException', 'controller is not bound to an app', 0)
@@ -96,7 +97,7 @@ pub fn (c &VSlimController) app() vphp.PhpObject {
 	return app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimController) view() &viewx.VSlimView {
 	if c.view_ref != unsafe { nil } {
 		return c.view_ref
@@ -125,8 +126,8 @@ pub fn (mut c VSlimController) view() &viewx.VSlimView {
 	return c.view_ref
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimController) render(template string, data vphp.PhpValue) &httpx.VSlimPsr7Response {
 	mut view := c.view()
 	body := view.render(template, data)
@@ -134,8 +135,8 @@ pub fn (mut c VSlimController) render(template string, data vphp.PhpValue) &http
 	return res.to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'renderWithLayout']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'renderWithLayout')]
 pub fn (mut c VSlimController) render_with_layout(template string, layout string, data vphp.PhpValue) &httpx.VSlimPsr7Response {
 	mut view := c.view()
 	body := view.render_with_layout(template, layout, data)
@@ -143,7 +144,7 @@ pub fn (mut c VSlimController) render_with_layout(template string, layout string
 	return res.to_psr7_response()
 }
 
-@[php_method: 'urlFor']
+@[vphp.PhpExportMethod(name: 'urlFor')]
 pub fn (c &VSlimController) url_for(name string, params vphp.PhpValue) string {
 	mut app := c.app_object() or { return '' }
 	defer {
@@ -158,7 +159,7 @@ pub fn (c &VSlimController) url_for(name string, params vphp.PhpValue) string {
 	}, name_arg, params) or { '' }
 }
 
-@[php_method: 'urlForQuery']
+@[vphp.PhpExportMethod(name: 'urlForQuery')]
 pub fn (c &VSlimController) url_for_query(name string, params vphp.PhpValue, query vphp.PhpValue) string {
 	mut app := c.app_object() or { return '' }
 	defer {
@@ -173,29 +174,31 @@ pub fn (c &VSlimController) url_for_query(name string, params vphp.PhpValue, que
 	}, name_arg, params, query) or { '' }
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimController) text(body string, status int) &httpx.VSlimPsr7Response {
 	res := httpx.VSlimResponse.text(status, body)
 	return res.to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimController) json(body string, status int) &httpx.VSlimPsr7Response {
 	res := httpx.VSlimResponse.json(status, body)
 	return res.to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpArgDefault(v_name: 'status', default_value: '302')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimController) redirect(location string, status int) &httpx.VSlimPsr7Response {
 	res := httpx.VSlimResponse.redirect_to_status(location, status)
 	return res.to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'redirectTo']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpArgDefault(v_name: 'status', default_value: '302')]
+@[vphp.PhpExportMethod(name: 'redirectTo')]
 pub fn (c &VSlimController) redirect_to(name string, params vphp.PhpValue, status int) &httpx.VSlimPsr7Response {
 	location := c.url_for(name, params)
 	if location == '' {
@@ -204,8 +207,9 @@ pub fn (c &VSlimController) redirect_to(name string, params vphp.PhpValue, statu
 	return c.redirect(location, status)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'redirectToQuery']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpArgDefault(v_name: 'status', default_value: '302')]
+@[vphp.PhpExportMethod(name: 'redirectToQuery')]
 pub fn (c &VSlimController) redirect_to_query(name string, params vphp.PhpValue, query vphp.PhpValue, status int) &httpx.VSlimPsr7Response {
 	location := c.url_for_query(name, params, query)
 	if location == '' {

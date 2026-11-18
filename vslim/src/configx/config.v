@@ -1,11 +1,12 @@
 module configx
 
 import os
+import registrationx
 import strings
 import toml
 import vphp
 
-@[php_class: 'VSlim\\Config']
+@[vphp.PhpExportClass(name: 'VSlim\\Config')]
 @[heap]
 pub struct VSlimConfig {
 mut:
@@ -14,8 +15,9 @@ mut:
 	root   toml.Any = toml.null
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimConfig) construct() &VSlimConfig {
+	c.track_state()
 	c.path = ''
 	c.loaded = false
 	c.root = toml.null
@@ -23,12 +25,10 @@ pub fn (mut c VSlimConfig) construct() &VSlimConfig {
 }
 
 pub fn VSlimConfig.new_default() &VSlimConfig {
-	mut config := &VSlimConfig{}
-	config.construct()
-	return config
+	return &VSlimConfig{}
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
 	if os.is_dir(path) {
 		return c.load_dir(path)
@@ -43,13 +43,14 @@ pub fn (mut c VSlimConfig) load(path string) &VSlimConfig {
 			'config env resolve failed: ${err.msg()}', 0)
 		return &c
 	}
+	c.track_state()
 	c.path = path
 	c.loaded = true
 	c.root = root
 	return &c
 }
 
-@[php_method: 'loadDir']
+@[vphp.PhpExportMethod(name: 'loadDir')]
 pub fn (mut c VSlimConfig) load_dir(path string) &VSlimConfig {
 	files := config_dir_files(path) or {
 		vphp.PhpException.raise_class('InvalidArgumentException',
@@ -70,13 +71,14 @@ pub fn (mut c VSlimConfig) load_dir(path string) &VSlimConfig {
 		}
 		root = merge_config_any(root, resolved)
 	}
+	c.track_state()
 	c.path = path
 	c.loaded = true
 	c.root = root
 	return &c
 }
 
-@[php_method: 'loadText']
+@[vphp.PhpExportMethod(name: 'loadText')]
 pub fn (mut c VSlimConfig) load_text(text string) &VSlimConfig {
 	doc := toml.parse_text(text) or {
 		vphp.PhpException.raise_class('InvalidArgumentException',
@@ -88,13 +90,14 @@ pub fn (mut c VSlimConfig) load_text(text string) &VSlimConfig {
 			'config env resolve failed: ${err.msg()}', 0)
 		return &c
 	}
+	c.track_state()
 	c.path = ''
 	c.loaded = true
 	c.root = root
 	return &c
 }
 
-@[php_method: 'mergeFile']
+@[vphp.PhpExportMethod(name: 'mergeFile')]
 pub fn (mut c VSlimConfig) merge_file(path string) &VSlimConfig {
 	if os.is_dir(path) {
 		return c.merge_dir(path)
@@ -113,7 +116,7 @@ pub fn (mut c VSlimConfig) merge_file(path string) &VSlimConfig {
 	return &c
 }
 
-@[php_method: 'mergeDir']
+@[vphp.PhpExportMethod(name: 'mergeDir')]
 pub fn (mut c VSlimConfig) merge_dir(path string) &VSlimConfig {
 	files := config_dir_files(path) or {
 		vphp.PhpException.raise_class('InvalidArgumentException',
@@ -136,7 +139,7 @@ pub fn (mut c VSlimConfig) merge_dir(path string) &VSlimConfig {
 	return &c
 }
 
-@[php_method: 'mergeText']
+@[vphp.PhpExportMethod(name: 'mergeText')]
 pub fn (mut c VSlimConfig) merge_text(text string) &VSlimConfig {
 	doc := toml.parse_text(text) or {
 		vphp.PhpException.raise_class('InvalidArgumentException',
@@ -152,84 +155,76 @@ pub fn (mut c VSlimConfig) merge_text(text string) &VSlimConfig {
 	return &c
 }
 
-@[php_method: 'isLoaded']
+@[vphp.PhpExportMethod(name: 'isLoaded')]
 pub fn (c &VSlimConfig) is_loaded() bool {
 	return c.loaded
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimConfig) path() string {
 	return c.path
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimConfig) has(key string) bool {
 	return c.value_opt(key) != none
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=""']
-@[php_arg_optional: 'default_value']
-@[php_method: 'getString']
+@[vphp.PhpStringParam('default_value', php_name: 'defaultValue', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: 'getString')]
 pub fn (c &VSlimConfig) get_string(key string, default_value string) string {
 	value := c.value_opt(key) or { return default_value }
 	return value.string()
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=0']
-@[php_arg_optional: 'default_value']
-@[php_method: 'getInt']
+@[vphp.PhpArgName(v_name: 'default_value', php_name: 'defaultValue')]
+@[vphp.PhpArgDefault(v_name: 'default_value', default_value: '0')]
+@[vphp.PhpExportMethod(name: 'getInt')]
 pub fn (c &VSlimConfig) get_int(key string, default_value int) int {
 	value := c.value_opt(key) or { return default_value }
 	return value.int()
 }
 
 @[vphp.PhpBoolParam('default_value', php_name: 'defaultValue', default_value: false, optional: true)]
-@[php_method: 'getBool']
+@[vphp.PhpExportMethod(name: 'getBool')]
 pub fn (c &VSlimConfig) get_bool(key string, default_value bool) bool {
 	value := c.value_opt(key) or { return default_value }
 	return value.bool()
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=0.0']
-@[php_arg_optional: 'default_value']
-@[php_method: 'getFloat']
+@[vphp.PhpArgName(v_name: 'default_value', php_name: 'defaultValue')]
+@[vphp.PhpArgDefault(v_name: 'default_value', default_value: '0.0')]
+@[vphp.PhpExportMethod(name: 'getFloat')]
 pub fn (c &VSlimConfig) get_float(key string, default_value f64) f64 {
 	value := c.value_opt(key) or { return default_value }
 	return value.f64()
 }
 
-@[php_method: 'getStringList']
+@[vphp.PhpExportMethod(name: 'getStringList')]
 pub fn (c &VSlimConfig) get_string_list(key string) []string {
 	value := c.value_opt(key) or { return []string{} }
 	arr := value.array()
 	return arr.as_strings()
 }
 
-@[php_arg_name: 'default_json=defaultJson']
-@[php_arg_default: 'default_json=""']
-@[php_arg_optional: 'default_json']
-@[php_method: 'getJson']
+@[vphp.PhpStringParam('default_json', php_name: 'defaultJson', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: 'getJson')]
 pub fn (c &VSlimConfig) get_json(key string, default_json string) string {
 	value := c.value_opt(key) or { return default_json }
 	return toml_any_to_json(value)
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=null']
-@[php_arg_optional: 'default_value']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'default_value', php_name: 'defaultValue')]
+@[vphp.PhpArgDefault(v_name: 'default_value', default_value: 'null')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimConfig) get(key string, default_value vphp.PhpValue) vphp.PhpValue {
 	value := c.value_opt(key) or { return default_value.to_request_owned() }
 	return toml_any_to_value(value)
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=[]']
-@[php_arg_optional: 'default_value']
-@[php_method: 'getMap']
+@[vphp.PhpArgName(v_name: 'default_value', php_name: 'defaultValue')]
+@[vphp.PhpArgDefault(v_name: 'default_value', default_value: '[]')]
+@[vphp.PhpExportMethod(name: 'getMap')]
 pub fn (c &VSlimConfig) get_map(key string, default_value vphp.PhpValue) vphp.PhpValue {
 	value := c.value_opt(key) or { return default_or_empty_value(default_value) }
 	match value {
@@ -242,10 +237,9 @@ pub fn (c &VSlimConfig) get_map(key string, default_value vphp.PhpValue) vphp.Ph
 	}
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=[]']
-@[php_arg_optional: 'default_value']
-@[php_method: 'getList']
+@[vphp.PhpArgName(v_name: 'default_value', php_name: 'defaultValue')]
+@[vphp.PhpArgDefault(v_name: 'default_value', default_value: '[]')]
+@[vphp.PhpExportMethod(name: 'getList')]
 pub fn (c &VSlimConfig) get_list(key string, default_value vphp.PhpValue) vphp.PhpValue {
 	value := c.value_opt(key) or { return default_or_empty_value(default_value) }
 	match value {
@@ -258,7 +252,7 @@ pub fn (c &VSlimConfig) get_list(key string, default_value vphp.PhpValue) vphp.P
 	}
 }
 
-@[php_method: 'allJson']
+@[vphp.PhpExportMethod(name: 'allJson')]
 pub fn (c &VSlimConfig) all_json() string {
 	if !c.loaded {
 		return '{}'
@@ -267,6 +261,7 @@ pub fn (c &VSlimConfig) all_json() string {
 }
 
 pub fn (mut c VSlimConfig) merge_root(root toml.Any) {
+	c.track_state()
 	if !c.loaded {
 		c.root = root
 		c.loaded = true
@@ -280,6 +275,42 @@ pub fn (mut c VSlimConfig) merge_root(root toml.Any) {
 	if c.path == '' {
 		c.path = '<merged>'
 	}
+}
+
+struct ConfigState {
+	path string
+	loaded bool
+	root toml.Any
+}
+
+fn (mut c VSlimConfig) track_state() {
+	mut scope := registrationx.current_registration_scope() or { return }
+	if !scope.needs_snapshot(usize(&c)) {
+		return
+	}
+	receiver := &c
+	// Loads replace the TOML root and merges copy each modified map.
+	saved := ConfigState{
+		path: c.path.clone()
+		loaded: c.loaded
+		root: c.root
+	}
+	mut value := vphp.bind_borrowed_object_value[VSlimConfig](receiver)
+	mut pin := value.retain()
+	value.release()
+	scope.add_change(fn [receiver, saved, mut pin] (commit bool) {
+		if !commit {
+			mut target := receiver
+			target.restore_state(saved)
+		}
+		pin.release()
+	})
+}
+
+fn (mut c VSlimConfig) restore_state(saved ConfigState) {
+	c.path = saved.path
+	c.loaded = saved.loaded
+	c.root = saved.root
 }
 
 pub fn (c &VSlimConfig) value_opt(key string) ?toml.Any {

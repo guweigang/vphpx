@@ -24,7 +24,7 @@ putenv('OLLAMA_STREAM_FIXTURE=' . __DIR__ . '/fixtures/ollama_stream_fixture.ndj
 putenv('OLLAMA_MODEL=qwen-test');
 
 $req = new VSlim\VHttpd\Request('GET', '/ollama/text?prompt=demo', '');
-$text = VSlim\Stream\Factory::ollamaText($req);
+$text = VSlim\Stream\Factory::ollamaText(requestPayload: $req);
 echo ($text instanceof VSlim\Stream\Response ? "text_response\n" : "text_not_response\n");
 echo $text->streamType . "\n";
 echo implode('', iterator_to_array($text->chunks(), false)) . "\n";
@@ -46,7 +46,7 @@ $psrReq = $requestFactory
     ->createServerRequest('POST', 'https://demo.local/ollama/sse?prompt=psr-demo')
     ->withHeader('x-trace-id', 'psr-trace')
     ->withBody($streamFactory->createStream('{"model":"psr-body-model"}'));
-$psrPayload = $client->payloadFromRequest($psrReq);
+$psrPayload = $client->payloadFromRequest(requestPayload: $psrReq);
 echo $psrPayload['model'] . "\n";
 echo $psrPayload['messages'][0]['content'] . "\n";
 
@@ -56,7 +56,7 @@ echo $psrText->header('x-trace-id') . "\n";
 echo $psrText->header('x-vhttpd-trace-id') . "\n";
 echo implode('', iterator_to_array($psrText->chunks(), false)) . "\n";
 
-$psrSse = VSlim\Stream\Factory::ollamaSse($psrReq);
+$psrSse = VSlim\Stream\Factory::ollamaSse(requestPayload: $psrReq);
 $psrEvents = iterator_to_array($psrSse->chunks(), false);
 echo ($psrSse instanceof VSlim\Stream\Response ? "psr_sse_response\n" : "psr_sse_not_response\n");
 echo $psrSse->header('x-trace-id') . "\n";

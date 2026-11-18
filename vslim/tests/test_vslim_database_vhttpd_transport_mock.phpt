@@ -185,14 +185,14 @@ TOML);
 $db = $app->database();
 echo ($db->connect() ? 'connected' : 'not-connected') . PHP_EOL;
 
-$rows = $db->queryParams('SELECT * FROM users WHERE id = ? AND name = ?', ['7', 'alice']);
+$rows = $db->queryParams(params: ['7', 'alice'], query: 'SELECT * FROM users WHERE id = ? AND name = ?');
 echo $rows[0]['pool'] . '|' . $rows[0]['session_id'] . '|' . $rows[0]['params'] . PHP_EOL;
 
 echo ($db->beginTransaction() ? 'tx-begin' : 'tx-fail') . PHP_EOL;
 $rows = $db->query('SELECT * FROM tx_users');
 echo $rows[0]['session_id'] . '|' . $rows[0]['sql'] . PHP_EOL;
 
-$meta = $db->executeParams('UPDATE users SET name = ? WHERE id = ?', ['bob', '7']);
+$meta = $db->executeParams(params: ['bob', '7'], query: 'UPDATE users SET name = ? WHERE id = ?');
 echo $db->affectedRows() . '|' . $db->lastInsertId() . '|' . $meta['affected_rows'] . PHP_EOL;
 
 echo ($db->commit() ? 'tx-commit' : 'tx-commit-fail') . PHP_EOL;

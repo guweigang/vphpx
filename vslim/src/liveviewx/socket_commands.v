@@ -2,8 +2,8 @@ module liveviewx
 
 import vphp
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut socket VSlimLiveSocket) patch(target_id string, html string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -17,8 +17,8 @@ pub fn (mut socket VSlimLiveSocket) patch(target_id string, html string) &VSlimL
 	return &socket
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut socket VSlimLiveSocket) append(target_id string, html string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -32,8 +32,8 @@ pub fn (mut socket VSlimLiveSocket) append(target_id string, html string) &VSlim
 	return &socket
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut socket VSlimLiveSocket) prepend(target_id string, html string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -47,8 +47,8 @@ pub fn (mut socket VSlimLiveSocket) prepend(target_id string, html string) &VSli
 	return &socket
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method: 'setText']
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: 'setText')]
 pub fn (mut socket VSlimLiveSocket) set_text(target_id string, text string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -62,8 +62,8 @@ pub fn (mut socket VSlimLiveSocket) set_text(target_id string, text string) &VSl
 	return &socket
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method: 'setAttr']
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: 'setAttr')]
 pub fn (mut socket VSlimLiveSocket) set_attr(target_id string, name string, value string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	attr_name := name.trim_space()
@@ -79,8 +79,8 @@ pub fn (mut socket VSlimLiveSocket) set_attr(target_id string, name string, valu
 	return &socket
 }
 
-@[php_arg_name: 'target_id=targetId']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'target_id', php_name: 'targetId')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut socket VSlimLiveSocket) remove(target_id string) &VSlimLiveSocket {
 	id := target_id.trim_space()
 	if id == '' {
@@ -93,18 +93,18 @@ pub fn (mut socket VSlimLiveSocket) remove(target_id string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) patches() []map[string]string {
 	return clone_entries(socket.patches)
 }
 
-@[php_method: 'clearPatches']
+@[vphp.PhpExportMethod(name: 'clearPatches')]
 pub fn (mut socket VSlimLiveSocket) clear_patches() &VSlimLiveSocket {
 	socket.patches = []map[string]string{}
 	return &socket
 }
 
-@[php_method: 'pushEvent']
+@[vphp.PhpExportMethod(name: 'pushEvent')]
 pub fn (mut socket VSlimLiveSocket) push_event(event string, payload string) &VSlimLiveSocket {
 	name := event.trim_space()
 	if name == '' {
@@ -117,18 +117,18 @@ pub fn (mut socket VSlimLiveSocket) push_event(event string, payload string) &VS
 	return &socket
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) events() []map[string]string {
 	return clone_entries(socket.events)
 }
 
-@[php_method: 'clearEvents']
+@[vphp.PhpExportMethod(name: 'clearEvents')]
 pub fn (mut socket VSlimLiveSocket) clear_events() &VSlimLiveSocket {
 	socket.events = []map[string]string{}
 	return &socket
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut socket VSlimLiveSocket) flash(kind string, message string) &VSlimLiveSocket {
 	level := kind.trim_space()
 	body := message.trim_space()
@@ -142,18 +142,18 @@ pub fn (mut socket VSlimLiveSocket) flash(kind string, message string) &VSlimLiv
 	return &socket
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) flashes() []map[string]string {
 	return clone_entries(socket.flashes)
 }
 
-@[php_method: 'clearFlashes']
+@[vphp.PhpExportMethod(name: 'clearFlashes')]
 pub fn (mut socket VSlimLiveSocket) clear_flashes() &VSlimLiveSocket {
 	socket.flashes = []map[string]string{}
 	return &socket
 }
 
-@[php_method: 'joinTopic']
+@[vphp.PhpExportMethod(name: 'joinTopic')]
 pub fn (mut socket VSlimLiveSocket) join_topic(room string) &VSlimLiveSocket {
 	topic := room.trim_space()
 	if topic == '' {
@@ -166,7 +166,7 @@ pub fn (mut socket VSlimLiveSocket) join_topic(room string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method: 'leaveTopic']
+@[vphp.PhpExportMethod(name: 'leaveTopic')]
 pub fn (mut socket VSlimLiveSocket) leave_topic(room string) &VSlimLiveSocket {
 	topic := room.trim_space()
 	if topic == '' {
@@ -179,8 +179,8 @@ pub fn (mut socket VSlimLiveSocket) leave_topic(room string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_arg_name: 'include_self=includeSelf']
-@[php_method: 'broadcastInfo']
+@[vphp.PhpArgName(v_name: 'include_self', php_name: 'includeSelf')]
+@[vphp.PhpExportMethod(name: 'broadcastInfo')]
 pub fn (mut socket VSlimLiveSocket) broadcast_info(room string, event string, payload vphp.PhpValue, include_self bool) &VSlimLiveSocket {
 	topic := room.trim_space()
 	name := event.trim_space()
@@ -197,48 +197,48 @@ pub fn (mut socket VSlimLiveSocket) broadcast_info(room string, event string, pa
 	return &socket
 }
 
-@[php_method: 'pubsubCommands']
+@[vphp.PhpExportMethod(name: 'pubsubCommands')]
 pub fn (socket &VSlimLiveSocket) pubsub_commands() []map[string]string {
 	return clone_entries(socket.pubsub)
 }
 
-@[php_method: 'clearPubsub']
+@[vphp.PhpExportMethod(name: 'clearPubsub')]
 pub fn (mut socket VSlimLiveSocket) clear_pubsub() &VSlimLiveSocket {
 	socket.pubsub = []map[string]string{}
 	return &socket
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut socket VSlimLiveSocket) redirect(location string) &VSlimLiveSocket {
 	socket.redirect_to = location.trim_space()
 	socket.navigate_to = ''
 	return &socket
 }
 
-@[php_method: 'redirectTo']
+@[vphp.PhpExportMethod(name: 'redirectTo')]
 pub fn (socket &VSlimLiveSocket) redirect_to() string {
 	return socket.redirect_to
 }
 
-@[php_method: 'clearRedirect']
+@[vphp.PhpExportMethod(name: 'clearRedirect')]
 pub fn (mut socket VSlimLiveSocket) clear_redirect() &VSlimLiveSocket {
 	socket.redirect_to = ''
 	return &socket
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut socket VSlimLiveSocket) navigate(location string) &VSlimLiveSocket {
 	socket.navigate_to = location.trim_space()
 	socket.redirect_to = ''
 	return &socket
 }
 
-@[php_method: 'navigateTo']
+@[vphp.PhpExportMethod(name: 'navigateTo')]
 pub fn (socket &VSlimLiveSocket) navigate_to() string {
 	return socket.navigate_to
 }
 
-@[php_method: 'clearNavigate']
+@[vphp.PhpExportMethod(name: 'clearNavigate')]
 pub fn (mut socket VSlimLiveSocket) clear_navigate() &VSlimLiveSocket {
 	socket.navigate_to = ''
 	return &socket

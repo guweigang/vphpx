@@ -22,6 +22,8 @@ $command = sprintf(
 
 passthru($command, $code);
 var_dump($code);
+passthru(escapeshellarg(PHP_BINARY) . ' -n -l ' . escapeshellarg($stubPath), $code);
+var_dump($code);
 
 $stub = file_get_contents($stubPath);
 $vhttpdRequestStart = strpos($stub, "namespace VSlim\\VHttpd");
@@ -85,11 +87,30 @@ var_dump(str_contains($stub, 'public function createStreamFromFile(string $filen
 var_dump(str_contains($stub, 'public function createUploadedFile(\Psr\Http\Message\StreamInterface $stream, ?int $size = null, int $error = UPLOAD_ERR_OK, ?string $clientFilename = null, ?string $clientMediaType = null): \Psr\Http\Message\UploadedFileInterface {}'));
 var_dump(str_contains($stub, 'public function createUri(string $uri = \'\'): \Psr\Http\Message\UriInterface {}'));
 var_dump(str_contains($stub, "public const string DEBUG = 'debug';"));
+if (!str_contains($stub, "/** @var callable */\n        protected \$callable;")
+    || !str_contains($stub, 'private readonly \VSlim\App\Feishu\BotHandler $handler;')) {
+    throw new RuntimeException('Missing callable PHPDoc or Feishu handler property type');
+}
+
+foreach ([
+    VSlim\App::class => 'http',
+    VSlim\Mcp\App::class => 'mcp',
+    VSlim\WebSocket\App::class => 'websocket',
+    VSlim\App\Feishu\BotApp::class => 'websocket_upstream',
+] as $class => $kind) {
+    $attributes = (new ReflectionClass($class))->getAttributes(VHttpd\Attribute\Dispatchable::class);
+    if (count($attributes) !== 1 || $attributes[0]->getArguments() !== [$kind]
+        || !str_contains($stub, "#[\\VHttpd\\Attribute\\Dispatchable('$kind')]")) {
+        throw new RuntimeException("Unexpected Dispatchable attribute for $class");
+    }
+}
 
 @unlink($stubPath);
 ?>
 --EXPECTF--
 Generated %svslim-stub-%d.php
+int(0)
+No syntax errors detected in %svslim-stub-%d.php
 int(0)
 bool(true)
 bool(true)

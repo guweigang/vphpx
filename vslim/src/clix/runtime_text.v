@@ -60,16 +60,12 @@ pub fn help_line(label string, description string) string {
 	return '  ${label}' + ' '.repeat(width - label.len) + description
 }
 
-pub fn command_usage_text_from_runtime(runtime vphp.PhpValue, program string, command_name string) string {
-	def := command_definition(runtime) or {
-		prefix := if program.trim_space() != '' {
-			'${program} ${command_name}'
-		} else {
-			command_name
-		}
-		return 'Usage:\n  ${prefix} [args...]\n'
+fn command_usage_text(definition ?CliCommandDefinition, program string, command_name string) string {
+	if def := definition {
+		return def.usage_text(program, command_name)
 	}
-	return def.usage_text(program, command_name)
+	prefix := if program.trim_space() != '' { '${program} ${command_name}' } else { command_name }
+	return 'Usage:\n  ${prefix} [args...]\n'
 }
 
 pub fn append_indented_text_lines(mut lines []string, text string) {
@@ -83,27 +79,9 @@ pub fn append_indented_text_lines(mut lines []string, text string) {
 	}
 }
 
-pub fn command_examples_text_from_runtime(runtime vphp.PhpValue) []string {
-	def := command_definition(runtime) or {
-		return runtime_string_list_method(runtime, 'examples')
-	}
-	if def.examples.len > 0 {
-		return def.examples.clone()
-	}
-	return runtime_string_list_method(runtime, 'examples')
-}
-
-pub fn command_epilog_text_from_runtime(runtime vphp.PhpValue) string {
-	def := command_definition(runtime) or { return runtime_text_method(runtime, 'epilog') }
-	if def.epilog != '' {
-		return def.epilog
-	}
-	return runtime_text_method(runtime, 'epilog')
-}
-
 pub fn command_help_text_from_runtime(runtime vphp.PhpValue, program string, command_name string) string {
 	def := command_definition(runtime) or {
-		return command_usage_text_from_runtime(runtime, program, command_name)
+		return command_usage_text(none, program, command_name)
 	}
 	description := if def.description != '' {
 		def.description
@@ -135,7 +113,11 @@ pub fn command_help_text_from_runtime(runtime vphp.PhpValue, program string, com
 		lines << help_line(label, opt.description_text())
 	}
 	lines << help_line('-h, --help', 'Show this help message')
-	examples := command_examples_text_from_runtime(runtime)
+	examples := if def.examples.len > 0 {
+		def.examples
+	} else {
+		runtime_string_list_method(runtime, 'examples')
+	}
 	if examples.len > 0 {
 		lines << ''
 		lines << 'Examples:'
@@ -145,7 +127,7 @@ pub fn command_help_text_from_runtime(runtime vphp.PhpValue, program string, com
 			}
 		}
 	}
-	epilog := command_epilog_text_from_runtime(runtime).trim_space()
+	epilog := (if def.epilog != '' { def.epilog } else { runtime_text_method(runtime, 'epilog') }).trim_space()
 	if epilog != '' {
 		lines << ''
 		lines << 'Notes:'

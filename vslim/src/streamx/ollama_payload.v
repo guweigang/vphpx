@@ -3,7 +3,7 @@ module streamx
 import httpx
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimStreamOllamaClient) payload(input vphp.PhpArray) vphp.PhpArray {
 	query := input['query']
 	body_input := input['body']
@@ -23,8 +23,8 @@ pub fn (c &VSlimStreamOllamaClient) payload(input vphp.PhpArray) vphp.PhpArray {
 	return payload
 }
 
-@[php_arg_name(request_payload: 'requestPayload')]
-@[php_method: 'payloadFromRequest']
+@[vphp.PhpArgName(v_name: 'request_payload', php_name: 'requestPayload')]
+@[vphp.PhpExportMethod(name: 'payloadFromRequest')]
 pub fn (c &VSlimStreamOllamaClient) payload_from_request(request_payload vphp.PhpValue) vphp.PhpArray {
 	req := c.request_from_ollama_source(request_payload)
 	return c.payload_from_vslim_request(req)

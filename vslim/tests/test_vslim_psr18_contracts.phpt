@@ -137,6 +137,10 @@ namespace {
     $networkException->attachRequest($request);
     var_dump($networkException->getRequest() === $request);
 
+    $requestRef = new ReflectionProperty(VSlim\Psr18\NetworkException::class, 'requestRef');
+    var_dump($requestRef->getDeclaringClass()->getName() === VSlim\Psr18\RequestException::class,
+        $requestRef->isPublic() && !$requestRef->hasType(), $requestRef->getValue($networkException) === $request);
+
     $sendRequest = new ReflectionMethod(VSlim\Psr18\Client::class, 'sendRequest');
     $requestExGetRequest = new ReflectionMethod(VSlim\Psr18\RequestException::class, 'getRequest');
     $networkExGetRequest = new ReflectionMethod(VSlim\Psr18\NetworkException::class, 'getRequest');
@@ -156,6 +160,9 @@ namespace {
 }
 ?>
 --EXPECT--
+bool(true)
+bool(true)
+bool(true)
 bool(true)
 bool(true)
 bool(true)

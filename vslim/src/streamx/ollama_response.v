@@ -2,8 +2,8 @@ module streamx
 
 import vphp
 
-@[php_arg_name(request_payload: 'requestPayload')]
-@[php_method: 'textResponseFromRequest']
+@[vphp.PhpArgName(v_name: 'request_payload', php_name: 'requestPayload')]
+@[vphp.PhpExportMethod(name: 'textResponseFromRequest')]
 pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload vphp.PhpValue) vphp.PhpValue {
 	req := c.request_from_ollama_source(request_payload)
 	mut payload := c.payload_from_vslim_request(req)
@@ -33,8 +33,8 @@ pub fn (c &VSlimStreamOllamaClient) text_response_from_request(request_payload v
 	return response
 }
 
-@[php_arg_name(request_payload: 'requestPayload')]
-@[php_method: 'sseResponseFromRequest']
+@[vphp.PhpArgName(v_name: 'request_payload', php_name: 'requestPayload')]
+@[vphp.PhpExportMethod(name: 'sseResponseFromRequest')]
 pub fn (c &VSlimStreamOllamaClient) sse_response_from_request(request_payload vphp.PhpValue) vphp.PhpValue {
 	req := c.request_from_ollama_source(request_payload)
 	mut payload := c.payload_from_vslim_request(req)

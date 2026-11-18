@@ -15,62 +15,62 @@ mut:
 	expires_at_unix i64
 }
 
-@[php_implements: 'Psr\\SimpleCache\\CacheException']
-@[php_class: 'VSlim\\Psr16\\CacheException']
-@[php_extends: 'Exception']
+@[vphp.PhpImplements(names: 'Psr\\SimpleCache\\CacheException')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr16\\CacheException')]
+@[vphp.PhpExtends(name: 'Exception')]
 @[heap]
 pub struct VSlimPsr16CacheException {}
 
-@[php_implements: 'Psr\\SimpleCache\\InvalidArgumentException']
-@[php_class: 'VSlim\\Psr16\\InvalidArgumentException']
-@[php_extends: 'VSlim\\Psr16\\CacheException']
+@[vphp.PhpImplements(names: 'Psr\\SimpleCache\\InvalidArgumentException')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr16\\InvalidArgumentException')]
+@[vphp.PhpExtends(name: 'VSlim\\Psr16\\CacheException')]
 @[heap]
 pub struct VSlimPsr16InvalidArgumentException {}
 
-@[php_implements: 'Psr\\SimpleCache\\CacheInterface']
-@[php_class: 'VSlim\\Psr16\\Cache']
+@[vphp.PhpImplements(names: 'Psr\\SimpleCache\\CacheInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr16\\Cache')]
 @[heap]
 pub struct VSlimPsr16Cache {
 mut:
 	entries             map[string]PsrCacheEntry
-	clock_ref           vphp.PhpObject = vphp.PhpObject.invalid() @[php_ignore]
-	namespace_prefix    string         @[php_prop: namespacePrefix]
-	default_ttl_seconds int            @[php_prop: defaultTtlSeconds]
+	clock_ref           vphp.PhpObject = vphp.PhpObject.invalid() @[vphp.PhpIgnoreField]
+	namespace_prefix    string @[vphp.PhpProperty; vphp.PhpProperty_name: 'namespacePrefix']
+	default_ttl_seconds int    @[vphp.PhpProperty; vphp.PhpProperty_name: 'defaultTtlSeconds']
 }
 
-@[php_class: 'VSlim\\Psr6\\CacheException']
-@[php_implements: 'Psr\\Cache\\CacheException']
-@[php_extends: 'Exception']
+@[vphp.PhpExportClass(name: 'VSlim\\Psr6\\CacheException')]
+@[vphp.PhpImplements(names: 'Psr\\Cache\\CacheException')]
+@[vphp.PhpExtends(name: 'Exception')]
 @[heap]
 pub struct VSlimPsr6CacheException {}
 
-@[php_class: 'VSlim\\Psr6\\InvalidArgumentException']
-@[php_implements: 'Psr\\Cache\\InvalidArgumentException']
-@[php_extends: 'VSlim\\Psr6\\CacheException']
+@[vphp.PhpExportClass(name: 'VSlim\\Psr6\\InvalidArgumentException')]
+@[vphp.PhpImplements(names: 'Psr\\Cache\\InvalidArgumentException')]
+@[vphp.PhpExtends(name: 'VSlim\\Psr6\\CacheException')]
 @[heap]
 pub struct VSlimPsr6InvalidArgumentException {}
 
-@[php_implements: 'Psr\\Cache\\CacheItemInterface']
-@[php_class: 'VSlim\\Psr6\\CacheItem']
+@[vphp.PhpImplements(names: 'Psr\\Cache\\CacheItemInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr6\\CacheItem')]
 @[heap]
 pub struct VSlimPsr6CacheItem {
 mut:
 	key             string
-	value_ref       vphp.PhpValue  = vphp.PhpValue.invalid()  @[php_ignore]
-	clock_ref       vphp.PhpObject = vphp.PhpObject.invalid() @[php_ignore]
+	value_ref       vphp.PhpValue  = vphp.PhpValue.invalid()  @[vphp.PhpIgnoreField]
+	clock_ref       vphp.PhpObject = vphp.PhpObject.invalid() @[vphp.PhpIgnoreField]
 	hit             bool
-	has_value       bool @[php_prop: hasValue]
-	expires_at_unix i64  @[php_prop: expiresAtUnix]
+	has_value       bool @[vphp.PhpProperty; vphp.PhpProperty_name: 'hasValue']
+	expires_at_unix i64  @[vphp.PhpProperty; vphp.PhpProperty_name: 'expiresAtUnix']
 }
 
-@[php_implements: 'Psr\\Cache\\CacheItemPoolInterface']
-@[php_class: 'VSlim\\Psr6\\CacheItemPool']
+@[vphp.PhpImplements(names: 'Psr\\Cache\\CacheItemPoolInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr6\\CacheItemPool')]
 @[heap]
 pub struct VSlimPsr6CacheItemPool {
 mut:
 	entries             map[string]PsrCacheEntry
 	deferred            map[string]Psr6DeferredEntry
-	clock_ref           vphp.PhpObject = vphp.PhpObject.invalid() @[php_ignore]
-	namespace_prefix    string         @[php_prop: namespacePrefix]
-	default_ttl_seconds int            @[php_prop: defaultTtlSeconds]
+	clock_ref           vphp.PhpObject = vphp.PhpObject.invalid() @[vphp.PhpIgnoreField]
+	namespace_prefix    string @[vphp.PhpProperty; vphp.PhpProperty_name: 'namespacePrefix']
+	default_ttl_seconds int    @[vphp.PhpProperty; vphp.PhpProperty_name: 'defaultTtlSeconds']
 }

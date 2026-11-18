@@ -2,16 +2,16 @@ module liveviewx
 
 import vphp
 
-@[php_class: 'VSlim\\Live\\Socket']
+@[vphp.PhpExportClass(name: 'VSlim\\Live\\Socket')]
 @[heap]
 pub struct VSlimLiveSocket {
 pub mut:
 	id          string
 	connected   bool
-	redirect_to string @[php_prop: redirectTo]
-	navigate_to string @[php_prop: navigateTo]
-	raw_path    string @[php_prop: rawPath]
-	root_id     string @[php_prop: rootId]
+	redirect_to string @[vphp.PhpProperty; vphp.PhpProperty_name: 'redirectTo']
+	navigate_to string @[vphp.PhpProperty; vphp.PhpProperty_name: 'navigateTo']
+	raw_path    string @[vphp.PhpProperty; vphp.PhpProperty_name: 'rawPath']
+	root_id     string @[vphp.PhpProperty; vphp.PhpProperty_name: 'rootId']
 	assigns     map[string]string
 	patches     []map[string]string
 	events      []map[string]string
@@ -19,7 +19,7 @@ pub mut:
 	pubsub      []map[string]string
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut socket VSlimLiveSocket) construct() &VSlimLiveSocket {
 	socket.id = ''
 	socket.connected = false
@@ -41,53 +41,53 @@ pub fn VSlimLiveSocket.new_object() !vphp.PhpObject {
 	}
 }
 
-@[php_method: 'setId']
+@[vphp.PhpExportMethod(name: 'setId')]
 pub fn (mut socket VSlimLiveSocket) set_id(id string) &VSlimLiveSocket {
 	socket.id = id.trim_space()
 	return &socket
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) id() string {
 	return socket.id
 }
 
-@[php_method: 'setConnected']
+@[vphp.PhpExportMethod(name: 'setConnected')]
 pub fn (mut socket VSlimLiveSocket) set_connected(connected bool) &VSlimLiveSocket {
 	socket.connected = connected
 	return &socket
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) connected() bool {
 	return socket.connected
 }
 
-@[php_arg_name: 'raw_path=rawPath']
-@[php_method: 'setTarget']
+@[vphp.PhpArgName(v_name: 'raw_path', php_name: 'rawPath')]
+@[vphp.PhpExportMethod(name: 'setTarget')]
 pub fn (mut socket VSlimLiveSocket) set_target(raw_path string) &VSlimLiveSocket {
 	socket.raw_path = normalize_target(raw_path)
 	return &socket
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) target() string {
 	return socket.raw_path
 }
 
-@[php_arg_name: 'root_id=rootId']
-@[php_method: 'setRootId']
+@[vphp.PhpArgName(v_name: 'root_id', php_name: 'rootId')]
+@[vphp.PhpExportMethod(name: 'setRootId')]
 pub fn (mut socket VSlimLiveSocket) set_root_id(root_id string) &VSlimLiveSocket {
 	socket.root_id = root_id.trim_space()
 	return &socket
 }
 
-@[php_method: 'rootId']
+@[vphp.PhpExportMethod(name: 'rootId')]
 pub fn (socket &VSlimLiveSocket) root_id() string {
 	return socket.root_id
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut socket VSlimLiveSocket) assign(key string, value vphp.PhpValue) &VSlimLiveSocket {
 	name := key.trim_space()
 	if name == '' {
@@ -106,7 +106,7 @@ pub fn (mut socket VSlimLiveSocket) assign_string(key string, value vphp.PhpStri
 	return &socket
 }
 
-@[php_method: 'assignMany']
+@[vphp.PhpExportMethod(name: 'assignMany')]
 pub fn (mut socket VSlimLiveSocket) assign_many(values vphp.PhpArray) &VSlimLiveSocket {
 	for key in values.assoc_keys() {
 		socket.assign(key, values.value_at(key))
@@ -114,7 +114,7 @@ pub fn (mut socket VSlimLiveSocket) assign_many(values vphp.PhpArray) &VSlimLive
 	return &socket
 }
 
-@[php_method: 'assignForm']
+@[vphp.PhpExportMethod(name: 'assignForm')]
 pub fn (mut socket VSlimLiveSocket) assign_form(values vphp.PhpArray) &VSlimLiveSocket {
 	for key in values.assoc_keys() {
 		name := key.trim_space()
@@ -131,13 +131,13 @@ pub fn (mut socket VSlimLiveSocket) assign_form(values vphp.PhpArray) &VSlimLive
 	return &socket
 }
 
-@[php_method: 'resetForm']
+@[vphp.PhpExportMethod(name: 'resetForm')]
 pub fn (mut socket VSlimLiveSocket) reset_form(values vphp.PhpArray) &VSlimLiveSocket {
 	socket.clear_errors()
 	return socket.assign_form(values)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut socket VSlimLiveSocket) forget(key string) &VSlimLiveSocket {
 	name := key.trim_space()
 	if name == '' {
@@ -147,12 +147,12 @@ pub fn (mut socket VSlimLiveSocket) forget(key string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method: 'forgetInput']
+@[vphp.PhpExportMethod(name: 'forgetInput')]
 pub fn (mut socket VSlimLiveSocket) forget_input(field string) &VSlimLiveSocket {
 	return socket.forget(field)
 }
 
-@[php_method: 'forgetInputs']
+@[vphp.PhpExportMethod(name: 'forgetInputs')]
 pub fn (mut socket VSlimLiveSocket) forget_inputs(fields vphp.PhpArray) &VSlimLiveSocket {
 	for field in field_names(fields) {
 		socket.forget(field)
@@ -160,7 +160,7 @@ pub fn (mut socket VSlimLiveSocket) forget_inputs(fields vphp.PhpArray) &VSlimLi
 	return &socket
 }
 
-@[php_method: 'clearAssigns']
+@[vphp.PhpExportMethod(name: 'clearAssigns')]
 pub fn (mut socket VSlimLiveSocket) clear_assigns() &VSlimLiveSocket {
 	socket.assigns = map[string]string{}
 	return &socket
@@ -175,8 +175,8 @@ fn live_component_state_key(component_id string, field string) string {
 	return '_component_${id}_${name}'
 }
 
-@[php_arg_name: 'component_id=componentId']
-@[php_method: 'assignComponentState']
+@[vphp.PhpArgName(v_name: 'component_id', php_name: 'componentId')]
+@[vphp.PhpExportMethod(name: 'assignComponentState')]
 pub fn (mut socket VSlimLiveSocket) assign_component_state(component_id string, field string, value vphp.PhpValue) &VSlimLiveSocket {
 	key := live_component_state_key(component_id, field)
 	if key == '' {
@@ -186,22 +186,22 @@ pub fn (mut socket VSlimLiveSocket) assign_component_state(component_id string, 
 	return &socket
 }
 
-@[php_arg_name: 'component_id=componentId']
-@[php_method: 'componentState']
+@[vphp.PhpArgName(v_name: 'component_id', php_name: 'componentId')]
+@[vphp.PhpExportMethod(name: 'componentState')]
 pub fn (socket &VSlimLiveSocket) component_state(component_id string, field string) string {
 	key := live_component_state_key(component_id, field)
 	return if key == '' { '' } else { socket.get(key) }
 }
 
-@[php_arg_name: 'component_id=componentId']
-@[php_method: 'componentStateOr']
+@[vphp.PhpArgName(v_name: 'component_id', php_name: 'componentId')]
+@[vphp.PhpExportMethod(name: 'componentStateOr')]
 pub fn (socket &VSlimLiveSocket) component_state_or(component_id string, field string, fallback string) string {
 	value := socket.component_state(component_id, field)
 	return if value == '' { fallback } else { value }
 }
 
-@[php_arg_name: 'component_id=componentId']
-@[php_method: 'clearComponentState']
+@[vphp.PhpArgName(v_name: 'component_id', php_name: 'componentId')]
+@[vphp.PhpExportMethod(name: 'clearComponentState')]
 pub fn (mut socket VSlimLiveSocket) clear_component_state(component_id string, field string) &VSlimLiveSocket {
 	key := live_component_state_key(component_id, field)
 	if key == '' {
@@ -213,7 +213,7 @@ pub fn (mut socket VSlimLiveSocket) clear_component_state(component_id string, f
 
 // Low-level error helpers remain available for direct socket manipulation,
 // but new code should usually prefer socket.form(...)->validate(...).
-@[php_method: 'assignError']
+@[vphp.PhpExportMethod(name: 'assignError')]
 pub fn (mut socket VSlimLiveSocket) assign_error(field string, message string) &VSlimLiveSocket {
 	key := error_key(field)
 	if key == '' {
@@ -223,7 +223,7 @@ pub fn (mut socket VSlimLiveSocket) assign_error(field string, message string) &
 	return &socket
 }
 
-@[php_method: 'assignErrors']
+@[vphp.PhpExportMethod(name: 'assignErrors')]
 pub fn (mut socket VSlimLiveSocket) assign_errors(values vphp.PhpArray) &VSlimLiveSocket {
 	for key in values.assoc_keys() {
 		field := key.trim_space()
@@ -235,7 +235,7 @@ pub fn (mut socket VSlimLiveSocket) assign_errors(values vphp.PhpArray) &VSlimLi
 	return &socket
 }
 
-@[php_method: 'clearError']
+@[vphp.PhpExportMethod(name: 'clearError')]
 pub fn (mut socket VSlimLiveSocket) clear_error(field string) &VSlimLiveSocket {
 	key := error_key(field)
 	if key == '' {
@@ -245,7 +245,7 @@ pub fn (mut socket VSlimLiveSocket) clear_error(field string) &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method: 'clearErrors']
+@[vphp.PhpExportMethod(name: 'clearErrors')]
 pub fn (mut socket VSlimLiveSocket) clear_errors() &VSlimLiveSocket {
 	for key in socket.assigns.keys() {
 		if key.starts_with('error_') {
@@ -255,12 +255,12 @@ pub fn (mut socket VSlimLiveSocket) clear_errors() &VSlimLiveSocket {
 	return &socket
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) input(field string) string {
 	return socket.get(field)
 }
 
-@[php_method: 'inputOr']
+@[vphp.PhpExportMethod(name: 'inputOr')]
 pub fn (socket &VSlimLiveSocket) input_or(field string, fallback string) string {
 	value := socket.input(field)
 	return if value == '' { fallback } else { value }
@@ -268,29 +268,29 @@ pub fn (socket &VSlimLiveSocket) input_or(field string, fallback string) string 
 
 // Compatibility aliases for older form-oriented examples.
 // Prefer input()/input_or() in new code.
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) old(field string) string {
 	return socket.input(field)
 }
 
-@[php_method: 'oldOr']
+@[vphp.PhpExportMethod(name: 'oldOr')]
 pub fn (socket &VSlimLiveSocket) old_or(field string, fallback string) string {
 	return socket.input_or(field, fallback)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) error(field string) string {
 	key := error_key(field)
 	return if key == '' { '' } else { socket.get(key) }
 }
 
-@[php_method: 'hasError']
+@[vphp.PhpExportMethod(name: 'hasError')]
 pub fn (socket &VSlimLiveSocket) has_error(field string) bool {
 	key := error_key(field)
 	return key != '' && socket.has(key)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) form(name string) &VSlimLiveForm {
 	return &VSlimLiveForm{
 		name:             name.trim_space()
@@ -301,18 +301,18 @@ pub fn (socket &VSlimLiveSocket) form(name string) &VSlimLiveForm {
 	}
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) get(key string) string {
 	return socket.assigns[key.trim_space()] or { '' }
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) has(key string) bool {
 	name := key.trim_space()
 	return name != '' && name in socket.assigns
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (socket &VSlimLiveSocket) assigns() map[string]string {
 	return socket.assigns.clone()
 }

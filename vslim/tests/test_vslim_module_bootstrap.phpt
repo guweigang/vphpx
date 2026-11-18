@@ -158,26 +158,29 @@ namespace {
                 });
         }
 
-        public function boot(): void
+        public function boot(?VSlim\App $app = null): void
         {
-            $this->events[] = 'boot';
+            $this->events[] = $app === null ? 'boot' : 'unexpected-app';
         }
     }
 
-    final class LateModule extends VSlim\Support\Module
+    abstract class LateModuleRoutes extends VSlim\Support\Module
     {
         public array $events = [];
 
+        public function Routes(VSlim\App $app): void
+        {
+            $this->events[] = 'routes';
+            $app->get('/late', fn () => 'late');
+        }
+    }
+
+    final class LateModule extends LateModuleRoutes
+    {
         public function register(VSlim\App $app): void
         {
             $this->events[] = 'register';
             $app->container()->set('late.registered', 'yes');
-        }
-
-        public function routes(VSlim\App $app): void
-        {
-            $this->events[] = 'routes';
-            $app->get('/late', fn () => 'late');
         }
 
         public function boot(VSlim\App $app): void
@@ -190,10 +193,10 @@ namespace {
     $app = new VSlim\App();
     $module = new DemoModule();
 
-    var_dump($app->module($module) === $app);
+    var_dump($app->module(modInput: $module) === $app);
     echo implode(',', $module->events) . PHP_EOL;
     var_dump($app->moduleCount());
-    var_dump($app->hasModule(DemoModule::class));
+    var_dump($app->hasModule(className: DemoModule::class));
     var_dump($app->providerCount());
     var_dump($app->module(DemoModule::class) === $app);
     var_dump($app->moduleCount());
@@ -211,7 +214,7 @@ namespace {
     var_dump($app->moduleCount());
 
     $app2 = new VSlim\App();
-    $app2->moduleMany([DemoModule::class, new LateModule()]);
+    $app2->moduleMany(modules: new ArrayIterator([DemoModule::class, new LateModule()]));
     var_dump($app2->moduleCount());
     var_dump($app2->providerCount());
     $app2->boot();

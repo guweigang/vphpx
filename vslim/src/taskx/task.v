@@ -2,15 +2,15 @@ module taskx
 
 import vphp
 
-@[php_class: 'VSlim\\Task']
+@[vphp.PhpExportClass(name: 'VSlim\\Task')]
 @[heap]
 pub struct VSlimTask {}
 
-@[php_class: 'VSlim\\TaskHandle']
+@[vphp.PhpExportClass(name: 'VSlim\\TaskHandle')]
 @[heap]
 pub struct VSlimTaskHandle {
 mut:
-	async_ref vphp.PhpTaskHandle = vphp.PhpTaskHandle.null() @[php_ignore]
+	async_ref vphp.PhpTaskHandle = vphp.PhpTaskHandle.null() @[vphp.PhpIgnoreField]
 	// Task handles are request-scoped PHP objects, but the callable / params /
 	// cached result must outlive the spawn() stack frame and survive until a
 	// later wait() or object cleanup(). We therefore retain them with
@@ -19,7 +19,7 @@ mut:
 	callable   vphp.PhpCallable = vphp.PhpCallable.invalid()
 	params     []vphp.PhpValue
 	resolved   bool
-	result_box vphp.PhpValue = vphp.PhpValue.invalid() @[php_ignore]
+	result_box vphp.PhpValue = vphp.PhpValue.invalid() @[vphp.PhpIgnoreField]
 }
 
 fn task_params_to_persistent(params vphp.PhpArray) []vphp.PhpValue {
@@ -72,12 +72,12 @@ fn (mut handle VSlimTaskHandle) wait_native() vphp.PhpValue {
 	return handle.result_box.owned()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimTask.list() []string {
 	return vphp.PhpTask.names()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimTask.spawn(target vphp.PhpValue, params vphp.PhpArray) &VSlimTaskHandle {
 	if !target.is_valid() || target.is_null() || target.is_undef() {
 		vphp.PhpException.raise_class('InvalidArgumentException',
@@ -114,7 +114,7 @@ pub fn VSlimTask.spawn(target vphp.PhpValue, params vphp.PhpArray) &VSlimTaskHan
 	return &VSlimTaskHandle{}
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut handle VSlimTaskHandle) wait() vphp.PhpValue {
 	if handle.resolved {
 		return handle.result_box.to_request_owned()

@@ -9,11 +9,11 @@ fn vslim_root() string {
 fn vslim_src_files() []string {
 	mut files := os.walk_ext(os.join_path(vslim_root(), 'src'), '.v')
 	files.sort()
-	return files.filter(!it.ends_with('/vphp_bridge.v'))
+	return files.filter(os.file_name(it) != 'vphp_bridge.v')
 }
 
 fn service_id_source_files() []string {
-	return vslim_src_files().filter(it.ends_with('/service_ids.v'))
+	return vslim_src_files().filter(os.file_name(it) == 'service_ids.v')
 }
 
 fn vslim_module_files(module_name string) []string {
@@ -33,17 +33,16 @@ fn repo_split_portable_text_files() []string {
 	files << os.join_path(vslim_root(), 'Makefile')
 	files << os.join_path(vslim_root(), 'templates/app/Makefile')
 	files.sort()
-	return files.filter(os.exists(it) && !it.contains('/vendor/') && !it.contains('/dist/')
-		&& !it.ends_with('/composer.lock'))
+	return files.filter(os.exists(it))
 }
 
 fn collect_repo_split_portable_text_files(dir string, mut files []string) {
 	names := os.ls(dir) or { return }
 	for name in names {
-		path := os.join_path(dir, name)
-		if path.contains('/vendor/') || path.contains('/dist/') || path.contains('/.git/') {
+		if name in ['vendor', 'dist', '.git'] {
 			continue
 		}
+		path := os.join_path(dir, name)
 		if os.is_dir(path) {
 			collect_repo_split_portable_text_files(path, mut files)
 			continue
@@ -126,11 +125,10 @@ fn test_vslim_domain_identifiers_do_not_reintroduce_php_prefixes() {
 }
 
 fn test_repo_split_text_files_do_not_use_machine_local_source_paths() {
-	local_source_prefix := '/' + os.join_path('Users', 'guweigang', 'Source')
+	local_source_prefix := ['', 'Users', 'guweigang', 'Source'].join('/')
 	banned := [
-		os.join_path(local_source_prefix, 'vphpx'),
-		os.join_path(local_source_prefix, 'vhttpd'),
-		'file://' + os.join_path(local_source_prefix, 'vphpx'),
+		local_source_prefix + '/vphpx',
+		local_source_prefix + '/vhttpd',
 	]
 	for file in repo_split_portable_text_files() {
 		if !os.exists(file) {
@@ -813,8 +811,10 @@ fn test_appx_does_not_reown_route_url_lookup() {
 	routex_source := os.read_file(os.join_path(vslim_root(), 'src', 'routex', 'url_lookup.v')) or {
 		panic('failed to read routex/url_lookup.v: ${err}')
 	}
-	assert routex_source.contains('pub fn url_for('), 'route URL lookup should be owned by routex'
-	assert routex_source.contains('pub fn url_for_abs('), 'absolute route URL lookup should be owned by routex'
+	assert source.contains('app.route_index.index_for_name('), 'appx should resolve named routes with the route index'
+	assert source.contains('.url_abs('), 'appx should delegate absolute URL generation for indexed routes'
+	assert routex_source.contains('pub fn (route VSlimRoute) url('), 'relative route URL generation should be owned by routex'
+	assert routex_source.contains('pub fn (route VSlimRoute) url_abs('), 'absolute route URL generation should be owned by routex'
 	http_source := os.read_file(os.join_path(vslim_root(), 'src', 'httpx', 'response.v')) or {
 		panic('failed to read httpx/response.v: ${err}')
 	}
@@ -1185,6 +1185,8 @@ fn test_appx_does_not_reown_support_lifecycle_reflection() {
 			'fn log_bootstrap_class_visibility(',
 			'fn (subject PhpValueSubject)',
 			'value_subject(',
+			'.method_required_params(',
+			'.with_method_result[',
 		] {
 			assert !source.contains(pattern), '${file} should delegate provider/module lifecycle reflection to supportx, not ${pattern}'
 		}
@@ -1193,8 +1195,8 @@ fn test_appx_does_not_reown_support_lifecycle_reflection() {
 		panic('failed to read supportx/lifecycle.v: ${err}')
 	}
 	assert source.contains('pub fn input_value'), 'support lifecycle input normalization should be owned by supportx'
-	assert source.contains('pub fn call_lifecycle'), 'support lifecycle calls should be owned by supportx'
-	assert source.contains('pub fn call_value_method'), 'support lifecycle value-returning calls should be owned by supportx'
+	assert source.contains('pub fn call_lifecycle_if_present('), 'support lifecycle calls should be owned by supportx'
+	assert source.contains('pub fn module_provider_input('), 'supportx should call the module providers callback'
 }
 
 fn test_bootstrap_spec_and_conventions_are_owned_by_supportx() {

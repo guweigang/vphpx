@@ -4,63 +4,62 @@ import eventx
 import httpx
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut probe VSlimPhpSignatureProbe) construct() &VSlimPhpSignatureProbe {
 	return &probe
 }
 
-@[php_method: 'alwaysTrue']
-@[php_return_type: 'true']
+@[vphp.PhpExportMethod(name: 'alwaysTrue')]
+@[vphp.PhpReturnType(php_type: 'true')]
 pub fn (probe &VSlimPhpSignatureProbe) always_true() bool {
 	return true
 }
 
-@[php_method: 'alwaysFalse']
-@[php_return_type: 'false']
+@[vphp.PhpExportMethod(name: 'alwaysFalse')]
+@[vphp.PhpReturnType(php_type: 'false')]
 pub fn (probe &VSlimPhpSignatureProbe) always_false() bool {
 	return false
 }
 
-@[php_method: 'alwaysNull']
-@[php_return_type: 'null']
+@[vphp.PhpExportMethod(name: 'alwaysNull')]
+@[vphp.PhpReturnType(php_type: 'null')]
 pub fn (probe &VSlimPhpSignatureProbe) always_null() vphp.PhpNull {
 	return vphp.PhpNull.value()
 }
 
-@[php_method: 'alwaysThrow']
-@[php_return_type: 'never']
+@[vphp.PhpExportMethod(name: 'alwaysThrow')]
+@[vphp.PhpReturnType(php_type: 'never')]
 pub fn (probe &VSlimPhpSignatureProbe) always_throw() vphp.PhpNull {
 	vphp.PhpException.raise_class('RuntimeException', 'probe never return', 0)
 	return vphp.PhpNull.value()
 }
 
-@[php_method: 'acceptTrue']
-@[php_arg_type: 'flag=true']
+@[vphp.PhpExportMethod(name: 'acceptTrue')]
+@[vphp.PhpArgType(v_name: 'flag', php_type: 'true')]
 pub fn (probe &VSlimPhpSignatureProbe) accept_true(flag vphp.PhpBool) bool {
 	return flag.value()
 }
 
-@[php_method: 'acceptFalse']
-@[php_arg_type: 'flag=false']
+@[vphp.PhpExportMethod(name: 'acceptFalse')]
+@[vphp.PhpArgType(v_name: 'flag', php_type: 'false')]
 pub fn (probe &VSlimPhpSignatureProbe) accept_false(flag vphp.PhpBool) bool {
 	return !flag.value()
 }
 
-@[php_arg_type: 'value=null']
-@[php_method: 'acceptNull']
+@[vphp.PhpArgType(v_name: 'value', php_type: 'null')]
+@[vphp.PhpExportMethod(name: 'acceptNull')]
 pub fn (probe &VSlimPhpSignatureProbe) accept_null(value vphp.PhpNull) bool {
 	return value.is_null()
 }
 
-@[php_method: 'acceptCallable']
-@[php_arg_type: 'cb=callable']
+@[vphp.PhpExportMethod(name: 'acceptCallable')]
+@[vphp.PhpArgType(v_name: 'cb', php_type: 'callable')]
 pub fn (probe &VSlimPhpSignatureProbe) accept_callable(cb vphp.PhpCallable) bool {
 	return cb.is_callable()
 }
 
-@[php_method: 'optionalTail']
-@[php_arg_default: 'suffix=""']
-@[php_arg_optional: 'suffix']
+@[vphp.PhpExportMethod(name: 'optionalTail')]
+@[vphp.PhpStringParam('suffix', php_name: 'suffix', default_value: '', optional: true)]
 pub fn (probe &VSlimPhpSignatureProbe) optional_tail(prefix string, suffix string) string {
 	if suffix == '' {
 		return prefix
@@ -68,8 +67,8 @@ pub fn (probe &VSlimPhpSignatureProbe) optional_tail(prefix string, suffix strin
 	return '${prefix}:${suffix}'
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'makePsrResponse']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'makePsrResponse')]
 pub fn (probe &VSlimPhpSignatureProbe) make_psr_response() &httpx.VSlimPsr7Response {
 	return &httpx.VSlimPsr7Response{
 		status:           204
@@ -81,8 +80,8 @@ pub fn (probe &VSlimPhpSignatureProbe) make_psr_response() &httpx.VSlimPsr7Respo
 	}
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'makeStaticPsrResponse']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'makeStaticPsrResponse')]
 pub fn VSlimPhpSignatureProbe.make_static_psr_response() &httpx.VSlimPsr7Response {
 	return &httpx.VSlimPsr7Response{
 		status:           202
@@ -94,33 +93,33 @@ pub fn VSlimPhpSignatureProbe.make_static_psr_response() &httpx.VSlimPsr7Respons
 	}
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
-@[php_method: 'acceptPsrRequest']
+@[vphp.PhpArgType(v_name: 'request', php_type: 'Psr\\Http\\Message\\RequestInterface')]
+@[vphp.PhpExportMethod(name: 'acceptPsrRequest')]
 pub fn (probe &VSlimPhpSignatureProbe) accept_psr_request(request vphp.PhpObject) bool {
 	return request.is_instance_of('Psr\\Http\\Message\\RequestInterface')
 }
 
-@[php_arg_type: 'expiration=?DateTimeInterface']
-@[php_method: 'acceptDateTimeInterface']
+@[vphp.PhpArgType(v_name: 'expiration', php_type: '?DateTimeInterface')]
+@[vphp.PhpExportMethod(name: 'acceptDateTimeInterface')]
 pub fn (probe &VSlimPhpSignatureProbe) accept_datetime_interface(expiration vphp.PhpValue) bool {
 	return expiration.is_null() || expiration.is_instance_of('DateTimeInterface')
 }
 
-@[php_arg_type: 'provider=Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'setProvider']
+@[vphp.PhpArgType(v_name: 'provider', php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'setProvider')]
 pub fn (mut probe VSlimPhpSignatureProbe) set_provider(provider &eventx.VSlimPsr14ListenerProvider) &VSlimPhpSignatureProbe {
 	probe.provider_ref = provider
 	return &probe
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'borrowedProvider']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'borrowedProvider')]
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider() &eventx.VSlimPsr14ListenerProvider {
 	return probe.provider_ref
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'borrowedProviderAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'borrowedProviderAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_alias() &eventx.VSlimPsr14ListenerProvider {
 	provider := probe.borrowed_provider()
 	return provider
@@ -133,8 +132,8 @@ fn (probe &VSlimPhpSignatureProbe) maybe_borrowed_provider() ?&eventx.VSlimPsr14
 	return probe.provider_ref
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'borrowedProviderFromGuard']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'borrowedProviderFromGuard')]
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_guard() &eventx.VSlimPsr14ListenerProvider {
 	if provider := probe.maybe_borrowed_provider() {
 		return provider
@@ -142,9 +141,9 @@ pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_guard() &eventx.VS
 	return probe.provider_ref
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'borrowedProviderFromIfExpr']
-@[php_arg_name: 'use_alias=useAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'borrowedProviderFromIfExpr')]
+@[vphp.PhpArgName(v_name: 'use_alias', php_name: 'useAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_if_expr(use_alias bool) &eventx.VSlimPsr14ListenerProvider {
 	return if use_alias {
 		provider := probe.borrowed_provider()
@@ -154,9 +153,9 @@ pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_if_expr(use_alias 
 	}
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'borrowedProviderFromIfExprAlias']
-@[php_arg_name: 'use_alias=useAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'borrowedProviderFromIfExprAlias')]
+@[vphp.PhpArgName(v_name: 'use_alias', php_name: 'useAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_if_expr_alias(use_alias bool) &eventx.VSlimPsr14ListenerProvider {
 	provider := if use_alias {
 		probe.borrowed_provider()
@@ -166,9 +165,9 @@ pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_if_expr_alias(use_
 	return provider
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'borrowedProviderFromMatchExpr']
-@[php_arg_name: 'use_alias=useAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'borrowedProviderFromMatchExpr')]
+@[vphp.PhpArgName(v_name: 'use_alias', php_name: 'useAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_match_expr(use_alias bool) &eventx.VSlimPsr14ListenerProvider {
 	return match use_alias {
 		true {
@@ -181,9 +180,9 @@ pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_match_expr(use_ali
 	}
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'borrowedProviderFromMatchExprAlias']
-@[php_arg_name: 'use_alias=useAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'borrowedProviderFromMatchExprAlias')]
+@[vphp.PhpArgName(v_name: 'use_alias', php_name: 'useAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_match_expr_alias(use_alias bool) &eventx.VSlimPsr14ListenerProvider {
 	provider := match use_alias {
 		true {
@@ -197,14 +196,14 @@ pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_match_expr_alias(u
 	return provider
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'borrowedProviderFromOrBlock']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'borrowedProviderFromOrBlock')]
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_or_block() &eventx.VSlimPsr14ListenerProvider {
 	return probe.maybe_borrowed_provider() or { probe.provider_ref }
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'borrowedProviderFromOrBlockAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'borrowedProviderFromOrBlockAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) borrowed_provider_from_or_block_alias() &eventx.VSlimPsr14ListenerProvider {
 	provider := probe.maybe_borrowed_provider() or { probe.provider_ref }
 	return provider
@@ -223,22 +222,22 @@ fn (probe &VSlimPhpSignatureProbe) maybe_fresh_provider() ?&eventx.VSlimPsr14Lis
 	return new_signature_probe_provider()
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'freshProvider']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'freshProvider')]
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider() &eventx.VSlimPsr14ListenerProvider {
 	return new_signature_probe_provider()
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'freshProviderAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'freshProviderAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_alias() &eventx.VSlimPsr14ListenerProvider {
 	provider := new_signature_probe_provider()
 	return provider
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'freshProviderFromIfExpr']
-@[php_arg_name: 'use_alias=useAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'freshProviderFromIfExpr')]
+@[vphp.PhpArgName(v_name: 'use_alias', php_name: 'useAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr(use_alias bool) &eventx.VSlimPsr14ListenerProvider {
 	return if use_alias {
 		provider := new_signature_probe_provider()
@@ -248,9 +247,9 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr(use_alias boo
 	}
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'freshProviderFromIfExprAlias']
-@[php_arg_name: 'use_alias=useAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'freshProviderFromIfExprAlias')]
+@[vphp.PhpArgName(v_name: 'use_alias', php_name: 'useAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr_alias(use_alias bool) &eventx.VSlimPsr14ListenerProvider {
 	provider := if use_alias {
 		new_signature_probe_provider()
@@ -260,9 +259,9 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_if_expr_alias(use_ali
 	return provider
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'freshProviderFromMatchExpr']
-@[php_arg_name: 'use_alias=useAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'freshProviderFromMatchExpr')]
+@[vphp.PhpArgName(v_name: 'use_alias', php_name: 'useAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr(use_alias bool) &eventx.VSlimPsr14ListenerProvider {
 	return match use_alias {
 		true {
@@ -275,9 +274,9 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr(use_alias 
 	}
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'freshProviderFromMatchExprAlias']
-@[php_arg_name: 'use_alias=useAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'freshProviderFromMatchExprAlias')]
+@[vphp.PhpArgName(v_name: 'use_alias', php_name: 'useAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr_alias(use_alias bool) &eventx.VSlimPsr14ListenerProvider {
 	provider := match use_alias {
 		true {
@@ -291,14 +290,14 @@ pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_match_expr_alias(use_
 	return provider
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'freshProviderFromOrBlock']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'freshProviderFromOrBlock')]
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_or_block() &eventx.VSlimPsr14ListenerProvider {
 	return probe.maybe_fresh_provider() or { new_signature_probe_provider() }
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'freshProviderFromOrBlockAlias']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'freshProviderFromOrBlockAlias')]
 pub fn (probe &VSlimPhpSignatureProbe) fresh_provider_from_or_block_alias() &eventx.VSlimPsr14ListenerProvider {
 	provider := probe.maybe_fresh_provider() or { new_signature_probe_provider() }
 	return provider

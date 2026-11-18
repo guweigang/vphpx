@@ -5,8 +5,8 @@ import configx as cfgx
 import os
 import vphp
 
-@[php_arg_name(chat_url: 'chatUrl', default_model: 'defaultModel', api_key: 'apiKey', fixture_path: 'fixturePath')]
-@[php_method]
+@[vphp.PhpArgNames(names: 'chat_url=chatUrl,default_model=defaultModel,api_key=apiKey,fixture_path=fixturePath')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimStreamOllamaClient) construct(chat_url string, default_model string, api_key string, fixture_path string) &VSlimStreamOllamaClient {
 	c.chat_url = normalize_ollama_chat_url(chat_url)
 	c.default_model = normalize_ollama_model(default_model)
@@ -15,7 +15,7 @@ pub fn (mut c VSlimStreamOllamaClient) construct(chat_url string, default_model 
 	return &c
 }
 
-@[php_method: 'fromEnv']
+@[vphp.PhpExportMethod(name: 'fromEnv')]
 pub fn VSlimStreamOllamaClient.from_env() &VSlimStreamOllamaClient {
 	mut out := &VSlimStreamOllamaClient{}
 	out.construct(os.getenv('OLLAMA_CHAT_URL'), os.getenv('OLLAMA_MODEL'),
@@ -23,7 +23,7 @@ pub fn VSlimStreamOllamaClient.from_env() &VSlimStreamOllamaClient {
 	return out
 }
 
-@[php_method: 'fromConfig']
+@[vphp.PhpExportMethod(name: 'fromConfig')]
 pub fn VSlimStreamOllamaClient.from_config(config &cfgx.VSlimConfig) &VSlimStreamOllamaClient {
 	mut out := &VSlimStreamOllamaClient{}
 	out.construct(config.get_string('stream.ollama.chat_url', os.getenv('OLLAMA_CHAT_URL')), config.get_string('stream.ollama.model',
@@ -33,7 +33,7 @@ pub fn VSlimStreamOllamaClient.from_config(config &cfgx.VSlimConfig) &VSlimStrea
 	return out
 }
 
-@[php_method: 'fromApp']
+@[vphp.PhpExportMethod(name: 'fromApp')]
 pub fn VSlimStreamOllamaClient.from_app(app vphp.PhpValue) &VSlimStreamOllamaClient {
 	if obj := app.as_object() {
 		if obj.method_exists('config') {
@@ -49,7 +49,7 @@ pub fn VSlimStreamOllamaClient.from_app(app vphp.PhpValue) &VSlimStreamOllamaCli
 	return VSlimStreamOllamaClient.from_env()
 }
 
-@[php_method: 'fromOptions']
+@[vphp.PhpExportMethod(name: 'fromOptions')]
 pub fn VSlimStreamOllamaClient.from_options(options vphp.PhpArray) &VSlimStreamOllamaClient {
 	base := VSlimStreamOllamaClient.from_env()
 	mut out := &VSlimStreamOllamaClient{}
@@ -59,22 +59,22 @@ pub fn VSlimStreamOllamaClient.from_options(options vphp.PhpArray) &VSlimStreamO
 	return out
 }
 
-@[php_method: 'chatUrl']
+@[vphp.PhpExportMethod(name: 'chatUrl')]
 pub fn (c &VSlimStreamOllamaClient) chat_url() string {
 	return c.chat_url_value()
 }
 
-@[php_method: 'defaultModel']
+@[vphp.PhpExportMethod(name: 'defaultModel')]
 pub fn (c &VSlimStreamOllamaClient) default_model() string {
 	return c.default_model_value()
 }
 
-@[php_method: 'apiKey']
+@[vphp.PhpExportMethod(name: 'apiKey')]
 pub fn (c &VSlimStreamOllamaClient) api_key() string {
 	return c.api_key_value()
 }
 
-@[php_method: 'fixturePath']
+@[vphp.PhpExportMethod(name: 'fixturePath')]
 pub fn (c &VSlimStreamOllamaClient) fixture_path() string {
 	return c.fixture_path_value()
 }

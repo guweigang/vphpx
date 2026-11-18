@@ -161,7 +161,7 @@ fn (app &VSlimApp) resolve_route_dispatch(req &httpx.VSlimRequest, source_payloa
 	method := req.effective_method()
 	path := req.normalized_path()
 	dispatch_req := req.with_method_snapshot(method)
-	resolved_route := routex.resolve_dispatch_match(app.routes, method, path)
+	resolved_route := app.route_index.resolve(app.routes, method, path)
 	match resolved_route.kind {
 		.matched {
 			if trace_on {

@@ -4,20 +4,20 @@ import configx as cfgx
 import json2
 import os
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut cfg VSlimDatabaseConfig) construct() &VSlimDatabaseConfig {
 	cfg.ensure()
 	return &cfg
 }
 
-@[php_method: 'setDriver']
+@[vphp.PhpExportMethod(name: 'setDriver')]
 pub fn (mut cfg VSlimDatabaseConfig) set_driver(driver string) &VSlimDatabaseConfig {
 	clean := driver.trim_space().to_lower()
 	cfg.driver = if clean == '' { 'mysql' } else { clean }
 	return &cfg
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (cfg &VSlimDatabaseConfig) driver() string {
 	if cfg.driver.trim_space() == '' {
 		return 'mysql'
@@ -25,14 +25,14 @@ pub fn (cfg &VSlimDatabaseConfig) driver() string {
 	return cfg.driver
 }
 
-@[php_method: 'setTransport']
+@[vphp.PhpExportMethod(name: 'setTransport')]
 pub fn (mut cfg VSlimDatabaseConfig) set_transport(transport string) &VSlimDatabaseConfig {
 	clean := transport.trim_space().to_lower()
 	cfg.transport = if clean == '' { 'direct' } else { clean }
 	return &cfg
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (cfg &VSlimDatabaseConfig) transport() string {
 	if cfg.transport.trim_space() == '' {
 		return 'direct'
@@ -40,13 +40,13 @@ pub fn (cfg &VSlimDatabaseConfig) transport() string {
 	return cfg.transport
 }
 
-@[php_method: 'setHost']
+@[vphp.PhpExportMethod(name: 'setHost')]
 pub fn (mut cfg VSlimDatabaseConfig) set_host(host string) &VSlimDatabaseConfig {
 	cfg.host = if host.trim_space() == '' { '127.0.0.1' } else { host.trim_space() }
 	return &cfg
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (cfg &VSlimDatabaseConfig) host() string {
 	if cfg.host.trim_space() == '' {
 		return '127.0.0.1'
@@ -54,13 +54,13 @@ pub fn (cfg &VSlimDatabaseConfig) host() string {
 	return cfg.host
 }
 
-@[php_method: 'setPort']
+@[vphp.PhpExportMethod(name: 'setPort')]
 pub fn (mut cfg VSlimDatabaseConfig) set_port(port int) &VSlimDatabaseConfig {
 	cfg.port = if port <= 0 { 3306 } else { port }
 	return &cfg
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (cfg &VSlimDatabaseConfig) port() int {
 	if cfg.port <= 0 {
 		return 3306
@@ -68,46 +68,46 @@ pub fn (cfg &VSlimDatabaseConfig) port() int {
 	return cfg.port
 }
 
-@[php_method: 'setUsername']
+@[vphp.PhpExportMethod(name: 'setUsername')]
 pub fn (mut cfg VSlimDatabaseConfig) set_username(username string) &VSlimDatabaseConfig {
 	cfg.username = username
 	return &cfg
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (cfg &VSlimDatabaseConfig) username() string {
 	return cfg.username
 }
 
-@[php_method: 'setPassword']
+@[vphp.PhpExportMethod(name: 'setPassword')]
 pub fn (mut cfg VSlimDatabaseConfig) set_password(password string) &VSlimDatabaseConfig {
 	cfg.password = password
 	return &cfg
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (cfg &VSlimDatabaseConfig) password() string {
 	return cfg.password
 }
 
-@[php_method: 'setDatabase']
+@[vphp.PhpExportMethod(name: 'setDatabase')]
 pub fn (mut cfg VSlimDatabaseConfig) set_database(name string) &VSlimDatabaseConfig {
 	cfg.database = name
 	return &cfg
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (cfg &VSlimDatabaseConfig) database() string {
 	return cfg.database
 }
 
-@[php_method: 'setPoolSize']
+@[vphp.PhpExportMethod(name: 'setPoolSize')]
 pub fn (mut cfg VSlimDatabaseConfig) set_pool_size(size int) &VSlimDatabaseConfig {
 	cfg.pool_size = if size <= 0 { 5 } else { size }
 	return &cfg
 }
 
-@[php_method: 'poolSize']
+@[vphp.PhpExportMethod(name: 'poolSize')]
 pub fn (cfg &VSlimDatabaseConfig) pool_size_value() int {
 	if cfg.pool_size <= 0 {
 		return 5
@@ -115,13 +115,13 @@ pub fn (cfg &VSlimDatabaseConfig) pool_size_value() int {
 	return cfg.pool_size
 }
 
-@[php_method: 'setPoolName']
+@[vphp.PhpExportMethod(name: 'setPoolName')]
 pub fn (mut cfg VSlimDatabaseConfig) set_pool_name(name string) &VSlimDatabaseConfig {
 	cfg.pool_name = if name.trim_space() == '' { 'default' } else { name.trim_space() }
 	return &cfg
 }
 
-@[php_method: 'poolName']
+@[vphp.PhpExportMethod(name: 'poolName')]
 pub fn (cfg &VSlimDatabaseConfig) pool_name_value() string {
 	if cfg.pool_name.trim_space() == '' {
 		return 'default'
@@ -129,14 +129,14 @@ pub fn (cfg &VSlimDatabaseConfig) pool_name_value() string {
 	return cfg.pool_name
 }
 
-@[php_arg_name: 'timeout_ms=timeoutMs']
-@[php_method: 'setTimeoutMs']
+@[vphp.PhpArgName(v_name: 'timeout_ms', php_name: 'timeoutMs')]
+@[vphp.PhpExportMethod(name: 'setTimeoutMs')]
 pub fn (mut cfg VSlimDatabaseConfig) set_timeout_ms(timeout_ms int) &VSlimDatabaseConfig {
 	cfg.timeout_ms = if timeout_ms <= 0 { 1000 } else { timeout_ms }
 	return &cfg
 }
 
-@[php_method: 'timeoutMs']
+@[vphp.PhpExportMethod(name: 'timeoutMs')]
 pub fn (cfg &VSlimDatabaseConfig) timeout_ms_value() int {
 	if cfg.timeout_ms <= 0 {
 		return 1000
@@ -144,19 +144,19 @@ pub fn (cfg &VSlimDatabaseConfig) timeout_ms_value() int {
 	return cfg.timeout_ms
 }
 
-@[php_arg_name: 'socket_path=socketPath']
-@[php_method: 'setUpstreamSocket']
+@[vphp.PhpArgName(v_name: 'socket_path', php_name: 'socketPath')]
+@[vphp.PhpExportMethod(name: 'setUpstreamSocket')]
 pub fn (mut cfg VSlimDatabaseConfig) set_upstream_socket(socket_path string) &VSlimDatabaseConfig {
 	cfg.upstream_socket = socket_path.trim_space()
 	return &cfg
 }
 
-@[php_method: 'upstreamSocket']
+@[vphp.PhpExportMethod(name: 'upstreamSocket')]
 pub fn (cfg &VSlimDatabaseConfig) upstream_socket_value() string {
 	return cfg.upstream_socket.trim_space()
 }
 
-@[php_method: 'toJson']
+@[vphp.PhpExportMethod(name: 'toJson')]
 pub fn (cfg &VSlimDatabaseConfig) to_json() string {
 	mut payload := map[string]string{}
 	payload['driver'] = cfg.driver()

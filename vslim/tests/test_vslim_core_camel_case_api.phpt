@@ -6,8 +6,8 @@ VSlim core PHP API exposes camelCase names for primary userland entrypoints
 <?php
 $app = new VSlim\App();
 $cfg = new VSlim\Config();
-$req = new VSlim\VHttpd\Request('GET', '/users/42?trace_id=demo', '');
-$res = new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
+$req = new VSlim\VHttpd\Request(rawPath: '/users/42?trace_id=demo', body: '', method: 'GET');
+$res = new VSlim\VHttpd\Response(contentType: 'text/plain; charset=utf-8', status: 200, body: 'ok');
 $view = new VSlim\View('', '/assets');
 $controller = new VSlim\Controller($app);
 
@@ -50,6 +50,21 @@ var_dump(method_exists($res, 'cookieHeader'));
 var_dump(method_exists($res, 'cookie_header'));
 var_dump(property_exists($res, 'contentType'));
 var_dump(property_exists($res, 'content_type'));
+
+$signature = new ReflectionMethod($res, 'setCookieFull');
+$names = array_map(static fn (ReflectionParameter $param): string => $param->getName(), $signature->getParameters());
+if ($names !== ['name', 'value', 'path', 'domain', 'maxAge', 'secure', 'httpOnly', 'sameSite']
+    || $signature->getNumberOfRequiredParameters() !== count($names)
+    || (string) $signature->getReturnType() !== VSlim\VHttpd\Response::class) {
+    throw new RuntimeException('Unexpected setCookieFull signature');
+}
+$res->setCookieFull(sameSite: 'strict', httpOnly: true, secure: true, maxAge: 60, domain: '',
+    path: '/', value: 'value', name: 'test');
+$cookie = $res->cookieHeader();
+if (!str_starts_with($cookie, 'test=value;') || !str_contains($cookie, 'Max-Age=60')
+    || !str_contains($cookie, 'HttpOnly') || !str_contains($cookie, 'SameSite=Strict')) {
+    throw new RuntimeException('Unexpected response cookie');
+}
 
 var_dump(method_exists($view, 'renderWithLayout'));
 var_dump(method_exists($view, 'render_with_layout'));

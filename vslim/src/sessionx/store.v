@@ -217,7 +217,7 @@ fn (mut session VSlimSessionStore) commit_cookie(response vphp.PhpObject) bool {
 	return false
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut session VSlimSessionStore) construct() &VSlimSessionStore {
 	session.cookie_name = 'vslim_session'
 	session.secret = ''
@@ -242,7 +242,7 @@ pub fn VSlimSessionStore.from_config_and_request(config &cfgx.VSlimConfig, reque
 	return session
 }
 
-@[php_method: 'setCookie']
+@[vphp.PhpExportMethod(name: 'setCookie')]
 pub fn (mut session VSlimSessionStore) set_cookie_name(name string) &VSlimSessionStore {
 	clean := name.trim_space()
 	if clean != '' {
@@ -251,7 +251,7 @@ pub fn (mut session VSlimSessionStore) set_cookie_name(name string) &VSlimSessio
 	return &session
 }
 
-@[php_method: 'cookie']
+@[vphp.PhpExportMethod(name: 'cookie')]
 pub fn (session &VSlimSessionStore) cookie_name_value() string {
 	if session.cookie_name.trim_space() == '' {
 		return 'vslim_session'
@@ -259,19 +259,19 @@ pub fn (session &VSlimSessionStore) cookie_name_value() string {
 	return session.cookie_name.trim_space()
 }
 
-@[php_method: 'setSecret']
+@[vphp.PhpExportMethod(name: 'setSecret')]
 pub fn (mut session VSlimSessionStore) set_secret(secret string) &VSlimSessionStore {
 	session.secret = secret.trim_space()
 	return &session
 }
 
-@[php_method: 'secret']
+@[vphp.PhpExportMethod(name: 'secret')]
 pub fn (session &VSlimSessionStore) secret_value() string {
 	return session.secret.trim_space()
 }
 
-@[php_arg_name: 'ttl_seconds=ttlSeconds']
-@[php_method: 'setTtlSeconds']
+@[vphp.PhpArgName(v_name: 'ttl_seconds', php_name: 'ttlSeconds')]
+@[vphp.PhpExportMethod(name: 'setTtlSeconds')]
 pub fn (mut session VSlimSessionStore) set_ttl_seconds(ttl_seconds int) &VSlimSessionStore {
 	if ttl_seconds >= 0 {
 		session.ttl_seconds = ttl_seconds
@@ -279,7 +279,7 @@ pub fn (mut session VSlimSessionStore) set_ttl_seconds(ttl_seconds int) &VSlimSe
 	return &session
 }
 
-@[php_method: 'ttlSeconds']
+@[vphp.PhpExportMethod(name: 'ttlSeconds')]
 pub fn (session &VSlimSessionStore) ttl_seconds_value() int {
 	if session.ttl_seconds < 0 {
 		return 0
@@ -287,13 +287,13 @@ pub fn (session &VSlimSessionStore) ttl_seconds_value() int {
 	return session.ttl_seconds
 }
 
-@[php_method: 'setPath']
+@[vphp.PhpExportMethod(name: 'setPath')]
 pub fn (mut session VSlimSessionStore) set_path(path string) &VSlimSessionStore {
 	session.path = if path.trim_space() == '' { '/' } else { path.trim_space() }
 	return &session
 }
 
-@[php_method: 'path']
+@[vphp.PhpExportMethod(name: 'path')]
 pub fn (session &VSlimSessionStore) path_value() string {
 	if session.path.trim_space() == '' {
 		return '/'
@@ -301,48 +301,48 @@ pub fn (session &VSlimSessionStore) path_value() string {
 	return session.path.trim_space()
 }
 
-@[php_method: 'setDomain']
+@[vphp.PhpExportMethod(name: 'setDomain')]
 pub fn (mut session VSlimSessionStore) set_domain(domain string) &VSlimSessionStore {
 	session.domain = domain.trim_space()
 	return &session
 }
 
-@[php_method: 'domain']
+@[vphp.PhpExportMethod(name: 'domain')]
 pub fn (session &VSlimSessionStore) domain_value() string {
 	return session.domain.trim_space()
 }
 
-@[php_method: 'setSecure']
+@[vphp.PhpExportMethod(name: 'setSecure')]
 pub fn (mut session VSlimSessionStore) set_secure(secure bool) &VSlimSessionStore {
 	session.secure = secure
 	return &session
 }
 
-@[php_method: 'secure']
+@[vphp.PhpExportMethod(name: 'secure')]
 pub fn (session &VSlimSessionStore) secure_value() bool {
 	return session.secure
 }
 
-@[php_arg_name: 'http_only=httpOnly']
-@[php_method: 'setHttpOnly']
+@[vphp.PhpArgName(v_name: 'http_only', php_name: 'httpOnly')]
+@[vphp.PhpExportMethod(name: 'setHttpOnly')]
 pub fn (mut session VSlimSessionStore) set_http_only(http_only bool) &VSlimSessionStore {
 	session.http_only = http_only
 	return &session
 }
 
-@[php_method: 'httpOnly']
+@[vphp.PhpExportMethod(name: 'httpOnly')]
 pub fn (session &VSlimSessionStore) http_only_value() bool {
 	return session.http_only
 }
 
-@[php_arg_name: 'same_site=sameSite']
-@[php_method: 'setSameSite']
+@[vphp.PhpArgName(v_name: 'same_site', php_name: 'sameSite')]
+@[vphp.PhpExportMethod(name: 'setSameSite')]
 pub fn (mut session VSlimSessionStore) set_same_site(same_site string) &VSlimSessionStore {
 	session.same_site = same_site.trim_space().to_lower()
 	return &session
 }
 
-@[php_method: 'sameSite']
+@[vphp.PhpExportMethod(name: 'sameSite')]
 pub fn (session &VSlimSessionStore) same_site_value() string {
 	if session.same_site.trim_space() == '' {
 		return 'lax'
@@ -350,7 +350,7 @@ pub fn (session &VSlimSessionStore) same_site_value() string {
 	return session.same_site.trim_space()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut session VSlimSessionStore) load(request vphp.PhpObject) &VSlimSessionStore {
 	session.load_cookie_value(session_request_cookie(request, session.cookie_name_value()))
 	return &session
@@ -387,23 +387,19 @@ pub fn (mut session VSlimSessionStore) mark_clean() {
 	session.dirty = false
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (session &VSlimSessionStore) all() map[string]string {
 	return session.values.clone()
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=""']
-@[php_arg_optional: 'default_value']
-@[php_method]
+@[vphp.PhpStringParam('default_value', php_name: 'defaultValue', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (session &VSlimSessionStore) get(key string, default_value string) string {
 	return session.values[key] or { default_value }
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=""']
-@[php_arg_optional: 'default_value']
-@[php_method]
+@[vphp.PhpStringParam('default_value', php_name: 'defaultValue', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut session VSlimSessionStore) pull(key string, default_value string) string {
 	value := session.values[key] or { default_value }
 	if key in session.values {
@@ -413,7 +409,7 @@ pub fn (mut session VSlimSessionStore) pull(key string, default_value string) st
 	return value
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut session VSlimSessionStore) flash(key string, value string) &VSlimSessionStore {
 	session.values['${session_flash_prefix}${key}'] = value
 	session.dirty = true
@@ -421,23 +417,19 @@ pub fn (mut session VSlimSessionStore) flash(key string, value string) &VSlimSes
 	return &session
 }
 
-@[php_method: 'hasFlash']
+@[vphp.PhpExportMethod(name: 'hasFlash')]
 pub fn (session &VSlimSessionStore) has_flash(key string) bool {
 	return '${session_flash_prefix}${key}' in session.values
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=""']
-@[php_arg_optional: 'default_value']
-@[php_method: 'getFlash']
+@[vphp.PhpStringParam('default_value', php_name: 'defaultValue', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: 'getFlash')]
 pub fn (session &VSlimSessionStore) get_flash(key string, default_value string) string {
 	return session.values['${session_flash_prefix}${key}'] or { default_value }
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=""']
-@[php_arg_optional: 'default_value']
-@[php_method: 'pullFlash']
+@[vphp.PhpStringParam('default_value', php_name: 'defaultValue', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: 'pullFlash')]
 pub fn (mut session VSlimSessionStore) pull_flash(key string, default_value string) string {
 	flash_key := '${session_flash_prefix}${key}'
 	value := session.values[flash_key] or { default_value }
@@ -448,7 +440,7 @@ pub fn (mut session VSlimSessionStore) pull_flash(key string, default_value stri
 	return value
 }
 
-@[php_method: 'clearFlashes']
+@[vphp.PhpExportMethod(name: 'clearFlashes')]
 pub fn (mut session VSlimSessionStore) clear_flashes() &VSlimSessionStore {
 	mut changed := false
 	for key in session.values.keys() {
@@ -463,12 +455,12 @@ pub fn (mut session VSlimSessionStore) clear_flashes() &VSlimSessionStore {
 	return &session
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (session &VSlimSessionStore) has(key string) bool {
 	return key in session.values
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut session VSlimSessionStore) set(key string, value string) &VSlimSessionStore {
 	session.values[key] = value
 	session.dirty = true
@@ -476,14 +468,14 @@ pub fn (mut session VSlimSessionStore) set(key string, value string) &VSlimSessi
 	return &session
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut session VSlimSessionStore) forget(key string) &VSlimSessionStore {
 	session.values.delete(key)
 	session.dirty = true
 	return &session
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut session VSlimSessionStore) clear() &VSlimSessionStore {
 	session.values = map[string]string{}
 	session.dirty = true
@@ -491,7 +483,7 @@ pub fn (mut session VSlimSessionStore) clear() &VSlimSessionStore {
 	return &session
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut session VSlimSessionStore) destroy(response vphp.PhpObject) bool {
 	session.values = map[string]string{}
 	session.dirty = false
@@ -499,12 +491,12 @@ pub fn (mut session VSlimSessionStore) destroy(response vphp.PhpObject) bool {
 	return session.commit_cookie(response)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut session VSlimSessionStore) commit(response vphp.PhpObject) bool {
 	return session.commit_cookie(response)
 }
 
-@[php_method: 'isLoaded']
+@[vphp.PhpExportMethod(name: 'isLoaded')]
 pub fn (session &VSlimSessionStore) is_loaded() bool {
 	return session.loaded
 }

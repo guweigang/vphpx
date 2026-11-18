@@ -1,5 +1,6 @@
 module supportx
 
+import registrationx
 import pathutil
 import vphp
 
@@ -57,12 +58,28 @@ pub fn scandir_names(path string) []string {
 }
 
 pub fn include_once_file(path string) vphp.PhpValue {
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
+	}
 	return vphp.PhpIncludeFile.at(path).load_once()
+}
+
+pub fn load_bootstrap_php_file(path string) vphp.PhpValue {
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
+	}
+	return vphp.PhpIncludeFile.at(path).load()
 }
 
 pub fn class_exists(class_name string) bool {
 	if class_name.trim_space() == '' {
 		return false
+	}
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
 	}
 	mut class_arg := vphp.PhpString.of(class_name)
 	mut autoload_arg := vphp.PhpBool.of(true)

@@ -1,14 +1,15 @@
 module module_probex
 
 import eventx
+import vphp
 
-@[php_class: 'VSlim\\Dev\\PhpSignatureProbe']
+@[vphp.PhpExportClass(name: 'VSlim\\Dev\\PhpSignatureProbe')]
 @[heap]
 pub struct VSlimPhpSignatureProbe {
 mut:
-	provider_ref &eventx.VSlimPsr14ListenerProvider = unsafe { nil } @[php_ignore]
+	provider_ref &eventx.VSlimPsr14ListenerProvider = unsafe { nil } @[vphp.PhpIgnoreField]
 }
 
-@[php_class: 'VSlim\\Debug\\ObjectProbe']
+@[vphp.PhpExportClass(name: 'VSlim\\Debug\\ObjectProbe')]
 @[heap]
 pub struct VSlimDebugObjectProbe {}

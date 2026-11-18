@@ -1,32 +1,18 @@
 # VSlim\Container
 
-`VSlim\Container` 是 VSlim 内置的 PSR-11 容器实现。它来自 `vslim.so`，不是用户态 PHP 写出来的 mock。
-
-真理之源：
-
-- [`src/container.v`](vslim/src/container.v)
-- [`src/bridge.v`](vslim/src/bridge.v)
-- [`tests/test_vslim_container_psr11_ext.phpt`](vslim/tests/test_vslim_container_psr11_ext.phpt)
-- [`tests/test_vslim_container_route_handler.phpt`](vslim/tests/test_vslim_container_route_handler.phpt)
+`VSlim\Container` 是由 VSlim 扩展提供的 PSR-11 容器实现。容器和异常类的声明位于 [`src/containerx/container.v`](../../src/containerx/container.v)。
 
 ## 依赖
 
 `VSlim\Container` 本身不要求额外的 `psr` 扩展。
 
-如果运行时已经通过 Composer 或其他方式提供了 `Psr\Container\*` 接口，
-`VSlim\Container` 与相关异常类会在首次实例化 / 抛出时自动完成运行时晚绑定。
-真理之源见：
+VSlim 在首次使用容器或其异常类时，会通过 Composer 等自动加载机制查找并绑定 PHP 用户态的 `Psr\Container\*` 接口。相关行为由 [容器接口测试](../../tests/test_vslim_container_psr11_ext.phpt) 和 [路由处理器测试](../../tests/test_vslim_container_route_handler.phpt) 覆盖。
 
-- [`src/container.v`](vslim/src/container.v)
-- [`src/bridge.v`](vslim/src/bridge.v)
-- [`tests/test_vslim_container_psr11_ext.phpt`](vslim/tests/test_vslim_container_psr11_ext.phpt)
+- `VSlim\Container` 使用 `@[vphp.PhpImplements(names: 'Psr\\Container\\ContainerInterface')]`
+- `VSlim\Container\ContainerException` 使用 `@[vphp.PhpImplements(names: 'Psr\\Container\\ContainerExceptionInterface')]`
+- `VSlim\Container\NotFoundException` 使用 `@[vphp.PhpImplements(names: 'Psr\\Container\\NotFoundExceptionInterface')]`
 
-实现方式：
-
-- `VSlim\Container` 通过 `@[php_implements: 'Psr\\Container\\ContainerInterface']` 声明 PSR-11 关系
-- `VSlim\Container\ContainerException` 通过 `@[php_implements: 'Psr\\Container\\ContainerExceptionInterface']` 声明容器异常关系
-- `VSlim\Container\NotFoundException` 通过 `@[php_implements: 'Psr\\Container\\NotFoundExceptionInterface']` 声明 not-found 异常关系
-- 这些 userland 接口绑定会由编译器自动生成到 `vphp_ext_auto_startup()`，不需要再手写 `vphp_ext_startup()`
+VPHP 把这三项绑定的注册代码生成到 `vphp_ext_auto_startup()`。
 
 ## 基本用法
 
@@ -87,7 +73,7 @@ try {
 `App` 有两个入口：
 
 - `container()`
-- `set_container()`
+- `setContainer()`
 
 最常见：
 

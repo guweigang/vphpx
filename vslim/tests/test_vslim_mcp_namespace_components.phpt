@@ -10,30 +10,40 @@ if (!extension_loaded('vslim')) {
 <?php
 declare(strict_types=1);
 
-$mcp = (new VSlim\Mcp\App())
+$constructor = new ReflectionMethod(VSlim\Mcp\App::class, '__construct');
+echo $constructor->getNumberOfRequiredParameters(), "\n";
+foreach ($constructor->getParameters() as $parameter) {
+    echo $parameter->getName(), ':', $parameter->getType(), '=', json_encode($parameter->getDefaultValue()), "\n";
+}
+$tool = new ReflectionMethod(VSlim\Mcp\App::class, 'tool');
+echo $tool->getNumberOfRequiredParameters(), ' ', $tool->getReturnType(), "\n";
+foreach ($tool->getParameters() as $parameter) {
+    echo $parameter->getName(), ':', $parameter->getType(), "\n";
+}
+$dispatch = new ReflectionMethod(VSlim\App::class, 'handleMcpDispatch');
+$frame = $dispatch->getParameters()[0];
+echo $frame->getName(), ':', $frame->getType(), ' -> ', $dispatch->getReturnType(), "\n";
+
+$mcp = (new VSlim\Mcp\App(serverCapabilities: ['logging' => [], 'sampling' => []]))
     ->serverInfo(['name' => 'vslim-mcp-demo', 'version' => '0.1.0'])
-    ->capabilities([
-        'logging' => [],
-        'sampling' => [],
-    ])
     ->tool(
-        'echo',
-        'Echo text',
-        [
+        inputSchema: [
             'type' => 'object',
             'properties' => [
                 'text' => ['type' => 'string'],
             ],
             'required' => ['text'],
         ],
-        static function (array $arguments): array {
+        handler: static function (array $arguments): array {
             return [
                 'content' => [
                     ['type' => 'text', 'text' => (string) ($arguments['text'] ?? '')],
                 ],
                 'isError' => false,
             ];
-        }
+        },
+        description: 'Echo text',
+        name: 'echo',
     )
     ->resource(
         'resource://demo/readme',
@@ -279,7 +289,7 @@ $app->mcp()
         }
     );
 echo ($app->hasMcp() ? "app_has_mcp\n" : "app_missing_mcp\n");
-$attached = $app->handleMcpDispatch([
+$attached = $app->handleMcpDispatch(frame: [
     'protocol_version' => '2025-11-05',
     'jsonrpc_raw' => json_encode([
         'jsonrpc' => '2.0',
@@ -289,8 +299,24 @@ $attached = $app->handleMcpDispatch([
 ]);
 $attachedBody = json_decode($attached['body'], true);
 echo $attachedBody['result']['tools'][0]['name'] . "\n";
+
+$app->setMcp(server: $mcp);
+$missing = $app->handleMcpDispatch(frame: [
+    'jsonrpc_raw' => '{"jsonrpc":"2.0","id":11,"method":"missing"}',
+]);
+$error = json_decode($missing['body'], true);
+echo $missing['status'], ' ', $error['id'], ' ', $error['error']['code'], "\n";
 ?>
 --EXPECT--
+0
+serverInfo:?array=[]
+serverCapabilities:?array=[]
+4 VSlim\Mcp\App
+name:string
+description:string
+inputSchema:array
+handler:callable
+frame:array -> array
 vslim-mcp-demo
 logging
 sampling
@@ -316,3 +342,4 @@ has_roots
 require_skipped
 app_has_mcp
 echo
+200 11 -32601

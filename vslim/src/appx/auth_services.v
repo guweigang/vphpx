@@ -3,18 +3,18 @@ module appx
 import sessionx
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (app &VSlimApp) session(request vphp.PhpObject) &sessionx.VSlimSessionStore {
 	return sessionx.VSlimSessionStore.from_config_and_request(app.config_ref, request)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (app &VSlimApp) auth(request vphp.PhpObject) &sessionx.VSlimAuthSessionGuard {
 	mut session := app.session(request)
 	return sessionx.VSlimAuthSessionGuard.from_store_and_config(session, app.config_ref)
 }
 
-@[php_method: 'setAuthUserResolver']
+@[vphp.PhpExportMethod(name: 'setAuthUserResolver')]
 pub fn (mut app VSlimApp) set_auth_user_resolver(resolver vphp.PhpCallable) &VSlimApp {
 	app.auth_user_resolver.release()
 	app.auth_user_resolver = resolver.retain().to_value()
@@ -22,7 +22,7 @@ pub fn (mut app VSlimApp) set_auth_user_resolver(resolver vphp.PhpCallable) &VSl
 	return &app
 }
 
-@[php_method: 'setAuthUserProvider']
+@[vphp.PhpExportMethod(name: 'setAuthUserProvider')]
 pub fn (mut app VSlimApp) set_auth_user_provider(provider vphp.PhpValue) &VSlimApp {
 	if sessionx.is_auth_user_provider(provider) {
 		app.auth_user_resolver.release()
@@ -35,7 +35,7 @@ pub fn (mut app VSlimApp) set_auth_user_provider(provider vphp.PhpValue) &VSlimA
 	return &app
 }
 
-@[php_method: 'setAuthGateResolver']
+@[vphp.PhpExportMethod(name: 'setAuthGateResolver')]
 pub fn (mut app VSlimApp) set_auth_gate_resolver(resolver vphp.PhpCallable) &VSlimApp {
 	app.auth_gate_resolver.release()
 	app.auth_gate_resolver = resolver.retain()
@@ -43,29 +43,29 @@ pub fn (mut app VSlimApp) set_auth_gate_resolver(resolver vphp.PhpCallable) &VSl
 	return &app
 }
 
-@[php_method: 'setAuthRedirectTo']
+@[vphp.PhpExportMethod(name: 'setAuthRedirectTo')]
 pub fn (mut app VSlimApp) set_auth_redirect_path(path string) &VSlimApp {
 	app.auth_redirect_path = path.trim_space()
 	return &app
 }
 
-@[php_method: 'hasAuthUserProvider']
+@[vphp.PhpExportMethod(name: 'hasAuthUserProvider')]
 pub fn (app &VSlimApp) has_auth_user_provider() bool {
 	return sessionx.is_auth_user_provider(app.auth_user_resolver)
 }
 
-@[php_method: 'authRedirectTo']
+@[vphp.PhpExportMethod(name: 'authRedirectTo')]
 pub fn (app &VSlimApp) auth_redirect_to() string {
 	return app.auth_redirect_path.trim_space()
 }
 
-@[php_method: 'resolveAuthUser']
-@[php_arg_name: 'user_id=userId']
+@[vphp.PhpExportMethod(name: 'resolveAuthUser')]
+@[vphp.PhpArgName(v_name: 'user_id', php_name: 'userId')]
 pub fn (app &VSlimApp) resolve_auth_user(user_id string) vphp.PhpValue {
 	return sessionx.resolve_auth_user(app.auth_user_resolver, user_id)
 }
 
-@[php_method: 'authUser']
+@[vphp.PhpExportMethod(name: 'authUser')]
 pub fn (app &VSlimApp) auth_user(request vphp.PhpObject) vphp.PhpValue {
 	mut guard := app.auth(request)
 	if !guard.check() {
@@ -79,26 +79,26 @@ pub fn (app &VSlimApp) auth_user(request vphp.PhpObject) vphp.PhpValue {
 	return user.to_request_owned()
 }
 
-@[php_method: 'authCheck']
+@[vphp.PhpExportMethod(name: 'authCheck')]
 pub fn (app &VSlimApp) auth_check(request vphp.PhpObject) bool {
 	mut guard := app.auth(request)
 	return guard.check()
 }
 
-@[php_method: 'authGuest']
+@[vphp.PhpExportMethod(name: 'authGuest')]
 pub fn (app &VSlimApp) auth_guest(request vphp.PhpObject) bool {
 	mut guard := app.auth(request)
 	return guard.guest()
 }
 
-@[php_method: 'authId']
+@[vphp.PhpExportMethod(name: 'authId')]
 pub fn (app &VSlimApp) auth_id(request vphp.PhpObject) string {
 	mut guard := app.auth(request)
 	return guard.id()
 }
 
-@[php_arg_name: 'user_id=userId']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'user_id', php_name: 'userId')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (app &VSlimApp) login(request vphp.PhpObject, response vphp.PhpObject, user_id string) bool {
 	mut guard := app.auth(request)
 	guard.login(user_id)
@@ -106,7 +106,7 @@ pub fn (app &VSlimApp) login(request vphp.PhpObject, response vphp.PhpObject, us
 	return store.commit(response)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (app &VSlimApp) logout(request vphp.PhpObject, response vphp.PhpObject) bool {
 	mut guard := app.auth(request)
 	guard.logout()
@@ -114,7 +114,7 @@ pub fn (app &VSlimApp) logout(request vphp.PhpObject, response vphp.PhpObject) b
 	return store.destroy(response)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (app &VSlimApp) can(ability string, request vphp.PhpObject) bool {
 	normalized := ability.trim_space().to_lower()
 	mut guard := app.auth(request)
@@ -140,13 +140,13 @@ pub fn (app &VSlimApp) can(ability string, request vphp.PhpObject) bool {
 	return result.to_bool()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (app &VSlimApp) cannot(ability string, request vphp.PhpObject) bool {
 	return !app.can(ability, request)
 }
 
-@[php_return_type: 'Psr\\Http\\Server\\MiddlewareInterface']
-@[php_method: 'startSessionMiddleware']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Server\\MiddlewareInterface')]
+@[vphp.PhpExportMethod(name: 'startSessionMiddleware')]
 pub fn (app &VSlimApp) start_session_middleware() &sessionx.VSlimSessionStartMiddleware {
 	unsafe {
 		mut writable := &VSlimApp(app)
@@ -154,8 +154,8 @@ pub fn (app &VSlimApp) start_session_middleware() &sessionx.VSlimSessionStartMid
 	}
 }
 
-@[php_return_type: 'Psr\\Http\\Server\\MiddlewareInterface']
-@[php_method: 'authMiddleware']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Server\\MiddlewareInterface')]
+@[vphp.PhpExportMethod(name: 'authMiddleware')]
 pub fn (app &VSlimApp) auth_middleware() &sessionx.VSlimAuthRequireMiddleware {
 	unsafe {
 		mut writable := &VSlimApp(app)
@@ -164,8 +164,8 @@ pub fn (app &VSlimApp) auth_middleware() &sessionx.VSlimAuthRequireMiddleware {
 	}
 }
 
-@[php_return_type: 'Psr\\Http\\Server\\MiddlewareInterface']
-@[php_method: 'guestMiddleware']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Server\\MiddlewareInterface')]
+@[vphp.PhpExportMethod(name: 'guestMiddleware')]
 pub fn (app &VSlimApp) guest_middleware() &sessionx.VSlimAuthGuestMiddleware {
 	unsafe {
 		mut writable := &VSlimApp(app)
@@ -174,8 +174,8 @@ pub fn (app &VSlimApp) guest_middleware() &sessionx.VSlimAuthGuestMiddleware {
 	}
 }
 
-@[php_return_type: 'Psr\\Http\\Server\\MiddlewareInterface']
-@[php_method: 'abilityMiddleware']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Server\\MiddlewareInterface')]
+@[vphp.PhpExportMethod(name: 'abilityMiddleware')]
 pub fn (app &VSlimApp) ability_middleware(ability string) &sessionx.VSlimAuthRequireAbilityMiddleware {
 	unsafe {
 		mut writable := &VSlimApp(app)

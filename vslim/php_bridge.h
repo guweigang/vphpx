@@ -42,6 +42,7 @@ extern zend_class_entry *vslim__psr6__invalidargumentexception_ce;
 extern zend_class_entry *vslim__psr6__cacheitem_ce;
 extern zend_class_entry *vslim__psr6__cacheitempool_ce;
 extern zend_class_entry *vslim__routegroup_ce;
+extern zend_class_entry *vslim__app__feishu__botapp_ce;
 extern zend_class_entry *vslim__view_ce;
 extern zend_class_entry *vslim__app_ce;
 extern zend_class_entry *vslim__psr20__clock_ce;

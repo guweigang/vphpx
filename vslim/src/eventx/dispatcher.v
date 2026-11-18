@@ -2,7 +2,7 @@ module eventx
 
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut provider VSlimPsr14ListenerProvider) construct() &VSlimPsr14ListenerProvider {
 	if provider.listeners.len == 0 {
 		provider.listeners = map[string][]vphp.PhpCallable{}
@@ -16,8 +16,8 @@ pub fn VSlimPsr14ListenerProvider.new_default() &VSlimPsr14ListenerProvider {
 	return provider
 }
 
-@[php_arg_name: 'event_class=eventClass']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'event_class', php_name: 'eventClass')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut provider VSlimPsr14ListenerProvider) listen(event_class string, listener vphp.PhpCallable) &VSlimPsr14ListenerProvider {
 	provider.ensure()
 	key := normalize_psr14_event_key(event_class)
@@ -32,12 +32,12 @@ pub fn (mut provider VSlimPsr14ListenerProvider) listen(event_class string, list
 	return &provider
 }
 
-@[php_method: 'listenAny']
+@[vphp.PhpExportMethod(name: 'listenAny')]
 pub fn (mut provider VSlimPsr14ListenerProvider) listen_any(listener vphp.PhpCallable) &VSlimPsr14ListenerProvider {
 	return provider.listen('*', listener)
 }
 
-@[php_method: 'listenerCount']
+@[vphp.PhpExportMethod(name: 'listenerCount')]
 pub fn (provider &VSlimPsr14ListenerProvider) listener_count() int {
 	mut count := 0
 	for _, listeners in provider.listeners {
@@ -46,8 +46,8 @@ pub fn (provider &VSlimPsr14ListenerProvider) listener_count() int {
 	return count
 }
 
-@[php_method: 'getListenersForEvent']
-@[php_return_type: 'iterable']
+@[vphp.PhpExportMethod(name: 'getListenersForEvent')]
+@[vphp.PhpReturnType(php_type: 'iterable')]
 pub fn (provider &VSlimPsr14ListenerProvider) get_listeners_for_event(event vphp.PhpObject) vphp.PhpValue {
 	mut out := vphp.PhpArray.new()
 	for listener in provider.listeners_for_event(event) {
@@ -58,7 +58,7 @@ pub fn (provider &VSlimPsr14ListenerProvider) get_listeners_for_event(event vphp
 	return out.take_value()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) construct() &VSlimPsr14EventDispatcher {
 	dispatcher.ensure()
 	return &dispatcher
@@ -71,37 +71,37 @@ pub fn VSlimPsr14EventDispatcher.from_provider(provider &VSlimPsr14ListenerProvi
 	return dispatcher
 }
 
-@[php_arg_type: 'provider=Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'setProvider']
+@[vphp.PhpArgType(v_name: 'provider', php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'setProvider')]
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) set_provider(provider &VSlimPsr14ListenerProvider) &VSlimPsr14EventDispatcher {
 	dispatcher.provider_ref = provider
 	return &dispatcher
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) provider() &VSlimPsr14ListenerProvider {
 	dispatcher.ensure()
 	return dispatcher.provider_ref
 }
 
-@[php_arg_name: 'event_class=eventClass']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'event_class', php_name: 'eventClass')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) listen(event_class string, listener vphp.PhpCallable) &VSlimPsr14EventDispatcher {
 	mut provider := dispatcher.provider()
 	provider.listen(event_class, listener)
 	return &dispatcher
 }
 
-@[php_method: 'listenAny']
+@[vphp.PhpExportMethod(name: 'listenAny')]
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) listen_any(listener vphp.PhpCallable) &VSlimPsr14EventDispatcher {
 	mut provider := dispatcher.provider()
 	provider.listen_any(listener)
 	return &dispatcher
 }
 
-@[php_method: 'dispatch']
-@[php_return_type: 'object']
+@[vphp.PhpExportMethod(name: 'dispatch')]
+@[vphp.PhpReturnType(php_type: 'object')]
 pub fn (mut dispatcher VSlimPsr14EventDispatcher) dispatch(event vphp.PhpObject) vphp.PhpObject {
 	if psr14_propagation_stopped(event) {
 		return event.to_request_owned()

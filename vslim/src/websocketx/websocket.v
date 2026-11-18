@@ -2,22 +2,21 @@ module websocketx
 
 import vphp
 
-@[php_attr: 'VHttpd\\Attribute\\Dispatchable("websocket")']
-@[php_class: 'VSlim\\WebSocket\\App']
+@[vphp.PhpClassAttribute(name: 'VHttpd\\Attribute\\Dispatchable', args: '"websocket"')]
+@[vphp.PhpExportClass(name: 'VSlim\\WebSocket\\App')]
 @[heap]
 pub struct VSlimWebSocketApp {
 mut:
-	on_open_handler    vphp.PhpCallable = vphp.PhpCallable.invalid() @[php_ignore]
-	on_message_handler vphp.PhpCallable = vphp.PhpCallable.invalid() @[php_ignore]
-	on_close_handler   vphp.PhpCallable = vphp.PhpCallable.invalid() @[php_ignore]
+	on_open_handler    vphp.PhpCallable = vphp.PhpCallable.invalid() @[vphp.PhpIgnoreField]
+	on_message_handler vphp.PhpCallable = vphp.PhpCallable.invalid() @[vphp.PhpIgnoreField]
+	on_close_handler   vphp.PhpCallable = vphp.PhpCallable.invalid() @[vphp.PhpIgnoreField]
 	connections        map[string]vphp.PhpObject
 	rooms              map[string][]string
 }
 
-@[php_arg_default(on_open: 'null', on_message: 'null', on_close: 'null')]
-@[php_arg_name(on_open: 'onOpen', on_message: 'onMessage', on_close: 'onClose')]
-@[php_arg_optional(on_open: true, on_message: true, on_close: true)]
-@[php_method]
+@[vphp.PhpArgDefaults(defaults: 'on_open=null,on_message=null,on_close=null')]
+@[vphp.PhpArgNames(names: 'on_open=onOpen,on_message=onMessage,on_close=onClose')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimWebSocketApp) construct(on_open ?vphp.PhpCallable, on_message ?vphp.PhpCallable, on_close ?vphp.PhpCallable) &VSlimWebSocketApp {
 	app.on_open_handler = vphp.PhpCallable.invalid()
 	app.on_message_handler = vphp.PhpCallable.invalid()
@@ -36,19 +35,19 @@ pub fn (mut app VSlimWebSocketApp) construct(on_open ?vphp.PhpCallable, on_messa
 	return &app
 }
 
-@[php_method: 'onOpen']
+@[vphp.PhpExportMethod(name: 'onOpen')]
 pub fn (mut app VSlimWebSocketApp) on_open(handler vphp.PhpCallable) &VSlimWebSocketApp {
 	app.store_on_open_handler(handler)
 	return &app
 }
 
-@[php_method: 'onMessage']
+@[vphp.PhpExportMethod(name: 'onMessage')]
 pub fn (mut app VSlimWebSocketApp) on_message(handler vphp.PhpCallable) &VSlimWebSocketApp {
 	app.store_on_message_handler(handler)
 	return &app
 }
 
-@[php_method: 'onClose']
+@[vphp.PhpExportMethod(name: 'onClose')]
 pub fn (mut app VSlimWebSocketApp) on_close(handler vphp.PhpCallable) &VSlimWebSocketApp {
 	app.store_on_close_handler(handler)
 	return &app
@@ -69,22 +68,22 @@ fn (mut app VSlimWebSocketApp) store_on_close_handler(handler vphp.PhpCallable) 
 	app.on_close_handler = handler.retain()
 }
 
-@[php_method: 'hasOnOpen']
+@[vphp.PhpExportMethod(name: 'hasOnOpen')]
 pub fn (app &VSlimWebSocketApp) has_on_open() bool {
 	return is_ws_handler_valid(app.on_open_handler)
 }
 
-@[php_method: 'hasOnMessage']
+@[vphp.PhpExportMethod(name: 'hasOnMessage')]
 pub fn (app &VSlimWebSocketApp) has_on_message() bool {
 	return is_ws_handler_valid(app.on_message_handler)
 }
 
-@[php_method: 'hasOnClose']
+@[vphp.PhpExportMethod(name: 'hasOnClose')]
 pub fn (app &VSlimWebSocketApp) has_on_close() bool {
 	return is_ws_handler_valid(app.on_close_handler)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimWebSocketApp) remember(conn vphp.PhpObject) &VSlimWebSocketApp {
 	id := websocket_connection_id(conn)
 	if id == '' {
@@ -98,8 +97,8 @@ pub fn (mut app VSlimWebSocketApp) remember(conn vphp.PhpObject) &VSlimWebSocket
 	return &app
 }
 
-@[php_arg_name: 'conn_or_id=connOrId']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'conn_or_id', php_name: 'connOrId')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimWebSocketApp) forget(conn_or_id vphp.PhpValue) &VSlimWebSocketApp {
 	id := websocket_conn_key(conn_or_id)
 	if id == '' {
@@ -114,15 +113,15 @@ pub fn (mut app VSlimWebSocketApp) forget(conn_or_id vphp.PhpValue) &VSlimWebSoc
 	return &app
 }
 
-@[php_arg_name: 'conn_or_id=connOrId']
-@[php_method: 'hasConnection']
+@[vphp.PhpArgName(v_name: 'conn_or_id', php_name: 'connOrId')]
+@[vphp.PhpExportMethod(name: 'hasConnection')]
 pub fn (app &VSlimWebSocketApp) has_connection(conn_or_id vphp.PhpValue) bool {
 	id := websocket_conn_key(conn_or_id)
 	return id != '' && id in app.connections
 }
 
-@[php_arg_name: 'conn_or_id=connOrId']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'conn_or_id', php_name: 'connOrId')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimWebSocketApp) join(room string, conn_or_id vphp.PhpValue) &VSlimWebSocketApp {
 	id := websocket_conn_key(conn_or_id)
 	key := normalize_ws_room(room)
@@ -137,8 +136,8 @@ pub fn (mut app VSlimWebSocketApp) join(room string, conn_or_id vphp.PhpValue) &
 	return &app
 }
 
-@[php_arg_name: 'conn_or_id=connOrId']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'conn_or_id', php_name: 'connOrId')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimWebSocketApp) leave(room string, conn_or_id vphp.PhpValue) &VSlimWebSocketApp {
 	id := websocket_conn_key(conn_or_id)
 	key := normalize_ws_room(room)
@@ -154,7 +153,7 @@ pub fn (mut app VSlimWebSocketApp) leave(room string, conn_or_id vphp.PhpValue) 
 	return &app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (app &VSlimWebSocketApp) members(room string) []string {
 	key := normalize_ws_room(room)
 	if key == '' {
@@ -163,15 +162,15 @@ pub fn (app &VSlimWebSocketApp) members(room string) []string {
 	return (app.rooms[key] or { []string{} }).clone()
 }
 
-@[php_method: 'connectionIds']
+@[vphp.PhpExportMethod(name: 'connectionIds')]
 pub fn (app &VSlimWebSocketApp) connection_ids() []string {
 	mut ids := app.connections.keys()
 	ids.sort()
 	return ids
 }
 
-@[php_arg_name: 'conn_or_id=connOrId']
-@[php_method: 'roomsFor']
+@[vphp.PhpArgName(v_name: 'conn_or_id', php_name: 'connOrId')]
+@[vphp.PhpExportMethod(name: 'roomsFor')]
 pub fn (app &VSlimWebSocketApp) rooms_for(conn_or_id vphp.PhpValue) []string {
 	id := websocket_conn_key(conn_or_id)
 	if id == '' {
@@ -187,8 +186,8 @@ pub fn (app &VSlimWebSocketApp) rooms_for(conn_or_id vphp.PhpValue) []string {
 	return names
 }
 
-@[php_arg_name: 'conn_or_id=connOrId']
-@[php_method: 'sendTo']
+@[vphp.PhpArgName(v_name: 'conn_or_id', php_name: 'connOrId')]
+@[vphp.PhpExportMethod(name: 'sendTo')]
 pub fn (app &VSlimWebSocketApp) send_to(conn_or_id vphp.PhpValue, data string) bool {
 	id := websocket_conn_key(conn_or_id)
 	return app.send_to_connection_id(id, data)
@@ -214,8 +213,8 @@ fn (app &VSlimWebSocketApp) send_to_connection_id(id string, data string) bool {
 	})
 }
 
-@[php_arg_name: 'except_id=exceptId']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'except_id', php_name: 'exceptId')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (app &VSlimWebSocketApp) broadcast(data string, room string, except_id string) int {
 	target_room := normalize_ws_room(room)
 	except := except_id.trim_space()
@@ -244,12 +243,12 @@ pub fn (app &VSlimWebSocketApp) broadcast(data string, room string, except_id st
 	return sent
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimWebSocketApp) handle(frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
 	return app.handle_websocket(frame, conn)
 }
 
-@[php_method: 'handleWebSocket']
+@[vphp.PhpExportMethod(name: 'handleWebSocket')]
 pub fn (mut app VSlimWebSocketApp) handle_websocket(frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
 	event := frame.string_at('event', '').trim_space().to_lower()
 	match event {

@@ -42,16 +42,16 @@ pub mut:
 	dispatcher            Psr15NextDispatcher = unsafe { nil }
 }
 
-@[php_implements: 'Psr\\Http\\Server\\RequestHandlerInterface']
-@[php_class: 'VSlim\\Psr15\\NextHandler']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Server\\RequestHandlerInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr15\\NextHandler')]
 @[heap]
 pub struct VSlimPsr15NextHandler {
 pub mut:
 	state Psr15NextHandlerState
 }
 
-@[php_implements: 'Psr\\Http\\Server\\RequestHandlerInterface']
-@[php_class: 'VSlim\\Psr15\\ContinueHandler']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Server\\RequestHandlerInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr15\\ContinueHandler')]
 @[heap]
 pub struct VSlimPsr15ContinueHandler {
 pub mut:
@@ -131,9 +131,9 @@ pub fn (mut state Psr15NextHandlerState) dispatch_next(key u64, request vphp.Php
 	}
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'handle']
+@[vphp.PhpArgType(v_name: 'request', php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'handle')]
 pub fn (handler &VSlimPsr15NextHandler) handle(request vphp.PhpObject) &httpx.VSlimPsr7Response {
 	unsafe {
 		mut writable := &VSlimPsr15NextHandler(handler)
@@ -148,9 +148,9 @@ pub fn (handler &VSlimPsr15NextHandler) handle(request vphp.PhpObject) &httpx.VS
 	}
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'handle']
+@[vphp.PhpArgType(v_name: 'request', php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'handle')]
 pub fn (handler &VSlimPsr15ContinueHandler) handle(request vphp.PhpObject) &httpx.VSlimPsr7Response {
 	unsafe {
 		mut writable := &VSlimPsr15ContinueHandler(handler)

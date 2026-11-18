@@ -2,7 +2,7 @@ module streamx
 
 import vphp
 
-@[php_method: 'openStream']
+@[vphp.PhpExportMethod(name: 'openStream')]
 pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.PhpArray) vphp.PhpArray {
 	fixture := c.fixture_path_value()
 	if fixture != '' {
@@ -95,10 +95,8 @@ pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.PhpArray) vphp.PhpA
 	return new_open_stream_result(true, fp.to_borrowed(), '', status, c.chat_url_value())
 }
 
-@[php_arg_name(output_mode: 'outputMode')]
-@[php_arg_default(output_mode: '"sse"')]
-@[php_arg_optional(output_mode: true)]
-@[php_method: 'upstreamPlan']
+@[vphp.PhpStringParam('output_mode', php_name: 'outputMode', default_value: 'sse', optional: true)]
+@[vphp.PhpExportMethod(name: 'upstreamPlan')]
 pub fn (c &VSlimStreamOllamaClient) upstream_plan(payload vphp.PhpArray, output_mode string) vphp.PhpValue {
 	mode := if output_mode.trim_space().to_lower() == 'text' { 'text' } else { 'sse' }
 	mapper := if mode == 'text' { 'ndjson_text_field' } else { 'ndjson_sse_field' }
@@ -149,8 +147,8 @@ pub fn (c &VSlimStreamOllamaClient) upstream_plan(payload vphp.PhpArray, output_
 		response_headers, fixture_arg, name_arg, meta)
 }
 
-@[php_arg_name(request_payload: 'requestPayload')]
-@[php_method: 'upstreamTextPlanFromRequest']
+@[vphp.PhpArgName(v_name: 'request_payload', php_name: 'requestPayload')]
+@[vphp.PhpExportMethod(name: 'upstreamTextPlanFromRequest')]
 pub fn (c &VSlimStreamOllamaClient) upstream_text_plan_from_request(request_payload vphp.PhpValue) vphp.PhpValue {
 	mut payload := c.payload_from_request(request_payload)
 	defer {
@@ -159,8 +157,8 @@ pub fn (c &VSlimStreamOllamaClient) upstream_text_plan_from_request(request_payl
 	return c.upstream_plan(payload, 'text')
 }
 
-@[php_arg_name(request_payload: 'requestPayload')]
-@[php_method: 'upstreamSsePlanFromRequest']
+@[vphp.PhpArgName(v_name: 'request_payload', php_name: 'requestPayload')]
+@[vphp.PhpExportMethod(name: 'upstreamSsePlanFromRequest')]
 pub fn (c &VSlimStreamOllamaClient) upstream_sse_plan_from_request(request_payload vphp.PhpValue) vphp.PhpValue {
 	mut payload := c.payload_from_request(request_payload)
 	defer {
@@ -169,10 +167,9 @@ pub fn (c &VSlimStreamOllamaClient) upstream_sse_plan_from_request(request_paylo
 	return c.upstream_plan(payload, 'sse')
 }
 
-@[php_arg_name(request_payload: 'requestPayload', output_mode: 'outputMode')]
-@[php_arg_default(output_mode: '"sse"')]
-@[php_arg_optional(output_mode: true)]
-@[php_method: 'upstreamPlanFromRequest']
+@[vphp.PhpArgName(v_name: 'request_payload', php_name: 'requestPayload')]
+@[vphp.PhpStringParam('output_mode', php_name: 'outputMode', default_value: 'sse', optional: true)]
+@[vphp.PhpExportMethod(name: 'upstreamPlanFromRequest')]
 pub fn (c &VSlimStreamOllamaClient) upstream_plan_from_request(request_payload vphp.PhpValue, output_mode string) vphp.PhpValue {
 	mut payload := c.payload_from_request(request_payload)
 	defer {

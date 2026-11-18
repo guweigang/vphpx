@@ -1,11 +1,12 @@
 module testingx
 
 import containerx
+import vphp
 
-@[php_class: 'VSlim\\Testing\\Harness']
+@[vphp.PhpExportClass(name: 'VSlim\\Testing\\Harness')]
 @[heap]
 pub struct VSlimTestingHarness {
 mut:
-	container_ref &containerx.VSlimContainer = unsafe { nil } @[php_ignore]
+	container_ref &containerx.VSlimContainer = unsafe { nil } @[vphp.PhpIgnoreField]
 	cookies       map[string]string
 }

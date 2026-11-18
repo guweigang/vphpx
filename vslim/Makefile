@@ -137,8 +137,8 @@ serve-embedded: server server-extension
 app-image:
 	php $(ROOT)/templates/app/bin/vslim build
 
-# Default test target stays fast on purpose. Heavy httpd/vhttpd/worker
-# integration PHPTs are split out into `make runtime-check`.
+# Default testing runs the architecture scan and lightweight PHPTs.
+# See `make runtime-check` for the worker integration PHPTs.
 test: build
 	@VHTTPD_ROOT="$(VHTTPD_ROOT)" VHTTPD_BIN="$(VHTTPD_BIN)" ./run_tests.sh
 

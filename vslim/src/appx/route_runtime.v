@@ -4,7 +4,7 @@ import routex
 import vphp
 import websocketx
 
-@[php_method: 'handleWebSocket']
+@[vphp.PhpExportMethod(name: 'handleWebSocket')]
 pub fn (mut app VSlimApp) handle_websocket(frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
 	route_frame := websocketx.select_route_frame(mut app.websocket_conn_route, app.websocket_routes,
 		frame)
@@ -21,45 +21,45 @@ pub fn (mut app VSlimApp) handle_websocket(frame vphp.PhpArray, conn vphp.PhpObj
 	return result
 }
 
-@[php_method: 'routeCount']
+@[vphp.PhpExportMethod(name: 'routeCount')]
 pub fn (app &VSlimApp) route_count() int {
 	return app.routes.len
 }
 
-@[php_method: 'routeNames']
+@[vphp.PhpExportMethod(name: 'routeNames')]
 pub fn (app &VSlimApp) route_names() []string {
-	return routex.route_names(app.routes)
+	return app.route_index.names()
 }
 
-@[php_method: 'hasRouteName']
+@[vphp.PhpExportMethod(name: 'hasRouteName')]
 pub fn (app &VSlimApp) has_route_name(name string) bool {
-	return routex.has_route_name(app.routes, name)
+	return app.route_index.index_for_name(name) != none
 }
 
-@[php_method: 'routeManifestLines']
+@[vphp.PhpExportMethod(name: 'routeManifestLines')]
 pub fn (app &VSlimApp) route_manifest_lines() []string {
 	return routex.route_manifest_lines(app.routes)
 }
 
-@[php_method: 'routeConflictKeys']
+@[vphp.PhpExportMethod(name: 'routeConflictKeys')]
 pub fn (app &VSlimApp) route_conflict_keys() []string {
 	return routex.route_conflict_keys(app.routes)
 }
 
-@[php_method: 'routeManifest']
+@[vphp.PhpExportMethod(name: 'routeManifest')]
 pub fn (app &VSlimApp) route_manifest() []map[string]string {
 	return routex.route_manifest(app.routes)
 }
 
-@[php_method: 'routeConflicts']
+@[vphp.PhpExportMethod(name: 'routeConflicts')]
 pub fn (app &VSlimApp) route_conflicts() []map[string]string {
 	return routex.route_conflicts(app.routes)
 }
 
-@[php_method: 'allowedMethodsFor']
-@[php_arg_name: 'raw_path=rawPath']
+@[vphp.PhpExportMethod(name: 'allowedMethodsFor')]
+@[vphp.PhpArgName(v_name: 'raw_path', php_name: 'rawPath')]
 pub fn (app &VSlimApp) allowed_methods_for(raw_path string) []string {
-	return routex.allowed_methods_for(app.routes, raw_path)
+	return app.route_index.allowed_methods_for(app.routes, raw_path)
 }
 
 fn (mut app VSlimApp) add_route(method string, name string, pattern string, handler vphp.PhpValue) {
@@ -73,6 +73,7 @@ fn (mut app VSlimApp) add_websocket_route(name string, pattern string, handler v
 	if !websocketx.is_supported_handler_value(handler) {
 		return
 	}
+	app.track_registration()
 	app.websocket_routes << routex.VSlimRoute.websocket(name, pattern, handler)
 }
 
@@ -80,6 +81,8 @@ fn (mut app VSlimApp) add_route_with_resource_meta(method string, name string, p
 	if !handler.is_valid() || handler.is_null() || handler.is_undef() {
 		return
 	}
+	app.track_registration()
+	app.route_index.add(pattern, name)
 	app.routes << routex.VSlimRoute.with_resource_meta(method, name, pattern, handler,
 		resource_action, resource_missing_handler)
 }

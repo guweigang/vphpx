@@ -2,10 +2,8 @@ module httpx
 
 import vphp
 
-@[php_arg_name: 'default_content=defaultContent']
-@[php_arg_default: 'default_content=""']
-@[php_arg_optional: 'default_content']
-@[php_method]
+@[vphp.PhpStringParam('default_content', php_name: 'defaultContent', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut s VSlimPsr7Stream) construct(default_content string) &VSlimPsr7Stream {
 	s.content = default_content
 	s.position = 0
@@ -16,12 +14,12 @@ pub fn (mut s VSlimPsr7Stream) construct(default_content string) &VSlimPsr7Strea
 	return &s
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (s &VSlimPsr7Stream) str() string {
 	return s.stream_string()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (s &VSlimPsr7Stream) close() {
 	unsafe {
 		mut writable := &VSlimPsr7Stream(s)
@@ -32,7 +30,7 @@ pub fn (s &VSlimPsr7Stream) close() {
 	}
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (s &VSlimPsr7Stream) detach() vphp.PhpNull {
 	unsafe {
 		mut writable := &VSlimPsr7Stream(s)
@@ -44,7 +42,7 @@ pub fn (s &VSlimPsr7Stream) detach() vphp.PhpNull {
 	return vphp.PhpNull.value()
 }
 
-@[php_method: 'getSize']
+@[vphp.PhpExportMethod(name: 'getSize')]
 pub fn (s &VSlimPsr7Stream) get_size() ?int {
 	if s.detached {
 		return none
@@ -52,7 +50,7 @@ pub fn (s &VSlimPsr7Stream) get_size() ?int {
 	return s.content.len
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (s &VSlimPsr7Stream) tell() int {
 	if s.detached {
 		vphp.PhpException.raise_class('RuntimeException',
@@ -62,7 +60,7 @@ pub fn (s &VSlimPsr7Stream) tell() int {
 	return s.position
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (s &VSlimPsr7Stream) eof() bool {
 	if s.detached {
 		return true
@@ -70,15 +68,14 @@ pub fn (s &VSlimPsr7Stream) eof() bool {
 	return s.position >= s.content.len
 }
 
-@[php_method: 'isSeekable']
+@[vphp.PhpExportMethod(name: 'isSeekable')]
 pub fn (s &VSlimPsr7Stream) is_seekable() bool {
 	return !s.detached && stream_is_seekable(s)
 }
 
-@[php_arg_name: 'default_whence=defaultWhence']
-@[php_arg_default: 'default_whence=SEEK_SET']
-@[php_arg_optional: 'default_whence']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'default_whence', php_name: 'defaultWhence')]
+@[vphp.PhpArgDefault(v_name: 'default_whence', default_value: 'SEEK_SET')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (s &VSlimPsr7Stream) seek(offset vphp.PhpValue, default_whence vphp.PhpValue) {
 	if s.detached {
 		vphp.PhpException.raise_class('RuntimeException', 'cannot seek a detached stream', 0)
@@ -112,7 +109,7 @@ pub fn (s &VSlimPsr7Stream) seek(offset vphp.PhpValue, default_whence vphp.PhpVa
 	}
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (s &VSlimPsr7Stream) rewind() {
 	if s.detached {
 		vphp.PhpException.raise_class('RuntimeException', 'cannot rewind a detached stream', 0)
@@ -128,12 +125,12 @@ pub fn (s &VSlimPsr7Stream) rewind() {
 	}
 }
 
-@[php_method: 'isWritable']
+@[vphp.PhpExportMethod(name: 'isWritable')]
 pub fn (s &VSlimPsr7Stream) is_writable() bool {
 	return !s.detached && stream_is_writable(s)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (s &VSlimPsr7Stream) write(chunk vphp.PhpValue) int {
 	if s.detached {
 		vphp.PhpException.raise_class('RuntimeException', 'cannot write to a detached stream', 0)
@@ -164,12 +161,12 @@ pub fn (s &VSlimPsr7Stream) write(chunk vphp.PhpValue) int {
 	return text.len
 }
 
-@[php_method: 'isReadable']
+@[vphp.PhpExportMethod(name: 'isReadable')]
 pub fn (s &VSlimPsr7Stream) is_readable() bool {
 	return !s.detached && stream_is_readable(s)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (s &VSlimPsr7Stream) read(length vphp.PhpValue) string {
 	if s.detached {
 		vphp.PhpException.raise_class('RuntimeException', 'cannot read from a detached stream', 0)
@@ -197,7 +194,7 @@ pub fn (s &VSlimPsr7Stream) read(length vphp.PhpValue) string {
 	return out
 }
 
-@[php_method: 'getContents']
+@[vphp.PhpExportMethod(name: 'getContents')]
 pub fn (s &VSlimPsr7Stream) get_contents() string {
 	if s.detached {
 		vphp.PhpException.raise_class('RuntimeException', 'cannot read from a detached stream', 0)
@@ -218,8 +215,8 @@ pub fn (s &VSlimPsr7Stream) get_contents() string {
 	return out
 }
 
-@[php_arg_name: 'default_key=defaultKey']
-@[php_method: 'getMetadata']
+@[vphp.PhpArgName(v_name: 'default_key', php_name: 'defaultKey')]
+@[vphp.PhpExportMethod(name: 'getMetadata')]
 pub fn (s &VSlimPsr7Stream) get_metadata(default_key ?vphp.PhpValue) vphp.PhpValue {
 	if actual_key := default_key {
 		key := actual_key.to_string()

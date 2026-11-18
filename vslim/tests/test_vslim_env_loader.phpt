@@ -20,7 +20,7 @@ putenv('VSLIM_ENV_BRAVO');
 putenv('VSLIM_ENV_CHARLIE');
 putenv('VSLIM_ENV_KEEP=');
 
-$loaded = VSlim\EnvLoader::bootstrap($root);
+$loaded = VSlim\EnvLoader::bootstrap(root: $root);
 ksort($loaded);
 
 echo count($loaded) . PHP_EOL;
