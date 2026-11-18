@@ -696,7 +696,8 @@ fn (b &ClassBuilder) render_typed_class_constant(ce_ptr string, con ClassConstan
 	res << '            zval val;'
 	res << '            ${zval_init}'
 	res << '            zend_string *const_name = zend_string_init("${con.name}", sizeof("${con.name}")-1, 1);'
-	res << '            zend_declare_typed_class_constant(${ce_ptr}, const_name, &val, ZEND_ACC_PUBLIC, NULL, (zend_type) ZEND_TYPE_INIT_CODE(${c_type_code}, 0, 0));'
+	res << '            zend_type constant_type = ZEND_TYPE_INIT_CODE(${c_type_code}, 0, 0);'
+	res << '            zend_declare_typed_class_constant(${ce_ptr}, const_name, &val, ZEND_ACC_PUBLIC, NULL, constant_type);'
 	res << '            zend_string_release(const_name);'
 	res << '            zval_ptr_dtor(&val);'
 	res << '        }'
@@ -778,7 +779,8 @@ fn (b &ClassBuilder) render_typed_property(ce_ptr string, prop ClassProperty) []
 		'ZEND_TYPE_INIT_NONE(0)'
 	}
 	declaration := if has_attributes { 'zend_property_info *property_info = ' } else { '' }
-	res << '            ${declaration}zend_declare_typed_property(${ce_ptr}, zend_string_init_interned("${name}", sizeof("${name}")-1, 1), &default_val, ${prop.flags}, NULL, (zend_type) ${zend_type});'
+	res << '            zend_type property_type = ${zend_type};'
+	res << '            ${declaration}zend_declare_typed_property(${ce_ptr}, zend_string_init_interned("${name}", sizeof("${name}")-1, 1), &default_val, ${prop.flags}, NULL, property_type);'
 	for i, attr in prop.attributes {
 		lines := render_attribute_registration('property_attribute_${i}', attr,
 			'zend_add_property_attribute', [ce_ptr, 'property_info'])
