@@ -171,7 +171,7 @@ fn render_class_type_init_literal(raw_type string, by_ref string) string {
 		php_type = php_type[1..]
 		allow_null = '1'
 	}
-	escaped := c_string_escape(normalize_php_type_literal(php_type))
+	escaped := c_string_escape(php_types.normalize_php_type_literal(php_type))
 	return 'ZEND_TYPE_INIT_CLASS_CONST("${escaped}", ${allow_null}, _ZEND_ARG_INFO_FLAGS(${by_ref}, 0, 0))'
 }
 
@@ -188,7 +188,7 @@ fn render_array_arginfo_header(c_func string, required_args int, resolved_return
 		return header + '${render_class_type_init_literal(resolved_return_type, '0')}, NULL },'
 	}
 	if return_obj_type != '' {
-		escaped := c_string_escape(normalize_php_type_literal(return_obj_type))
+		escaped := c_string_escape(php_types.normalize_php_type_literal(return_obj_type))
 		return header + 'ZEND_TYPE_INIT_CLASS_CONST("${escaped}", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },'
 	}
 	if type_info.mask_obj_class != '' {
@@ -348,7 +348,7 @@ fn render_arginfo_arg_line(arg_name string, raw_type string, default_value strin
 				classname = classname[1..]
 				allow_null = '1'
 			}
-			escaped := c_string_escape(normalize_php_type_literal(classname))
+			escaped := c_string_escape(php_types.normalize_php_type_literal(classname))
 			return 'ZEND_ARG_VARIADIC_OBJ_INFO(${by_ref}, ${arg_name}, ${escaped}, ${allow_null})'
 		}
 		if arg_info.code == 'IS_CALLABLE' {

@@ -1,5 +1,7 @@
 module builder
 
+import compiler.php_types
+
 struct PhpTypeDecl {
 	raw        string
 	clean      string
@@ -19,7 +21,7 @@ fn parse_php_type_decl(raw_type string) PhpTypeDecl {
 		allow_null = true
 		clean = clean[1..]
 	}
-	clean = normalize_php_type_literal(clean)
+	clean = php_types.normalize_php_type_literal(clean)
 	return PhpTypeDecl{
 		raw:        raw_type
 		clean:      clean

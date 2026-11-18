@@ -32,6 +32,16 @@ pub fn (ctx Context) create_saved_closure_with_arginfo[T](v_cb T, bridge voidptr
 		arity, required, arginfo)
 }
 
+pub fn (ctx Context) create_typed_saved_variadic_closure[T](v_cb T, bridge zend.ClosureBridge) {
+	zend.create_typed_variadic_closure(ctx.return().raw_ptr(), save_closure_value[T](v_cb),
+		bridge)
+}
+
+pub fn (ctx Context) create_typed_saved_closure_with_arginfo[T](v_cb T, bridge zend.ClosureBridge, arity int, required int, arginfo voidptr) {
+	zend.create_typed_closure_with_arginfo(ctx.return().raw_ptr(), save_closure_value[T](v_cb),
+		bridge, arity, required, arginfo)
+}
+
 // These values suppress sibling initializers while reading one default field.
 // Their storage is never exposed to the callback or converted to a PHP value.
 pub fn struct_closure_default_placeholder[T]() T {
@@ -137,47 +147,22 @@ pub fn (ctx Context) invoke_variadic_closure_void[T](cb T) {
 }
 
 pub fn (ctx Context) variadic_closure_args[T]() ![]T {
-	$if T is ZVal {
-		return ctx.variadic_zval_args()
-	} $else $if T is PhpValue {
-		return ctx.variadic_php_value_args()
-	} $else $if T is RequestBorrowedZBox {
-		return ctx.variadic_borrowed_zbox_args()
-	} $else $if T is VScalarValue {
-		return ctx.variadic_v_scalar_args()
+	$if T is ZVal || T is PhpValue || T is RequestBorrowedZBox || T is VScalarValue {
+		count := ctx.num_args()
+		mut args := []T{cap: count}
+		for i in 0 .. count {
+			$if T is ZVal {
+				args << ctx.arg_val(i)
+			} $else $if T is PhpValue {
+				args << ctx.arg_value(i)
+			} $else $if T is RequestBorrowedZBox {
+				args << ctx.arg_borrowed_zbox(i)
+			} $else {
+				args << ctx.arg_v_scalar(i)!
+			}
+		}
+		return args
 	} $else {
 		return error('unsupported variadic closure argument type')
 	}
-}
-
-fn (ctx Context) variadic_zval_args() []ZVal {
-	mut args := []ZVal{cap: ctx.num_args()}
-	for i in 0 .. ctx.num_args() {
-		args << ctx.arg_val(i)
-	}
-	return args
-}
-
-fn (ctx Context) variadic_php_value_args() []PhpValue {
-	mut args := []PhpValue{cap: ctx.num_args()}
-	for i in 0 .. ctx.num_args() {
-		args << ctx.arg_value(i)
-	}
-	return args
-}
-
-fn (ctx Context) variadic_borrowed_zbox_args() []RequestBorrowedZBox {
-	mut args := []RequestBorrowedZBox{cap: ctx.num_args()}
-	for i in 0 .. ctx.num_args() {
-		args << ctx.arg_borrowed_zbox(i)
-	}
-	return args
-}
-
-fn (ctx Context) variadic_v_scalar_args() ![]VScalarValue {
-	mut args := []VScalarValue{cap: ctx.num_args()}
-	for i in 0 .. ctx.num_args() {
-		args << ctx.arg_v_scalar(i)!
-	}
-	return args
 }

@@ -1,5 +1,15 @@
 module php_types
 
+// normalize_php_type_literal decodes namespace separators retained by legacy attributes.
+pub fn normalize_php_type_literal(name string) string {
+	return name.replace('\\\\', '\\')
+}
+
+// class_lookup_name converts a PHP class reference to a name accepted by Zend's class table.
+pub fn class_lookup_name(name string) string {
+	return normalize_php_type_literal(name).trim_string_left('\\')
+}
+
 pub struct PhpTypeSpec {
 pub:
 	v_key          string

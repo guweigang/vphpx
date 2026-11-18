@@ -367,6 +367,16 @@ fn v_get_variadic_zval_void() fn (...vphp.ZVal) {
 }
 
 @[php_function]
+fn v_get_variadic_borrowed_closure() fn (...vphp.RequestBorrowedZBox) vphp.ZVal {
+	return fn (args ...vphp.RequestBorrowedZBox) vphp.ZVal {
+		if args.len == 0 {
+			return vphp.ZVal.new_null()
+		}
+		return args[args.len - 1].to_zval()
+	}
+}
+
+@[php_function]
 fn v_get_variadic_scalar_string() fn (...vphp.VScalarValue) string {
 	return my_variadic_scalar_string
 }

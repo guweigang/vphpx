@@ -6,13 +6,15 @@ pub mut:
 	php_name    string
 	module_name string
 	cases       []PhpEnumCaseRepr
+	attributes  []PhpAttributeRepr
 	parse_err   string
 }
 
 pub struct PhpEnumCaseRepr {
 pub:
-	name  string
-	value string
+	name       string
+	value      string
+	attributes []PhpAttributeRepr
 }
 
 pub fn (r PhpEnumRepr) c_name() string {

@@ -1,6 +1,8 @@
 module main
 
-@[php_trait]
+import vphp
+
+@[vphp.PhpTrait]
 struct SlugTrait {
 pub mut:
 	slug   string

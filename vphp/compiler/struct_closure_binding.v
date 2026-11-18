@@ -174,7 +174,7 @@ fn (binding StructClosureBinding) render_helper_lines() []string {
 	lines << '}'
 	lines << ''
 	lines << 'fn ${binding.wrap}(ctx vphp.Context, cb ${binding.alias}) {'
-	lines << '    ctx.create_saved_closure_with_arginfo[${binding.alias}](cb, voidptr(${binding.bridge}), ${binding.fields.len}, ${required}, C.${binding.arginfo_symbol()})'
+	lines << '    ctx.create_typed_saved_closure_with_arginfo[${binding.alias}](cb, ${binding.bridge}, ${binding.fields.len}, ${required}, C.${binding.arginfo_symbol()})'
 	lines << '}'
 	lines << ''
 	return lines
@@ -202,7 +202,7 @@ fn (binding StructClosureBinding) render_variadic_helper_lines() []string {
 	lines << '}'
 	lines << ''
 	lines << 'fn ${binding.wrap}(ctx vphp.Context, cb ${binding.alias}) {'
-	lines << '    ctx.create_saved_variadic_closure[${binding.alias}](cb, voidptr(${binding.bridge}))'
+	lines << '    ctx.create_typed_saved_variadic_closure[${binding.alias}](cb, ${binding.bridge})'
 	lines << '}'
 	lines << ''
 	return lines

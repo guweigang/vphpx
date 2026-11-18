@@ -12,7 +12,7 @@ pub fn parse_globals_decl(stmt ast.Stmt, table &ast.Table) ?repr.PhpGlobalsRepr 
 		return none
 	}
 	mut globals_repr := repr.PhpGlobalsRepr{}
-	if !struct_decl.attrs.any(it.name == 'php_globals') {
+	if !struct_decl.attrs.any(it.name in ['php_globals', 'vphp.PhpGlobals']) {
 		return none
 	}
 

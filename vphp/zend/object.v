@@ -1,6 +1,27 @@
 module zend
 
+pub fn new_plain_object_tracker() voidptr {
+	return C.vphp_new_plain_object_tracker()
+}
+
+pub fn capture_plain_object(tracker voidptr, root voidptr) voidptr {
+	return C.vphp_capture_plain_object(tracker, unsafe { &C.zval(root) })
+}
+
+pub fn restore_plain_objects(handle voidptr) {
+	C.vphp_restore_plain_objects(handle)
+}
+
+pub fn release_plain_object_state(handle voidptr) {
+	C.vphp_release_plain_object_state(handle)
+}
+
 fn C.vphp_object_is_instance_of(obj voidptr, ce voidptr) bool
+fn C.vphp_object_method_required_params(value &C.zval, name &char, name_len usize) int
+
+pub fn object_method_required_params(value &C.zval, name string) int {
+	return C.vphp_object_method_required_params(value, name.str, usize(name.len))
+}
 
 pub fn object_is_instance_of(obj voidptr, ce voidptr) bool {
 	return C.vphp_object_is_instance_of(obj, ce)

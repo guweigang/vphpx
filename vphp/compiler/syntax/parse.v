@@ -1,5 +1,6 @@
 module syntax
 
+import strconv
 import v.flat
 import v.parser
 import v.pref
@@ -17,7 +18,7 @@ pub fn parse_file(path string, mut table Table) !File {
 			return error('${path}:${diagnostic.line}:${diagnostic.column}: ${diagnostic.message}')
 		}
 	}
-	return decode_file(tree, mut table)
+	return decode_file(tree, mut table) or { return error('${path}: ${err.msg()}') }
 }
 
 struct Decoder {
@@ -26,29 +27,28 @@ struct Decoder {
 	imports map[string]string
 }
 
-fn decode_file(tree &flat.FlatAst, mut table Table) File {
+fn decode_file(tree &flat.FlatAst, mut table Table) !File {
+	mut file_imports := map[int]map[string]string{}
+	for id in tree.file_node_ids {
+		file := tree.node(flat.NodeId(id))
+		if file.children_count > 0 {
+			file_imports[int(file.pos.id)] = decode_import_aliases(tree, file)
+		}
+	}
 	mut attrs := map[int][]Attr{}
 	for node in tree.nodes {
 		if node.kind == .directive && node.value.starts_with('@attributes:') {
-			attrs[node.value.all_after(':').int()] = decode_attrs(node.generic_params())
+			id := node.value.all_after(':').int()
+			imports := file_imports[int(tree.node(flat.NodeId(id)).pos.id)]
+			attrs[id] = decode_source_attrs(node.generic_params(), imports)!
 		}
 	}
 	mut module_name := 'main'
 	mut stmts := []Stmt{}
 	for id in tree.file_node_ids {
-		children := tree.children_of(tree.node(flat.NodeId(id)))
-		mut imports := map[string]string{}
-		for child in children {
-			node := tree.node(child)
-			if node.kind == .import_decl {
-				alias := node.typ_text()
-				module := node.value.all_after_last('.')
-				if alias != '' && alias != module {
-					imports[alias] = module
-				}
-			}
-		}
-		d := Decoder{tree, attrs, imports}
+		file := tree.node(flat.NodeId(id))
+		children := tree.children_of(file)
+		d := Decoder{tree, attrs, file_imports[int(file.pos.id)]}
 		for child in children {
 			node := tree.node(child)
 			match node.kind {
@@ -59,7 +59,7 @@ fn decode_file(tree &flat.FlatAst, mut table Table) File {
 					stmts << d.function(child)
 				}
 				.struct_decl {
-					decl := d.structure(child)
+					decl := d.structure(child)!
 					table.register(module_name, decl.name, Symbol{ kind: .struct_, info: Struct{decl.fields} })
 					stmts << decl
 				}
@@ -81,11 +81,11 @@ fn decode_file(tree &flat.FlatAst, mut table Table) File {
 					stmts << EnumDecl{
 						name:   node.value
 						attrs:  attrs[int(child)]
-						fields: d.value_fields(node)
+						fields: d.enum_fields(node)!
 					}
 				}
 				.const_decl {
-					stmts << ConstDecl{attrs[int(child)], d.value_fields(node)}
+					stmts << ConstDecl{attrs[int(child)], d.value_fields(node), module_name}
 				}
 				.type_decl {
 					if node.children_count > 0 {
@@ -101,6 +101,146 @@ fn decode_file(tree &flat.FlatAst, mut table Table) File {
 		}
 	}
 	return File{module_name, stmts}
+}
+
+fn decode_import_aliases(tree &flat.FlatAst, file flat.Node) map[string]string {
+	mut imports := map[string]string{}
+	for child in tree.children_of(file) {
+		node := tree.node(child)
+		if node.kind == .import_decl {
+			alias := node.typ_text()
+			module_name_short := node.value.all_after_last('.')
+			if alias != '' && alias != module_name_short {
+				imports[alias] = module_name_short
+			}
+		}
+	}
+	return imports
+}
+
+fn decode_source_attrs(raw []string, imports map[string]string) ![]Attr {
+	mut attrs := decode_attrs(raw)
+	for index, attr in attrs {
+		mut resolved := attr
+		if dot := attr.name.index('.') {
+			if module_name := imports[attr.name[..dot]] {
+				resolved = Attr{ ...resolved, name: module_name + attr.name[dot..] }
+			}
+		}
+		if resolved.has_arg && resolved.name in ['vphp.PhpStringParam_default_value', 'vphp.PhpArgNames',
+			'vphp.PhpArgNames_names', 'vphp.PhpArgTypes', 'vphp.PhpArgTypes_types',
+			'vphp.PhpArgDefaults', 'vphp.PhpArgDefaults_defaults', 'vphp.PhpExportFunction_name',
+			'vphp.PhpExportMethod_name', 'vphp.PhpArgType', 'vphp.PhpArgType_v_name',
+			'vphp.PhpArgType_php_type', 'vphp.PhpArgType_1', 'vphp.PhpArgName', 'vphp.PhpArgName_v_name',
+			'vphp.PhpArgName_php_name', 'vphp.PhpArgName_1', 'vphp.PhpArgDefault',
+			'vphp.PhpArgDefault_v_name', 'vphp.PhpArgDefault_default_value', 'vphp.PhpArgDefault_1',
+			'vphp.PhpReturnType', 'vphp.PhpReturnType_php_type', 'vphp.PhpExportClass',
+			'vphp.PhpExportClass_name', 'vphp.PhpExportInterface', 'vphp.PhpExportInterface_name',
+			'vphp.PhpExportEnum', 'vphp.PhpExportEnum_name', 'vphp.PhpExtends', 'vphp.PhpExtends_name',
+			'vphp.PhpExtendsInterfaces', 'vphp.PhpExtendsInterfaces_names', 'vphp.PhpImplements',
+			'vphp.PhpImplements_names', 'vphp.PhpProperty', 'vphp.PhpProperty_name',
+			'vphp.PhpDeclaredProperty', 'vphp.PhpDeclaredProperty_name',
+			'vphp.PhpDeclaredProperty_v_type', 'vphp.PhpDeclaredProperty_1',
+			'vphp.PhpDeclaredReadonlyProperty', 'vphp.PhpDeclaredReadonlyProperty_name',
+			'vphp.PhpDeclaredReadonlyProperty_v_type', 'vphp.PhpDeclaredReadonlyProperty_visibility',
+			'vphp.PhpDeclaredReadonlyProperty_1', 'vphp.PhpDeclaredReadonlyProperty_2',
+			'vphp.PhpClassConstants', 'vphp.PhpClassConstants_source', 'vphp.PhpClassStatics',
+			'vphp.PhpClassStatics_source', 'vphp.PhpExportTask', 'vphp.PhpExportTask_name',
+			'vphp.PhpClassAttribute', 'vphp.PhpClassAttribute_name', 'vphp.PhpClassAttribute_args',
+			'vphp.PhpClassAttribute_1', 'vphp.PhpParameterAttribute',
+			'vphp.PhpParameterAttribute_v_name', 'vphp.PhpParameterAttribute_name',
+			'vphp.PhpParameterAttribute_args', 'vphp.PhpParameterAttribute_1',
+			'vphp.PhpParameterAttribute_2', 'vphp.PhpCallableAttribute',
+			'vphp.PhpCallableAttribute_name', 'vphp.PhpCallableAttribute_args',
+			'vphp.PhpCallableAttribute_1', 'vphp.PhpPropertyAttribute', 'vphp.PhpPropertyAttribute_name',
+			'vphp.PhpPropertyAttribute_args', 'vphp.PhpPropertyAttribute_1',
+			'vphp.PhpClassConstantAttribute', 'vphp.PhpClassConstantAttribute_name',
+			'vphp.PhpClassConstantAttribute_args', 'vphp.PhpClassConstantAttribute_1',
+			'vphp.PhpEnumCaseAttribute', 'vphp.PhpEnumCaseAttribute_name',
+			'vphp.PhpEnumCaseAttribute_args', 'vphp.PhpEnumCaseAttribute_1',
+			'vphp.PhpInterfaceAttribute', 'vphp.PhpInterfaceAttribute_name',
+			'vphp.PhpInterfaceAttribute_args', 'vphp.PhpInterfaceAttribute_1', 'vphp.PhpEnumAttribute',
+			'vphp.PhpEnumAttribute_name', 'vphp.PhpEnumAttribute_args', 'vphp.PhpEnumAttribute_1'] {
+			spelling := raw[index].all_after(':').trim_space()
+			value := parse_string_attr_literal(spelling) or {
+				return error('${resolved.name} must be a V string literal')
+			}
+			resolved = Attr{ ...resolved, arg: value }
+		}
+		attrs[index] = resolved
+	}
+	normalize_export_attrs(mut attrs)
+	return attrs
+}
+
+fn normalize_export_attrs(mut attrs []Attr) {
+	for index, attr in attrs {
+		legacy_name := match attr.name {
+			'vphp.PhpExportClass' { 'php_class' }
+			'vphp.PhpExportInterface' { 'php_interface' }
+			'vphp.PhpExportEnum' { 'php_enum' }
+			'vphp.PhpExtends', 'vphp.PhpExtendsInterfaces' { 'php_extends' }
+			'vphp.PhpImplements' { 'php_implements' }
+			'vphp.PhpProperty' { 'php_prop' }
+			'vphp.PhpClassConstants' { 'php_const' }
+			'vphp.PhpClassStatics' { 'php_static' }
+			'vphp.PhpExportTask' { 'php_task' }
+			'vphp.PhpArgNames' { 'php_arg_name' }
+			'vphp.PhpArgTypes' { 'php_arg_type' }
+			'vphp.PhpArgDefaults' { 'php_arg_default' }
+			else { continue }
+		}
+		mut name := attr.arg
+		field := match legacy_name {
+			'php_implements' { 'names' }
+			'php_extends' {
+				if attr.name == 'vphp.PhpExtendsInterfaces' { 'names' } else { 'name' }
+			}
+			'php_const', 'php_static' { 'source' }
+			'php_arg_name' { 'names' }
+			'php_arg_type' { 'types' }
+			'php_arg_default' { 'defaults' }
+			else { 'name' }
+		}
+		if index + 1 < attrs.len && attrs[index + 1].name == '${attr.name}_${field}' {
+			name = attrs[index + 1].arg
+		}
+		// Type names retain the escaped spelling used by registration and C symbols.
+		attrs[index] = Attr{
+			name:    legacy_name
+			arg:     match legacy_name {
+				'php_prop', 'php_const', 'php_static', 'php_arg_name', 'php_arg_type',
+				'php_arg_default' {
+					name
+				}
+				'php_task' {
+					// Task registration inserts the name into a single-quoted V literal.
+					quoted := strconv.quote(name)
+					quoted[1..quoted.len - 1].replace("'", r"\'").replace(r'$', r'\$')
+				}
+				else { name.replace('\\', '\\\\') }
+			}
+			has_arg: name != ''
+		}
+	}
+}
+
+fn parse_string_attr_literal(spelling string) ?string {
+	// Use V's own literal decoding for raw strings, escapes and Unicode.
+	mut reader := parser.Parser.new(pref.new_preferences())
+	tree := reader.parse_text('vphp_attr.v', 'module main\nfn attr_default() string { return ${spelling} }')
+	if reader.diagnostics.any(it.severity !in ['warning:', 'notice:']) {
+		return none
+	}
+	for node in tree.nodes {
+		if node.kind == .return_stmt && node.children_count == 1 {
+			value := tree.node(tree.child(node, 0))
+			if value.kind == .string_literal {
+				return value.value
+			}
+		}
+	}
+	return none
 }
 
 // Glue is emitted in a separate file with its own imports. Qualify types using
@@ -213,7 +353,7 @@ fn (d &Decoder) function(id flat.NodeId) FnDecl {
 	}
 }
 
-fn (d &Decoder) structure(id flat.NodeId) StructDecl {
+fn (d &Decoder) structure(id flat.NodeId) !StructDecl {
 	node := d.tree.node(id)
 	mut fields := []Field{}
 	mut embeds := []Param{}
@@ -239,7 +379,11 @@ fn (d &Decoder) structure(id flat.NodeId) StructDecl {
 		fields << Field{
 			name:             field.value
 			typ:              d.type_name(field.typ_text())
-			attrs:            if meta.len > 1 { decode_attrs(meta[1..]) } else { []Attr{} }
+			attrs:            if meta.len > 1 {
+				decode_source_attrs(meta[1..], d.imports)!
+			} else {
+				[]Attr{}
+			}
 			comments:         d.field_comments(field)
 			is_pub:           flags.contains('p')
 			is_mut:           flags.contains('m')
@@ -270,6 +414,23 @@ fn (d &Decoder) value_fields(node &flat.Node) []ValueField {
 			name:     field.value
 			expr:     d.expr(d.tree.child(field, 0))
 			has_expr: field.children_count > 0
+		}
+	}
+	return result
+}
+
+fn (d &Decoder) enum_fields(node &flat.Node) ![]ValueField {
+	mut result := []ValueField{}
+	for child in d.tree.children_of(node) {
+		field := d.tree.node(child)
+		if field.kind != .enum_field {
+			continue
+		}
+		result << ValueField{
+			name:     field.value
+			expr:     d.expr(d.tree.child(field, 0))
+			has_expr: field.children_count > 0
+			attrs:    decode_source_attrs(field.generic_params(), d.imports)!
 		}
 	}
 	return result

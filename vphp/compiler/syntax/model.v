@@ -171,8 +171,9 @@ pub:
 
 pub struct ConstDecl {
 pub:
-	attrs  []Attr
-	fields []ValueField
+	attrs       []Attr
+	fields      []ValueField
+	module_name string
 }
 
 pub struct ValueField {
@@ -180,6 +181,7 @@ pub:
 	name     string
 	expr     Expr
 	has_expr bool
+	attrs    []Attr
 }
 
 pub struct Block {

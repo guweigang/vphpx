@@ -65,8 +65,8 @@ const article_statics = ArticleStatics{}
 @[heap]
 @[php_class]
 @[php_extends: Post]
-@[php_const: article_consts]
-@[php_static: article_statics]
+@[vphp.PhpClassConstants(source: 'article_consts')]
+@[vphp.PhpClassStatics('article_statics')]
 struct Article implements ContentContract {
 	Post
 pub:

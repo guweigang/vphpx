@@ -125,6 +125,42 @@ vphp_zend_add_parameter_attribute(zend_function *func, uint32_t offset,
   return zend_add_parameter_attribute(func, offset, name, argc);
 }
 
+typedef struct vphp_attribute_array {
+  HashTable table;
+  struct vphp_attribute_array *next;
+} vphp_attribute_array;
+
+static vphp_attribute_array *vphp_attribute_arrays;
+
+static inline HashTable *vphp_new_attribute_array(uint32_t size) {
+  vphp_attribute_array *entry = pemalloc(sizeof(*entry), 1);
+  zend_hash_init(&entry->table, size, NULL, ZVAL_PTR_DTOR, 1);
+  entry->next = vphp_attribute_arrays;
+  vphp_attribute_arrays = entry;
+  return &entry->table;
+}
+
+static inline void vphp_set_attribute_array(zval *value, HashTable *table) {
+  /* Internal attributes cannot destroy refcounted arrays. Share an immutable
+   * table and let PHP copy it on writes, as it does for the immutable empty array.
+   * Only interned strings and immutable nested arrays may be stored in it. */
+  GC_ADD_FLAGS(table, GC_IMMUTABLE);
+  GC_SET_REFCOUNT(table, 2);
+  Z_ARR_P(value) = table;
+  Z_TYPE_INFO_P(value) = IS_ARRAY;
+}
+
+static inline void vphp_release_attribute_arrays(void) {
+  while (vphp_attribute_arrays) {
+    vphp_attribute_array *entry = vphp_attribute_arrays;
+    vphp_attribute_arrays = entry->next;
+    GC_DEL_FLAGS(&entry->table, GC_IMMUTABLE);
+    GC_SET_REFCOUNT(&entry->table, 1);
+    zend_hash_destroy(&entry->table);
+    pefree(entry, 1);
+  }
+}
+
 static inline zend_object *
 vphp_zend_throw_exception(zend_class_entry *exception_ce, const char *message,
                           zend_long code) {

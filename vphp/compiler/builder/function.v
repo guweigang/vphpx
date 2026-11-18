@@ -8,6 +8,7 @@ pub mut:
 	c_func       string
 	return_spec  ReturnSpec
 	args         []ClassMethodArg // reuse ClassMethodArg for function args
+	attributes   []ClassAttribute
 	uses_context bool
 	table        &ast.Table = unsafe { nil } // SAFETY: nil literal in unsafe context
 }
@@ -68,21 +69,16 @@ pub fn (b &FuncBuilder) render_arginfo() string {
 	return res.join('\n')
 }
 
-pub fn (b FuncBuilder) render_parameter_attribute_minit_lines() []string {
-	if b.args.all(it.attributes.len == 0) {
+pub fn (b FuncBuilder) render_attribute_minit_lines() []string {
+	if b.attributes.len == 0 && b.args.all(it.attributes.len == 0) {
 		return []
 	}
 	mut res := []string{}
 	func_var := 'func_${b.c_func}'
 	res << '{'
-	res << '    zend_function *${func_var} = zend_hash_str_find_ptr(CG(function_table), "${c_string_escape(b.php_name)}", sizeof("${c_string_escape(b.php_name)}")-1);'
+	res << '    zend_function *${func_var} = zend_hash_str_find_ptr_lc(CG(function_table), "${c_string_escape(b.php_name)}", sizeof("${c_string_escape(b.php_name)}")-1);'
 	res << '    if (${func_var} != NULL) {'
-	for ai, arg in b.args {
-		for attr_i, attr in arg.attributes {
-			attr_var := 'attribute_${b.c_func}_${ai}_${attr_i}'
-			res << render_add_parameter_attribute_lines(func_var, ai, attr, attr_var)
-		}
-	}
+	res << render_callable_attributes(func_var, b.c_func, b.attributes, b.args)
 	res << '    }'
 	res << '}'
 	return res
@@ -91,7 +87,7 @@ pub fn (b FuncBuilder) render_parameter_attribute_minit_lines() []string {
 pub fn (b FuncBuilder) export_fragments() ExportFragments {
 	return ExportFragments{
 		declarations:   [b.render_declaration()]
-		minit_lines:    b.render_parameter_attribute_minit_lines()
+		minit_lines:    b.render_attribute_minit_lines()
 		function_table: [b]
 	}
 }

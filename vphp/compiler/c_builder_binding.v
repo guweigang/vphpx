@@ -37,6 +37,7 @@ fn (g CGenerator) build_func(f &repr.PhpFuncRepr) builder.FuncBuilder {
 	mut func_builder := builder.new_func_builder_with_args(f.name, f.name, spec, args,
 		f.uses_context)
 	func_builder.table = g.table
+	func_builder.attributes = php_attributes_to_builder(f.attributes)
 	return *func_builder
 }
 
@@ -144,17 +145,9 @@ fn (g CGenerator) interface_method_args_to_builder(args []repr.PhpArgRepr) []bui
 fn php_attributes_to_builder(attrs []repr.PhpAttributeRepr) []builder.ClassAttribute {
 	mut out := []builder.ClassAttribute{}
 	for attr in attrs {
-		mut args := []builder.ClassAttributeArg{}
-		for arg in attr.args {
-			args << builder.ClassAttributeArg{
-				kind:  arg.kind
-				name:  arg.name
-				value: arg.value
-			}
-		}
 		out << builder.ClassAttribute{
 			name: attr.name
-			args: args
+			args: attr.args.map(builder.ClassAttributeArg(it))
 		}
 	}
 	return out
@@ -163,6 +156,7 @@ fn php_attributes_to_builder(attrs []repr.PhpAttributeRepr) []builder.ClassAttri
 fn (g CGenerator) build_interface_type(r &repr.PhpInterfaceRepr) &builder.ClassBuilder {
 	mut class_builder := builder.new_interface_builder(r.php_name, r.c_name())
 	class_builder.table = g.table
+	class_builder.attributes = php_attributes_to_builder(r.attributes)
 	for iface in r.extends {
 		class_builder.add_interface(iface)
 	}
@@ -186,11 +180,13 @@ fn (g CGenerator) build_enum_type(r &repr.PhpEnumRepr) &builder.ClassBuilder {
 	mut class_builder := builder.new_enum_builder(r.php_name, r.c_name())
 	class_builder.set_v_name(r.name)
 	class_builder.table = g.table
+	class_builder.attributes = php_attributes_to_builder(r.attributes)
 	// PHP 8.1 native enum: no ZEND_ACC_FINAL, no __construct, no class constants.
 	// Cases are added via zend_enum_add_case_cstr() in MINIT (see builder render_minit).
 	// We store cases as constants in the builder so render_minit can iterate them.
 	for case_ in r.cases {
-		class_builder.add_constant(case_.name, 'int', case_.value)
+		class_builder.add_constant(case_.name, 'int', case_.value,
+			...php_attributes_to_builder(case_.attributes))
 	}
 	return class_builder
 }
@@ -203,11 +199,15 @@ fn (g CGenerator) build_class_type(r &repr.PhpClassRepr, has_init bool) &builder
 	class_builder.set_uses_inherited_object(needs_inherited_wrapper)
 	if class_uses_inherited_receiver(r) {
 		class_builder.set_create_object(false)
-	} else if !r.serializable {
+	} else if !r.serializable && !r.copy_zend_properties {
 		class_builder.add_class_flag('ZEND_ACC_NOT_SERIALIZABLE')
 	}
 	if r.cloneable {
 		class_builder.clone_handler_prefix = to_snake_case(r.name)
+	}
+	class_builder.clone_zend_properties = r.copy_zend_properties
+	if r.is_final {
+		class_builder.add_class_flag('ZEND_ACC_FINAL')
 	}
 	if r.is_abstract {
 		class_builder.add_class_flag('ZEND_ACC_EXPLICIT_ABSTRACT_CLASS')
@@ -224,17 +224,19 @@ fn (g CGenerator) build_class_type(r &repr.PhpClassRepr, has_init bool) &builder
 			break
 		}
 	}
-	if has_non_static && all_readonly {
+	if has_non_static && all_readonly && r.properties.any(!it.is_property_only && !it.is_static) {
 		class_builder.add_class_flag('ZEND_ACC_READONLY_CLASS')
 	}
 	for iface in r.internal_implements {
 		class_builder.add_interface(iface)
 	}
 	for con in r.constants {
-		class_builder.add_constant(con.name, con.const_type, con.value)
+		class_builder.add_constant(con.name, con.const_type, con.value,
+			...php_attributes_to_builder(con.attributes))
 	}
 	for prop in r.properties {
-		class_builder.add_property(prop.name, prop.v_type, visibility_to_property_flags(prop))
+		class_builder.add_property(prop.name, prop.v_type, visibility_to_property_flags(prop),
+			...php_attributes_to_builder(prop.attributes))
 	}
 	if !has_init && !class_uses_inherited_receiver(r) {
 		class_builder.add_method('__construct', '${r.c_name().to_lower()}___construct', '', '',
@@ -253,23 +255,17 @@ fn (g CGenerator) build_class_type(r &repr.PhpClassRepr, has_init bool) &builder
 		}
 		spec := g.build_method_return_spec(php_name, m)
 		uses_context_arg := method_uses_context_arg(m)
+		attributes := php_attributes_to_builder(m.attributes)
 		if m.is_abstract {
 			class_builder.add_abstract_method_spec_with_context(php_name, c_func, spec, flags +
-				' | ZEND_ACC_ABSTRACT', g.method_args_to_builder(m.args), uses_context_arg)
+				' | ZEND_ACC_ABSTRACT', g.method_args_to_builder(m.args), uses_context_arg, ...attributes)
 		} else {
 			class_builder.add_method_spec_with_context(php_name, c_func, spec, flags,
-				g.method_args_to_builder(m.args), uses_context_arg)
+				g.method_args_to_builder(m.args), uses_context_arg, ...attributes)
 		}
 	}
-	for attr in r.attributes {
-		mut args := []builder.ClassAttributeArg{}
-		for arg in attr.args {
-			args << builder.ClassAttributeArg{
-				kind:  arg.kind
-				value: arg.value
-			}
-		}
-		class_builder.add_attribute(attr.name, args)
+	for attr in php_attributes_to_builder(r.attributes) {
+		class_builder.add_attribute(attr.name, attr.args)
 	}
 	return class_builder
 }

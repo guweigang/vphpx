@@ -5,6 +5,9 @@
 #include <Zend/zend_exceptions.h>
 #include <Zend/zend_inheritance.h>
 #include <Zend/zend_interfaces.h>
+#if PHP_VERSION_ID >= 80400
+#include <Zend/zend_lazy_objects.h>
+#endif
 #include <php.h>
 #include <stdbool.h>
 #ifdef PHP_WIN32

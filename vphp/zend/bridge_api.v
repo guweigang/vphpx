@@ -26,6 +26,10 @@ pub fn C.vphp_clear_exception()
 pub fn C.vphp_get_active_ce(ex &C.zend_execute_data) voidptr
 pub fn C.vphp_get_this_object(ex &C.zend_execute_data) voidptr
 pub fn C.vphp_get_current_this_object() voidptr
+pub fn C.vphp_new_plain_object_tracker() voidptr
+pub fn C.vphp_capture_plain_object(tracker voidptr, root &C.zval) voidptr
+pub fn C.vphp_restore_plain_objects(handle voidptr)
+pub fn C.vphp_release_plain_object_state(handle voidptr)
 pub fn C.vphp_get_active_globals() voidptr
 
 // ===== 2. 框架与异常 =====
@@ -171,8 +175,8 @@ pub fn C.vphp_bind_class_interface(class_name &char, class_name_len int, iface_n
 pub fn C.vphp_register_auto_interface_binding(class_name &char, class_name_len int, iface_name &char, iface_name_len int)
 pub fn C.vphp_create_closure_FULL_AUTO_V2(z &C.zval, thunk voidptr, bridge voidptr)
 pub fn C.vphp_create_closure_with_arity(z &C.zval, thunk voidptr, bridge voidptr, num_args int, required_args int)
-pub fn C.vphp_create_closure_with_arginfo(z &C.zval, thunk voidptr, bridge voidptr, num_args int, required_args int, arginfo voidptr)
-pub fn C.vphp_create_variadic_closure(z &C.zval, thunk voidptr, bridge voidptr)
+pub fn C.vphp_create_closure_with_arginfo(z &C.zval, thunk voidptr, bridge ClosureBridge, num_args int, required_args int, arginfo voidptr)
+pub fn C.vphp_create_variadic_closure(z &C.zval, thunk voidptr, bridge ClosureBridge)
 
 // ===== 9. 资源系统 =====
 pub fn C.vphp_init_resource_system(module_number int)

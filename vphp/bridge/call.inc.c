@@ -97,6 +97,10 @@ int vphp_new_instance(const char *class_name, int class_name_len, zval *retval,
 int vphp_include_file(const char *filename, int filename_len, zval *retval,
                       int once) {
   zend_file_handle file_handle;
+  ZVAL_UNDEF(retval);
+  if (EG(exception)) {
+    return FAILURE;
+  }
   zend_string *filename_str = zend_string_init(filename, filename_len, 0);
   zend_string *resolved_path = zend_resolve_path(filename_str);
   zend_string_release(filename_str);
@@ -111,9 +115,33 @@ int vphp_include_file(const char *filename, int filename_len, zval *retval,
   if (resolved_path) {
     file_handle.opened_path = resolved_path;
   }
-  ZVAL_UNDEF(retval);
-  return vphp_zend_execute_scripts(once ? ZEND_INCLUDE_ONCE : ZEND_INCLUDE,
-                                   retval, 1, &file_handle);
+  int type = once ? ZEND_INCLUDE_ONCE : ZEND_INCLUDE;
+  if (!EG(current_execute_data)) {
+    zend_result result = vphp_zend_execute_scripts(type, retval, 1, &file_handle);
+    zend_destroy_file_handle(&file_handle);
+    return result;
+  }
+
+  // Let the calling PHP frame catch exceptions from the included file.
+  zend_op_array *script = zend_compile_file(&file_handle, type);
+  if (file_handle.opened_path) {
+    zend_hash_add_empty_element(&EG(included_files), file_handle.opened_path);
+  }
+  zend_destroy_file_handle(&file_handle);
+  if (script) {
+    if (!EG(exception)) {
+      zend_execute(script, retval);
+#ifdef ZEND_HAS_OOM
+      if (ZEND_HAS_OOM()) {
+        zend_handle_delayed_oom();
+      }
+#endif
+    }
+    zend_destroy_static_vars(script);
+    destroy_op_array(script);
+    efree_size(script, sizeof(zend_op_array));
+  }
+  return EG(exception) ? FAILURE : SUCCESS;
 }
 
 int vphp_call_method(zval *obj, const char *method, int method_len,
@@ -290,12 +318,10 @@ static void ZEND_FASTCALL vphp_closure_handler(zend_execute_data *execute_data,
                                                zval *return_value) {
   zend_internal_function *zf = (zend_internal_function *)execute_data->func;
   void *v_thunk = zf->reserved[0];
-  void *bridge_ptr = zf->reserved[1];
+  vphp_closure_bridge bridge = (vphp_closure_bridge)zf->reserved[1];
 
-  if (bridge_ptr) {
+  if (bridge) {
     vphp_mark_omitted_computed_defaults(execute_data);
-    void (*bridge)(void *, zend_execute_data *, zval *) =
-        (void (*)(void *, zend_execute_data *, zval *))bridge_ptr;
     bridge(v_thunk, execute_data, return_value);
   }
 }
@@ -319,11 +345,11 @@ void vphp_create_closure_FULL_AUTO_V2(zval *zv, void *v_thunk,
 
 void vphp_create_closure_with_arity(zval *zv, void *v_thunk, void *bridge_ptr,
                                     int num_args, int required_args) {
-  vphp_create_closure_with_arginfo(zv, v_thunk, bridge_ptr, num_args,
+  vphp_create_closure_with_arginfo(zv, v_thunk, (vphp_closure_bridge)bridge_ptr, num_args,
                                   required_args, NULL);
 }
 
-void vphp_create_closure_with_arginfo(zval *zv, void *v_thunk, void *bridge_ptr,
+void vphp_create_closure_with_arginfo(zval *zv, void *v_thunk, vphp_closure_bridge bridge,
                                      int num_args, int required_args,
                                      const zend_internal_arg_info *arginfo) {
   zend_internal_function *zf =
@@ -336,7 +362,7 @@ void vphp_create_closure_with_arginfo(zval *zv, void *v_thunk, void *bridge_ptr,
   zf->required_num_args = required_args;
   zf->arg_info = arginfo ? (zend_internal_arg_info *)arginfo + 1 : NULL;
   zf->reserved[0] = v_thunk;
-  zf->reserved[1] = bridge_ptr;
+  zf->reserved[1] = (void *)bridge;
 
   vphp_zend_create_closure(zv, (zend_function *)zf);
 }
@@ -468,18 +494,6 @@ static const zend_internal_arg_info vphp_variadic_closure_arginfo[] = {
      ZEND_TYPE_INIT_NONE(_ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL},
     ZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)};
 
-void vphp_create_variadic_closure(zval *zv, void *v_thunk, void *bridge_ptr) {
-  zend_internal_function *zf =
-      (zend_internal_function *)pecalloc(1, sizeof(zend_internal_function), 1);
-  zf->type = ZEND_INTERNAL_FUNCTION;
-  zf->handler = vphp_closure_handler;
-  zf->fn_flags = ZEND_ACC_CLOSURE | ZEND_ACC_PUBLIC;
-  zf->function_name = zend_string_init("VPHPClosure", 11, 1);
-  zf->num_args = 1;
-  zf->required_num_args = 0;
-  zf->arg_info = (zend_internal_arg_info *)vphp_variadic_closure_arginfo + 1;
-  zf->reserved[0] = v_thunk;
-  zf->reserved[1] = bridge_ptr;
-
-  vphp_zend_create_closure(zv, (zend_function *)zf);
+void vphp_create_variadic_closure(zval *zv, void *v_thunk, vphp_closure_bridge bridge) {
+  vphp_create_closure_with_arginfo(zv, v_thunk, bridge, 1, 0, vphp_variadic_closure_arginfo);
 }

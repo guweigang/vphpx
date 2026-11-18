@@ -22,6 +22,10 @@ echo $zval("z", 9), "\n";
 $void = v_get_variadic_zval_void();
 var_dump($void(), $void("ignored", 7));
 
+$borrowed = v_get_variadic_borrowed_closure();
+$object = new stdClass();
+var_dump($borrowed(), $borrowed(["first"], $object) === $object);
+
 $scalarString = v_get_variadic_scalar_string();
 echo $scalarString("book", 3, true, 1.5), "\n";
 
@@ -77,6 +81,8 @@ name: args
 2:z|9
 NULL
 NULL
+NULL
+bool(true)
 4:book|3|true|1.5
 8
 bool(false)

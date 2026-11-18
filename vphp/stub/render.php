@@ -116,6 +116,9 @@ function render_function(ReflectionFunction $function): array
     foreach ($docblock as $line) {
         $lines[] = '    ' . $line;
     }
+    foreach ($function->getAttributes() as $attribute) {
+        $lines[] = '    ' . render_php_attribute($attribute);
+    }
     $lines[] = '    function ' . $function->getName() . $signature . ' {}';
     return $lines;
 }
@@ -123,7 +126,7 @@ function render_function(ReflectionFunction $function): array
 /**
  * @return list<string>
  */
-function render_enum(ReflectionClass $class): array
+function render_enum(ReflectionEnum $class): array
 {
     $lines = [];
     $header = '    enum ' . $class->getShortName();
@@ -139,6 +142,9 @@ function render_enum(ReflectionClass $class): array
     $lines[] = '    {';
 
     foreach ($class->getCases() as $case) {
+        foreach ($case->getAttributes() as $attribute) {
+            $lines[] = '        ' . render_php_attribute($attribute);
+        }
         if ($class->isBacked()) {
             $lines[] = sprintf('        case %s = %s;', $case->getName(), render_value($case->getBackingValue()));
         } else {
@@ -155,11 +161,14 @@ function render_enum(ReflectionClass $class): array
  */
 function render_class(ReflectionClass $class): array
 {
-    if (method_exists($class, 'isEnum') && $class->isEnum()) {
-        return render_enum($class);
-    }
-
     $lines = [];
+    foreach ($class->getAttributes() as $attribute) {
+        $lines[] = '    ' . render_php_attribute($attribute);
+    }
+    if (method_exists($class, 'isEnum') && $class->isEnum()) {
+        $enum = $class instanceof ReflectionEnum ? $class : new ReflectionEnum($class->getName());
+        return array_merge($lines, render_enum($enum));
+    }
     $header = '    ';
     if ($class->isFinal() && !$class->isTrait()) {
         $header .= 'final ';
@@ -212,6 +221,9 @@ function render_class(ReflectionClass $class): array
         if ($constant->getDeclaringClass()->getName() !== $class->getName()) {
             continue;
         }
+        foreach ($constant->getAttributes() as $attribute) {
+            $lines[] = '        ' . render_php_attribute($attribute);
+        }
         $visibility = $constant->isPrivate() ? 'private' : ($constant->isProtected() ? 'protected' : 'public');
         $final = $constant->isFinal() ? ' final' : '';
         $type = '';
@@ -237,15 +249,23 @@ function render_class(ReflectionClass $class): array
         if ($property->getDeclaringClass()->getName() !== $class->getName()) {
             continue;
         }
+        $propertyType = $property->getType();
+        $requiresType = $property->isReadOnly() || $class->isReadOnly();
+        $type = $propertyType === null ? '' : render_type($propertyType) . ' ';
+        if (property_type_contains_callable($propertyType)) {
+            // Zend can expose callable properties that PHP source cannot declare.
+            $lines[] = '        /** @var ' . trim($type) . ' */';
+            $type = '';
+        }
+        if ($type === '' && $requiresType) {
+            $type = 'mixed ';
+        }
+        foreach ($property->getAttributes() as $attribute) {
+            $lines[] = '        ' . render_php_attribute($attribute);
+        }
         $visibility = $property->isPrivate() ? 'private' : ($property->isProtected() ? 'protected' : 'public');
         $static = $property->isStatic() ? ' static' : '';
         $readonly = ($property->isReadOnly() && !$class->isReadOnly()) ? ' readonly' : '';
-        $type = '';
-        if ($property->hasType()) {
-            $type = render_type($property->getType()) . ' ';
-        } elseif ($property->isReadOnly() || $class->isReadOnly()) {
-            $type = 'mixed ';
-        }
         $lines[] = sprintf(
             '        %s%s%s %s$%s;',
             $visibility,
@@ -269,6 +289,9 @@ function render_class(ReflectionClass $class): array
         [$signature, $docblock] = render_callable_signature($method);
         foreach ($docblock as $line) {
             $lines[] = '        ' . $line;
+        }
+        foreach ($method->getAttributes() as $attribute) {
+            $lines[] = '        ' . render_php_attribute($attribute);
         }
 
         $prefix = '        ';
@@ -307,7 +330,8 @@ function render_callable_signature(ReflectionFunctionAbstract $function): array
     $docblock = [];
     foreach ($function->getParameters() as $parameter) {
         [$rendered, $paramDoc] = render_parameter($parameter, $function);
-        $params[] = $rendered;
+        $attributes = array_map('render_php_attribute', $parameter->getAttributes());
+        $params[] = implode(' ', [...$attributes, $rendered]);
         if ($paramDoc !== null) {
             $docblock[] = ' * @param ' . $paramDoc . ' $' . $parameter->getName();
         }
@@ -370,6 +394,17 @@ function render_parameter(ReflectionParameter $parameter, ?ReflectionFunctionAbs
     return [$reference . $name . ' = null', $type];
 }
 
+function property_type_contains_callable(?ReflectionType $type): bool
+{
+    $members = $type instanceof ReflectionUnionType ? $type->getTypes() : [$type];
+    foreach ($members as $member) {
+        if ($member instanceof ReflectionNamedType && $member->getName() === 'callable') {
+            return true;
+        }
+    }
+    return false;
+}
+
 function render_type(?ReflectionType $type): string
 {
     if ($type === null) {
@@ -417,6 +452,16 @@ function render_class_name(string $name): string
     return '\\' . ltrim($name, '\\');
 }
 
+function render_php_attribute(ReflectionAttribute $attribute): string
+{
+    $args = [];
+    foreach ($attribute->getArguments() as $key => $value) {
+        $args[] = (is_string($key) ? $key . ': ' : '') . render_value($value);
+    }
+    return '#[' . render_class_name($attribute->getName())
+        . ($args === [] ? '' : '(' . implode(', ', $args) . ')') . ']';
+}
+
 /**
  * @param mixed $value
  */
@@ -435,7 +480,9 @@ function render_value($value): string
 
     return match (true) {
         is_string($value) => var_export($value, true),
-        is_int($value), is_float($value) => (string) $value,
+        $value === PHP_INT_MIN => '(-' . PHP_INT_MAX . ' - 1)',
+        is_int($value) => (string) $value,
+        is_float($value) => var_export($value, true),
         is_bool($value) => $value ? 'true' : 'false',
         $value === null => 'null',
         default => var_export($value, true),

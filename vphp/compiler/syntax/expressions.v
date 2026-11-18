@@ -47,7 +47,7 @@ fn (d &Decoder) expr(id flat.NodeId) Expr {
 			}
 			Expr(PrefixExpr{op, boxed(d.expr(d.tree.child(n, 0)))})
 		}
-		.struct_init, .assoc { Expr(StructInit{n.value_text(), d.value_fields(n)}) }
+		.struct_init, .assoc { Expr(StructInit{d.type_name(n.value_text()), d.value_fields(n)}) }
 		.map_init { Expr(d.map_init(n)) }
 		.array_literal { Expr(ArrayLiteral{d.tree.children_of(n).map(d.expr(it))}) }
 		.array_init {

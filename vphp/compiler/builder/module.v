@@ -163,6 +163,7 @@ pub fn (b &ModuleBuilder) render_mshutdown() string {
 	res.write_string('    vphp_call_optional_void_symbol("vphp_ext_shutdown");\n')
 	res.write_string('    vphp_call_optional_void_symbol("vphp_ext_auto_shutdown");\n')
 	res.write_string('    vphp_framework_shutdown();\n')
+	res.write_string('    vphp_release_attribute_arrays();\n')
 	res.write_string('    _vcleanup_caller();\n')
 	res.write_string('    return SUCCESS;\n}\n')
 	return res.str()

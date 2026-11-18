@@ -14,9 +14,12 @@ pub enum PhpAttributeTarget {
 
 pub struct PhpAttributeItem {
 pub:
-	kind  string
-	name  string
-	value string
+	kind     string
+	name     string
+	value    string
+	key_kind string
+	key      string
+	items    []PhpAttributeItem
 }
 
 pub struct PhpAttribute {

@@ -12,13 +12,15 @@ pub fn parse_class_decl(stmt ast.Stmt, table &ast.Table, module_name string) ?&r
 		return none
 	}
 	mut cls := repr.new_class_repr()
-	if !struct_decl.attrs.any(it.name == 'php_class' || it.name == 'php_trait') {
+	cls.is_trait = struct_decl.attrs.any(it.name in ['php_trait', 'vphp.PhpTrait'])
+	if !cls.is_trait && !struct_decl.attrs.any(it.name == 'php_class') {
 		return none
 	}
-	cls.is_trait = struct_decl.attrs.any(it.name == 'php_trait')
 
 	cls.name = struct_decl.name.all_after_last('.')
 	cls.module_name = module_name
+	cls.has_v_fields = struct_decl.fields.len > 0 || struct_decl.embeds.len > 0
+	cls.attributes = parse_php_type_attributes(struct_decl.attrs, 'vphp.PhpClassAttribute')
 	if attr := ast.find_attr(struct_decl.attrs, if cls.is_trait { 'php_trait' } else { 'php_class' }) {
 		cls.php_name = if attr.arg != '' { attr.arg } else { cls.name }
 	} else {
@@ -28,26 +30,30 @@ pub fn parse_class_decl(stmt ast.Stmt, table &ast.Table, module_name string) ?&r
 		cls.parent = normalize_attr_value(attr.arg)
 	}
 	mut php_prop_map := map[string]string{}
-	for attr in struct_decl.attrs {
+	for index, attr in struct_decl.attrs {
 		if attr.name == 'php_const' {
 			cls.shadow_const_name = attr.arg
 		} else if attr.name == 'php_static' {
 			cls.shadow_static_name = attr.arg
-		} else if attr.name == 'php_abstract' {
+		} else if attr.name in ['php_abstract', 'vphp.PhpAbstractClass'] {
 			cls.is_abstract = true
+		} else if attr.name == 'vphp.PhpFinalClass' {
+			cls.is_final = true
 		} else if attr.name == 'vphp.PhpObjectCopy_cloneable' {
 			cls.cloneable = attr.arg == 'true'
 		} else if attr.name == 'vphp.PhpObjectCopy_serializable' {
 			cls.serializable = attr.arg == 'true'
+		} else if attr.name == 'vphp.PhpZendPropertyCopy' {
+			cls.copy_zend_properties = true
 		} else if attr.name == 'php_implements' {
 			cls.implements_attr << parse_attr_list(attr.arg)
 		} else if attr.name == 'php_prop' {
 			if php_prop := parse_php_prop_attr(attr.arg) {
 				cls.properties << php_prop
 			}
-		} else if attr.name == 'php_attr' {
-			if php_attr := parse_php_attr(attr.arg) {
-				cls.attributes << php_attr
+		} else if attr.name in ['vphp.PhpDeclaredProperty', 'vphp.PhpDeclaredReadonlyProperty'] {
+			if php_prop := parse_declared_property_attr(attr, struct_decl.attrs[index + 1..]) {
+				cls.properties << php_prop
 			}
 		} else if attr.name == 'php_prop_map' {
 			for v_field_name, php_prop_name in parse_php_prop_map(attr.arg) {
@@ -70,11 +76,11 @@ pub fn parse_class_decl(stmt ast.Stmt, table &ast.Table, module_name string) ?&r
 		}
 	}
 	for field in struct_decl.fields {
-		if field.attrs.any(it.name == 'php_ignore') {
+		if field.attrs.any(it.name in ['php_ignore', 'vphp.PhpIgnoreField']) {
 			continue
 		}
 		type_name := table.get_type_name(field.typ)
-		mut is_static := field.attrs.any(it.name == 'php_static')
+		mut is_static := field.attrs.any(it.name in ['php_static', 'vphp.PhpStaticProperty'])
 		mut php_prop_name := php_prop_map[field.name] or { field.name }
 		if attr := ast.find_attr(field.attrs, 'php_prop') {
 			normalized := normalize_attr_value(attr.arg)
@@ -118,6 +124,7 @@ pub fn parse_class_decl(stmt ast.Stmt, table &ast.Table, module_name string) ?&r
 			is_static:        is_static
 			is_mut:           field.is_mut
 			is_property_only: false
+			attributes:       parse_typed_php_attributes(field.attrs, 'vphp.PhpPropertyAttribute')
 		}
 	}
 	return cls
@@ -147,7 +154,7 @@ pub fn add_class_method(mut cls repr.PhpClassRepr, stmt ast.FnDecl, table &ast.T
 		method_return_types)
 	if compiler_notes_enabled() && !attrs.borrowed_return && inferred_borrowed
 		&& normalize_delegated_target_type(ret_type) == cls.name {
-		println('  - [Compiler][note] borrowed self-return inferred: ${cls.name}.${stmt.name} -> consider adding @[php_borrowed_return]')
+		println('  - [Compiler][note] borrowed self-return inferred: ${cls.name}.${stmt.name} -> consider adding @[vphp.PhpBorrowedReturn]')
 	}
 	mut php_return_type := attrs.php_return_type
 	if stmt.is_noreturn && php_return_type == '' {
@@ -160,6 +167,7 @@ pub fn add_class_method(mut cls repr.PhpClassRepr, stmt ast.FnDecl, table &ast.T
 		is_static:       false
 		return_spec:     repr.new_return_repr(ret_type, php_return_type)
 		borrowed_return: attrs.borrowed_return || inferred_borrowed
+		attributes:      attrs.php_attributes
 		visibility:      if stmt.is_pub { 'public' } else { 'protected' }
 		args:            args
 		has_export:      attrs.has_export
@@ -191,6 +199,7 @@ pub fn add_class_static_method(mut cls repr.PhpClassRepr, stmt ast.FnDecl, table
 		is_static:       true
 		return_spec:     repr.new_return_repr(ret_type, php_return_type_static)
 		borrowed_return: attrs.borrowed_return
+		attributes:      attrs.php_attributes
 		visibility:      if stmt.is_pub { 'public' } else { 'protected' }
 		args:            args
 		has_export:      attrs.has_export

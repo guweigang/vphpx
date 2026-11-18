@@ -12,7 +12,7 @@ pub fn parse_constant_decl(stmt ast.Stmt, table &ast.Table) ?&repr.PhpConstRepr 
 		return none
 	}
 	mut con := repr.new_const_repr()
-	con.has_php_const = const_decl.attrs.any(it.name == 'php_const')
+	con.has_php_const = const_decl.attrs.any(it.name in ['php_const', 'vphp.PhpExportConstant'])
 
 	for field in const_decl.fields {
 		if field.name.ends_with('ext_config') {
@@ -38,15 +38,28 @@ pub fn parse_constant_decl(stmt ast.Stmt, table &ast.Table) ?&repr.PhpConstRepr 
 			expr := field.expr as ast.StructInit
 			con.const_type = 'struct'
 			con.name = raw_name
-			mut v_type := table.get_type_name(expr.typ)
-			if v_type.contains('.') {
-				v_type = v_type.all_after_last('.')
+			v_type := table.get_type_name(expr.typ)
+			con.v_type = v_type.all_after_last('.')
+			type_key := if v_type.contains('.') {
+				v_type
+			} else {
+				'${const_decl.module_name}.${v_type}'
 			}
-			con.v_type = v_type
+			mut field_attributes := map[string][]repr.PhpAttributeRepr{}
+			if symbol := table.find_sym(type_key) {
+				info := symbol.info
+				if info is ast.Struct {
+					for member in info.fields {
+						field_attributes[member.name] = parse_typed_php_attributes(member.attrs,
+							'vphp.PhpClassConstantAttribute')
+					}
+				}
+			}
 
 			for f in expr.init_fields {
 				mut sub := repr.PhpConstRepr{
-					name: f.name.to_upper()
+					name:       f.name.to_upper()
+					attributes: field_attributes[f.name]
 				}
 				if f.expr is ast.StringLiteral {
 					sub.value = (f.expr as ast.StringLiteral).val

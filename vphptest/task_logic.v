@@ -2,8 +2,7 @@ module main
 
 import vphp
 
-// === 新增：利用 @[php_class] 机制定义的 VPhp\Task ===
-@[php_task: 'AnalyzeTask']
+@[vphp.PhpExportTask(name: '')]
 struct AnalyzeTask {
 pub mut:
     symbol string

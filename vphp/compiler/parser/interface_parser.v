@@ -17,6 +17,7 @@ pub fn parse_interface_decl(stmt ast.Stmt, table &ast.Table) ?&repr.PhpInterface
 	}
 
 	iface.name = interface_decl.name.all_after_last('.')
+	iface.attributes = parse_php_type_attributes(interface_decl.attrs, 'vphp.PhpInterfaceAttribute')
 	if attr := ast.find_attr(interface_decl.attrs, 'php_interface') {
 		iface.php_name = if attr.arg != '' { attr.arg } else { iface.name }
 	} else {

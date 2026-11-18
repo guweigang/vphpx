@@ -26,10 +26,10 @@ typedef struct {
 
 typedef struct {
   void *v_ptr;
-  void *prop_handler;
-  void *write_handler;
-  void *sync_handler;
-  void *(*new_raw)();
+  void (*prop_handler)(void *, char *, int, zval *);
+  void (*write_handler)(void *, char *, int, zval *);
+  void (*sync_handler)(void *, zval *);
+  void *(*new_raw)(void);
   void (*cleanup_raw)(void *);
   void (*free_raw)(void *);
 } vphp_class_handlers;
@@ -53,7 +53,8 @@ void vphp_create_closure_FULL_AUTO_V2(zval *zv, void *v_thunk,
                                       void *bridge_ptr);
 void vphp_create_closure_with_arity(zval *zv, void *v_thunk, void *bridge_ptr,
                                     int num_args, int required_args);
-void vphp_create_closure_with_arginfo(zval *zv, void *v_thunk, void *bridge_ptr,
+typedef void (*vphp_closure_bridge)(void *thunk, zend_execute_data *ex, zval *ret);
+void vphp_create_closure_with_arginfo(zval *zv, void *v_thunk, vphp_closure_bridge bridge,
                                      int num_args, int required_args,
                                      const zend_internal_arg_info *arginfo);
 typedef bool (*vphp_computed_default_matcher)(const zend_internal_function *func,
@@ -62,7 +63,9 @@ void vphp_register_closure_default_class(const char *name,
                                          vphp_computed_default_matcher matches);
 bool vphp_matches_computed_default_handler(const zend_internal_function *func,
                                            zif_handler handler);
-void vphp_create_variadic_closure(zval *zv, void *v_thunk, void *bridge_ptr);
+void vphp_create_variadic_closure(zval *zv, void *v_thunk, vphp_closure_bridge bridge);
+zend_class_entry *vphp_register_class_with_abstract_statics(
+    zend_class_entry *ce, zend_class_entry *parent);
 vphp_object_wrapper *vphp_obj_from_obj(zend_object *obj);
 void vphp_register_object(void *v_ptr, zend_object *obj);
 void vphp_return_obj(zval *return_value, void *v_ptr, zend_class_entry *ce);
@@ -204,6 +207,10 @@ void vphp_write_property_compat(zend_object *obj, const char *name, int name_len
 int vphp_has_property_compat(zend_object *obj, const char *name, int name_len);
 int vphp_isset_property_compat(zend_object *obj, const char *name, int name_len);
 void vphp_unset_property_compat(zend_object *obj, const char *name, int name_len);
+void *vphp_new_plain_object_tracker(void);
+void *vphp_capture_plain_object(void *tracker, zval *root);
+void vphp_restore_plain_objects(void *handle);
+void vphp_release_plain_object_state(void *handle);
 
 // 状态获取
 char *VPHP_Z_STRVAL(zval *z);
@@ -234,6 +241,8 @@ void *vphp_get_current_this_object(void);
 void *vphp_get_v_ptr_from_zval(zval *zv);
 
 // 方法调用与 Callable
+int vphp_object_method_required_params(const zval *value, const char *name,
+                                       size_t name_len);
 int vphp_call_method(zval *obj, const char *method, int method_len,
                      zval *retval, int param_count, zval **params_ptrs);
 int vphp_is_callable(zval *callable);

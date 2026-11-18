@@ -7,6 +7,7 @@ pub mut:
 	extends_attr []string
 	extends      []string
 	methods      []PhpMethodRepr
+	attributes   []PhpAttributeRepr
 }
 
 pub fn (r PhpInterfaceRepr) c_name() string {

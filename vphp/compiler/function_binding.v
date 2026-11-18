@@ -33,7 +33,7 @@ fn (glue FunctionGlue) render_lines() []string {
 	mut lines := []string{}
 	lines << glue.helper_lines
 	lines << "@[export: 'vphp_wrap_${glue.name}']"
-	lines << 'fn vphp_wrap_${glue.name}(ctx vphp.Context) {'
+	lines << 'fn vphp_wrap_${glue.name.to_lower()}(ctx vphp.Context) {'
 	lines << '    mut vphp_scope := vphp.PhpScope.once()'
 	lines << '    defer { vphp_scope.close() }'
 	lines << glue.arg_setup.lines

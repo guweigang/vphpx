@@ -1,8 +1,10 @@
 module main
 
+import vphp
+
 @[heap]
 @[php_class]
-@[php_abstract]
+@[vphp.PhpAbstractClass]
 struct AbstractReport {
 pub mut:
 	title string
@@ -14,7 +16,7 @@ pub fn (r &AbstractReport) label() string {
 }
 
 @[php_method]
-@[php_abstract]
+@[vphp.PhpAbstractMethod]
 pub fn (r &AbstractReport) summarize() string {
 	return r.title
 }

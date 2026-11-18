@@ -140,6 +140,120 @@ In practice:
 - temporary owned results inside glue should prefer `RequestOwnedZBox`
 - long-lived stored values should prefer `PersistentOwnedZBox`
 
+## Exporting Types, Functions, and Methods
+
+Use `@[vphp.PhpExportClass(name: 'My\\Project\\Widget')]` on a struct,
+`@[vphp.PhpExportInterface(name: 'My\\Project\\Contract')]` on an interface,
+and `@[vphp.PhpExportEnum(name: 'My\\Project\\Kind')]` on an enum.
+Pass `name: ''` to use the V declaration name. Existing `@[php_class]`,
+`@[php_interface]`, and `@[php_enum]` declarations are also supported.
+
+Mark a composable V struct with `@[vphp.PhpTrait]` and embed it in an
+exported class. Its PHP properties and exported methods are composed into
+the class, whose own members take precedence. Existing `@[php_trait]`
+declarations are also supported.
+
+Use `@[vphp.PhpClassAttribute(name: 'My\\Project\\Handler', args: '"http"')]`
+to attach a PHP attribute to an exported class. Use `PhpInterfaceAttribute`
+and `PhpEnumAttribute` with the same fields on exported interfaces and enums.
+The `args` string accepts positional and named scalar arguments. Numeric
+arguments must match a complete numeric literal, so `42ms` remains a string
+and `1e3` becomes a float. Quote numeric-looking text to preserve its spelling.
+Separate arguments with commas. Quote text containing whitespace, brackets,
+colons, quote characters, or equals signs.
+Quoted arguments accept escaped quotes and backslashes, and `\uXXXX` or
+`\UXXXXXXXX` for Unicode. The outer V string is decoded first, so use
+`args: 'text: "\\u96EA"'` to pass the Unicode escape to the attribute parser.
+Unknown escapes inside an argument retain their backslashes.
+Arrays use PHP bracket syntax, such as `[1, "group" => [2, 3]]`.
+They can be positional or named arguments and can contain nested arrays.
+Use integer or string keys, or omit the key to append an element.
+An empty string denotes no arguments. Existing `@[php_attr]` declarations are
+also supported.
+
+Use `@[vphp.PhpParameterAttribute(v_name: 'value', name: 'My\\Project\\Input', args: '')]`
+on a function or method to attach a PHP attribute to the named V parameter.
+The attribute follows that parameter's PHP name in Reflection and stubs.
+Existing `@[php_param_attr]` mappings also support multiple attributes or
+parameters in one declaration.
+
+Use `@[vphp.PhpCallableAttribute(name: 'My\\Project\\Audit', args: 'level: 2')]`
+to attach a PHP attribute to the exported function or method itself.
+
+Use `@[vphp.PhpExtends(name: 'Exception')]` to declare a class parent.
+`@[vphp.PhpImplements(names: 'My\\Project\\Contract')]` declares class interfaces,
+and `@[vphp.PhpExtendsInterfaces(names: 'My\\Project\\BaseContract')]` declares
+interface parents. The `names` fields accept a comma-separated list. Existing
+`@[php_extends]` and `@[php_implements]` declarations are also supported.
+
+Put `@[vphp.PhpProperty(name: 'captionText')]` on a struct field to
+set its PHP property name. The field keeps its V type, visibility, and
+mutability. Existing property name mappings remain supported.
+`@[vphp.PhpIgnoreField]` keeps a field out of the PHP properties.
+`@[vphp.PhpStaticProperty]` declares a static PHP property and can be used
+with `PhpProperty` to set its name. Existing field-level `@[php_ignore]`
+and `@[php_static]` declarations are also supported.
+
+Use `@[vphp.PhpPropertyAttribute(name: 'My\\Project\\Audit', args: 'level: 2')]`
+on a V field to attach a PHP attribute to its exported property. It can be
+combined with `PhpProperty` and `PhpStaticProperty`. PHP Reflection and the
+generated stub expose the attribute on the resulting property.
+
+Put `@[vphp.PhpDeclaredProperty(name: 'requestRef', v_type: 'mixed')]`
+on an exported struct to declare a public writable PHP property without
+a V field. This uses the same property types and defaults as the existing
+class-level `@[php_prop]` declaration.
+
+Use `@[vphp.PhpClassConstants(source: 'my_constants')]` to export fields from
+a V constant struct as PHP class constants. Annotate those fields with
+`@[vphp.PhpClassConstantAttribute(name: 'My\\Project\\Audit', args: 'level: 2')]`
+to attach a PHP attribute. Use `PhpEnumCaseAttribute` with the same fields
+on a case in an exported V enum. Reflection and the generated stub expose
+the metadata on the corresponding constant or case.
+
+Use `@[vphp.PhpClassStatics(source: 'my_statics')]` to bind a V constant struct
+with mutable fields to PHP static properties. Existing class-level
+`@[php_const]` and `@[php_static]` declarations are also supported.
+
+Put `@[vphp.PhpExportConstant]` on a V scalar constant to export it as a
+PHP global constant. For example, `const max_retries = 3` is exported as
+`MAX_RETRIES` with value `3` and type `int`. The global `@[php_const]`
+spelling is also supported.
+
+Mark the extension's Zend module globals struct with `@[vphp.PhpGlobals]`.
+Use `vphp.get_globals[T]()` to read the active storage and
+`vphp.with_globals[T](...)` to mutate it. Each extension declares at most
+one globals struct. The existing `@[php_globals]` spelling is also supported.
+
+Use `@[vphp.PhpExportTask(name: 'Analyze')]` on a struct implementing
+`vphp.ITask` to register its PHP task name. Pass `name: ''` to use the V
+struct name. Existing `@[php_task]` declarations are also supported.
+
+Use `@[vphp.PhpExportFunction(name: 'my_function')]` on a function and
+`@[vphp.PhpExportMethod(name: 'withUri')]` on a method of an exported class.
+Pass `name: ''` to use the V declaration name. Existing `@[php_function]`
+and `@[php_method]` declarations are also supported.
+
+Pair `@[vphp.PhpAbstractClass]` with a class export and
+`@[vphp.PhpAbstractMethod]` with an instance or static method export.
+The method's V signature supplies the PHP abstract method signature.
+Existing `@[php_abstract]` declarations are also supported.
+
+Use `@[vphp.PhpBorrowedReturn]` when an exported method returns an existing
+V object with borrowed ownership. This uses the same bridge behavior as
+`@[php_borrowed_return]`, which remains supported.
+
+Override inferred PHP types with `@[vphp.PhpArgType(v_name: 'value', php_type: 'int|string')]`
+or use `PhpArgTypes(types: 'request=ServerRequestInterface,handler=RequestHandlerInterface')`
+to declare several overrides on one callable. Use `PhpArgName` to rename
+one parameter or `PhpArgNames(names: 'old_name=newName,other_name=otherName')`
+to rename several. `PhpArgDefault(v_name: 'offset', default_value: 'SEEK_SET')`
+sets a PHP default expression and makes the parameter optional.
+`PhpArgDefaults(defaults: 'first=null,second=[]')` declares several defaults
+on one callable.
+Use `@[vphp.PhpReturnType(php_type: 'int|string')]` to override a return type.
+Existing `@[php_arg_type]` mappings are also supported.
+
 ## Exported Function Parameter Forms
 
 Exported V functions and methods should use one of five parameter forms. Pick

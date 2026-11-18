@@ -32,7 +32,7 @@ pub fn parse_structural_elements(all_stmts []ast.Stmt,
 		if stmt is ast.StructDecl {
 			if g_repr := parse_globals_decl(stmt, table) {
 				if globals_repr.name != '' {
-					return error('multiple @[php_globals] declarations are not supported: ${globals_repr.name} and ${g_repr.name}')
+					return error('multiple PHP module globals declarations: ${globals_repr.name} and ${g_repr.name}')
 				}
 				globals_repr = g_repr
 				continue

@@ -2,12 +2,12 @@ module main
 
 import vphp
 
-@[php_interface: 'VPHP\\Compiler\\ModuleProbeContract']
+@[vphp.PhpExportInterface(name: 'VPHP\\Compiler\\ModuleProbeContract')]
 pub interface VphpModuleProbeContract {
 	label() string
 }
 
-@[php_enum: 'VPHP\\Compiler\\ModuleProbeKind']
+@[vphp.PhpExportEnum('VPHP\\Compiler\\ModuleProbeKind')]
 pub enum VphpModuleProbeKind {
 	alpha = 7
 	beta  = 11
@@ -25,7 +25,7 @@ pub:
 	count  int    = 3
 }
 
-@[php_const]
+@[vphp.PhpExportConstant]
 const compiler_probe_constant = 'module-constant-ok'
 
 pub type VphpModuleProbeSum = int | string
@@ -219,4 +219,17 @@ pub fn (mut b VphpModuleProbeWrapperBox) change_props(new_val vphp.PhpValue, new
 	b.num = new_num.retain()
 	b.b = new_b.retain()
 	b.arr = new_arr.retain()
+}
+
+@[vphp.PhpStringParam('value', php_name: 'defaultValue', default_value: 'line\n"\\\${token}雪\x00', optional: true)]
+@[php_arg_default(suffix: '""')]
+@[php_function]
+pub fn v_typed_string_param(prefix string, value string, suffix string) string {
+	return prefix + value + suffix
+}
+
+@[vphp.PhpStringParam('value', php_name: 'text', default_value: '', optional: false)]
+@[php_function]
+pub fn v_typed_required_string_param(value string) string {
+	return value
 }

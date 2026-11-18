@@ -3,6 +3,7 @@ module compiler
 import os
 import strings
 import compiler.builder
+import compiler.linker
 import compiler.repr
 
 fn (c Compiler) collect_non_type_fragments() builder.ExportFragments {
@@ -27,7 +28,7 @@ fn (c Compiler) collect_non_type_fragments() builder.ExportFragments {
 	return fragments
 }
 
-fn (c Compiler) collect_type_fragments() builder.ExportFragments {
+fn (c Compiler) collect_type_fragments() !builder.ExportFragments {
 	mut fragments := builder.ExportFragments{}
 	c_emitter := CGenerator{
 		ext_name:          c.ext_name
@@ -36,14 +37,21 @@ fn (c Compiler) collect_type_fragments() builder.ExportFragments {
 		table:             c.table
 	}
 
+	mut types := []repr.PhpRepr{}
 	for el in c.elements {
 		if el is repr.PhpInterfaceRepr {
-			fragments.merge(c_emitter.build_interface_export(el))
+			types << el
 		}
 	}
-
 	for el in c.elements {
-		if el is repr.PhpClassRepr && !el.is_trait {
+		if (el is repr.PhpClassRepr && !el.is_trait) || el is repr.PhpEnumRepr {
+			types << el
+		}
+	}
+	for el in linker.registration_order(types)! {
+		if el is repr.PhpInterfaceRepr {
+			fragments.merge(c_emitter.build_interface_export(el))
+		} else if el is repr.PhpClassRepr {
 			fragments.merge(c_emitter.build_class_export(el))
 		} else if el is repr.PhpEnumRepr {
 			fragments.merge(c_emitter.build_enum_export(el))
@@ -156,7 +164,7 @@ fn (mut c Compiler) generate_c(default_class string, closure_defaults []StructCl
 	// 2. 模块层：初始化 ModuleBuilder 并收集功能点
 	mut mod_builder := builder.new_module_builder(c.ext_name, c.ext_version, c.ext_description)
 	mut fragments := c.collect_non_type_fragments()
-	mut type_fragments := c.collect_type_fragments()
+	mut type_fragments := c.collect_type_fragments()!
 	for k, v in c.ini_entries {
 		mod_builder.add_ini_entry(k, v)
 	}
@@ -255,7 +263,7 @@ fn (mut c Compiler) generate_v_glue() ! {
 	}
 	v_code := v_glue.generate(mut c.elements)
 	os.write_file(c.bridge_output_path(), v_code)!
-	v_glue.generate_modules(c.elements, c.target_files)!
+	v_glue.generate_module_bridges(c.elements, c.module_dirs)!
 }
 
 fn (c Compiler) bridge_output_path() string {
@@ -305,7 +313,7 @@ fn (mut c Compiler) generate_h() ! {
 	}
 
 	fragments := c.collect_non_type_fragments()
-	type_fragments := c.collect_type_fragments()
+	type_fragments := c.collect_type_fragments()!
 	for line in fragments.declarations {
 		res.write_string(line + '\n')
 	}

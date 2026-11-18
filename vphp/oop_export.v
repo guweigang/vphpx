@@ -59,6 +59,10 @@ pub fn ZendClassHandlers.new(config ZendClassHandlersConfig) voidptr {
 	})
 }
 
+pub fn ZendClassHandlers.new_typed(config zend.TypedClassHandlersConfig) voidptr {
+	return zend.new_typed_class_handlers(config)
+}
+
 // --- From zend_object_type.v ---
 pub struct ZendObject {
 	handle object.Handle

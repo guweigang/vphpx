@@ -15,6 +15,8 @@ pub mut:
 	has_cleanup_method      bool
 	cloneable               bool
 	serializable            bool
+	copy_zend_properties    bool
+	has_v_fields            bool
 	has_clone_into          bool
 	embeds_v                []string
 	implements_v            []string
@@ -50,6 +52,7 @@ pub:
 	v_field_name string // V 侧原始名，如 "max_title_len"
 	value        string
 	const_type   string
+	attributes   []PhpAttributeRepr
 }
 
 pub struct PhpClassPropRepr {
@@ -61,6 +64,7 @@ pub:
 	is_static        bool
 	is_mut           bool
 	is_property_only bool
+	attributes       []PhpAttributeRepr
 }
 
 pub struct PhpMethodRepr {
@@ -74,6 +78,7 @@ pub mut:
 	delegated_target_type   string
 	delegated_target_method string
 	args                    []PhpArgRepr
+	attributes              []PhpAttributeRepr
 	has_export              bool
 	visibility              string
 	is_abstract             bool
@@ -139,15 +144,19 @@ pub fn (field PhpParamsField) has_computed_default() bool {
 
 pub struct PhpAttributeRepr {
 pub:
-	name string
-	args []PhpAttributeArg
+	name        string
+	args        []PhpAttributeArg
+	parse_error string
 }
 
 pub struct PhpAttributeArg {
 pub:
-	kind  string
-	name  string
-	value string
+	kind     string
+	name     string
+	value    string
+	key_kind string
+	key      string
+	items    []PhpAttributeArg
 }
 
 pub fn new_class_repr() &PhpClassRepr {

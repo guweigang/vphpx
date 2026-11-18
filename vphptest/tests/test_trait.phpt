@@ -1,5 +1,5 @@
 --TEST--
-php_trait embedded structs flatten methods and properties, while outer class methods win on conflicts
+Embedded PHP trait members keep visibility, class overrides and subclass inheritance
 --SKIPIF--
 <?php if (!extension_loaded("vphptest")) print "skip"; ?>
 --FILE--
@@ -24,6 +24,18 @@ try {
 } catch (Error $e) {
     echo "protected_method=" . $e->getMessage() . PHP_EOL;
 }
+
+class TraitPostChild extends TraitPost
+{
+    public function inspectTrait(): string
+    {
+        return $this->internal_trait();
+    }
+}
+
+$child = new TraitPostChild('Child');
+echo "child_summary=" . $child->summary() . PHP_EOL;
+echo "child_trait=" . $child->trait_only() . '|' . $child->inspectTrait() . PHP_EOL;
 ?>
 --EXPECT--
 internal_note_mods=protected
@@ -36,3 +48,5 @@ bump=2
 visits_after=2
 protected_prop=Cannot access protected property TraitPost::$internal_note
 protected_method=Call to protected method TraitPost::internal_trait() from global scope
+child_summary=class:Child
+child_trait=trait:from-trait|hidden:secret

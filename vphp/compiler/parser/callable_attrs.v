@@ -12,6 +12,7 @@ mut:
 	php_arg_names    map[string]string
 	php_arg_defaults map[string]string
 	php_param_attrs  map[string][]repr.PhpAttributeRepr
+	php_attributes   []repr.PhpAttributeRepr
 	php_return_type  string
 	php_arg_optional map[string]bool
 	borrowed_return  bool
@@ -19,85 +20,71 @@ mut:
 }
 
 fn split_attr_entries(raw string) []string {
+	parts := split_attr_parts(raw, ',', '') or { return [] }
+	return parts.filter(it != '')
+}
+
+fn split_attr_parts(raw string, separator string, context string) ![]string {
 	mut out := []string{}
-	mut current := []rune{}
-	mut quote := rune(0)
+	mut start := 0
+	mut quote := u8(0)
 	mut escaped := false
-	mut bracket_depth := 0
-	mut brace_depth := 0
-	mut paren_depth := 0
-	for ch in raw.runes() {
+	mut closers := []u8{}
+	for i, ch in raw {
 		if escaped {
-			current << ch
 			escaped = false
 			continue
 		}
-		if quote != rune(0) {
-			current << ch
+		if quote != 0 {
 			if ch == `\\` {
 				escaped = true
 				continue
 			}
 			if ch == quote {
-				quote = rune(0)
+				quote = 0
 			}
 			continue
 		}
 		match ch {
 			`'`, `"` {
 				quote = ch
-				current << ch
 			}
 			`[` {
-				bracket_depth++
-				current << ch
-			}
-			`]` {
-				if bracket_depth > 0 {
-					bracket_depth--
-				}
-				current << ch
+				closers << `]`
 			}
 			`{` {
-				brace_depth++
-				current << ch
-			}
-			`}` {
-				if brace_depth > 0 {
-					brace_depth--
-				}
-				current << ch
+				closers << `}`
 			}
 			`(` {
-				paren_depth++
-				current << ch
+				closers << `)`
 			}
-			`)` {
-				if paren_depth > 0 {
-					paren_depth--
-				}
-				current << ch
-			}
-			`,` {
-				if quote == rune(0) && bracket_depth == 0 && brace_depth == 0 && paren_depth == 0 {
-					entry := current.string().trim_space()
-					if entry != '' {
-						out << entry
-					}
-					current = []rune{}
+			`]`, `}`, `)` {
+				if closers.len > 0 && closers.last() == ch {
+					closers.pop()
+				} else if context != '' {
+					return error('unexpected `${ch.ascii_str()}` in ${context}')
 				} else {
-					current << ch
+					index := closers.last_index(ch)
+					if index >= 0 {
+						closers.delete(index)
+					}
 				}
 			}
-			else {
-				current << ch
-			}
+			else {}
+		}
+		if i >= start && closers.len == 0
+			&& ch == separator[0] && raw[i..].starts_with(separator) {
+			out << raw[start..i].trim_space()
+			start = i + separator.len
 		}
 	}
-	entry := current.string().trim_space()
-	if entry != '' {
-		out << entry
+	if context != '' && quote != 0 {
+		return error('unclosed quoted string in ${context}')
 	}
+	if context != '' && closers.len > 0 {
+		return error('expected `${closers.last().ascii_str()}` in ${context}')
+	}
+	out << raw[start..].trim_space()
 	return out
 }
 
@@ -105,16 +92,26 @@ fn parse_callable_attrs(attrs []ast.Attr, callable_attr_name string, default_nam
 	mut parsed := ParsedCallableAttrs{
 		php_name: default_name
 	}
-	for attr in attrs {
+	typed_export := if callable_attr_name == 'php_method' {
+		'vphp.PhpExportMethod'
+	} else {
+		'vphp.PhpExportFunction'
+	}
+	for index, attr in attrs {
 		if attr.name == 'php_ignore' {
 			return ParsedCallableAttrs{
 				php_name: default_name
 			}
 		}
-		if attr.name == callable_attr_name {
+		if attr.name == callable_attr_name || attr.name == typed_export {
 			parsed.has_php_callable = true
-			if attr.arg != '' {
-				parsed.php_name = attr.arg
+			mut name := attr.arg
+			if attr.name == typed_export && index + 1 < attrs.len
+				&& attrs[index + 1].name == '${typed_export}_name' {
+				name = attrs[index + 1].arg
+			}
+			if name != '' {
+				parsed.php_name = name
 			}
 			continue
 		}
@@ -124,6 +121,20 @@ fn parse_callable_attrs(attrs []ast.Attr, callable_attr_name string, default_nam
 		}
 		if attr.name == 'php_return_type' && attr.arg != '' {
 			parsed.php_return_type = normalize_attr_value(attr.arg)
+			continue
+		}
+		if attr.name == 'vphp.PhpReturnType' {
+			mut php_type := attr.arg
+			if index + 1 < attrs.len && attrs[index + 1].name == 'vphp.PhpReturnType_php_type' {
+				php_type = attrs[index + 1].arg
+			}
+			if php_type.trim_space() != '' {
+				parsed.php_return_type = php_type.trim_space()
+			}
+			continue
+		}
+		if attr.name == 'vphp.PhpStringParam' {
+			apply_string_param_attr(attr, attrs[index + 1..], mut parsed)
 			continue
 		}
 		if attr.name == 'vphp.PhpBoolParam' {
@@ -147,6 +158,24 @@ fn parse_callable_attrs(attrs []ast.Attr, callable_attr_name string, default_nam
 			} else {
 				parsed.php_arg_optional.delete(v_name.arg)
 				parsed.php_arg_defaults.delete(v_name.arg)
+			}
+			continue
+		}
+		if attr.name == 'vphp.PhpArgType' {
+			if name, value := typed_arg_pair(attr, attrs[index + 1..], 'php_type') {
+				parsed.php_arg_types[name] = value
+			}
+			continue
+		}
+		if attr.name == 'vphp.PhpArgName' {
+			if name, value := typed_arg_pair(attr, attrs[index + 1..], 'php_name') {
+				parsed.php_arg_names[name] = value
+			}
+			continue
+		}
+		if attr.name == 'vphp.PhpArgDefault' {
+			if name, value := typed_arg_pair(attr, attrs[index + 1..], 'default_value') {
+				parsed.php_arg_defaults[name] = value
 			}
 			continue
 		}
@@ -189,6 +218,16 @@ fn parse_callable_attrs(attrs []ast.Attr, callable_attr_name string, default_nam
 			}
 			continue
 		}
+		if attr.name == 'vphp.PhpCallableAttribute' {
+			if attribute := parse_typed_php_attribute(attr, attrs[index + 1..]) {
+				parsed.php_attributes << attribute
+			}
+			continue
+		}
+		if attr.name == 'vphp.PhpParameterAttribute' {
+			apply_parameter_attribute(attr, attrs[index + 1..], mut parsed)
+			continue
+		}
 		if is_call_style_attr_arg(attr, 'php_param_attr') {
 			parsed.php_param_attrs[attr.call_arg_name] << parse_php_attr_list(attr.arg)
 			continue
@@ -199,19 +238,86 @@ fn parse_callable_attrs(attrs []ast.Attr, callable_attr_name string, default_nam
 			}
 			continue
 		}
-		if attr.name == 'php_borrowed_return' {
+		if attr.name in ['php_borrowed_return', 'vphp.PhpBorrowedReturn'] {
 			parsed.borrowed_return = true
 			continue
 		}
-		if attr.name == 'php_abstract' {
+		if attr.name in ['php_abstract', 'vphp.PhpAbstractMethod'] {
 			parsed.is_abstract = true
 		}
 	}
 	return parsed
 }
 
+fn typed_arg_pair(base ast.Attr, following []ast.Attr, value_field string) ?(string, string) {
+	mut v_name := base.arg.trim_space()
+	mut value := ''
+	for field in following {
+		match field.name {
+			'${base.name}_v_name' { v_name = field.arg.trim_space() }
+			'${base.name}_${value_field}', '${base.name}_1' { value = field.arg.trim_space() }
+			else { break }
+		}
+	}
+	if v_name != '' && value != '' {
+		return v_name, value
+	}
+	return none
+}
+
+fn apply_string_param_attr(base ast.Attr, following []ast.Attr, mut parsed ParsedCallableAttrs) {
+	mut name := base.arg
+	mut php_name := ''
+	mut default_value := ''
+	mut optional := false
+	for field in following {
+		if !field.name.starts_with('vphp.PhpStringParam_') {
+			break
+		}
+		match field.name {
+			'vphp.PhpStringParam_v_name' { name = field.arg }
+			'vphp.PhpStringParam_php_name' { php_name = field.arg }
+			'vphp.PhpStringParam_default_value' { default_value = field.arg }
+			'vphp.PhpStringParam_optional' { optional = field.arg == 'true' }
+			else {}
+		}
+	}
+	if name == '' {
+		return
+	}
+	if php_name != '' {
+		parsed.php_arg_names[name] = php_name
+	}
+	parsed.php_arg_optional[name] = optional
+	if optional {
+		parsed.php_arg_defaults[name] = quote_params_string(default_value, `"`)
+	} else {
+		parsed.php_arg_defaults.delete(name)
+	}
+}
+
 fn is_call_style_attr_arg(attr ast.Attr, call_name string) bool {
 	return attr.call_name == call_name && attr.call_arg_name != '' && attr.has_arg
+}
+
+fn apply_parameter_attribute(base ast.Attr, following []ast.Attr, mut parsed ParsedCallableAttrs) {
+	mut v_name := base.arg
+	mut name := ''
+	mut args := ''
+	for field in following {
+		match field.name {
+			'vphp.PhpParameterAttribute_v_name' { v_name = field.arg }
+			'vphp.PhpParameterAttribute_name', 'vphp.PhpParameterAttribute_1' { name = field.arg }
+			'vphp.PhpParameterAttribute_args', 'vphp.PhpParameterAttribute_2' { args = field.arg }
+			else { break }
+		}
+	}
+	v_name = v_name.trim_space()
+	if v_name != '' {
+		if attr := php_attribute_from_parts(name, args) {
+			parsed.php_param_attrs[v_name] << attr
+		}
+	}
 }
 
 fn parse_php_attr_list(raw string) []repr.PhpAttributeRepr {

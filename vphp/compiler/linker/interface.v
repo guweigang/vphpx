@@ -16,15 +16,23 @@ fn uniq_non_empty(values []string) []string {
 	return out
 }
 
-pub fn link_class_interfaces(mut elements []repr.PhpRepr) ! {
+fn exported_interface_names(elements []repr.PhpRepr) map[string]string {
 	mut interface_map := map[string]string{}
 	for el in elements {
 		if el is repr.PhpInterfaceRepr {
 			interface_map[el.name] = el.php_name
-			interface_map[el.php_name] = el.php_name
+			interface_map[registration_key(el.php_name)] = el.php_name
 		}
 	}
+	return interface_map
+}
 
+fn resolve_exported_interface(interface_map map[string]string, name string) ?string {
+	return interface_map[name] or { interface_map[registration_key(name)] or { return none } }
+}
+
+pub fn link_class_interfaces(mut elements []repr.PhpRepr) ! {
+	interface_map := exported_interface_names(elements)
 	for i in 0 .. elements.len {
 		mut el := elements[i]
 		if mut el is repr.PhpClassRepr {
@@ -40,8 +48,7 @@ pub fn link_class_interfaces(mut elements []repr.PhpRepr) ! {
 				internal_ifaces << php_iface
 			}
 			for iface_name in el.implements_attr {
-				if iface_name in interface_map {
-					php_iface := interface_map[iface_name]
+				if php_iface := resolve_exported_interface(interface_map, iface_name) {
 					all_ifaces << php_iface
 					internal_ifaces << php_iface
 				} else {
@@ -59,23 +66,13 @@ pub fn link_class_interfaces(mut elements []repr.PhpRepr) ! {
 }
 
 pub fn link_interface_parents(mut elements []repr.PhpRepr) ! {
-	mut interface_map := map[string]string{}
-	for el in elements {
-		if el is repr.PhpInterfaceRepr {
-			interface_map[el.name] = el.php_name
-		}
-	}
-
+	interface_map := exported_interface_names(elements)
 	for i in 0 .. elements.len {
 		mut el := elements[i]
 		if mut el is repr.PhpInterfaceRepr {
 			mut all_parents := []string{}
 			for parent_name in el.extends_attr {
-				if parent_name in interface_map {
-					all_parents << interface_map[parent_name]
-				} else {
-					all_parents << parent_name
-				}
+				all_parents << (resolve_exported_interface(interface_map, parent_name) or { parent_name })
 			}
 			el.extends = uniq_non_empty(all_parents)
 			elements[i] = el

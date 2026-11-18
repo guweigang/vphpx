@@ -19,14 +19,14 @@ pub mut:
     last_user     string
 }
 
-@[php_const]
+@[vphp.PhpExportConstant]
 const app_version = '1.0.0'
 
-@[php_const]
+@[vphp.PhpExportConstant]
 const max_retry = 3
 
-@[php_const]
+@[vphp.PhpExportConstant]
 const pi_value = 3.14159
 
-@[php_const]
+@[vphp.PhpExportConstant]
 const debug_mode = false
