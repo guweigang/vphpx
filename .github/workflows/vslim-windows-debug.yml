@@ -119,6 +119,7 @@ jobs:
           $exitCode = 0
           php ..\vphptest\run-tests.php -n -q --show-all -d "extension=$extension" `
             tests/test_vslim_cli_run_argv.phpt `
+            tests/test_vslim_cli_enum_input_types.phpt `
             tests/test_vslim_cli_nested_invocation.phpt `
             tests/test_vslim_cli_template_bin_entry.phpt `
             tests/test_vslim_psr7_psr17_interface_contracts.phpt `

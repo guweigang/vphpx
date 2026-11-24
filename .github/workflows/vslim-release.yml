@@ -58,6 +58,14 @@ jobs:
             artifact_name: vslim-linux-amd64-binary
             needs_build: true
             emit_only: false
+          - name: linux amd64 PHP 8.6 compatibility
+            runs_on: ubuntu-latest
+            platform: linux-amd64
+            php-version: '8.6'
+            package_type: binary
+            extension_file: vslim.so
+            needs_build: true
+            verify_only: true
           - name: macos amd64 bundle
             runs_on: ${{ inputs.macos_runner == '26' && 'macos-26-intel' || 'macos-15-intel' }}
             platform: macos-amd64
@@ -87,10 +95,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.5
+      - name: Setup PHP ${{ matrix.php-version || '8.5' }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: ${{ matrix.php-version || '8.5' }}
           coverage: none
           extensions: zip
 
@@ -218,7 +226,16 @@ jobs:
           TEST_PHP_EXECUTABLE="$(command -v php)" php ../vphptest/run-tests.php -q --show-all -d extension=./${{ matrix.extension_file }} \
             tests/test_vslim_database_bundle_smoke.phpt \
             tests/test_vslim_config_toml.phpt \
+            tests/test_vslim_container_lazy_proxy.phpt \
             tests/test_vslim_psr7_psr17_interface_contracts.phpt \
+            tests/test_vslim_psr7_uri_copy.phpt \
+            tests/test_vslim_psr6_clock_integration.phpt \
+            tests/test_vslim_psr16_clock_integration.phpt \
+            tests/test_vslim_psr14_contracts.phpt \
+            tests/test_vslim_request_state.phpt \
+            tests/test_vslim_stream_response.phpt \
+            tests/test_vslim_stream_static_factory.phpt \
+            tests/test_vslim_stub_generator.phpt \
             tests/test_vslim_template_project_metadata.phpt
 
       - name: Run architecture scan and PHPT smoke tests on Windows
@@ -242,9 +259,15 @@ jobs:
           $exitCode = 0
           php ..\vphptest\run-tests.php -n -q --show-all -d "extension=$extension" `
             tests/test_vslim_database_bundle_smoke.phpt `
+            tests/test_vslim_cli_enum_input_types.phpt `
             tests/test_vslim_cli_nested_invocation.phpt `
             tests/test_vslim_config_toml.phpt `
+            tests/test_vslim_container_lazy_proxy.phpt `
             tests/test_vslim_psr7_psr17_interface_contracts.phpt `
+            tests/test_vslim_psr7_uri_copy.phpt `
+            tests/test_vslim_psr6_clock_integration.phpt `
+            tests/test_vslim_psr16_clock_integration.phpt `
+            tests/test_vslim_request_state.phpt `
             tests/test_vslim_template_project_metadata.phpt
           if ($LASTEXITCODE -ne 0) {
             $exitCode = $LASTEXITCODE
@@ -256,7 +279,7 @@ jobs:
           exit $exitCode
 
       - name: Build release bundle
-        if: runner.os != 'Windows' && (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch')
+        if: ${{ !matrix.verify_only && runner.os != 'Windows' && (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch') }}
         working-directory: vslim
         shell: bash
         env:
@@ -292,7 +315,7 @@ jobs:
             --ext-path=".\${{ matrix.extension_file }}"
 
       - name: Upload bundle artifact
-        if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
+        if: ${{ !matrix.verify_only && (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch') }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}

@@ -1,0 +1,8 @@
+module main
+
+import vphp
+
+@[vphp.PhpExportClass(name: '')]
+@parent@
+@property@
+pub struct VRestrictedRef {}

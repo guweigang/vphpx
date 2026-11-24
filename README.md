@@ -82,7 +82,23 @@ make -C vphptest build
 That flow runs the `vphp` compiler and links the generated extension.
 
 For a standalone project, use [the `vphp` CLI](vphp/compiler/README.md#standalone-extension-cli)
-to check the sources, build a PHP extension, and generate IDE stubs.
+to create a scaffold, check the sources, build a PHP extension, and generate IDE stubs.
+The bundled executable includes the VPHP SDK, so developers need no repository checkout:
+
+```sh
+vphp new hello_ext
+cd hello_ext
+vphp build
+php -n -d extension=build/hello_ext.so tests/smoke.php
+vphp stub
+```
+
+V, a C compiler, PHP CLI and matching PHP development headers are required locally.
+Run `vphp setup` once to install missing prerequisites and verify a real extension
+build. Use `vphp setup --dry-run` to preview or `vphp doctor` for a lightweight
+check. Setup supports macOS and the apt, dnf/yum, pacman, zypper and apk Linux
+families; system authentication or the Apple installer may require interaction.
+Build the bundled executable with `sh cmd/vphp/scripts/package.sh`.
 
 ### 3. Load it in PHP
 

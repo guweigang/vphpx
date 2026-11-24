@@ -1,4 +1,9 @@
 *.so
+/build/
+*.stub-attributes.json
+*.stub-expressions.json
+*.so.classes.php
+*.dll.classes.php
 *_generated.c
 *_generated.c.flags
 *_generated.c.objects
