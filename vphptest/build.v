@@ -150,6 +150,8 @@ fn link_extension(ext_name string, transpiled_c string, output_so string, native
 	}
 	if is_macos {
 		args << ['-undefined', 'dynamic_lookup']
+	} else if os.user_os() == 'linux' {
+		args << '-Wl,-z,nodelete'
 	}
 	args << '-fvisibility=default'
 	println('执行命令: ${cmdexec.display(args[0], args[1..])}')

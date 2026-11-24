@@ -1,7 +1,13 @@
 module vphp
 
 import vphp.scope
+import vphp.zend
 import vphp.zval as zvalmod
+
+// current_fiber_id identifies the active PHP fiber, or zero on the main stack.
+pub fn current_fiber_id() usize {
+	return zend.current_fiber_id()
+}
 
 pub struct PhpScope {}
 

@@ -11,6 +11,17 @@ pub fn PhpJson.encode_with_flags(value ZVal, flags int) string {
 		PhpInt.of(flags))
 }
 
+// encode_or_throw uses JSON_THROW_ON_ERROR and keeps the PHP exception pending on failure.
+pub fn PhpJson.encode_or_throw(value ZVal) !string {
+	mut flags := php_const('JSON_THROW_ON_ERROR')
+	defer {
+		flags.release()
+	}
+	return PhpFunction.named('json_encode').with_result[PhpString, string](fn (text PhpString) string {
+		return text.value()
+	}, PhpValue.from_zval(value), PhpValue.from_zval(flags))
+}
+
 pub fn PhpJson.decode_assoc(raw string) ZVal {
 	mut result := PhpFunction.named('json_decode').request_owned(PhpString.of(raw),
 		PhpBool.of(true))

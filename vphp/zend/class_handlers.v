@@ -8,12 +8,13 @@ pub type ClassReleaseHandler = fn (voidptr)
 @[params]
 pub struct TypedClassHandlersConfig {
 pub:
-	prop_handler  ClassPropertyHandler
-	write_handler ClassPropertyHandler
-	sync_handler  ClassSyncHandler
-	new_raw       ClassAllocateHandler
-	cleanup_raw   ClassReleaseHandler
-	free_raw      ClassReleaseHandler
+	prop_handler   ClassPropertyHandler
+	write_handler  ClassPropertyHandler
+	sync_handler   ClassSyncHandler
+	new_raw        ClassAllocateHandler
+	cleanup_raw    ClassReleaseHandler
+	free_raw       ClassReleaseHandler
+	init_php_state ClassReleaseHandler = unsafe { nil }
 }
 
 @[params]
@@ -41,12 +42,13 @@ pub fn new_class_handlers(config ClassHandlersConfig) voidptr {
 pub fn new_typed_class_handlers(config TypedClassHandlersConfig) voidptr {
 	return unsafe {
 		&C.vphp_class_handlers{
-			prop_handler:  config.prop_handler
-			write_handler: config.write_handler
-			sync_handler:  config.sync_handler
-			new_raw:       config.new_raw
-			cleanup_raw:   config.cleanup_raw
-			free_raw:      config.free_raw
+			prop_handler:   config.prop_handler
+			write_handler:  config.write_handler
+			sync_handler:   config.sync_handler
+			new_raw:        config.new_raw
+			cleanup_raw:    config.cleanup_raw
+			free_raw:       config.free_raw
+			init_php_state: config.init_php_state
 		}
 	}
 }

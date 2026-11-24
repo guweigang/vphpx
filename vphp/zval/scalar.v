@@ -37,6 +37,10 @@ pub fn string_value(handle Handle) string {
 	return zend.zval_string_value_ptr(handle.raw_ptr())
 }
 
+pub fn cast_string(input Handle, output Handle) bool {
+	return zend.zval_cast_string_ptr(input.raw_ptr(), output.raw_ptr())
+}
+
 pub fn set_null(handle Handle) {
 	if !handle.is_valid() {
 		return

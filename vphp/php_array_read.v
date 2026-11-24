@@ -25,6 +25,12 @@ pub fn (a PhpArray) value(key string) !PhpValue {
 	return PhpValue.from_zval(a.get(key)!)
 }
 
+// find returns none for a missing key and a PhpValue for a present key, including null.
+pub fn (a PhpArray) find(key string) ?PhpValue {
+	raw := a.to_zval().find_array_key(key) or { return none }
+	return PhpValue.from_zval(raw)
+}
+
 pub fn (a PhpArray) value_at(key string) PhpValue {
 	return PhpValue.from_zval(a.to_zval().value_at(key))
 }

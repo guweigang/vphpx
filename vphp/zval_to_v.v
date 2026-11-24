@@ -30,6 +30,28 @@ fn cached_class_entry(name string) voidptr {
 	return lookup(name)
 }
 
+// enum_case_to_v resolves a case of the exported enum by name, independent of its PHP backing value.
+pub fn (obj ZendObject) enum_case_to_v[T]() !T {
+	$if T is $enum {
+		type_name := php_enum_class_name(unsafe { T(0) })
+		ce := C.vphp_find_loaded_class_entry(&char(type_name.str), type_name.len)
+		if !obj.is_valid() || ce == unsafe { nil }
+			|| !zend.object_is_instance_of(obj.raw_ptr(), ce) {
+			return error('expected a PHP enum case of ${type_name}')
+		}
+		name := obj.prop_borrowed('name').to_string()
+		$for item in T.values {
+			case_ := unsafe { T(item.value) }
+			if name == php_enum_case_name(case_, item.name) {
+				return case_
+			}
+		}
+		return error('unknown PHP enum case ${type_name}::${name}')
+	} $else {
+		$compile_error('enum_case_to_v needs a V enum')
+	}
+}
+
 // ======== Zend Value -> V 转换 API ========
 
 // 便捷转换：array => map<string,string>（无效/null/undef 返回空 map）
@@ -54,11 +76,19 @@ pub fn (v ZVal) to_string_list() []string {
 
 // 将 Zend Value 转换为明确的 V 类型（严格校验类型）
 pub fn (v ZVal) to_v[T]() !T {
+	$if T is PhpInterfaceValue {
+		mut value := T{}
+		value.bind_php_interface_zval(v)!
+		return value
+	}
 	$if T is $enum {
 		if v.is_numeric() {
 			return unsafe { T(v.to_int()) }
 		}
 		if v.is_object() {
+			if case_value := ZendObject.from_zval(v).enum_case_to_v[T]() {
+				return case_value
+			}
 			obj := PhpObject.from_zval(v) or {
 				return error('expected enum object, failed to cast')
 			}
@@ -72,7 +102,7 @@ pub fn (v ZVal) to_v[T]() !T {
 	}
 	$if T is $struct {
 		if v.is_object() {
-			mut v_name := typeof(T).name
+			mut v_name := typeof[T]().name.trim_left('&')
 			if v_name.contains('.') {
 				v_name = v_name.all_after_last('.')
 			}
@@ -86,7 +116,11 @@ pub fn (v ZVal) to_v[T]() !T {
 					if ptr != unsafe { nil } // SAFETY: nil literal in unsafe context
 
 					{
-						return unsafe { *(&T(ptr)) }
+						$if T is $pointer {
+							return unsafe { T(ptr) }
+						} $else {
+							return unsafe { *(&T(ptr)) }
+						}
 					}
 				}
 			}

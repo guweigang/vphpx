@@ -1,15 +1,9 @@
 module vphp
 
-import vphp.zend
-
 // 任务可能的返回结果，定义为 Sum Type（代数数据类型）
 pub type TaskResult = string | int | i64 | f64 | bool | []string | []int | []i64 | []f64
 
-// 并发任务的异步结果包装器
-pub struct AsyncResult {
-pub mut:
-	handle thread TaskResult
-}
+pub type AsyncResult = PhpNativeTask[TaskResult]
 
 pub struct PhpTask {
 	name string
@@ -88,21 +82,11 @@ pub fn (task PhpTask) exists() bool {
 pub fn (task PhpTask) spawn(args []ZVal) !PhpTaskHandle {
 	creator := ITask.get_creator(task.name) or { return error('Task ${task.name} not registered') }
 
-	task_inst := creator(args)
-	t := spawn run_php_task(task_inst)
-
-	// SAFETY: C interop block with valid pointer arguments
-	unsafe {
-		mut res := &AsyncResult(zend.emalloc(usize(sizeof(AsyncResult))))
-		res.handle = t
-		return PhpTaskHandle{
-			ptr: res
-		}
+	return PhpTaskHandle{
+		ptr: spawn_php_native_task[ITask, TaskResult](creator(args), fn (job ITask) TaskResult {
+			return job.run()
+		})
 	}
-}
-
-fn run_php_task(task ITask) TaskResult {
-	return task.run()
 }
 
 pub fn PhpTaskHandle.null() PhpTaskHandle {
@@ -115,31 +99,40 @@ pub fn (handle PhpTaskHandle) ptr() voidptr {
 
 pub fn (handle PhpTaskHandle) is_valid() bool {
 	return handle.ptr != // SAFETY: nil literal in unsafe context
-	 unsafe { nil }
+	unsafe { nil }
+}
+
+pub fn (handle PhpTaskHandle) is_complete() bool {
+	return handle.is_valid() && unsafe { (&PhpNativeTask[TaskResult](handle.ptr)).is_complete() }
 }
 
 pub fn (handle PhpTaskHandle) wait_result() !TaskResult {
-	// SAFETY: C interop block with valid pointer arguments
-	unsafe {
-		if handle.ptr == nil {
-			return error('Task handle is nil')
-		}
-
-		task := &AsyncResult(handle.ptr)
-		return task.handle.wait()
+	if !handle.is_valid() {
+		return error('Task handle is nil')
 	}
+	mut task := unsafe { &PhpNativeTask[TaskResult](handle.ptr) }
+	return task.wait()
 }
 
 pub fn (handle PhpTaskHandle) release() {
-	if handle.ptr == 0 {
+	if !handle.is_valid() {
 		return
 	}
-	zend.efree(handle.ptr)
+	task := unsafe { &PhpNativeTask[TaskResult](handle.ptr) }
+	task.release()
+}
+
+@[export: 'vphp_release_native_task_resource']
+fn release_native_task_resource(ptr voidptr) {
+	task_release_handle(ptr)
 }
 
 pub fn (handle PhpTaskHandle) wait_box() RequestOwnedZBox {
 	results := handle.wait_result() or { return RequestOwnedZBox.new_null() }
+	return task_result_box(results)
+}
 
+fn task_result_box(results TaskResult) RequestOwnedZBox {
 	match results {
 		string {
 			return RequestOwnedZBox.new_string(results)
@@ -193,6 +186,10 @@ pub fn (handle PhpTaskHandle) wait_box() RequestOwnedZBox {
 
 pub fn (handle PhpTaskHandle) wait_value() PhpValue {
 	return PhpValue.from_request_owned_zbox(handle.wait_box())
+}
+
+pub fn (handle PhpTaskHandle) await_value() !PhpValue {
+	return PhpValue.from_request_owned_zbox(task_result_box(handle.wait_result()!))
 }
 
 pub fn task_exists(name string) bool {

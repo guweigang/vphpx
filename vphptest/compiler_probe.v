@@ -29,7 +29,10 @@ pub:
 const compiler_probe_constant = 'module-constant-ok'
 
 pub type VphpModuleProbeSum = int | string
-pub type VphpModuleProbeSumType = VphpModuleProbeKind | int | VphpModuleProbeReadOnlyBox | VphpOtherProbeKind
+pub type VphpModuleProbeSumType = VphpModuleProbeKind
+	| int
+	| VphpModuleProbeReadOnlyBox
+	| VphpOtherProbeKind
 
 @[php_class: 'VPHP\\Compiler\\ModuleProbeReadOnlyBox']
 pub struct VphpModuleProbeReadOnlyBox {
@@ -103,12 +106,37 @@ pub struct VphpCopyableBox {
 pub mut:
 	count int
 mut:
-	hidden int @[php_ignore]
+	hidden        int           @[php_ignore]
+	clone_pending bool          @[php_ignore]
+	held          vphp.PhpValue @[php_ignore]
 }
 
 pub fn (b &VphpCopyableBox) clone_into(mut target VphpCopyableBox) {
 	target.count = b.count
 	target.hidden = b.hidden
+	target.clone_pending = true
+	target.held = b.held.owned()
+}
+
+@[vphp.PhpExportMethod(name: 'hold')]
+pub fn (mut b VphpCopyableBox) hold(value vphp.PhpValue) {
+	b.held.release()
+	b.held = value.owned()
+}
+
+pub fn (mut b VphpCopyableBox) init_php_state() {
+	if b.clone_pending {
+		if state := vphp.owned_object_php_state(b) {
+			state.bool('clone_initialized', true)
+			b.clone_pending = false
+		}
+	}
+}
+
+@[php_method: 'cloneInitialized']
+pub fn (b &VphpCopyableBox) clone_initialized() bool {
+	state := vphp.owned_object_php_state(b) or { return false }
+	return state.bool_at('clone_initialized', false)
 }
 
 @[php_method]
@@ -123,11 +151,11 @@ pub fn (b &VphpCopyableBox) state() string {
 }
 
 @[php_method: '__serialize']
-pub fn (b &VphpCopyableBox) serialize_state() map[string]int {
-	return {
-		'count':  b.count
-		'hidden': b.hidden
-	}
+pub fn (b &VphpCopyableBox) serialize_state() vphp.PhpArray {
+	data := vphp.PhpArray.new()
+	data.int('count', b.count)
+	data.int('hidden', b.hidden)
+	return data
 }
 
 @[php_method: '__unserialize']
@@ -142,6 +170,53 @@ pub fn (mut b VphpCopyableBox) unserialize_state(data vphp.PhpArray) {
 	b.hidden = hidden.to_int()
 }
 
+@[vphp.PhpExportClass(name: 'VPHP\\Compiler\\TaggedBox')]
+@[vphp.PhpObjectCopy(cloneable: true, serializable: true)]
+@[heap]
+pub struct VphpTaggedBox {
+	VphpCopyableBox
+pub mut:
+	tag string
+}
+
+pub fn (box &VphpTaggedBox) clone_into(mut target VphpTaggedBox) {
+	box.VphpCopyableBox.clone_into(mut target.VphpCopyableBox)
+	target.tag = box.tag.clone()
+}
+
+@[vphp.PhpExportMethod(name: '__serialize')]
+pub fn (box &VphpTaggedBox) serialize_tagged_state() vphp.PhpArray {
+	data := box.VphpCopyableBox.serialize_state()
+	data.string('tag', box.tag)
+	return data
+}
+
+@[vphp.PhpExportMethod(name: '__unserialize')]
+pub fn (mut box VphpTaggedBox) unserialize_tagged_state(data vphp.PhpArray) {
+	tag := data.string_value('tag') or {
+		vphp.PhpException.raise_class('UnexpectedValueException', 'Invalid TaggedBox tag', 0)
+		return
+	}
+	box.VphpCopyableBox.unserialize_state(data)
+	if !vphp.PhpException.has_current() {
+		box.tag = tag.value()
+	}
+}
+
+@[vphp.PhpExportClass(name: 'VPHP\\Compiler\\NumberedBox')]
+@[vphp.PhpObjectCopy(cloneable: true, serializable: false)]
+@[heap]
+pub struct VphpNumberedBox {
+	VphpTaggedBox
+pub mut:
+	number int
+}
+
+pub fn (box &VphpNumberedBox) clone_into(mut target VphpNumberedBox) {
+	box.VphpTaggedBox.clone_into(mut target.VphpTaggedBox)
+	target.number = box.number
+}
+
 @[php_function]
 pub fn v_compiler_probe() string {
 	return 'module-probe-ok'
@@ -152,22 +227,22 @@ pub fn v_compiler_probe_named_sum(value ?VphpModuleProbeSumType) ?VphpModuleProb
 	return value
 }
 
-@[php_function]
 @[php_arg_type: 'value=VPHP\\Compiler\\ModuleProbeKind|VPHP\\Compiler\\OtherProbeKind']
 @[php_return_type: 'VPHP\\Compiler\\ModuleProbeKind|VPHP\\Compiler\\OtherProbeKind']
+@[php_function]
 pub fn v_compiler_probe_explicit_union(value vphp.PhpValue) vphp.PhpValue {
 	return value
 }
 
-@[php_function]
 @[php_arg_type(value: 'Iterator&Countable')]
 @[php_return_type: 'Iterator&Countable']
+@[php_function]
 pub fn v_compiler_probe_intersection(value vphp.PhpValue) vphp.PhpValue {
 	return value
 }
 
-@[php_function]
 @[php_return_type: '(Iterator&Countable)|ArrayObject']
+@[php_function]
 pub fn v_compiler_probe_wrong_dnf_return() vphp.PhpValue {
 	return vphp.PhpValue.from_zval(vphp.ZVal.new_int(10))
 }
@@ -191,9 +266,9 @@ struct VphpModuleProbeConsts {
 }
 
 const compiler_probe_consts = VphpModuleProbeConsts{
-	max_limit: 100
+	max_limit:     100
 	const_version: '1.0.0'
-	is_active: true
+	is_active:     true
 }
 
 @[php_class: 'VPHP\\Compiler\\ModuleProbeTypedConsts']

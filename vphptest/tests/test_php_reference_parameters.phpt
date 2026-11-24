@@ -7,6 +7,18 @@ $function = new ReflectionFunction('v_step_reference');
 var_dump($step->isPassedByReference(), $cursor->isPassedByReference());
 echo $cursor->getName(), ':', $cursor->getType(), PHP_EOL;
 
+if (PHP_VERSION_ID >= 80600) {
+    $partial = eval('return v_step_reference(3, cursor: ?);');
+    $parameters = (new ReflectionFunction($partial))->getParameters();
+    $partialValue = 5;
+    $partial(cursor: $partialValue);
+    if (count($parameters) !== 1 || $parameters[0]->getName() !== 'cursor'
+        || !$parameters[0]->isPassedByReference() || (string) $parameters[0]->getType() !== 'int'
+        || $partialValue !== 8) {
+        throw new RuntimeException('The partial application lost the parameter reference');
+    }
+}
+
 $value = 5;
 v_step_reference(cursor: $value, step: 3);
 echo $value, PHP_EOL;

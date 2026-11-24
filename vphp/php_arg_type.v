@@ -4,10 +4,11 @@ import vphp.zend
 
 pub struct PhpArgMeta {
 pub:
-	index           int
-	name            string
-	attributes      []PhpAttribute
-	use_php_default bool
+	index             int
+	name              string
+	attributes        []PhpAttribute
+	use_php_default   bool
+	is_named_variadic bool
 }
 
 pub struct PhpArg {
@@ -81,6 +82,16 @@ pub fn (arg PhpArg) name() string {
 		return meta.name
 	}
 	return ''
+}
+
+// variadic_name is present for a named tail argument, including an empty key.
+pub fn (arg PhpArg) variadic_name() ?string {
+	if meta := arg.meta {
+		if meta.is_named_variadic {
+			return meta.name
+		}
+	}
+	return none
 }
 
 pub fn (arg PhpArg) attributes() []PhpAttribute {
@@ -184,8 +195,56 @@ pub fn (arg PhpArg) iterable() ?PhpIterable {
 	return PhpIterable.from_zval(arg.zval())
 }
 
+pub fn (arg PhpArg) generator() ?PhpGenerator {
+	return PhpGenerator.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) fiber() ?PhpFiber {
+	return PhpFiber.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) date_interval() ?PhpDateInterval {
+	return PhpDateInterval.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) date_time_interface() ?PhpDateTimeInterface {
+	return PhpDateTimeInterface.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) date_time_immutable() ?PhpDateTimeImmutable {
+	return PhpDateTimeImmutable.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) json_serializable() ?PhpJsonSerializable {
+	return PhpJsonSerializable.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) stringable() ?PhpStringable {
+	return PhpStringable.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) countable() ?PhpCountable {
+	return PhpCountable.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) array_access() ?PhpArrayAccess {
+	return PhpArrayAccess.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) weak_map() ?PhpWeakMap {
+	return PhpWeakMap.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) weak_reference() ?PhpWeakReference {
+	return PhpWeakReference.from_zval(arg.zval())
+}
+
 pub fn (arg PhpArg) iterator() ?PhpIterator {
 	return PhpIterator.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) iterator_aggregate() ?PhpIteratorAggregate {
+	return PhpIteratorAggregate.from_zval(arg.zval())
 }
 
 pub fn (arg PhpArg) throwable() ?PhpThrowable {
@@ -258,6 +317,14 @@ pub fn (arg PhpArg) to_v_ptr[T]() !voidptr {
 		return error('object not bound to V pointer')
 	}
 	return ptr
+}
+
+// bound_v_object reads the existing V instance behind a PHP argument.
+pub fn (arg PhpArg) bound_v_object[T]() !&T {
+	ptr := arg.to_v_ptr[T]() or {
+		return error('Argument #${arg.index() + 1} must be an object bound to ${typeof[T]().name}: ${err.msg()}')
+	}
+	return unsafe { &T(ptr) }
 }
 
 pub fn (arg PhpArg) raw_obj() voidptr {

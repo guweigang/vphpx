@@ -25,30 +25,28 @@ fn normalize_attr_value(raw string) string {
 	return raw.trim_space().trim('\'"')
 }
 
+fn export_min_php_version(attrs []ast.Attr, attr_name string, export_name string) !int {
+	version := ast.find_attr_arg(attrs, attr_name, 'version') or { return 0 }
+	return parse_min_php_version(version, export_name)
+}
+
+fn parse_min_php_version(version string, export_name string) !int {
+	return match version.trim_left('.') {
+		'php82' { 0 }
+		'php83' { 80300 }
+		'php84' { 80400 }
+		'php85' { 80500 }
+		'php86' { 80600 }
+		else { return error('${export_name}: invalid minimum PHP version ${version}') }
+	}
+}
+
 fn parse_attr_list(raw string) []string {
 	mut out := []string{}
 	for part in raw.split(',') {
 		name := normalize_attr_value(part)
 		if name != '' {
 			out << name
-		}
-	}
-	return out
-}
-
-fn parse_php_arg_types(raw string) map[string]string {
-	mut out := map[string]string{}
-	for part in raw.split(',') {
-		entry := part.trim_space()
-		if entry == '' {
-			continue
-		}
-		if idx := entry.index('=') {
-			arg_name := entry[..idx].trim_space()
-			arg_type := entry[idx + 1..].trim_space()
-			if arg_name != '' && arg_type != '' {
-				out[arg_name] = arg_type
-			}
 		}
 	}
 	return out
@@ -78,42 +76,53 @@ fn parse_php_prop_attr(raw string) ?repr.PhpClassPropRepr {
 		return none
 	}
 	mut name := value
-	mut v_type := 'mixed'
+	mut php_type := 'mixed'
 	if value.contains(':') {
 		name = value.all_before(':').trim_space()
-		v_type = value.all_after(':').trim_space()
+		php_type = value.all_after(':').trim_space()
 	}
-	return php_only_property(name, v_type, 'public', false)
+	return php_only_property(name, php_type, 'public', false)
 }
 
-fn parse_declared_property_attr(base ast.Attr, following []ast.Attr) ?repr.PhpClassPropRepr {
-	mut name := base.arg
-	mut v_type := ''
-	mut visibility := 'public'
+fn parse_declared_property_attr(base ast.Attr) ?repr.PhpClassPropRepr {
+	name := base.args['name']
+	php_type := base.args['php_type']
+	visibility := base.args['visibility'] or { 'public' }
+	set_visibility := if value := base.args['set_visibility'] { ?string(value) } else { none }
 	readonly := base.name == 'vphp.PhpDeclaredReadonlyProperty'
-	field_prefix := base.name + '_'
-	for field in following {
-		if !field.name.starts_with(field_prefix) {
-			break
-		}
-		match field.name[field_prefix.len..] {
-			'name' { name = field.arg }
-			'v_type', '1' { v_type = field.arg }
-			'visibility', '2' { visibility = field.arg }
-			else { break }
-		}
+	is_static := base.name in ['vphp.PhpDeclaredStaticProperty',
+		'vphp.PhpDeclaredStaticPropertyWithDefault', 'vphp.PhpDeclaredStaticPropertyWithSetVisibility',
+		'vphp.PhpDeclaredStaticPropertyWithSetVisibilityAndDefault']
+	declared := php_only_property(name.trim_space(), php_type.trim_space(), visibility, readonly) or {
+		return none
 	}
-	return php_only_property(name.trim_space(), v_type.trim_space(), visibility, readonly)
+	property := repr.PhpClassPropRepr{
+		...declared
+		is_static:      is_static
+		set_visibility: set_visibility
+		explicit_mixed: php_type.trim_space().to_lower() == 'mixed'
+	}
+	if value := base.args['default_value'] {
+		return property_with_default(property, value)
+	}
+	return property
 }
 
-fn php_only_property(name string, v_type string, visibility string, readonly bool) ?repr.PhpClassPropRepr {
+fn property_with_default(property repr.PhpClassPropRepr, value string) repr.PhpClassPropRepr {
+	parsed := parse_attr_value(value.trim_space(), '', true) or {
+		return repr.PhpClassPropRepr{ ...property, default_error: err.msg() }
+	}
+	return repr.PhpClassPropRepr{ ...property, default_value: parsed }
+}
+
+fn php_only_property(name string, php_type string, visibility string, readonly bool) ?repr.PhpClassPropRepr {
 	if name == '' {
 		return none
 	}
 	return repr.PhpClassPropRepr{
 		name:             name
 		v_field_name:     name
-		v_type:           if v_type == '' { 'mixed' } else { v_type }
+		php_type:         if php_type == '' { 'mixed' } else { php_type }
 		visibility:       visibility
 		is_static:        false
 		is_mut:           !readonly
@@ -192,9 +201,12 @@ fn parse_attr_arg(token string) !repr.PhpAttributeArg {
 	if arrow_parts.len > 1 {
 		return error('`=>` is only allowed between a key and value in a PHP attribute array')
 	}
+	if reference := parse_attribute_class_reference(raw, '') {
+		return reference
+	}
 	parts := split_attr_parts(raw, ':', 'PHP attribute argument')!
 	if parts.len == 1 {
-		return parse_attr_value(raw, '')
+		return parse_attr_value(raw, '', false)
 	}
 	name := parts[0]
 	if name == '' {
@@ -204,16 +216,43 @@ fn parse_attr_arg(token string) !repr.PhpAttributeArg {
 		return error('invalid named argument `${name}`')
 	}
 	if parts.len > 2 {
+		offset := raw.index(':') or { 0 }
+		if reference := parse_attribute_class_reference(raw[offset + 1..].trim_space(),
+			name) {
+			return reference
+		}
 		return error('unexpected extra `:` in PHP attribute argument `${name}`, expected a comma between PHP attribute values')
 	}
 	value := parts[1]
 	if value == '' {
 		return error('missing value for named argument `${name}`')
 	}
-	return parse_attr_value(value, name)
+	return parse_attr_value(value, name, false)
 }
 
-fn parse_attr_array(value string) ![]repr.PhpAttributeArg {
+fn parse_attribute_class_reference(value string, name string) ?repr.PhpAttributeArg {
+	separator := value.index('::') or { return none }
+	raw_class := value[..separator].trim_space()
+	class_name := raw_class.trim_string_left('\\')
+	member := value[separator + 2..].trim_space()
+	if class_name.split('\\').any(!is_attr_arg_name(it)) || !is_attr_arg_name(member) {
+		return none
+	}
+	scope := class_name.to_lower()
+	if scope == 'static' || (scope in ['self', 'parent'] && raw_class != class_name) {
+		return none
+	}
+	if member.to_lower() == 'class' && scope !in ['self', 'parent'] {
+		return repr.PhpAttributeArg{ kind: 'string', name: name, value: class_name }
+	}
+	return repr.PhpAttributeArg{
+		kind:  'class_constant'
+		name:  name
+		value: '${class_name}::${member}'
+	}
+}
+
+fn parse_attr_array(value string, require_literals bool) ![]repr.PhpAttributeArg {
 	mut items := []repr.PhpAttributeArg{}
 	mut max_index_used := false
 	mut next_index_is_max := false
@@ -233,20 +272,20 @@ fn parse_attr_array(value string) ![]repr.PhpAttributeArg {
 			if max_index_used {
 				return error('cannot append after the maximum PHP attribute array index')
 			}
-			items << parse_attr_value(parts[0], '')!
+			items << parse_attr_value(parts[0], '', require_literals)!
 			max_index_used = next_index_is_max
 			continue
 		}
 		if parts.any(it == '') {
 			return error('expected a key and a value around `=>` in PHP attribute array')
 		}
-		key := parse_attr_value(parts[0], '')!
-		if key.kind !in ['int', 'string'] {
+		key := parse_attr_value(parts[0], '', require_literals)!
+		if key.kind !in ['int', 'string', 'class_constant'] {
 			return error('PHP attribute array keys must be integers or strings, got `${parts[0]}`')
 		}
 		max_index_used = max_index_used || key.value == max_i64.str()
 		next_index_is_max = next_index_is_max || key.value == (max_i64 - 1).str()
-		item := parse_attr_value(parts[1], '')!
+		item := parse_attr_value(parts[1], '', require_literals)!
 		items << repr.PhpAttributeArg{ ...item, key_kind: key.kind, key: key.value }
 	}
 	return items
@@ -285,7 +324,21 @@ fn attr_literal_end(value string) !int {
 	return error('unclosed PHP attribute literal')
 }
 
-fn parse_attr_value(value string, name string) !repr.PhpAttributeArg {
+fn integer_literal_radix(value string) int {
+	magnitude := value.trim_left('+-').to_lower()
+	return if magnitude.starts_with('0x') || magnitude.starts_with('0b')
+		|| magnitude.starts_with('0o') {
+		0
+	} else {
+		10
+	}
+}
+
+fn parse_integer_literal(value string) !i64 {
+	return strconv.common_parse_int(value, integer_literal_radix(value), 64, true, true)
+}
+
+fn parse_attr_value(value string, name string, require_literals bool) !repr.PhpAttributeArg {
 	if value.len > 0 && value[0] in [`[`, `'`, `"`] {
 		end := attr_literal_end(value)!
 		if end != value.len {
@@ -293,9 +346,18 @@ fn parse_attr_value(value string, name string) !repr.PhpAttributeArg {
 			return error('expected a comma after PHP attribute ${kind}, found `${value[end..].trim_space()}`')
 		}
 		if value[0] == `[` {
-			return repr.PhpAttributeArg{ kind: 'array', name: name, items: parse_attr_array(value)! }
+			return repr.PhpAttributeArg{
+				kind:  'array'
+				name:  name
+				items: parse_attr_array(value, require_literals)!
+			}
 		}
 		return repr.PhpAttributeArg{ kind: 'string', name: name, value: decode_attr_string(value) }
+	}
+	if !require_literals {
+		if reference := parse_attribute_class_reference(value, name) {
+			return reference
+		}
 	}
 	if value.contains('=>') {
 		return error('unexpected unquoted `=>` in PHP attribute value `${value}`')
@@ -324,21 +386,14 @@ fn parse_attr_value(value string, name string) !repr.PhpAttributeArg {
 			value: ''
 		}
 	}
-	magnitude := value.trim_left('+-').to_lower()
-	base := if magnitude.starts_with('0x') || magnitude.starts_with('0b')
-		|| magnitude.starts_with('0o') {
-		0
-	} else {
-		10
-	}
-	if integer := strconv.common_parse_int(value, base, 64, true, true) {
+	if integer := parse_integer_literal(value) {
 		return repr.PhpAttributeArg{
 			kind:  'int'
 			name:  name
 			value: integer.str()
 		}
 	}
-	if base == 10 && value.contains_any('.eE') {
+	if integer_literal_radix(value) == 10 && value.contains_any('.eE') {
 		if float := strconv.atof64(value) {
 			if math.is_finite(float) {
 				return repr.PhpAttributeArg{
@@ -349,6 +404,9 @@ fn parse_attr_value(value string, name string) !repr.PhpAttributeArg {
 			}
 		}
 	}
+	if require_literals {
+		return error('expected a quoted string, number, boolean, null, or array literal, got `${value}`')
+	}
 	return repr.PhpAttributeArg{
 		kind:  'string'
 		name:  name
@@ -358,9 +416,9 @@ fn parse_attr_value(value string, name string) !repr.PhpAttributeArg {
 
 fn parse_typed_php_attributes(attrs []ast.Attr, name string) []repr.PhpAttributeRepr {
 	mut result := []repr.PhpAttributeRepr{}
-	for index, attr in attrs {
+	for attr in attrs {
 		if attr.name == name {
-			if attribute := parse_typed_php_attribute(attr, attrs[index + 1..]) {
+			if attribute := parse_typed_php_attribute(attr) {
 				result << attribute
 			}
 		}
@@ -370,13 +428,13 @@ fn parse_typed_php_attributes(attrs []ast.Attr, name string) []repr.PhpAttribute
 
 fn parse_php_type_attributes(attrs []ast.Attr, schema string) []repr.PhpAttributeRepr {
 	mut result := []repr.PhpAttributeRepr{}
-	for index, attr in attrs {
+	for attr in attrs {
 		if attr.name == 'php_attr' {
 			if attribute := parse_php_attr(attr.arg) {
 				result << attribute
 			}
 		} else if attr.name == schema {
-			if attribute := parse_typed_php_attribute(attr, attrs[index + 1..]) {
+			if attribute := parse_typed_php_attribute(attr) {
 				result << attribute
 			}
 		}
@@ -384,17 +442,8 @@ fn parse_php_type_attributes(attrs []ast.Attr, schema string) []repr.PhpAttribut
 	return result
 }
 
-fn parse_typed_php_attribute(base ast.Attr, following []ast.Attr) ?repr.PhpAttributeRepr {
-	mut name := base.arg
-	mut args := ''
-	for field in following {
-		match field.name {
-			'${base.name}_name' { name = field.arg }
-			'${base.name}_args', '${base.name}_1' { args = field.arg }
-			else { break }
-		}
-	}
-	return php_attribute_from_parts(name, args)
+fn parse_typed_php_attribute(base ast.Attr) ?repr.PhpAttributeRepr {
+	return php_attribute_from_parts(base.args['name'], base.args['args'])
 }
 
 fn php_attribute_from_parts(raw_name string, args string) ?repr.PhpAttributeRepr {

@@ -60,7 +60,7 @@ fn php_named_attribute_arg_literal(arg repr.PhpAttributeArg) string {
 }
 
 fn php_attribute_literal(attr repr.PhpAttributeRepr) string {
-	if attr.args.any(it.kind == 'array') {
+	if attr.args.any(it.kind in ['array', 'class_constant']) {
 		items := attr.args.map(php_attribute_item_literal(it)).join(', ')
 		return 'vphp.PhpAttribute{ name: ${php_attribute_v_string(attr.name)}, target: .parameter, items: [${items}] }'
 	}

@@ -1,5 +1,7 @@
 module vphp
 
+import strconv
+
 pub enum DynArrayKeyKind {
 	deleted
 	int_key
@@ -23,11 +25,12 @@ pub:
 @[heap]
 pub struct DynArray {
 mut:
-	buckets    []DynArrayBucket
-	int_index  map[i64]int
-	str_index  map[string]int
-	n_next_idx i64
-	cursor     int
+	buckets             []DynArrayBucket
+	int_index           map[i64]int
+	str_index           map[string]int
+	n_next_idx          i64
+	next_index_from_php bool
+	cursor              int
 }
 
 pub fn DynArray.new() DynArray {
@@ -67,34 +70,11 @@ pub fn DynArray.from_map(v map[string]DynValue) &DynArray {
 }
 
 fn dyn_array_normalize_str_key(s string) ?i64 {
-	if s.len == 0 {
+	key := strconv.atoi64(s) or { return none }
+	if sizeof(voidptr) == 4 && (key < min_i32 || key > max_i32) {
 		return none
 	}
-	mut negative := false
-	mut start := 0
-	if s[0] == `-` {
-		negative = true
-		start = 1
-		if s.len == 1 {
-			return none
-		}
-		if s.len > 2 && s[1] == `0` {
-			return none
-		}
-	} else if s.len > 1 && s[0] == `0` {
-		return none
-	}
-	mut result := i64(0)
-	for i in start .. s.len {
-		if s[i] < `0` || s[i] > `9` {
-			return none
-		}
-		result = result * 10 + i64(s[i] - `0`)
-	}
-	if negative {
-		result = -result
-	}
-	return result
+	return if key.str() == s { key } else { none }
 }
 
 fn (mut arr DynArray) append_bucket(kind DynArrayKeyKind, ikey i64, skey string, val DynValue) {
@@ -109,7 +89,7 @@ fn (mut arr DynArray) append_bucket(kind DynArrayKeyKind, ikey i64, skey string,
 		.int_key {
 			arr.int_index[ikey] = idx
 			if ikey >= arr.n_next_idx {
-				arr.n_next_idx = ikey + 1
+				arr.n_next_idx = if ikey == max_i64 { max_i64 } else { ikey + 1 }
 			}
 		}
 		.str_key {
@@ -202,7 +182,17 @@ pub fn (mut arr DynArray) set(key DynValue, val DynValue) {
 }
 
 pub fn (mut arr DynArray) push(val DynValue) {
-	arr.set_int(arr.n_next_idx, val)
+	// Zend uses its minimum integer as a sentinel before the first numeric insertion.
+	minimum := if sizeof(voidptr) == 8 { min_i64 } else { i64(min_i32) }
+	index := if arr.next_index_from_php && arr.n_next_idx == minimum {
+		i64(0)
+	} else {
+		arr.n_next_idx
+	}
+	if index == max_i64 && index in arr.int_index {
+		return
+	}
+	arr.set_int(index, val)
 }
 
 pub fn (mut arr DynArray) delete_int(key i64) {
@@ -276,6 +266,7 @@ pub fn (mut it DynArrayIterator) next() ?DynArrayIterItem {
 pub fn (arr &DynArray) clone_boxed() &DynArray {
 	mut cloned := DynArray.new_boxed()
 	cloned.n_next_idx = arr.n_next_idx
+	cloned.next_index_from_php = arr.next_index_from_php
 	cloned.cursor = arr.cursor
 	for bucket in arr.buckets {
 		idx := cloned.buckets.len
@@ -337,5 +328,6 @@ pub fn (mut arr DynArray) release() {
 	arr.int_index = map[i64]int{}
 	arr.str_index = map[string]int{}
 	arr.n_next_idx = 0
+	arr.next_index_from_php = false
 	arr.cursor = 0
 }

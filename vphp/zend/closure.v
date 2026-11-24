@@ -25,6 +25,16 @@ pub fn create_typed_closure_with_arginfo(ret voidptr, thunk voidptr, bridge Clos
 		required_args, arginfo)
 }
 
+pub fn create_named_variadic_closure(ret voidptr, thunk voidptr, bridge ClosureBridge, num_args int, required_args int, arginfo voidptr) {
+	C.vphp_create_named_variadic_closure(unsafe { &C.zval(ret) }, thunk, bridge, num_args,
+		required_args, arginfo)
+}
+
+pub fn create_closure_with_attributes(ret voidptr, thunk voidptr, bridge ClosureBridge, num_args int, required_args int, arginfo voidptr, attributes voidptr) {
+	C.vphp_create_closure_with_attributes(unsafe { &C.zval(ret) }, thunk, bridge, num_args,
+		required_args, arginfo, attributes)
+}
+
 pub fn create_typed_variadic_closure(ret voidptr, thunk voidptr, bridge ClosureBridge) {
 	C.vphp_create_variadic_closure(unsafe { &C.zval(ret) }, thunk, bridge)
 }

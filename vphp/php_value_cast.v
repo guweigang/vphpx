@@ -68,6 +68,104 @@ pub fn (v PhpValue) as_iterator() ?PhpIterator {
 	return PhpIterator.from_zval(v.to_zval())
 }
 
+pub fn (v PhpValue) as_iterator_aggregate() ?PhpIteratorAggregate {
+	if !v.is_instance_of('IteratorAggregate') {
+		return none
+	}
+	return PhpIteratorAggregate{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
+pub fn (v PhpValue) is_generator() bool {
+	return v.value.with_request_zval(fn (z ZVal) bool {
+		return z.is_object() && z.is_instance_of('Generator')
+	})
+}
+
+pub fn (v PhpValue) as_generator() ?PhpGenerator {
+	if !v.is_generator() {
+		return none
+	}
+	return PhpGenerator{
+		PhpIterator: PhpIterator{ object: PhpObject{ value: v.value.clone() } }
+	}
+}
+
+pub fn (v PhpValue) is_fiber() bool {
+	return v.value.with_request_zval(fn (z ZVal) bool {
+		return PhpFiber.from_zval(z) != none
+	})
+}
+
+pub fn (v PhpValue) as_fiber() ?PhpFiber {
+	if !v.is_fiber() {
+		return none
+	}
+	return PhpFiber{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
+pub fn (v PhpValue) as_date_interval() ?PhpDateInterval {
+	if !v.is_instance_of('DateInterval') {
+		return none
+	}
+	return PhpDateInterval{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
+pub fn (v PhpValue) as_date_time_interface() ?PhpDateTimeInterface {
+	if !v.is_instance_of('DateTimeInterface') {
+		return none
+	}
+	return PhpDateTimeInterface{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
+pub fn (v PhpValue) as_date_time_immutable() ?PhpDateTimeImmutable {
+	if !v.is_instance_of('DateTimeImmutable') {
+		return none
+	}
+	return PhpDateTimeImmutable{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
+pub fn (v PhpValue) as_json_serializable() ?PhpJsonSerializable {
+	if !v.is_instance_of('JsonSerializable') {
+		return none
+	}
+	return PhpJsonSerializable{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
+pub fn (v PhpValue) as_stringable() ?PhpStringable {
+	if !v.is_instance_of('Stringable') {
+		return none
+	}
+	return PhpStringable{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
+pub fn (v PhpValue) as_countable() ?PhpCountable {
+	if !v.is_instance_of('Countable') {
+		return none
+	}
+	return PhpCountable{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
+pub fn (v PhpValue) as_array_access() ?PhpArrayAccess {
+	if !v.is_instance_of('ArrayAccess') {
+		return none
+	}
+	return PhpArrayAccess{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
+pub fn (v PhpValue) as_weak_map() ?PhpWeakMap {
+	if !v.is_instance_of('WeakMap') {
+		return none
+	}
+	return PhpWeakMap{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
+pub fn (v PhpValue) as_weak_reference() ?PhpWeakReference {
+	if !v.is_instance_of('WeakReference') {
+		return none
+	}
+	return PhpWeakReference{ PhpObject: PhpObject{ value: v.value.clone() } }
+}
+
 pub fn (v PhpValue) as_reference() ?PhpReference {
 	return PhpReference.from_zval(v.to_zval())
 }

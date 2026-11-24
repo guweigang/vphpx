@@ -31,6 +31,37 @@ pub fn (o PhpObject) call_method(method string, args ...PhpArgInput) PhpValue {
 	return result.take_value()
 }
 
+// call_method_by_value returns an owned snapshot of the method result.
+// A PHP reference is dereferenced at the top level. PHP objects keep their identity.
+pub fn (o PhpObject) call_method_by_value(method string, args ...PhpArgInput) PhpValue {
+	mut result := o.call_method(method, ...args)
+	return PhpValue.adopt_zval(result.take_zval_by_value())
+}
+
+fn (o PhpObject) method_request_owned_args(method string, args PhpArray) RequestOwnedZBox {
+	return o.value.with_request_object[RequestOwnedZBox](fn [method, args] (obj PhpObject) RequestOwnedZBox {
+		mut callback := PhpArray.new()
+		mut name := PhpString.of(method)
+		defer {
+			callback.release()
+			name.release()
+		}
+		callback.next(obj)
+		callback.next(name)
+		return PhpCallable.borrowed(callback.to_zval()).request_owned_args(args)
+	}) or { RequestOwnedZBox.adopt_zval(invalid_zval()) }
+}
+
+pub fn (o PhpObject) call_method_args(method string, args PhpArray) PhpValue {
+	mut result := o.method_request_owned_args(method, args)
+	return result.take_value()
+}
+
+pub fn (o PhpObject) method_reference_args(method string, args PhpArray) !PhpReference {
+	mut result := o.method_request_owned_args(method, args)
+	return php_call_reference_result(mut result)
+}
+
 pub fn (o PhpObject) with_attribute(name string, value PhpArgInput) PhpObject {
 	if !o.is_valid() || !o.method_exists('withAttribute') {
 		return o.to_request_owned()
@@ -54,13 +85,17 @@ pub fn (o PhpObject) method[T](method string, args ...PhpArgInput) !T {
 	return php_call_copied_result_as[T](result.to_zval())
 }
 
+pub fn (o PhpObject) method_reference(method string, args ...PhpArgInput) !PhpReference {
+	mut result := o.method_request_owned(method, ...args)
+	return php_call_reference_result(mut result)
+}
+
 pub fn (o PhpObject) with_method_result[T, R](method string, run fn (T) R, args ...PhpArgInput) !R {
 	mut result := o.method_request_owned(method, ...args)
 	defer {
 		result.release()
 	}
-	value := php_call_result_as[T](result.to_zval())!
-	return run(value)
+	return php_with_call_result[T, R](result.to_zval(), run)
 }
 
 pub fn (o PhpObject) with_method_result_zval[T](method string, run fn (ZVal) T, args ...ZVal) T {

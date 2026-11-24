@@ -24,6 +24,8 @@ UNAME_S := $(shell uname -s)
 PLATFORM_LDFLAGS :=
 ifeq ($(UNAME_S),Darwin)
 PLATFORM_LDFLAGS += -undefined dynamic_lookup
+else ifeq ($(UNAME_S),Linux)
+PLATFORM_LDFLAGS += -Wl,-z,nodelete
 endif
 
 # 默认目标：构建扩展

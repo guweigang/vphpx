@@ -47,6 +47,11 @@ fn gen_php_args_lines(args []repr.PhpArgRepr, returns_voidptr bool) []string {
 		return []
 	}
 	mut lines := []string{}
+	if args.any(it.is_variadic && !php_types.accepts_named_variadic(it.v_type, true)) {
+		lines << '    if !ctx.reject_named_variadic_args() {'
+		lines << '        ${arg_return_stmt(returns_voidptr)}'
+		lines << '    }'
+	}
 	has_php_defaults := args.any(it.use_php_default)
 	helper := if has_php_defaults { 'args_with_php_defaults' } else { 'args_with_meta' }
 	lines << '    php_args := ctx.${helper}(['
@@ -144,11 +149,11 @@ fn build_php_arg_bindings(args []repr.PhpArgRepr) []PhpArgBinding {
 	return bindings
 }
 
-fn build_php_arg_setup(args []repr.PhpArgRepr, returns_voidptr bool, allow_raw_object bool, table &ast.Table) PhpArgSetup {
+fn build_php_arg_setup(args []repr.PhpArgRepr, returns_voidptr bool, allow_raw_object bool, module_name string, table &ast.Table) PhpArgSetup {
 	mut lines := gen_php_args_lines(args, returns_voidptr)
 	mut names := []string{}
 	for binding in build_php_arg_bindings(args) {
-		lines << binding.render_lines(returns_voidptr, allow_raw_object, table)
+		lines << binding.render_lines(returns_voidptr, allow_raw_object, module_name, table)
 		names << binding.call_name()
 	}
 	return PhpArgSetup{
@@ -172,20 +177,23 @@ fn (binding PhpArgBinding) call_name() string {
 	}
 }
 
-fn (binding PhpArgBinding) render_lines(returns_voidptr bool, allow_raw_object bool, table &ast.Table) []string {
+fn (binding PhpArgBinding) render_lines(returns_voidptr bool, allow_raw_object bool, module_name string, table &ast.Table) []string {
 	return match binding.kind {
 		.single {
 			PhpSingleArgBinding.new(binding.arg, binding.var_name, binding.php_index,
-				allow_raw_object).render_lines(returns_voidptr, table)
+				allow_raw_object).render_lines(returns_voidptr, module_name, table)
 		}
 		.params_struct {
-			binding.params_struct.render_lines(returns_voidptr)
+			binding.params_struct.render_lines(returns_voidptr, module_name, table)
 		}
 	}
 }
 
-fn (binding PhpSingleArgBinding) render_lines(returns_voidptr bool, table &ast.Table) []string {
+fn (binding PhpSingleArgBinding) render_lines(returns_voidptr bool, module_name string, table &ast.Table) []string {
 	arg := binding.arg
+	if lines := binding.read().checked_object_lines(binding.var_name, none, returns_voidptr, module_name, table) {
+		return lines
+	}
 	if arg.is_variadic {
 		return binding.render_semantic_lines(returns_voidptr) or { binding.render_v_value_lines() }
 	}
@@ -205,11 +213,11 @@ fn (binding PhpSingleArgBinding) render_lines(returns_voidptr bool, table &ast.T
 		return binding.render_v_value_lines()
 	}
 
-	clean_type := arg.v_type.trim_left('?&')
+	argument_type := arg.v_type.trim_left('?&')
 	is_sumtype_or_enum := if table != unsafe { nil } // SAFETY: nil literal in unsafe context
 
 	{
-		if sym := table.find_sym(clean_type) {
+		if sym := table.find_sym(argument_type) {
 			sym.kind == .sum_type || sym.kind == .enum
 		} else {
 			false
@@ -266,14 +274,14 @@ fn (binding PhpSingleArgBinding) render_raw_object_lines() ?[]string {
 fn (binding PhpSingleArgBinding) render_ref_object_lines(returns_voidptr bool) ?[]string {
 	arg := binding.arg
 	if arg.v_type.starts_with('&') {
-		clean_type := arg.v_type[1..]
+		pointee_type := arg.v_type[1..]
 		read := binding.read()
 		return [
-			'    ${binding.var_name}_ptr := ${read.arg_expr()}.to_v_ptr[${clean_type}]() or {',
-			"        vphp.throw_exception('argument ${binding.index} must be object bound to ${clean_type}, got ' + ${read.arg_expr()}.zval().type_name(), 0)",
+			'    ${binding.var_name}_ptr := ${read.arg_expr()}.to_v_ptr[${pointee_type}]() or {',
+			"        vphp.throw_exception('argument ${binding.index} must be object bound to ${pointee_type}, got ' + ${read.arg_expr()}.zval().type_name(), 0)",
 			'        ${arg_return_stmt(returns_voidptr)}',
 			'    }',
-			'    ${binding.var_name} := unsafe { &${clean_type}(${binding.var_name}_ptr) }',
+			'    ${binding.var_name} := unsafe { &${pointee_type}(${binding.var_name}_ptr) }',
 		]
 	}
 	return none

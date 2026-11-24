@@ -43,9 +43,9 @@ pub fn PhpException.raise_object(mut exception ZVal) {
 		PhpException.raise('exception object must be a valid object', 0)
 		return
 	}
-	handle := exception.handle()
-	exception.disown()
-	zend.throw_exception_object_ptr(handle.raw_ptr())
+	zend.throw_exception_object_ptr(exception.raw_ptr())
+	exception.release()
+	exception = invalid_zval()
 }
 
 pub fn PhpException.raise_php_object(mut exception PhpObject) {
@@ -67,6 +67,42 @@ pub fn PhpException.current_message_opt() ?string {
 
 pub fn PhpException.clear() {
 	zend.clear_exception()
+}
+
+// take_current clears the pending exception and returns a request-owned
+// handle to the original Throwable. The caller must release the handle.
+pub fn PhpException.take_current() ?PhpThrowable {
+	if !PhpException.has_current() {
+		return none
+	}
+	mut captured := RequestOwnedZBox.new_null()
+	if !zend.take_exception(captured.to_zval().raw_ptr()) {
+		captured.release()
+		return none
+	}
+	return PhpThrowable.from_request_owned_zbox(captured) or {
+		captured.release()
+		return none
+	}
+}
+
+// with_preserved_pending lets cleanup run while Zend can still execute PHP
+// operations. If a Throwable was pending, restore it unless cleanup exited.
+pub fn PhpException.with_preserved_pending(cleanup fn ()) {
+	mut original := PhpException.take_current() or {
+		cleanup()
+		return
+	}
+	defer {
+		if mut displaced := PhpException.take_current() {
+			original.throw()
+			displaced.release()
+		} else if !PhpException.has_current() {
+			original.throw()
+		}
+		original.release()
+	}
+	cleanup()
 }
 
 pub fn PhpException.raise_interop(class InteropErrorClass, msg string, code int) {

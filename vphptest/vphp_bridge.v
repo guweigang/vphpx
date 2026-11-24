@@ -23,8 +23,12 @@ __global C.finder_ce &C.zend_class_entry
 __global C.readonlyrecord_ce &C.zend_class_entry
 __global C.vphp__compiler__moduleprobecontract_ce &C.zend_class_entry
 __global C.vphp__compiler__moduleprobekind_ce &C.zend_class_entry
+__global C.vphp__compiler__otherprobekind_ce &C.zend_class_entry
 __global C.vphp__compiler__moduleprobereadonlybox_ce &C.zend_class_entry
 __global C.vphp__compiler__moduleprobebox_ce &C.zend_class_entry
+__global C.vphp__compiler__copyablebox_ce &C.zend_class_entry
+__global C.vphp__compiler__taggedbox_ce &C.zend_class_entry
+__global C.vphp__compiler__numberedbox_ce &C.zend_class_entry
 __global C.vphp__compiler__moduleprobetypedconsts_ce &C.zend_class_entry
 __global C.vphp__compiler__moduleprobewrapperbox_ce &C.zend_class_entry
 __global C.traitpost_ce &C.zend_class_entry
@@ -80,7 +84,7 @@ pub fn abstract_report_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &AbstractReport(ptr)
-        out.add_property_string('title', obj.title)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'title', obj.title)
     }
 }
 @[export: 'vphp_wrap_abstract_report_label']
@@ -101,13 +105,13 @@ pub fn vphp_wrap_abstract_report_summarize(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'abstract_report_handlers']
 pub fn abstract_report_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(abstract_report_get_prop),
-        write_handler: voidptr(abstract_report_set_prop),
-        sync_handler: voidptr(abstract_report_sync_props),
-        new_raw: voidptr(abstract_report_new_raw),
-        cleanup_raw: voidptr(abstract_report_cleanup_raw),
-        free_raw: voidptr(abstract_report_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: abstract_report_get_prop,
+        write_handler: abstract_report_set_prop,
+        sync_handler: abstract_report_sync_props,
+        new_raw: abstract_report_new_raw,
+        cleanup_raw: abstract_report_cleanup_raw,
+        free_raw: abstract_report_free_raw
     )
 }
 pub fn AbstractReport.php_class_entry() vphp.ZendClassEntry {
@@ -188,11 +192,11 @@ pub fn daily_report_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &DailyReport(ptr)
-        out.add_property_string('summary', obj.summary)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'summary', obj.summary)
     }
 }
 @[export: 'vphp_wrap_daily_report_construct']
-pub fn vphp_wrap_daily_report_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_daily_report_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &DailyReport(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -203,7 +207,7 @@ pub fn vphp_wrap_daily_report_construct(ptr voidptr, ctx vphp.Context) voidptr {
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).as_v[string]()
     res := recv.construct(arg_0, arg_1)
-    return voidptr(res)
+    ctx.return().return_v_object[DailyReport](res, .borrowed)
 }
 @[export: 'vphp_wrap_daily_report_summarize']
 pub fn vphp_wrap_daily_report_summarize(ptr voidptr, ctx vphp.Context)  {
@@ -215,13 +219,13 @@ pub fn vphp_wrap_daily_report_summarize(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'daily_report_handlers']
 pub fn daily_report_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(daily_report_get_prop),
-        write_handler: voidptr(daily_report_set_prop),
-        sync_handler: voidptr(daily_report_sync_props),
-        new_raw: voidptr(daily_report_new_raw),
-        cleanup_raw: voidptr(daily_report_cleanup_raw),
-        free_raw: voidptr(daily_report_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: daily_report_get_prop,
+        write_handler: daily_report_set_prop,
+        sync_handler: daily_report_sync_props,
+        new_raw: daily_report_new_raw,
+        cleanup_raw: daily_report_cleanup_raw,
+        free_raw: daily_report_free_raw
     )
 }
 pub fn DailyReport.php_class_entry() vphp.ZendClassEntry {
@@ -302,7 +306,7 @@ pub fn author_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &Author(ptr)
-        out.add_property_string('name', obj.name)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'name', obj.name)
     }
 }
 @[export: 'vphp_wrap_author_create']
@@ -326,13 +330,13 @@ pub fn vphp_wrap_author_get_name(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'author_handlers']
 pub fn author_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(author_get_prop),
-        write_handler: voidptr(author_set_prop),
-        sync_handler: voidptr(author_sync_props),
-        new_raw: voidptr(author_new_raw),
-        cleanup_raw: voidptr(author_cleanup_raw),
-        free_raw: voidptr(author_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: author_get_prop,
+        write_handler: author_set_prop,
+        sync_handler: author_sync_props,
+        new_raw: author_new_raw,
+        cleanup_raw: author_cleanup_raw,
+        free_raw: author_free_raw
     )
 }
 pub fn Author.php_class_entry() vphp.ZendClassEntry {
@@ -413,7 +417,7 @@ pub fn post_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &Post(ptr)
-        out.add_property_long('post_id', i64(obj.post_id))
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'post_id', obj.post_id)
     }
 }
 @[export: 'vphp_wrap_post_set_author']
@@ -424,11 +428,10 @@ pub fn vphp_wrap_post_set_author(ptr voidptr, ctx vphp.Context)  {
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'author' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[Author]() or {
-        vphp.throw_exception('argument 0 must be object bound to Author, got ' + php_args.at(0).zval().type_name(), 0)
+    arg_0 := php_args.at(0).bound_v_object[Author]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
         return
     }
-    arg_0 := unsafe { &Author(arg_0_ptr) }
     recv.set_author(arg_0)
 }
 @[export: 'vphp_wrap_post_get_author']
@@ -441,13 +444,13 @@ pub fn vphp_wrap_post_get_author(ptr voidptr, ctx vphp.Context) voidptr {
 }
 @[export: 'post_handlers']
 pub fn post_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(post_get_prop),
-        write_handler: voidptr(post_set_prop),
-        sync_handler: voidptr(post_sync_props),
-        new_raw: voidptr(post_new_raw),
-        cleanup_raw: voidptr(post_cleanup_raw),
-        free_raw: voidptr(post_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: post_get_prop,
+        write_handler: post_set_prop,
+        sync_handler: post_sync_props,
+        new_raw: post_new_raw,
+        cleanup_raw: post_cleanup_raw,
+        free_raw: post_free_raw
     )
 }
 pub fn Post.php_class_entry() vphp.ZendClassEntry {
@@ -548,31 +551,44 @@ pub fn article_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &Article(ptr)
-        out.add_property_long('created_at', i64(obj.created_at))
-        out.add_property_long('id', i64(obj.id))
-        out.add_property_string('title', obj.title)
-        out.add_property_bool('is_top', obj.is_top)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'created_at', obj.created_at)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'id', obj.id)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'title', obj.title)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'is_top', obj.is_top)
     }
 }
 pub fn Article.consts() ArticleConsts {
     return article_consts
 }
 pub fn Article.statics() &ArticleStatics {
-    return &article_statics
+    return vphp_article_static_state(vphp.current_static_sync_class(vphp_article_static_state_from_php))
+}
+fn vphp_article_static_state(raw_ce voidptr) &ArticleStatics {
+    key := vphp.static_shadow_state_key("vphp_article_static_state", raw_ce, "Article", "total_count\x00")
+    return vphp.request_static_state[ArticleStatics](key, fn () ArticleStatics {
+        return article_statics
+    })
 }
 pub fn Article.sync_statics_to_php(ctx vphp.Context) {
-    ce := ctx.active_class_entry()
+    vphp_article_static_state_to_php(ctx.static_sync_class_entry().raw_ptr())
+}
+fn vphp_article_static_state_to_php(raw_ce voidptr) {
+    ce := vphp.ZendClassEntry(vphp.ZendClassEntry.from_ptr(raw_ce))
     if !ce.is_valid() { return }
-    ce.set_static_prop("total_count", article_statics.total_count)
+    s := vphp_article_static_state(raw_ce)
+    ce.set_static_prop("total_count", s.total_count)
 }
 pub fn Article.sync_statics_from_php(ctx vphp.Context) {
-    ce := ctx.active_class_entry()
+    vphp_article_static_state_from_php(ctx.static_sync_class_entry().raw_ptr())
+}
+fn vphp_article_static_state_from_php(raw_ce voidptr) {
+    ce := vphp.ZendClassEntry(vphp.ZendClassEntry.from_ptr(raw_ce))
     if !ce.is_valid() { return }
-    mut s := Article.statics()
+    mut s := vphp_article_static_state(raw_ce)
     s.total_count = ce.static_prop[int]("total_count")
 }
 @[export: 'vphp_wrap_article_construct']
-pub fn vphp_wrap_article_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_article_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -582,19 +598,19 @@ pub fn vphp_wrap_article_construct(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).as_v[int]()
-    Article.sync_statics_from_php(ctx)
+    mut vphp_static_sync := vphp.begin_static_sync(ctx, vphp_article_static_state_from_php, vphp_article_static_state_to_php)
+    defer { vphp_static_sync.close() }
     res := recv.construct(arg_0, arg_1)
-    Article.sync_statics_to_php(ctx)
-    return voidptr(res)
+    ctx.return().return_v_object[Article](res, .borrowed)
 }
 @[export: 'vphp_wrap_article_internal_format']
 pub fn vphp_wrap_article_internal_format(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    Article.sync_statics_from_php(ctx)
+    mut vphp_static_sync := vphp.begin_static_sync(ctx, vphp_article_static_state_from_php, vphp_article_static_state_to_php)
+    defer { vphp_static_sync.close() }
     res := recv.internal_format()
-    Article.sync_statics_to_php(ctx)
     ctx.return().v[string](res)
 }
 @[export: 'vphp_wrap_article_create']
@@ -605,9 +621,9 @@ pub fn vphp_wrap_article_create(ctx vphp.Context) voidptr {
         vphp.PhpArgMeta{ index: 0, name: 'title' },
     ])
     arg_0 := php_args.at(0).as_v[string]()
-    Article.sync_statics_from_php(ctx)
+    mut vphp_static_sync := vphp.begin_static_sync(ctx, vphp_article_static_state_from_php, vphp_article_static_state_to_php)
+    defer { vphp_static_sync.close() }
     res := Article.create(arg_0)
-    Article.sync_statics_to_php(ctx)
     return voidptr(res)
 }
 @[export: 'vphp_wrap_article_get_formatted_title']
@@ -615,9 +631,9 @@ pub fn vphp_wrap_article_get_formatted_title(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    Article.sync_statics_from_php(ctx)
+    mut vphp_static_sync := vphp.begin_static_sync(ctx, vphp_article_static_state_from_php, vphp_article_static_state_to_php)
+    defer { vphp_static_sync.close() }
     res := recv.get_formatted_title()
-    Article.sync_statics_to_php(ctx)
     ctx.return().v[string](res)
 }
 @[export: 'vphp_wrap_article_save']
@@ -625,9 +641,9 @@ pub fn vphp_wrap_article_save(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Article(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    Article.sync_statics_from_php(ctx)
+    mut vphp_static_sync := vphp.begin_static_sync(ctx, vphp_article_static_state_from_php, vphp_article_static_state_to_php)
+    defer { vphp_static_sync.close() }
     res := recv.save()
-    Article.sync_statics_to_php(ctx)
     ctx.return().v[bool](res)
 }
 @[export: 'vphp_wrap_article_dump_properties']
@@ -639,9 +655,9 @@ pub fn vphp_wrap_article_dump_properties(ptr voidptr, ctx vphp.Context)  {
         vphp.PhpArgMeta{ index: 0, name: 'data' },
     ])
     arg_0 := php_args.at(0).zval()
-    Article.sync_statics_from_php(ctx)
+    mut vphp_static_sync := vphp.begin_static_sync(ctx, vphp_article_static_state_from_php, vphp_article_static_state_to_php)
+    defer { vphp_static_sync.close() }
     recv.dump_properties(arg_0)
-    Article.sync_statics_to_php(ctx)
 }
 @[export: 'vphp_wrap_article_process_with_callback']
 pub fn vphp_wrap_article_process_with_callback(ptr voidptr, ctx vphp.Context)  {
@@ -655,9 +671,9 @@ pub fn vphp_wrap_article_process_with_callback(ptr voidptr, ctx vphp.Context)  {
         vphp.throw_exception('argument 0 must be callable', 0)
         return
     }
-    Article.sync_statics_from_php(ctx)
+    mut vphp_static_sync := vphp.begin_static_sync(ctx, vphp_article_static_state_from_php, vphp_article_static_state_to_php)
+    defer { vphp_static_sync.close() }
     res := recv.process_with_callback(arg_0)
-    Article.sync_statics_to_php(ctx)
     ctx.return().v[bool](res)
 }
 @[export: 'vphp_wrap_article_restore_author']
@@ -668,20 +684,20 @@ pub fn vphp_wrap_article_restore_author(ctx vphp.Context) voidptr {
         vphp.PhpArgMeta{ index: 0, name: 'authorVal' },
     ])
     arg_0 := php_args.at(0).zval()
-    Article.sync_statics_from_php(ctx)
+    mut vphp_static_sync := vphp.begin_static_sync(ctx, vphp_article_static_state_from_php, vphp_article_static_state_to_php)
+    defer { vphp_static_sync.close() }
     res := Article.restore_author(arg_0)
-    Article.sync_statics_to_php(ctx)
     return voidptr(res)
 }
 @[export: 'article_handlers']
 pub fn article_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(article_get_prop),
-        write_handler: voidptr(article_set_prop),
-        sync_handler: voidptr(article_sync_props),
-        new_raw: voidptr(article_new_raw),
-        cleanup_raw: voidptr(article_cleanup_raw),
-        free_raw: voidptr(article_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: article_get_prop,
+        write_handler: article_set_prop,
+        sync_handler: article_sync_props,
+        new_raw: article_new_raw,
+        cleanup_raw: article_cleanup_raw,
+        free_raw: article_free_raw
     )
 }
 pub fn Article.php_class_entry() vphp.ZendClassEntry {
@@ -762,7 +778,7 @@ pub fn story_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &Story(ptr)
-        out.add_property_long('chapter_count', i64(obj.chapter_count))
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'chapter_count', obj.chapter_count)
     }
 }
 @[export: 'vphp_wrap_story_create']
@@ -773,11 +789,10 @@ pub fn vphp_wrap_story_create(ctx vphp.Context) voidptr {
         vphp.PhpArgMeta{ index: 0, name: 'author' },
         vphp.PhpArgMeta{ index: 1, name: 'chapters' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[Author]() or {
-        vphp.throw_exception('argument 0 must be object bound to Author, got ' + php_args.at(0).zval().type_name(), 0)
+    arg_0 := php_args.at(0).bound_v_object[Author]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
         return unsafe { nil }
     }
-    arg_0 := unsafe { &Author(arg_0_ptr) }
     arg_1 := php_args.at(1).as_v[int]()
     res := Story.create(arg_0, arg_1)
     return voidptr(res)
@@ -792,13 +807,13 @@ pub fn vphp_wrap_story_tell(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'story_handlers']
 pub fn story_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(story_get_prop),
-        write_handler: voidptr(story_set_prop),
-        sync_handler: voidptr(story_sync_props),
-        new_raw: voidptr(story_new_raw),
-        cleanup_raw: voidptr(story_cleanup_raw),
-        free_raw: voidptr(story_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: story_get_prop,
+        write_handler: story_set_prop,
+        sync_handler: story_sync_props,
+        new_raw: story_new_raw,
+        cleanup_raw: story_cleanup_raw,
+        free_raw: story_free_raw
     )
 }
 pub fn Story.php_class_entry() vphp.ZendClassEntry {
@@ -879,11 +894,11 @@ pub fn alias_base_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &AliasBase(ptr)
-        out.add_property_string('label', obj.label)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'label', obj.label)
     }
 }
 @[export: 'vphp_wrap_alias_base_construct']
-pub fn vphp_wrap_alias_base_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_alias_base_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &AliasBase(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -892,17 +907,17 @@ pub fn vphp_wrap_alias_base_construct(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
-    return voidptr(res)
+    ctx.return().return_v_object[AliasBase](res, .borrowed)
 }
 @[export: 'alias_base_handlers']
 pub fn alias_base_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(alias_base_get_prop),
-        write_handler: voidptr(alias_base_set_prop),
-        sync_handler: voidptr(alias_base_sync_props),
-        new_raw: voidptr(alias_base_new_raw),
-        cleanup_raw: voidptr(alias_base_cleanup_raw),
-        free_raw: voidptr(alias_base_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: alias_base_get_prop,
+        write_handler: alias_base_set_prop,
+        sync_handler: alias_base_sync_props,
+        new_raw: alias_base_new_raw,
+        cleanup_raw: alias_base_cleanup_raw,
+        free_raw: alias_base_free_raw
     )
 }
 pub fn AliasBase.php_class_entry() vphp.ZendClassEntry {
@@ -983,11 +998,11 @@ pub fn alias_worker_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &AliasWorker(ptr)
-        out.add_property_string('title', obj.title)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'title', obj.title)
     }
 }
 @[export: 'vphp_wrap_alias_worker_construct']
-pub fn vphp_wrap_alias_worker_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_alias_worker_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &AliasWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -998,7 +1013,7 @@ pub fn vphp_wrap_alias_worker_construct(ptr voidptr, ctx vphp.Context) voidptr {
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).as_v[string]()
     res := recv.construct(arg_0, arg_1)
-    return voidptr(res)
+    ctx.return().return_v_object[AliasWorker](res, .borrowed)
 }
 @[export: 'vphp_wrap_alias_worker_save']
 pub fn vphp_wrap_alias_worker_save(ptr voidptr, ctx vphp.Context)  {
@@ -1026,13 +1041,13 @@ pub fn vphp_wrap_alias_worker_ping(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'alias_worker_handlers']
 pub fn alias_worker_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(alias_worker_get_prop),
-        write_handler: voidptr(alias_worker_set_prop),
-        sync_handler: voidptr(alias_worker_sync_props),
-        new_raw: voidptr(alias_worker_new_raw),
-        cleanup_raw: voidptr(alias_worker_cleanup_raw),
-        free_raw: voidptr(alias_worker_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: alias_worker_get_prop,
+        write_handler: alias_worker_set_prop,
+        sync_handler: alias_worker_sync_props,
+        new_raw: alias_worker_new_raw,
+        cleanup_raw: alias_worker_cleanup_raw,
+        free_raw: alias_worker_free_raw
     )
 }
 pub fn AliasWorker.php_class_entry() vphp.ZendClassEntry {
@@ -1084,14 +1099,14 @@ pub fn runtime_demo_base_exception_cleanup_raw(ptr voidptr) {
         return
     }
 }
-fn runtime_demo_base_exception_load_from_php(php_obj vphp.ZendObject) RuntimeDemoBaseException {
-    mut recv := RuntimeDemoBaseException{}
-    if !php_obj.is_valid() {
-        return recv
+pub fn runtime_demo_base_exception_load_from_php(php_obj vphp.ZendObject) RuntimeDemoBaseException {
+    return RuntimeDemoBaseException{
     }
+}
+pub fn runtime_demo_base_exception_snapshot(recv RuntimeDemoBaseException) RuntimeDemoBaseException {
     return recv
 }
-fn runtime_demo_base_exception_sync_to_php(php_obj vphp.ZendObject, recv RuntimeDemoBaseException) {
+pub fn runtime_demo_base_exception_sync_to_php(php_obj vphp.ZendObject, original RuntimeDemoBaseException, recv RuntimeDemoBaseException) {
     if !php_obj.is_valid() {
         return
     }
@@ -1117,13 +1132,13 @@ pub fn runtime_demo_base_exception_sync_props(ptr voidptr, zv &C.zval) {
 }
 @[export: 'runtime_demo_base_exception_handlers']
 pub fn runtime_demo_base_exception_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(runtime_demo_base_exception_get_prop),
-        write_handler: voidptr(runtime_demo_base_exception_set_prop),
-        sync_handler: voidptr(runtime_demo_base_exception_sync_props),
-        new_raw: voidptr(runtime_demo_base_exception_new_raw),
-        cleanup_raw: voidptr(runtime_demo_base_exception_cleanup_raw),
-        free_raw: voidptr(runtime_demo_base_exception_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: runtime_demo_base_exception_get_prop,
+        write_handler: runtime_demo_base_exception_set_prop,
+        sync_handler: runtime_demo_base_exception_sync_props,
+        new_raw: runtime_demo_base_exception_new_raw,
+        cleanup_raw: runtime_demo_base_exception_cleanup_raw,
+        free_raw: runtime_demo_base_exception_free_raw
     )
 }
 pub fn RuntimeDemoBaseException.php_class_entry() vphp.ZendClassEntry {
@@ -1175,14 +1190,14 @@ pub fn runtime_demo_child_exception_cleanup_raw(ptr voidptr) {
         return
     }
 }
-fn runtime_demo_child_exception_load_from_php(php_obj vphp.ZendObject) RuntimeDemoChildException {
-    mut recv := RuntimeDemoChildException{}
-    if !php_obj.is_valid() {
-        return recv
+pub fn runtime_demo_child_exception_load_from_php(php_obj vphp.ZendObject) RuntimeDemoChildException {
+    return RuntimeDemoChildException{
     }
+}
+pub fn runtime_demo_child_exception_snapshot(recv RuntimeDemoChildException) RuntimeDemoChildException {
     return recv
 }
-fn runtime_demo_child_exception_sync_to_php(php_obj vphp.ZendObject, recv RuntimeDemoChildException) {
+pub fn runtime_demo_child_exception_sync_to_php(php_obj vphp.ZendObject, original RuntimeDemoChildException, recv RuntimeDemoChildException) {
     if !php_obj.is_valid() {
         return
     }
@@ -1208,13 +1223,13 @@ pub fn runtime_demo_child_exception_sync_props(ptr voidptr, zv &C.zval) {
 }
 @[export: 'runtime_demo_child_exception_handlers']
 pub fn runtime_demo_child_exception_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(runtime_demo_child_exception_get_prop),
-        write_handler: voidptr(runtime_demo_child_exception_set_prop),
-        sync_handler: voidptr(runtime_demo_child_exception_sync_props),
-        new_raw: voidptr(runtime_demo_child_exception_new_raw),
-        cleanup_raw: voidptr(runtime_demo_child_exception_cleanup_raw),
-        free_raw: voidptr(runtime_demo_child_exception_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: runtime_demo_child_exception_get_prop,
+        write_handler: runtime_demo_child_exception_set_prop,
+        sync_handler: runtime_demo_child_exception_sync_props,
+        new_raw: runtime_demo_child_exception_new_raw,
+        cleanup_raw: runtime_demo_child_exception_cleanup_raw,
+        free_raw: runtime_demo_child_exception_free_raw
     )
 }
 pub fn RuntimeDemoChildException.php_class_entry() vphp.ZendClassEntry {
@@ -1295,11 +1310,11 @@ pub fn callable_processor_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &CallableProcessor(ptr)
-        out.add_property_string('prefix', obj.prefix)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'prefix', obj.prefix)
     }
 }
 @[export: 'vphp_wrap_callable_processor_construct']
-pub fn vphp_wrap_callable_processor_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_callable_processor_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &CallableProcessor(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1308,7 +1323,6 @@ pub fn vphp_wrap_callable_processor_construct(ptr voidptr, ctx vphp.Context) voi
     ])
     arg_0 := php_args.at(0).as_v[string]()
     recv.construct(arg_0)
-    return ptr
 }
 @[export: 'vphp_wrap_callable_processor_process']
 pub fn vphp_wrap_callable_processor_process(ptr voidptr, ctx vphp.Context)  {
@@ -1371,12 +1385,12 @@ fn vphp_struct_closure_bridge_callableprocessor_struct_closure(v_ptr voidptr, ex
             vphp.PhpException.raise_class('ArgumentCountError', 'closure requires at least 2 arguments', 0)
             return
         }
-        field_0 := ctx.arg_val(0).to_v[string]() or {
-            vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0)
+        field_0 := ctx.closure_arg_to_v[string](0) or {
+            if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0) }
             return
         }
-        field_1 := ctx.arg_val(1).to_v[int]() or {
-            vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0)
+        field_1 := ctx.closure_arg_to_v[int](1) or {
+            if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0) }
             return
         }
         args := StructClosureArgs{
@@ -1388,7 +1402,7 @@ fn vphp_struct_closure_bridge_callableprocessor_struct_closure(v_ptr voidptr, ex
 }
 
 fn vphp_wrap_struct_closure_callableprocessor_struct_closure(ctx vphp.Context, cb VPhpStructClosureCallableProcessorStructClosure) {
-    ctx.create_saved_closure_with_arginfo[VPhpStructClosureCallableProcessorStructClosure](cb, voidptr(vphp_struct_closure_bridge_callableprocessor_struct_closure), 2, 2, C.struct_closure_arginfo_callableprocessor_struct_closure)
+    ctx.create_typed_saved_closure_with_arginfo[VPhpStructClosureCallableProcessorStructClosure](cb, vphp_struct_closure_bridge_callableprocessor_struct_closure, 2, 2, C.struct_closure_arginfo_callableprocessor_struct_closure)
 }
 
 @[export: 'vphp_wrap_callable_processor_struct_closure']
@@ -1547,13 +1561,13 @@ pub fn vphp_wrap_callable_processor_direct_defaults(ctx vphp.Context)  {
 }
 @[export: 'callable_processor_handlers']
 pub fn callable_processor_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(callable_processor_get_prop),
-        write_handler: voidptr(callable_processor_set_prop),
-        sync_handler: voidptr(callable_processor_sync_props),
-        new_raw: voidptr(callable_processor_new_raw),
-        cleanup_raw: voidptr(callable_processor_cleanup_raw),
-        free_raw: voidptr(callable_processor_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: callable_processor_get_prop,
+        write_handler: callable_processor_set_prop,
+        sync_handler: callable_processor_sync_props,
+        new_raw: callable_processor_new_raw,
+        cleanup_raw: callable_processor_cleanup_raw,
+        free_raw: callable_processor_free_raw
     )
 }
 pub fn CallableProcessor.php_class_entry() vphp.ZendClassEntry {
@@ -1625,13 +1639,12 @@ pub fn finder_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_finder_construct']
-pub fn vphp_wrap_finder_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_finder_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Finder(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     arg_0 := ctx
     recv.construct(arg_0)
-    return ptr
 }
 @[export: 'vphp_wrap_finder_find']
 pub fn vphp_wrap_finder_find(ptr voidptr, ctx vphp.Context)  {
@@ -1686,13 +1699,13 @@ pub fn vphp_wrap_finder_try_parse_int(ctx vphp.Context)  {
 }
 @[export: 'finder_handlers']
 pub fn finder_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(finder_get_prop),
-        write_handler: voidptr(finder_set_prop),
-        sync_handler: voidptr(finder_sync_props),
-        new_raw: voidptr(finder_new_raw),
-        cleanup_raw: voidptr(finder_cleanup_raw),
-        free_raw: voidptr(finder_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: finder_get_prop,
+        write_handler: finder_set_prop,
+        sync_handler: finder_sync_props,
+        new_raw: finder_new_raw,
+        cleanup_raw: finder_cleanup_raw,
+        free_raw: finder_free_raw
     )
 }
 pub fn Finder.php_class_entry() vphp.ZendClassEntry {
@@ -1777,12 +1790,12 @@ pub fn readonly_record_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &ReadonlyRecord(ptr)
-        out.add_property_long('created_at', i64(obj.created_at))
-        out.add_property_string('title', obj.title)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'created_at', obj.created_at)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'title', obj.title)
     }
 }
 @[export: 'vphp_wrap_readonly_record_construct']
-pub fn vphp_wrap_readonly_record_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_readonly_record_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &ReadonlyRecord(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -1791,7 +1804,7 @@ pub fn vphp_wrap_readonly_record_construct(ptr voidptr, ctx vphp.Context) voidpt
     ])
     arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
-    return voidptr(res)
+    ctx.return().return_v_object[ReadonlyRecord](res, .borrowed)
 }
 @[export: 'vphp_wrap_readonly_record_reveal']
 pub fn vphp_wrap_readonly_record_reveal(ptr voidptr, ctx vphp.Context)  {
@@ -1803,13 +1816,13 @@ pub fn vphp_wrap_readonly_record_reveal(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'readonly_record_handlers']
 pub fn readonly_record_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(readonly_record_get_prop),
-        write_handler: voidptr(readonly_record_set_prop),
-        sync_handler: voidptr(readonly_record_sync_props),
-        new_raw: voidptr(readonly_record_new_raw),
-        cleanup_raw: voidptr(readonly_record_cleanup_raw),
-        free_raw: voidptr(readonly_record_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: readonly_record_get_prop,
+        write_handler: readonly_record_set_prop,
+        sync_handler: readonly_record_sync_props,
+        new_raw: readonly_record_new_raw,
+        cleanup_raw: readonly_record_cleanup_raw,
+        free_raw: readonly_record_free_raw
     )
 }
 pub fn ReadonlyRecord.php_class_entry() vphp.ZendClassEntry {
@@ -1844,8 +1857,25 @@ pub fn (val ReadonlyRecord) php_class_name() string {
     return 'ReadonlyRecord'
 }
 
+@[export: 'vphp_enum_backing_values_vphp__compiler__moduleprobekind']
+fn vphp_enum_backing_values_vphp__compiler__moduleprobekind(values &i64) {
+    unsafe {
+        values[0] = i64(VphpModuleProbeKind.alpha)
+        values[1] = i64(VphpModuleProbeKind.beta)
+    }
+}
 pub fn (val VphpModuleProbeKind) php_class_name() string {
     return 'VPHP\\Compiler\\ModuleProbeKind'
+}
+
+@[export: 'vphp_enum_backing_values_vphp__compiler__otherprobekind']
+fn vphp_enum_backing_values_vphp__compiler__otherprobekind(values &i64) {
+    unsafe {
+        values[0] = i64(VphpOtherProbeKind.other)
+    }
+}
+pub fn (val VphpOtherProbeKind) php_class_name() string {
+    return 'VPHP\\Compiler\\OtherProbeKind'
 }
 
 @[export: 'vphp_module_probe_read_only_box_new_raw']
@@ -1893,19 +1923,19 @@ pub fn vphp_module_probe_read_only_box_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VphpModuleProbeReadOnlyBox(ptr)
-        out.add_property_string('title', obj.title)
-        out.add_property_long('value', i64(obj.value))
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'title', obj.title)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'value', obj.value)
     }
 }
 @[export: 'vphp_module_probe_read_only_box_handlers']
 pub fn vphp_module_probe_read_only_box_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vphp_module_probe_read_only_box_get_prop),
-        write_handler: voidptr(vphp_module_probe_read_only_box_set_prop),
-        sync_handler: voidptr(vphp_module_probe_read_only_box_sync_props),
-        new_raw: voidptr(vphp_module_probe_read_only_box_new_raw),
-        cleanup_raw: voidptr(vphp_module_probe_read_only_box_cleanup_raw),
-        free_raw: voidptr(vphp_module_probe_read_only_box_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vphp_module_probe_read_only_box_get_prop,
+        write_handler: vphp_module_probe_read_only_box_set_prop,
+        sync_handler: vphp_module_probe_read_only_box_sync_props,
+        new_raw: vphp_module_probe_read_only_box_new_raw,
+        cleanup_raw: vphp_module_probe_read_only_box_cleanup_raw,
+        free_raw: vphp_module_probe_read_only_box_free_raw
     )
 }
 pub fn VphpModuleProbeReadOnlyBox.php_class_entry() vphp.ZendClassEntry {
@@ -1994,8 +2024,8 @@ pub fn vphp_module_probe_box_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VphpModuleProbeBox(ptr)
-        out.add_property_string('name', obj.name)
-        out.add_property_long('count', i64(obj.count))
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'name', obj.name)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'count', obj.count)
     }
 }
 @[export: 'vphp_wrap_vphp_module_probe_box_test_sumtype']
@@ -2039,6 +2069,9 @@ pub fn vphp_wrap_vphp_module_probe_box_test_variadic(ptr voidptr, ctx vphp.Conte
     mut recv := unsafe { &VphpModuleProbeBox(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
+    if !ctx.reject_named_variadic_args() {
+        return
+    }
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'sep' },
         vphp.PhpArgMeta{ index: 1, name: 'args' },
@@ -2056,11 +2089,10 @@ pub fn vphp_wrap_vphp_module_probe_box_test_struct_param(ptr voidptr, ctx vphp.C
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'box' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[VphpModuleProbeReadOnlyBox]() or {
-        vphp.throw_exception('argument 0 must be object bound to VphpModuleProbeReadOnlyBox, got ' + php_args.at(0).zval().type_name(), 0)
+    arg_0 := php_args.at(0).bound_v_object[VphpModuleProbeReadOnlyBox]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
         return
     }
-    arg_0 := unsafe { &VphpModuleProbeReadOnlyBox(arg_0_ptr) }
     res := recv.test_struct_param(arg_0)
     ctx.return().v[string](res)
 }
@@ -2072,6 +2104,34 @@ pub fn vphp_wrap_vphp_module_probe_box_label(ptr voidptr, ctx vphp.Context)  {
     res := recv.label()
     ctx.return().v[string](res)
 }
+@[export: 'vphp_wrap_vphp_module_probe_box_compound_identity']
+pub fn vphp_wrap_vphp_module_probe_box_compound_identity(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpModuleProbeBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
+    ])
+    arg_0 := php_args.at(0).value
+    res := recv.compound_identity(arg_0)
+    ctx.return().v[vphp.PhpValue](res)
+}
+@[export: 'vphp_wrap_vphp_module_probe_box_step_reference']
+pub fn vphp_wrap_vphp_module_probe_box_step_reference(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpModuleProbeBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'cursor' },
+    ])
+    arg_0 := ctx
+    arg_1 := php_args.at(0).reference() or {
+        vphp.throw_exception('argument 0 must be reference', 0)
+        return
+    }
+    res := recv.step_reference(arg_0, arg_1)
+    ctx.return().v[bool](res)
+}
 @[export: 'vphp_wrap_vphp_module_probe_box_static_label']
 pub fn vphp_wrap_vphp_module_probe_box_static_label(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
@@ -2081,13 +2141,13 @@ pub fn vphp_wrap_vphp_module_probe_box_static_label(ctx vphp.Context)  {
 }
 @[export: 'vphp_module_probe_box_handlers']
 pub fn vphp_module_probe_box_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vphp_module_probe_box_get_prop),
-        write_handler: voidptr(vphp_module_probe_box_set_prop),
-        sync_handler: voidptr(vphp_module_probe_box_sync_props),
-        new_raw: voidptr(vphp_module_probe_box_new_raw),
-        cleanup_raw: voidptr(vphp_module_probe_box_cleanup_raw),
-        free_raw: voidptr(vphp_module_probe_box_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vphp_module_probe_box_get_prop,
+        write_handler: vphp_module_probe_box_set_prop,
+        sync_handler: vphp_module_probe_box_sync_props,
+        new_raw: vphp_module_probe_box_new_raw,
+        cleanup_raw: vphp_module_probe_box_cleanup_raw,
+        free_raw: vphp_module_probe_box_free_raw
     )
 }
 pub fn VphpModuleProbeBox.php_class_entry() vphp.ZendClassEntry {
@@ -2120,6 +2180,441 @@ pub fn (obj &VphpModuleProbeBox) bind_owned_php_object_value() vphp.PhpValue {
 
 pub fn (val VphpModuleProbeBox) php_class_name() string {
     return 'VPHP\\Compiler\\ModuleProbeBox'
+}
+
+@[export: 'vphp_copyable_box_new_raw']
+pub fn vphp_copyable_box_new_raw() voidptr {
+    return vphp.generic_new_raw[VphpCopyableBox]()
+}
+@[export: 'vphp_copyable_box_free_raw']
+pub fn vphp_copyable_box_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    vphp.generic_free_raw[VphpCopyableBox](ptr)
+}
+@[export: 'vphp_copyable_box_cleanup_raw']
+pub fn vphp_copyable_box_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'vphp_copyable_box_clone_into_raw']
+pub fn vphp_copyable_box_clone_into_raw(source voidptr, target voidptr) {
+    unsafe {
+        src := &VphpCopyableBox(source)
+        mut dst := &VphpCopyableBox(target)
+        src.clone_into(mut dst)
+    }
+}
+@[export: 'vphp_copyable_box_get_prop']
+pub fn vphp_copyable_box_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        obj := &VphpCopyableBox(ptr)
+        if name == 'count' {
+            ret.v[i64](i64(obj.count))
+            return
+        }
+    }
+}
+@[export: 'vphp_copyable_box_set_prop']
+pub fn vphp_copyable_box_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        mut obj := &VphpCopyableBox(ptr)
+        if name == 'count' {
+            obj.count = int(arg.get_int())
+            return
+        }
+    }
+}
+@[export: 'vphp_copyable_box_sync_props']
+pub fn vphp_copyable_box_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
+    unsafe {
+        obj := &VphpCopyableBox(ptr)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'count', obj.count)
+    }
+}
+@[export: 'vphp_wrap_vphp_copyable_box_hold']
+pub fn vphp_wrap_vphp_copyable_box_hold(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpCopyableBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
+    ])
+    arg_0 := php_args.at(0).value
+    recv.hold(arg_0)
+}
+@[export: 'vphp_wrap_vphp_copyable_box_clone_initialized']
+pub fn vphp_wrap_vphp_copyable_box_clone_initialized(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpCopyableBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.clone_initialized()
+    ctx.return().v[bool](res)
+}
+@[export: 'vphp_wrap_vphp_copyable_box_bump']
+pub fn vphp_wrap_vphp_copyable_box_bump(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpCopyableBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'delta' },
+    ])
+    arg_0 := php_args.at(0).as_v[int]()
+    recv.bump(arg_0)
+}
+@[export: 'vphp_wrap_vphp_copyable_box_state']
+pub fn vphp_wrap_vphp_copyable_box_state(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpCopyableBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.state()
+    ctx.return().v[string](res)
+}
+@[export: 'vphp_wrap_vphp_copyable_box_serialize_state']
+pub fn vphp_wrap_vphp_copyable_box_serialize_state(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpCopyableBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.serialize_state()
+    ctx.return().v[vphp.PhpArray](res)
+}
+@[export: 'vphp_wrap_vphp_copyable_box_unserialize_state']
+pub fn vphp_wrap_vphp_copyable_box_unserialize_state(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpCopyableBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'data' },
+    ])
+    arg_0 := php_args.at(0).array() or {
+        vphp.throw_exception('argument 0 must be array', 0)
+        return
+    }
+    recv.unserialize_state(arg_0)
+}
+@[export: 'vphp_copyable_box_handlers']
+pub fn vphp_copyable_box_handlers() voidptr {
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vphp_copyable_box_get_prop,
+        write_handler: vphp_copyable_box_set_prop,
+        sync_handler: vphp_copyable_box_sync_props,
+        new_raw: vphp_copyable_box_new_raw,
+        cleanup_raw: vphp_copyable_box_cleanup_raw,
+        free_raw: vphp_copyable_box_free_raw,
+        init_php_state: vphp_copyable_box_init_php_state
+    )
+}
+fn vphp_copyable_box_init_php_state(ptr voidptr) {
+    unsafe {
+        mut obj := &VphpCopyableBox(ptr)
+        obj.init_php_state()
+    }
+}
+pub fn VphpCopyableBox.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vphp__compiler__copyablebox_ce)
+}
+
+pub fn VphpCopyableBox.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vphp_copyable_box_handlers())
+}
+
+pub fn VphpCopyableBox.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    return vphp.bind_object_zval[VphpCopyableBox](v_ptr, ownership)
+}
+
+pub fn (obj &VphpCopyableBox) bind_php_object() vphp.ZVal {
+    return vphp.bind_borrowed_object_zval[VphpCopyableBox](obj)
+}
+
+pub fn (obj &VphpCopyableBox) bind_php_object_value() vphp.PhpValue {
+    return vphp.bind_borrowed_object_value[VphpCopyableBox](obj)
+}
+
+pub fn (obj &VphpCopyableBox) bind_owned_php_object() vphp.ZVal {
+    return vphp.bind_owned_object_zval[VphpCopyableBox](obj)
+}
+
+pub fn (obj &VphpCopyableBox) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.bind_owned_object_value[VphpCopyableBox](obj)
+}
+
+pub fn (val VphpCopyableBox) php_class_name() string {
+    return 'VPHP\\Compiler\\CopyableBox'
+}
+
+@[export: 'vphp_tagged_box_new_raw']
+pub fn vphp_tagged_box_new_raw() voidptr {
+    return vphp.generic_new_raw[VphpTaggedBox]()
+}
+@[export: 'vphp_tagged_box_free_raw']
+pub fn vphp_tagged_box_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    mut obj := unsafe { &VphpTaggedBox(ptr) }
+    vphp.generic_release_fields(mut obj.VphpCopyableBox)
+    vphp.generic_free_raw[VphpTaggedBox](ptr)
+}
+@[export: 'vphp_tagged_box_cleanup_raw']
+pub fn vphp_tagged_box_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'vphp_tagged_box_clone_into_raw']
+pub fn vphp_tagged_box_clone_into_raw(source voidptr, target voidptr) {
+    unsafe {
+        src := &VphpTaggedBox(source)
+        mut dst := &VphpTaggedBox(target)
+        src.clone_into(mut dst)
+    }
+}
+@[export: 'vphp_tagged_box_get_prop']
+pub fn vphp_tagged_box_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        obj := &VphpTaggedBox(ptr)
+        if name == 'tag' {
+            ret.v[string](obj.tag)
+            return
+        }
+        if name == 'count' {
+            ret.v[i64](i64(obj.VphpCopyableBox.count))
+            return
+        }
+    }
+}
+@[export: 'vphp_tagged_box_set_prop']
+pub fn vphp_tagged_box_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        mut obj := &VphpTaggedBox(ptr)
+        if name == 'tag' {
+            obj.tag = arg.get_string()
+            return
+        }
+        if name == 'count' {
+            obj.VphpCopyableBox.count = int(arg.get_int())
+            return
+        }
+    }
+}
+@[export: 'vphp_tagged_box_sync_props']
+pub fn vphp_tagged_box_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
+    unsafe {
+        obj := &VphpTaggedBox(ptr)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'tag', obj.tag)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'count', obj.VphpCopyableBox.count)
+    }
+}
+@[export: 'vphp_wrap_vphp_tagged_box_serialize_tagged_state']
+pub fn vphp_wrap_vphp_tagged_box_serialize_tagged_state(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpTaggedBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.serialize_tagged_state()
+    ctx.return().v[vphp.PhpArray](res)
+}
+@[export: 'vphp_wrap_vphp_tagged_box_unserialize_tagged_state']
+pub fn vphp_wrap_vphp_tagged_box_unserialize_tagged_state(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VphpTaggedBox(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'data' },
+    ])
+    arg_0 := php_args.at(0).array() or {
+        vphp.throw_exception('argument 0 must be array', 0)
+        return
+    }
+    recv.unserialize_tagged_state(arg_0)
+}
+@[export: 'vphp_tagged_box_handlers']
+pub fn vphp_tagged_box_handlers() voidptr {
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vphp_tagged_box_get_prop,
+        write_handler: vphp_tagged_box_set_prop,
+        sync_handler: vphp_tagged_box_sync_props,
+        new_raw: vphp_tagged_box_new_raw,
+        cleanup_raw: vphp_tagged_box_cleanup_raw,
+        free_raw: vphp_tagged_box_free_raw,
+        init_php_state: vphp_tagged_box_init_php_state
+    )
+}
+fn vphp_tagged_box_init_php_state(ptr voidptr) {
+    unsafe {
+        mut obj := &VphpTaggedBox(ptr)
+        obj.init_php_state()
+    }
+}
+pub fn VphpTaggedBox.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vphp__compiler__taggedbox_ce)
+}
+
+pub fn VphpTaggedBox.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vphp_tagged_box_handlers())
+}
+
+pub fn VphpTaggedBox.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    return vphp.bind_object_zval[VphpTaggedBox](v_ptr, ownership)
+}
+
+pub fn (obj &VphpTaggedBox) bind_php_object() vphp.ZVal {
+    return vphp.bind_borrowed_object_zval[VphpTaggedBox](obj)
+}
+
+pub fn (obj &VphpTaggedBox) bind_php_object_value() vphp.PhpValue {
+    return vphp.bind_borrowed_object_value[VphpTaggedBox](obj)
+}
+
+pub fn (obj &VphpTaggedBox) bind_owned_php_object() vphp.ZVal {
+    return vphp.bind_owned_object_zval[VphpTaggedBox](obj)
+}
+
+pub fn (obj &VphpTaggedBox) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.bind_owned_object_value[VphpTaggedBox](obj)
+}
+
+pub fn (val VphpTaggedBox) php_class_name() string {
+    return 'VPHP\\Compiler\\TaggedBox'
+}
+
+@[export: 'vphp_numbered_box_new_raw']
+pub fn vphp_numbered_box_new_raw() voidptr {
+    return vphp.generic_new_raw[VphpNumberedBox]()
+}
+@[export: 'vphp_numbered_box_free_raw']
+pub fn vphp_numbered_box_free_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+    mut obj := unsafe { &VphpNumberedBox(ptr) }
+    vphp.generic_release_fields(mut obj.VphpTaggedBox)
+    vphp.generic_release_fields(mut obj.VphpTaggedBox.VphpCopyableBox)
+    vphp.generic_free_raw[VphpNumberedBox](ptr)
+}
+@[export: 'vphp_numbered_box_cleanup_raw']
+pub fn vphp_numbered_box_cleanup_raw(ptr voidptr) {
+    if ptr == 0 {
+        return
+    }
+}
+@[export: 'vphp_numbered_box_clone_into_raw']
+pub fn vphp_numbered_box_clone_into_raw(source voidptr, target voidptr) {
+    unsafe {
+        src := &VphpNumberedBox(source)
+        mut dst := &VphpNumberedBox(target)
+        src.clone_into(mut dst)
+    }
+}
+@[export: 'vphp_numbered_box_get_prop']
+pub fn vphp_numbered_box_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
+    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        obj := &VphpNumberedBox(ptr)
+        if name == 'number' {
+            ret.v[i64](i64(obj.number))
+            return
+        }
+        if name == 'tag' {
+            ret.v[string](obj.VphpTaggedBox.tag)
+            return
+        }
+        if name == 'count' {
+            ret.v[i64](i64(obj.VphpTaggedBox.VphpCopyableBox.count))
+            return
+        }
+    }
+}
+@[export: 'vphp_numbered_box_set_prop']
+pub fn vphp_numbered_box_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
+    arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        mut obj := &VphpNumberedBox(ptr)
+        if name == 'number' {
+            obj.number = int(arg.get_int())
+            return
+        }
+        if name == 'tag' {
+            obj.VphpTaggedBox.tag = arg.get_string()
+            return
+        }
+        if name == 'count' {
+            obj.VphpTaggedBox.VphpCopyableBox.count = int(arg.get_int())
+            return
+        }
+    }
+}
+@[export: 'vphp_numbered_box_sync_props']
+pub fn vphp_numbered_box_sync_props(ptr voidptr, zv &C.zval) {
+    out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
+    unsafe {
+        obj := &VphpNumberedBox(ptr)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'number', obj.number)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'tag', obj.VphpTaggedBox.tag)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'count', obj.VphpTaggedBox.VphpCopyableBox.count)
+    }
+}
+@[export: 'vphp_numbered_box_handlers']
+pub fn vphp_numbered_box_handlers() voidptr {
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vphp_numbered_box_get_prop,
+        write_handler: vphp_numbered_box_set_prop,
+        sync_handler: vphp_numbered_box_sync_props,
+        new_raw: vphp_numbered_box_new_raw,
+        cleanup_raw: vphp_numbered_box_cleanup_raw,
+        free_raw: vphp_numbered_box_free_raw,
+        init_php_state: vphp_numbered_box_init_php_state
+    )
+}
+fn vphp_numbered_box_init_php_state(ptr voidptr) {
+    unsafe {
+        mut obj := &VphpNumberedBox(ptr)
+        obj.init_php_state()
+    }
+}
+pub fn VphpNumberedBox.php_class_entry() vphp.ZendClassEntry {
+    return vphp.ZendClassEntry.from_ptr(C.vphp__compiler__numberedbox_ce)
+}
+
+pub fn VphpNumberedBox.php_object_handlers() object.ObjectHandlers {
+    return object.ObjectHandlers.from_ptr(vphp_numbered_box_handlers())
+}
+
+pub fn VphpNumberedBox.php_object_zval(v_ptr voidptr, ownership vphp.OwnershipKind) vphp.ZVal {
+    return vphp.bind_object_zval[VphpNumberedBox](v_ptr, ownership)
+}
+
+pub fn (obj &VphpNumberedBox) bind_php_object() vphp.ZVal {
+    return vphp.bind_borrowed_object_zval[VphpNumberedBox](obj)
+}
+
+pub fn (obj &VphpNumberedBox) bind_php_object_value() vphp.PhpValue {
+    return vphp.bind_borrowed_object_value[VphpNumberedBox](obj)
+}
+
+pub fn (obj &VphpNumberedBox) bind_owned_php_object() vphp.ZVal {
+    return vphp.bind_owned_object_zval[VphpNumberedBox](obj)
+}
+
+pub fn (obj &VphpNumberedBox) bind_owned_php_object_value() vphp.PhpValue {
+    return vphp.bind_owned_object_value[VphpNumberedBox](obj)
+}
+
+pub fn (val VphpNumberedBox) php_class_name() string {
+    return 'VPHP\\Compiler\\NumberedBox'
 }
 
 @[export: 'vphp_module_probe_typed_consts_new_raw']
@@ -2163,13 +2658,13 @@ pub fn VphpModuleProbeTypedConsts.consts() VphpModuleProbeConsts {
 }
 @[export: 'vphp_module_probe_typed_consts_handlers']
 pub fn vphp_module_probe_typed_consts_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vphp_module_probe_typed_consts_get_prop),
-        write_handler: voidptr(vphp_module_probe_typed_consts_set_prop),
-        sync_handler: voidptr(vphp_module_probe_typed_consts_sync_props),
-        new_raw: voidptr(vphp_module_probe_typed_consts_new_raw),
-        cleanup_raw: voidptr(vphp_module_probe_typed_consts_cleanup_raw),
-        free_raw: voidptr(vphp_module_probe_typed_consts_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vphp_module_probe_typed_consts_get_prop,
+        write_handler: vphp_module_probe_typed_consts_set_prop,
+        sync_handler: vphp_module_probe_typed_consts_sync_props,
+        new_raw: vphp_module_probe_typed_consts_new_raw,
+        cleanup_raw: vphp_module_probe_typed_consts_cleanup_raw,
+        free_raw: vphp_module_probe_typed_consts_free_raw
     )
 }
 pub fn VphpModuleProbeTypedConsts.php_class_entry() vphp.ZendClassEntry {
@@ -2228,27 +2723,27 @@ pub fn vphp_module_probe_wrapper_box_get_prop(ptr voidptr, name_ptr &char, name_
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
         obj := &VphpModuleProbeWrapperBox(ptr)
         if name == 'val' {
-            ret.v[vphp.PhpValue](obj.val)
+            vphp.PhpObjectPropertyHandler.return_value(ret, obj.val)
             return
         }
         if name == 'obj' {
-            ret.v[vphp.PhpObject](obj.obj)
+            vphp.PhpObjectPropertyHandler.return_value(ret, obj.obj.to_value())
             return
         }
         if name == 'str' {
-            ret.v[vphp.PhpString](obj.str)
+            vphp.PhpObjectPropertyHandler.return_value(ret, obj.str.to_value())
             return
         }
         if name == 'num' {
-            ret.v[vphp.PhpInt](obj.num)
+            vphp.PhpObjectPropertyHandler.return_value(ret, obj.num.to_value())
             return
         }
         if name == 'b' {
-            ret.v[vphp.PhpBool](obj.b)
+            vphp.PhpObjectPropertyHandler.return_value(ret, obj.b.to_value())
             return
         }
         if name == 'arr' {
-            ret.v[vphp.PhpArray](obj.arr)
+            vphp.PhpObjectPropertyHandler.return_value(ret, obj.arr.to_value())
             return
         }
     }
@@ -2260,27 +2755,39 @@ pub fn vphp_module_probe_wrapper_box_set_prop(ptr voidptr, name_ptr &char, name_
         name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
         mut obj := &VphpModuleProbeWrapperBox(ptr)
         if name == 'val' {
+            mut previous := obj.val
             obj.val = vphp.PhpValue.from_zval(arg).retain()
+            previous.release()
             return
         }
         if name == 'obj' {
+            mut previous := obj.obj
             obj.obj = (vphp.PhpObject.from_zval(arg) or { vphp.PhpObject.invalid() }).retain()
+            previous.release()
             return
         }
         if name == 'str' {
+            mut previous := obj.str
             obj.str = vphp.PhpString.coerce(arg).retain()
+            previous.release()
             return
         }
         if name == 'num' {
+            mut previous := obj.num
             obj.num = vphp.PhpInt.coerce(arg).retain()
+            previous.release()
             return
         }
         if name == 'b' {
+            mut previous := obj.b
             obj.b = vphp.PhpBool.coerce(arg).retain()
+            previous.release()
             return
         }
         if name == 'arr' {
+            mut previous := obj.arr
             obj.arr = (vphp.PhpArray.from_zval(arg) or { vphp.PhpArray.empty() }).retain()
+            previous.release()
             return
         }
     }
@@ -2290,12 +2797,12 @@ pub fn vphp_module_probe_wrapper_box_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VphpModuleProbeWrapperBox(ptr)
-        out.set_prop('val', obj.val.to_zval())
-        out.set_prop('obj', obj.obj.to_zval())
-        out.set_prop('str', obj.str.to_zval())
-        out.set_prop('num', obj.num.to_zval())
-        out.set_prop('b', obj.b.to_zval())
-        out.set_prop('arr', obj.arr.to_zval())
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'val', obj.val)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'obj', obj.obj.to_value())
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'str', obj.str.to_value())
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'num', obj.num.to_value())
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'b', obj.b.to_value())
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'arr', obj.arr.to_value())
     }
 }
 @[export: 'vphp_wrap_vphp_module_probe_wrapper_box_change_props']
@@ -2336,13 +2843,13 @@ pub fn vphp_wrap_vphp_module_probe_wrapper_box_change_props(ptr voidptr, ctx vph
 }
 @[export: 'vphp_module_probe_wrapper_box_handlers']
 pub fn vphp_module_probe_wrapper_box_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vphp_module_probe_wrapper_box_get_prop),
-        write_handler: voidptr(vphp_module_probe_wrapper_box_set_prop),
-        sync_handler: voidptr(vphp_module_probe_wrapper_box_sync_props),
-        new_raw: voidptr(vphp_module_probe_wrapper_box_new_raw),
-        cleanup_raw: voidptr(vphp_module_probe_wrapper_box_cleanup_raw),
-        free_raw: voidptr(vphp_module_probe_wrapper_box_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vphp_module_probe_wrapper_box_get_prop,
+        write_handler: vphp_module_probe_wrapper_box_set_prop,
+        sync_handler: vphp_module_probe_wrapper_box_sync_props,
+        new_raw: vphp_module_probe_wrapper_box_new_raw,
+        cleanup_raw: vphp_module_probe_wrapper_box_cleanup_raw,
+        free_raw: vphp_module_probe_wrapper_box_free_raw
     )
 }
 pub fn VphpModuleProbeWrapperBox.php_class_entry() vphp.ZendClassEntry {
@@ -2439,13 +2946,13 @@ pub fn trait_post_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &TraitPost(ptr)
-        out.add_property_string('title', obj.title)
-        out.add_property_string('slug', obj.slug)
-        out.add_property_long('visits', i64(obj.visits))
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'title', obj.title)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'slug', obj.slug)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'visits', obj.visits)
     }
 }
 @[export: 'vphp_wrap_trait_post_construct']
-pub fn vphp_wrap_trait_post_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_trait_post_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &TraitPost(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2454,7 +2961,7 @@ pub fn vphp_wrap_trait_post_construct(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
-    return voidptr(res)
+    ctx.return().return_v_object[TraitPost](res, .borrowed)
 }
 @[export: 'vphp_wrap_trait_post_summary']
 pub fn vphp_wrap_trait_post_summary(ptr voidptr, ctx vphp.Context)  {
@@ -2490,13 +2997,13 @@ pub fn vphp_wrap_trait_post_internal_trait(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'trait_post_handlers']
 pub fn trait_post_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(trait_post_get_prop),
-        write_handler: voidptr(trait_post_set_prop),
-        sync_handler: voidptr(trait_post_sync_props),
-        new_raw: voidptr(trait_post_new_raw),
-        cleanup_raw: voidptr(trait_post_cleanup_raw),
-        free_raw: voidptr(trait_post_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: trait_post_get_prop,
+        write_handler: trait_post_set_prop,
+        sync_handler: trait_post_sync_props,
+        new_raw: trait_post_new_raw,
+        cleanup_raw: trait_post_cleanup_raw,
+        free_raw: trait_post_free_raw
     )
 }
 pub fn TraitPost.php_class_entry() vphp.ZendClassEntry {
@@ -2577,11 +3084,11 @@ pub fn validator_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &Validator(ptr)
-        out.add_property_bool('strict', obj.strict)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'strict', obj.strict)
     }
 }
 @[export: 'vphp_wrap_validator_construct']
-pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &Validator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2590,7 +3097,6 @@ pub fn vphp_wrap_validator_construct(ptr voidptr, ctx vphp.Context) voidptr {
     ])
     arg_0 := php_args.at(0).as_v[bool]()
     recv.construct(arg_0)
-    return ptr
 }
 @[export: 'vphp_wrap_validator_check']
 pub fn vphp_wrap_validator_check(ptr voidptr, ctx vphp.Context)  {
@@ -2645,13 +3151,13 @@ pub fn vphp_wrap_validator_parse_int(ctx vphp.Context)  {
 }
 @[export: 'validator_handlers']
 pub fn validator_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(validator_get_prop),
-        write_handler: voidptr(validator_set_prop),
-        sync_handler: voidptr(validator_sync_props),
-        new_raw: voidptr(validator_new_raw),
-        cleanup_raw: voidptr(validator_cleanup_raw),
-        free_raw: voidptr(validator_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: validator_get_prop,
+        write_handler: validator_set_prop,
+        sync_handler: validator_sync_props,
+        new_raw: validator_new_raw,
+        cleanup_raw: validator_cleanup_raw,
+        free_raw: validator_free_raw
     )
 }
 pub fn Validator.php_class_entry() vphp.ZendClassEntry {
@@ -2732,11 +3238,11 @@ pub fn dispatchable_sample_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &DispatchableSample(ptr)
-        out.add_property_string('name', obj.name)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'name', obj.name)
     }
 }
 @[export: 'vphp_wrap_dispatchable_sample_construct']
-pub fn vphp_wrap_dispatchable_sample_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_dispatchable_sample_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &DispatchableSample(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2745,7 +3251,7 @@ pub fn vphp_wrap_dispatchable_sample_construct(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
-    return voidptr(res)
+    ctx.return().return_v_object[DispatchableSample](res, .borrowed)
 }
 @[export: 'vphp_wrap_dispatchable_sample_tagged']
 pub fn vphp_wrap_dispatchable_sample_tagged(ptr voidptr, ctx vphp.Context)  {
@@ -2761,13 +3267,13 @@ pub fn vphp_wrap_dispatchable_sample_tagged(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'dispatchable_sample_handlers']
 pub fn dispatchable_sample_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(dispatchable_sample_get_prop),
-        write_handler: voidptr(dispatchable_sample_set_prop),
-        sync_handler: voidptr(dispatchable_sample_sync_props),
-        new_raw: voidptr(dispatchable_sample_new_raw),
-        cleanup_raw: voidptr(dispatchable_sample_cleanup_raw),
-        free_raw: voidptr(dispatchable_sample_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: dispatchable_sample_get_prop,
+        write_handler: dispatchable_sample_set_prop,
+        sync_handler: dispatchable_sample_sync_props,
+        new_raw: dispatchable_sample_new_raw,
+        cleanup_raw: dispatchable_sample_cleanup_raw,
+        free_raw: dispatchable_sample_free_raw
     )
 }
 pub fn DispatchableSample.php_class_entry() vphp.ZendClassEntry {
@@ -2802,6 +3308,14 @@ pub fn (val DispatchableSample) php_class_name() string {
     return 'DispatchableSample'
 }
 
+@[export: 'vphp_enum_backing_values_articlestatus']
+fn vphp_enum_backing_values_articlestatus(values &i64) {
+    unsafe {
+        values[0] = i64(ArticleStatus.draft)
+        values[1] = i64(ArticleStatus.review)
+        values[2] = i64(ArticleStatus.published)
+    }
+}
 pub fn (val ArticleStatus) php_class_name() string {
     return 'ArticleStatus'
 }
@@ -2865,13 +3379,13 @@ pub fn vphp_wrap_v_php_task_list(ctx vphp.Context)  {
 }
 @[export: 'v_php_task_handlers']
 pub fn v_php_task_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(v_php_task_get_prop),
-        write_handler: voidptr(v_php_task_set_prop),
-        sync_handler: voidptr(v_php_task_sync_props),
-        new_raw: voidptr(v_php_task_new_raw),
-        cleanup_raw: voidptr(v_php_task_cleanup_raw),
-        free_raw: voidptr(v_php_task_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: v_php_task_get_prop,
+        write_handler: v_php_task_set_prop,
+        sync_handler: v_php_task_sync_props,
+        new_raw: v_php_task_new_raw,
+        cleanup_raw: v_php_task_cleanup_raw,
+        free_raw: v_php_task_free_raw
     )
 }
 pub fn VPhpTask.php_class_entry() vphp.ZendClassEntry {
@@ -2952,11 +3466,11 @@ pub fn stringable_box_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &StringableBox(ptr)
-        out.add_property_string('name', obj.name)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'name', obj.name)
     }
 }
 @[export: 'vphp_wrap_stringable_box_construct']
-pub fn vphp_wrap_stringable_box_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_stringable_box_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &StringableBox(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -2965,7 +3479,7 @@ pub fn vphp_wrap_stringable_box_construct(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
-    return voidptr(res)
+    ctx.return().return_v_object[StringableBox](res, .borrowed)
 }
 @[export: 'vphp_wrap_stringable_box_str']
 pub fn vphp_wrap_stringable_box_str(ptr voidptr, ctx vphp.Context)  {
@@ -2977,13 +3491,13 @@ pub fn vphp_wrap_stringable_box_str(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'stringable_box_handlers']
 pub fn stringable_box_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(stringable_box_get_prop),
-        write_handler: voidptr(stringable_box_set_prop),
-        sync_handler: voidptr(stringable_box_sync_props),
-        new_raw: voidptr(stringable_box_new_raw),
-        cleanup_raw: voidptr(stringable_box_cleanup_raw),
-        free_raw: voidptr(stringable_box_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: stringable_box_get_prop,
+        write_handler: stringable_box_set_prop,
+        sync_handler: stringable_box_sync_props,
+        new_raw: stringable_box_new_raw,
+        cleanup_raw: stringable_box_cleanup_raw,
+        free_raw: stringable_box_free_raw
     )
 }
 pub fn StringableBox.php_class_entry() vphp.ZendClassEntry {
@@ -3757,6 +4271,72 @@ fn vphp_wrap_v_php_reference_api(ctx vphp.Context) {
     ctx.return().v[string](res)
 }
 
+@[export: 'vphp_wrap_v_step_reference']
+fn vphp_wrap_v_step_reference(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'step' },
+        vphp.PhpArgMeta{ index: 1, name: 'cursor' },
+    ])
+    arg_0 := php_args.at(0).as_v[int]()
+    arg_1 := php_args.at(1).reference() or {
+        vphp.throw_exception('argument 1 must be reference', 0)
+        return
+    }
+    v_step_reference(arg_0, arg_1)
+}
+
+@[export: 'vphp_wrap_v_optional_reference']
+fn vphp_wrap_v_optional_reference(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'cursor' },
+        vphp.PhpArgMeta{ index: 1, name: 'label' },
+    ])
+    arg_0 := php_args.at(0).reference()
+    arg_1 := php_args.at(1).as_v_opt[string]()
+    res := v_optional_reference(arg_0, arg_1)
+    ctx.return().v[string](res)
+}
+
+@[export: 'vphp_wrap_v_step_references']
+fn vphp_wrap_v_step_references(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    if !ctx.reject_named_variadic_args() {
+        return
+    }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'step' },
+        vphp.PhpArgMeta{ index: 1, name: 'cursors' },
+    ])
+    arg_0 := php_args.at(0).as_v[int]()
+    arg_1 := php_args.variadic_references(1) or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return
+    }
+    res := v_step_references(arg_0, ...arg_1)
+    ctx.return().v[int](res)
+}
+
+@[export: 'vphp_wrap_v_replace_reference']
+fn vphp_wrap_v_replace_reference(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'target' },
+        vphp.PhpArgMeta{ index: 1, name: 'replacement' },
+    ])
+    arg_0 := php_args.at(0).reference() or {
+        vphp.throw_exception('argument 0 must be reference', 0)
+        return
+    }
+    arg_1 := php_args.at(1).zval()
+    v_replace_reference(arg_0, arg_1)
+}
+
 @[export: 'vphp_wrap_v_php_iterable_api']
 fn vphp_wrap_v_php_iterable_api(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
@@ -3917,6 +4497,8 @@ fn vphp_wrap_v_test_globals(ctx vphp.Context) {
     v_test_globals(arg_0)
 }
 
+__global C.struct_closure_arginfo_v_get_v_closure voidptr
+
 pub type VPhpVariadicClosureVGetVClosure = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_v_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
@@ -3928,7 +4510,7 @@ fn vphp_variadic_closure_bridge_v_get_v_closure(v_ptr voidptr, ex &C.zend_execut
 }
 
 fn vphp_wrap_variadic_closure_v_get_v_closure(ctx vphp.Context, cb VPhpVariadicClosureVGetVClosure) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVClosure](cb, voidptr(vphp_variadic_closure_bridge_v_get_v_closure))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetVClosure](cb, vphp_variadic_closure_bridge_v_get_v_closure, 1, 0, C.struct_closure_arginfo_v_get_v_closure)
 }
 
 @[export: 'vphp_wrap_v_get_v_closure']
@@ -3938,6 +4520,8 @@ fn vphp_wrap_v_get_v_closure(ctx vphp.Context) {
     res := v_get_v_closure()
     vphp_wrap_variadic_closure_v_get_v_closure(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_v_closure_auto voidptr
 
 pub type VPhpVariadicClosureVGetVClosureAuto = fn (...vphp.ZVal) vphp.ZVal
 
@@ -3950,7 +4534,7 @@ fn vphp_variadic_closure_bridge_v_get_v_closure_auto(v_ptr voidptr, ex &C.zend_e
 }
 
 fn vphp_wrap_variadic_closure_v_get_v_closure_auto(ctx vphp.Context, cb VPhpVariadicClosureVGetVClosureAuto) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVClosureAuto](cb, voidptr(vphp_variadic_closure_bridge_v_get_v_closure_auto))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetVClosureAuto](cb, vphp_variadic_closure_bridge_v_get_v_closure_auto, 1, 0, C.struct_closure_arginfo_v_get_v_closure_auto)
 }
 
 @[export: 'vphp_wrap_v_get_v_closure_auto']
@@ -4029,6 +4613,8 @@ fn vphp_wrap_v_invoke_with_arg(ctx vphp.Context) {
     ctx.return().v[string](res)
 }
 
+__global C.struct_closure_arginfo_v_get_closure_0 voidptr
+
 pub type VPhpVariadicClosureVGetClosure0 = fn (...vphp.ZVal) vphp.ZVal
 
 fn vphp_variadic_closure_bridge_v_get_closure_0(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
@@ -4040,7 +4626,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_0(v_ptr voidptr, ex &C.zend_execut
 }
 
 fn vphp_wrap_variadic_closure_v_get_closure_0(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure0) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure0](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_0))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetClosure0](cb, vphp_variadic_closure_bridge_v_get_closure_0, 1, 0, C.struct_closure_arginfo_v_get_closure_0)
 }
 
 @[export: 'vphp_wrap_v_get_closure_0']
@@ -4050,6 +4636,8 @@ fn vphp_wrap_v_get_closure_0(ctx vphp.Context) {
     res := v_get_closure_0()
     vphp_wrap_variadic_closure_v_get_closure_0(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_closure_1 voidptr
 
 pub type VPhpVariadicClosureVGetClosure1 = fn (...vphp.ZVal) vphp.ZVal
 
@@ -4062,7 +4650,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_1(v_ptr voidptr, ex &C.zend_execut
 }
 
 fn vphp_wrap_variadic_closure_v_get_closure_1(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure1) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure1](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_1))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetClosure1](cb, vphp_variadic_closure_bridge_v_get_closure_1, 1, 0, C.struct_closure_arginfo_v_get_closure_1)
 }
 
 @[export: 'vphp_wrap_v_get_closure_1']
@@ -4072,6 +4660,8 @@ fn vphp_wrap_v_get_closure_1(ctx vphp.Context) {
     res := v_get_closure_1()
     vphp_wrap_variadic_closure_v_get_closure_1(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_closure_2 voidptr
 
 pub type VPhpVariadicClosureVGetClosure2 = fn (...vphp.ZVal) vphp.ZVal
 
@@ -4084,7 +4674,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_2(v_ptr voidptr, ex &C.zend_execut
 }
 
 fn vphp_wrap_variadic_closure_v_get_closure_2(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure2) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure2](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_2))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetClosure2](cb, vphp_variadic_closure_bridge_v_get_closure_2, 1, 0, C.struct_closure_arginfo_v_get_closure_2)
 }
 
 @[export: 'vphp_wrap_v_get_closure_2']
@@ -4094,6 +4684,8 @@ fn vphp_wrap_v_get_closure_2(ctx vphp.Context) {
     res := v_get_closure_2()
     vphp_wrap_variadic_closure_v_get_closure_2(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_closure_3 voidptr
 
 pub type VPhpVariadicClosureVGetClosure3 = fn (...vphp.ZVal) vphp.ZVal
 
@@ -4106,7 +4698,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_3(v_ptr voidptr, ex &C.zend_execut
 }
 
 fn vphp_wrap_variadic_closure_v_get_closure_3(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure3) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure3](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_3))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetClosure3](cb, vphp_variadic_closure_bridge_v_get_closure_3, 1, 0, C.struct_closure_arginfo_v_get_closure_3)
 }
 
 @[export: 'vphp_wrap_v_get_closure_3']
@@ -4116,6 +4708,8 @@ fn vphp_wrap_v_get_closure_3(ctx vphp.Context) {
     res := v_get_closure_3()
     vphp_wrap_variadic_closure_v_get_closure_3(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_closure_4 voidptr
 
 pub type VPhpVariadicClosureVGetClosure4 = fn (...vphp.ZVal) vphp.ZVal
 
@@ -4128,7 +4722,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_4(v_ptr voidptr, ex &C.zend_execut
 }
 
 fn vphp_wrap_variadic_closure_v_get_closure_4(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure4) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure4](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_4))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetClosure4](cb, vphp_variadic_closure_bridge_v_get_closure_4, 1, 0, C.struct_closure_arginfo_v_get_closure_4)
 }
 
 @[export: 'vphp_wrap_v_get_closure_4']
@@ -4138,6 +4732,8 @@ fn vphp_wrap_v_get_closure_4(ctx vphp.Context) {
     res := v_get_closure_4()
     vphp_wrap_variadic_closure_v_get_closure_4(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_closure_3_void voidptr
 
 pub type VPhpVariadicClosureVGetClosure3Void = fn (...vphp.ZVal)
 
@@ -4150,7 +4746,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_3_void(v_ptr voidptr, ex &C.zend_e
 }
 
 fn vphp_wrap_variadic_closure_v_get_closure_3_void(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure3Void) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure3Void](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_3_void))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetClosure3Void](cb, vphp_variadic_closure_bridge_v_get_closure_3_void, 1, 0, C.struct_closure_arginfo_v_get_closure_3_void)
 }
 
 @[export: 'vphp_wrap_v_get_closure_3_void']
@@ -4160,6 +4756,8 @@ fn vphp_wrap_v_get_closure_3_void(ctx vphp.Context) {
     res := v_get_closure_3_void()
     vphp_wrap_variadic_closure_v_get_closure_3_void(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_closure_4_void voidptr
 
 pub type VPhpVariadicClosureVGetClosure4Void = fn (...vphp.ZVal)
 
@@ -4172,7 +4770,7 @@ fn vphp_variadic_closure_bridge_v_get_closure_4_void(v_ptr voidptr, ex &C.zend_e
 }
 
 fn vphp_wrap_variadic_closure_v_get_closure_4_void(ctx vphp.Context, cb VPhpVariadicClosureVGetClosure4Void) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetClosure4Void](cb, voidptr(vphp_variadic_closure_bridge_v_get_closure_4_void))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetClosure4Void](cb, vphp_variadic_closure_bridge_v_get_closure_4_void, 1, 0, C.struct_closure_arginfo_v_get_closure_4_void)
 }
 
 @[export: 'vphp_wrap_v_get_closure_4_void']
@@ -4196,12 +4794,12 @@ fn vphp_struct_closure_bridge_v_get_struct_param_closure(v_ptr voidptr, ex &C.ze
             vphp.PhpException.raise_class('ArgumentCountError', 'closure requires at least 2 arguments', 0)
             return
         }
-        field_0 := ctx.arg_val(0).to_v[string]() or {
-            vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0)
+        field_0 := ctx.closure_arg_to_v[string](0) or {
+            if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0) }
             return
         }
-        field_1 := ctx.arg_val(1).to_v[int]() or {
-            vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0)
+        field_1 := ctx.closure_arg_to_v[int](1) or {
+            if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0) }
             return
         }
         args := StructClosureArgs{
@@ -4213,7 +4811,7 @@ fn vphp_struct_closure_bridge_v_get_struct_param_closure(v_ptr voidptr, ex &C.ze
 }
 
 fn vphp_wrap_struct_closure_v_get_struct_param_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructParamClosure) {
-    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructParamClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_param_closure), 2, 2, C.struct_closure_arginfo_v_get_struct_param_closure)
+    ctx.create_typed_saved_closure_with_arginfo[VPhpStructClosureVGetStructParamClosure](cb, vphp_struct_closure_bridge_v_get_struct_param_closure, 2, 2, C.struct_closure_arginfo_v_get_struct_param_closure)
 }
 
 @[export: 'vphp_wrap_v_get_struct_param_closure']
@@ -4239,13 +4837,13 @@ fn vphp_struct_closure_bridge_v_get_struct_default_closure(v_ptr voidptr, ex &C.
             vphp.PhpException.raise_class('ArgumentCountError', 'closure requires at least 1 argument', 0)
             return
         }
-        field_0 := ctx.arg_val(0).to_v[string]() or {
-            vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0)
+        field_0 := ctx.closure_arg_to_v[string](0) or {
+            if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0) }
             return
         }
         field_1 := if arg_count > 1 {
-            provided_1 := ctx.arg_val(1).to_v[int]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0)
+            provided_1 := ctx.closure_arg_to_v[int](1) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0) }
                 return
             }
             provided_1
@@ -4253,8 +4851,8 @@ fn vphp_struct_closure_bridge_v_get_struct_default_closure(v_ptr voidptr, ex &C.
             7
         }
         field_2 := if arg_count > 2 {
-            provided_2 := ctx.arg_val(2).to_v[bool]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 3 (flag): ${err.msg()}', 0)
+            provided_2 := ctx.closure_arg_to_v[bool](2) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 3 (flag): ${err.msg()}', 0) }
                 return
             }
             provided_2
@@ -4264,8 +4862,8 @@ fn vphp_struct_closure_bridge_v_get_struct_default_closure(v_ptr voidptr, ex &C.
         field_3 := if arg_count > 3 {
             mut provided_3 := ?string(none)
             if !ctx.arg_val(3).is_null() {
-                provided_3 = ctx.arg_val(3).to_v[string]() or {
-                    vphp.PhpException.raise_class('TypeError', 'argument 4 (label): ${err.msg()}', 0)
+                provided_3 = ctx.closure_arg_to_v[string](3) or {
+                    if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 4 (label): ${err.msg()}', 0) }
                     return
                 }
             }
@@ -4274,8 +4872,8 @@ fn vphp_struct_closure_bridge_v_get_struct_default_closure(v_ptr voidptr, ex &C.
             none
         }
         field_4 := if arg_count > 4 && !ctx.arg_val(4).is_undef() {
-            provided_4 := ctx.arg_val(4).to_v[int]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 5 (computed): ${err.msg()}', 0)
+            provided_4 := ctx.closure_arg_to_v[int](4) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 5 (computed): ${err.msg()}', 0) }
                 return
             }
             provided_4
@@ -4302,7 +4900,7 @@ fn vphp_struct_closure_bridge_v_get_struct_default_closure(v_ptr voidptr, ex &C.
 }
 
 fn vphp_wrap_struct_closure_v_get_struct_default_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructDefaultClosure) {
-    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructDefaultClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_default_closure), 5, 1, C.struct_closure_arginfo_v_get_struct_default_closure)
+    ctx.create_typed_saved_closure_with_arginfo[VPhpStructClosureVGetStructDefaultClosure](cb, vphp_struct_closure_bridge_v_get_struct_default_closure, 5, 1, C.struct_closure_arginfo_v_get_struct_default_closure)
 }
 
 @[export: 'vphp_wrap_v_get_struct_default_closure']
@@ -4328,13 +4926,13 @@ fn vphp_struct_closure_bridge_v_get_struct_default_closure_void(v_ptr voidptr, e
             vphp.PhpException.raise_class('ArgumentCountError', 'closure requires at least 1 argument', 0)
             return
         }
-        field_0 := ctx.arg_val(0).to_v[string]() or {
-            vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0)
+        field_0 := ctx.closure_arg_to_v[string](0) or {
+            if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0) }
             return
         }
         field_1 := if arg_count > 1 {
-            provided_1 := ctx.arg_val(1).to_v[int]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0)
+            provided_1 := ctx.closure_arg_to_v[int](1) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 2 (count): ${err.msg()}', 0) }
                 return
             }
             provided_1
@@ -4342,8 +4940,8 @@ fn vphp_struct_closure_bridge_v_get_struct_default_closure_void(v_ptr voidptr, e
             7
         }
         field_2 := if arg_count > 2 {
-            provided_2 := ctx.arg_val(2).to_v[bool]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 3 (flag): ${err.msg()}', 0)
+            provided_2 := ctx.closure_arg_to_v[bool](2) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 3 (flag): ${err.msg()}', 0) }
                 return
             }
             provided_2
@@ -4353,8 +4951,8 @@ fn vphp_struct_closure_bridge_v_get_struct_default_closure_void(v_ptr voidptr, e
         field_3 := if arg_count > 3 {
             mut provided_3 := ?string(none)
             if !ctx.arg_val(3).is_null() {
-                provided_3 = ctx.arg_val(3).to_v[string]() or {
-                    vphp.PhpException.raise_class('TypeError', 'argument 4 (label): ${err.msg()}', 0)
+                provided_3 = ctx.closure_arg_to_v[string](3) or {
+                    if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 4 (label): ${err.msg()}', 0) }
                     return
                 }
             }
@@ -4363,8 +4961,8 @@ fn vphp_struct_closure_bridge_v_get_struct_default_closure_void(v_ptr voidptr, e
             none
         }
         field_4 := if arg_count > 4 && !ctx.arg_val(4).is_undef() {
-            provided_4 := ctx.arg_val(4).to_v[int]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 5 (computed): ${err.msg()}', 0)
+            provided_4 := ctx.closure_arg_to_v[int](4) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 5 (computed): ${err.msg()}', 0) }
                 return
             }
             provided_4
@@ -4391,7 +4989,7 @@ fn vphp_struct_closure_bridge_v_get_struct_default_closure_void(v_ptr voidptr, e
 }
 
 fn vphp_wrap_struct_closure_v_get_struct_default_closure_void(ctx vphp.Context, cb VPhpStructClosureVGetStructDefaultClosureVoid) {
-    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructDefaultClosureVoid](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_default_closure_void), 5, 1, C.struct_closure_arginfo_v_get_struct_default_closure_void)
+    ctx.create_typed_saved_closure_with_arginfo[VPhpStructClosureVGetStructDefaultClosureVoid](cb, vphp_struct_closure_bridge_v_get_struct_default_closure_void, 5, 1, C.struct_closure_arginfo_v_get_struct_default_closure_void)
 }
 
 @[export: 'vphp_wrap_v_get_struct_default_closure_void']
@@ -4417,13 +5015,13 @@ fn vphp_struct_closure_bridge_v_get_struct_computed_defaults_closure(v_ptr voidp
             vphp.PhpException.raise_class('ArgumentCountError', 'closure requires at least 1 argument', 0)
             return
         }
-        field_0 := ctx.arg_val(0).to_v[string]() or {
-            vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0)
+        field_0 := ctx.closure_arg_to_v[string](0) or {
+            if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 1 (name): ${err.msg()}', 0) }
             return
         }
         field_1 := if arg_count > 1 && !ctx.arg_val(1).is_undef() {
-            provided_1 := ctx.arg_val(1).to_v[int]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 2 (first): ${err.msg()}', 0)
+            provided_1 := ctx.closure_arg_to_v[int](1) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 2 (first): ${err.msg()}', 0) }
                 return
             }
             provided_1
@@ -4439,8 +5037,8 @@ fn vphp_struct_closure_bridge_v_get_struct_computed_defaults_closure(v_ptr voidp
         field_2 := if arg_count > 2 && !ctx.arg_val(2).is_undef() {
             mut provided_2 := ?int(none)
             if !ctx.arg_val(2).is_null() {
-                provided_2 = ctx.arg_val(2).to_v[int]() or {
-                    vphp.PhpException.raise_class('TypeError', 'argument 3 (second): ${err.msg()}', 0)
+                provided_2 = ctx.closure_arg_to_v[int](2) or {
+                    if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 3 (second): ${err.msg()}', 0) }
                     return
                 }
             }
@@ -4455,8 +5053,8 @@ fn vphp_struct_closure_bridge_v_get_struct_computed_defaults_closure(v_ptr voidp
             defaults.second
         }
         field_3 := if arg_count > 3 {
-            provided_3 := ctx.arg_val(3).to_v[bool]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 4 (flag): ${err.msg()}', 0)
+            provided_3 := ctx.closure_arg_to_v[bool](3) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 4 (flag): ${err.msg()}', 0) }
                 return
             }
             provided_3
@@ -4477,7 +5075,7 @@ fn vphp_struct_closure_bridge_v_get_struct_computed_defaults_closure(v_ptr voidp
 }
 
 fn vphp_wrap_struct_closure_v_get_struct_computed_defaults_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructComputedDefaultsClosure) {
-    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructComputedDefaultsClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_computed_defaults_closure), 4, 1, C.struct_closure_arginfo_v_get_struct_computed_defaults_closure)
+    ctx.create_typed_saved_closure_with_arginfo[VPhpStructClosureVGetStructComputedDefaultsClosure](cb, vphp_struct_closure_bridge_v_get_struct_computed_defaults_closure, 4, 1, C.struct_closure_arginfo_v_get_struct_computed_defaults_closure)
 }
 
 @[export: 'vphp_wrap_v_get_struct_computed_defaults_closure']
@@ -4500,8 +5098,8 @@ fn vphp_struct_closure_bridge_v_get_struct_native_defaults_closure(v_ptr voidptr
         cb := *(&VPhpStructClosureVGetStructNativeDefaultsClosure(v_ptr))
         arg_count := ctx.num_args()
         field_0 := if arg_count > 0 && !ctx.arg_val(0).is_undef() {
-            provided_0 := ctx.arg_val(0).to_v[NativeClosurePayload]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 1 (payload): ${err.msg()}', 0)
+            provided_0 := ctx.closure_arg_to_v[NativeClosurePayload](0) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 1 (payload): ${err.msg()}', 0) }
                 return
             }
             provided_0
@@ -4514,8 +5112,8 @@ fn vphp_struct_closure_bridge_v_get_struct_native_defaults_closure(v_ptr voidptr
             defaults.payload
         }
         field_1 := if arg_count > 1 {
-            provided_1 := ctx.arg_val(1).to_v[string]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 2 (label): ${err.msg()}', 0)
+            provided_1 := ctx.closure_arg_to_v[string](1) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 2 (label): ${err.msg()}', 0) }
                 return
             }
             provided_1
@@ -4534,7 +5132,7 @@ fn vphp_struct_closure_bridge_v_get_struct_native_defaults_closure(v_ptr voidptr
 }
 
 fn vphp_wrap_struct_closure_v_get_struct_native_defaults_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructNativeDefaultsClosure) {
-    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructNativeDefaultsClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_native_defaults_closure), 2, 0, C.struct_closure_arginfo_v_get_struct_native_defaults_closure)
+    ctx.create_typed_saved_closure_with_arginfo[VPhpStructClosureVGetStructNativeDefaultsClosure](cb, vphp_struct_closure_bridge_v_get_struct_native_defaults_closure, 2, 0, C.struct_closure_arginfo_v_get_struct_native_defaults_closure)
 }
 
 @[export: 'vphp_wrap_v_get_struct_native_defaults_closure']
@@ -4557,8 +5155,8 @@ fn vphp_struct_closure_bridge_v_get_struct_failing_defaults_closure(v_ptr voidpt
         cb := *(&VPhpStructClosureVGetStructFailingDefaultsClosure(v_ptr))
         arg_count := ctx.num_args()
         field_0 := if arg_count > 0 && !ctx.arg_val(0).is_undef() {
-            provided_0 := ctx.arg_val(0).to_v[int]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 1 (first): ${err.msg()}', 0)
+            provided_0 := ctx.closure_arg_to_v[int](0) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 1 (first): ${err.msg()}', 0) }
                 return
             }
             provided_0
@@ -4572,8 +5170,8 @@ fn vphp_struct_closure_bridge_v_get_struct_failing_defaults_closure(v_ptr voidpt
             defaults.first
         }
         field_1 := if arg_count > 1 && !ctx.arg_val(1).is_undef() {
-            provided_1 := ctx.arg_val(1).to_v[int]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 2 (second): ${err.msg()}', 0)
+            provided_1 := ctx.closure_arg_to_v[int](1) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 2 (second): ${err.msg()}', 0) }
                 return
             }
             provided_1
@@ -4587,8 +5185,8 @@ fn vphp_struct_closure_bridge_v_get_struct_failing_defaults_closure(v_ptr voidpt
             defaults.second
         }
         field_2 := if arg_count > 2 {
-            provided_2 := ctx.arg_val(2).to_v[bool]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 3 (tail): ${err.msg()}', 0)
+            provided_2 := ctx.closure_arg_to_v[bool](2) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 3 (tail): ${err.msg()}', 0) }
                 return
             }
             provided_2
@@ -4608,7 +5206,7 @@ fn vphp_struct_closure_bridge_v_get_struct_failing_defaults_closure(v_ptr voidpt
 }
 
 fn vphp_wrap_struct_closure_v_get_struct_failing_defaults_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructFailingDefaultsClosure) {
-    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructFailingDefaultsClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_failing_defaults_closure), 3, 0, C.struct_closure_arginfo_v_get_struct_failing_defaults_closure)
+    ctx.create_typed_saved_closure_with_arginfo[VPhpStructClosureVGetStructFailingDefaultsClosure](cb, vphp_struct_closure_bridge_v_get_struct_failing_defaults_closure, 3, 0, C.struct_closure_arginfo_v_get_struct_failing_defaults_closure)
 }
 
 @[export: 'vphp_wrap_v_get_struct_failing_defaults_closure']
@@ -4635,6 +5233,8 @@ fn vphp_wrap_v_invoke_legacy_struct_closure_void(ctx vphp.Context) {
     v_invoke_legacy_struct_closure_void(arg_0)
 }
 
+__global C.struct_closure_arginfo_v_get_variadic_value_closure voidptr
+
 pub type VPhpVariadicClosureVGetVariadicValueClosure = fn (...vphp.PhpValue) string
 
 fn vphp_variadic_closure_bridge_v_get_variadic_value_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
@@ -4646,7 +5246,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_value_closure(v_ptr voidptr, ex &
 }
 
 fn vphp_wrap_variadic_closure_v_get_variadic_value_closure(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicValueClosure) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicValueClosure](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_value_closure))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetVariadicValueClosure](cb, vphp_variadic_closure_bridge_v_get_variadic_value_closure, 1, 0, C.struct_closure_arginfo_v_get_variadic_value_closure)
 }
 
 @[export: 'vphp_wrap_v_get_variadic_value_closure']
@@ -4656,6 +5256,8 @@ fn vphp_wrap_v_get_variadic_value_closure(ctx vphp.Context) {
     res := v_get_variadic_value_closure()
     vphp_wrap_variadic_closure_v_get_variadic_value_closure(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_variadic_zval_closure voidptr
 
 pub type VPhpVariadicClosureVGetVariadicZvalClosure = fn (...vphp.ZVal) vphp.ZVal
 
@@ -4668,7 +5270,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_zval_closure(v_ptr voidptr, ex &C
 }
 
 fn vphp_wrap_variadic_closure_v_get_variadic_zval_closure(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicZvalClosure) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicZvalClosure](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_zval_closure))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetVariadicZvalClosure](cb, vphp_variadic_closure_bridge_v_get_variadic_zval_closure, 1, 0, C.struct_closure_arginfo_v_get_variadic_zval_closure)
 }
 
 @[export: 'vphp_wrap_v_get_variadic_zval_closure']
@@ -4678,6 +5280,8 @@ fn vphp_wrap_v_get_variadic_zval_closure(ctx vphp.Context) {
     res := v_get_variadic_zval_closure()
     vphp_wrap_variadic_closure_v_get_variadic_zval_closure(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_variadic_zval_void voidptr
 
 pub type VPhpVariadicClosureVGetVariadicZvalVoid = fn (...vphp.ZVal)
 
@@ -4690,7 +5294,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_zval_void(v_ptr voidptr, ex &C.ze
 }
 
 fn vphp_wrap_variadic_closure_v_get_variadic_zval_void(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicZvalVoid) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicZvalVoid](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_zval_void))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetVariadicZvalVoid](cb, vphp_variadic_closure_bridge_v_get_variadic_zval_void, 1, 0, C.struct_closure_arginfo_v_get_variadic_zval_void)
 }
 
 @[export: 'vphp_wrap_v_get_variadic_zval_void']
@@ -4700,6 +5304,32 @@ fn vphp_wrap_v_get_variadic_zval_void(ctx vphp.Context) {
     res := v_get_variadic_zval_void()
     vphp_wrap_variadic_closure_v_get_variadic_zval_void(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_variadic_borrowed_closure voidptr
+
+pub type VPhpVariadicClosureVGetVariadicBorrowedClosure = fn (...vphp.RequestBorrowedZBox) vphp.ZVal
+
+fn vphp_variadic_closure_bridge_v_get_variadic_borrowed_closure(v_ptr voidptr, ex &C.zend_execute_data, ret &C.zval) {
+    unsafe {
+        ctx := vphp.Context.from_ptr(ex, ret)
+        cb := *(&VPhpVariadicClosureVGetVariadicBorrowedClosure(v_ptr))
+        ctx.forward_variadic_closure[vphp.RequestBorrowedZBox, vphp.ZVal](cb)
+    }
+}
+
+fn vphp_wrap_variadic_closure_v_get_variadic_borrowed_closure(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicBorrowedClosure) {
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetVariadicBorrowedClosure](cb, vphp_variadic_closure_bridge_v_get_variadic_borrowed_closure, 1, 0, C.struct_closure_arginfo_v_get_variadic_borrowed_closure)
+}
+
+@[export: 'vphp_wrap_v_get_variadic_borrowed_closure']
+fn vphp_wrap_v_get_variadic_borrowed_closure(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_get_variadic_borrowed_closure()
+    vphp_wrap_variadic_closure_v_get_variadic_borrowed_closure(ctx, res)
+}
+
+__global C.struct_closure_arginfo_v_get_variadic_scalar_string voidptr
 
 pub type VPhpVariadicClosureVGetVariadicScalarString = fn (...vphp.VScalarValue) string
 
@@ -4712,7 +5342,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_scalar_string(v_ptr voidptr, ex &
 }
 
 fn vphp_wrap_variadic_closure_v_get_variadic_scalar_string(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicScalarString) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicScalarString](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_scalar_string))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetVariadicScalarString](cb, vphp_variadic_closure_bridge_v_get_variadic_scalar_string, 1, 0, C.struct_closure_arginfo_v_get_variadic_scalar_string)
 }
 
 @[export: 'vphp_wrap_v_get_variadic_scalar_string']
@@ -4722,6 +5352,8 @@ fn vphp_wrap_v_get_variadic_scalar_string(ctx vphp.Context) {
     res := v_get_variadic_scalar_string()
     vphp_wrap_variadic_closure_v_get_variadic_scalar_string(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_variadic_scalar_i64 voidptr
 
 pub type VPhpVariadicClosureVGetVariadicScalarI64 = fn (...vphp.VScalarValue) i64
 
@@ -4734,7 +5366,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_scalar_i64(v_ptr voidptr, ex &C.z
 }
 
 fn vphp_wrap_variadic_closure_v_get_variadic_scalar_i64(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicScalarI64) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicScalarI64](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_scalar_i64))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetVariadicScalarI64](cb, vphp_variadic_closure_bridge_v_get_variadic_scalar_i64, 1, 0, C.struct_closure_arginfo_v_get_variadic_scalar_i64)
 }
 
 @[export: 'vphp_wrap_v_get_variadic_scalar_i64']
@@ -4744,6 +5376,8 @@ fn vphp_wrap_v_get_variadic_scalar_i64(ctx vphp.Context) {
     res := v_get_variadic_scalar_i64()
     vphp_wrap_variadic_closure_v_get_variadic_scalar_i64(ctx, res)
 }
+
+__global C.struct_closure_arginfo_v_get_variadic_scalar_value voidptr
 
 pub type VPhpVariadicClosureVGetVariadicScalarValue = fn (...vphp.VScalarValue) vphp.VScalarValue
 
@@ -4756,7 +5390,7 @@ fn vphp_variadic_closure_bridge_v_get_variadic_scalar_value(v_ptr voidptr, ex &C
 }
 
 fn vphp_wrap_variadic_closure_v_get_variadic_scalar_value(ctx vphp.Context, cb VPhpVariadicClosureVGetVariadicScalarValue) {
-    ctx.create_saved_variadic_closure[VPhpVariadicClosureVGetVariadicScalarValue](cb, voidptr(vphp_variadic_closure_bridge_v_get_variadic_scalar_value))
+    ctx.create_typed_saved_closure_with_arginfo[VPhpVariadicClosureVGetVariadicScalarValue](cb, vphp_variadic_closure_bridge_v_get_variadic_scalar_value, 1, 0, C.struct_closure_arginfo_v_get_variadic_scalar_value)
 }
 
 @[export: 'vphp_wrap_v_get_variadic_scalar_value']
@@ -4857,8 +5491,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
         cb := *(&VPhpStructClosureVGetStructLiteralDefaultsClosure(v_ptr))
         arg_count := ctx.num_args()
         field_0 := if arg_count > 0 {
-            provided_0 := ctx.arg_val(0).to_v[string]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 1 (message): ${err.msg()}', 0)
+            provided_0 := ctx.closure_arg_to_v[string](0) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 1 (message): ${err.msg()}', 0) }
                 return
             }
             provided_0
@@ -4866,8 +5500,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
             'a\n\t\x00\xe2\x98\xba\$\'\\"'
         }
         field_1 := if arg_count > 1 {
-            provided_1 := ctx.arg_val(1).to_v[string]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 2 (raw): ${err.msg()}', 0)
+            provided_1 := ctx.closure_arg_to_v[string](1) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 2 (raw): ${err.msg()}', 0) }
                 return
             }
             provided_1
@@ -4875,8 +5509,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
             '\\n\${literal}'
         }
         field_2 := if arg_count > 2 {
-            provided_2 := ctx.arg_val(2).to_v[int]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 3 (octal): ${err.msg()}', 0)
+            provided_2 := ctx.closure_arg_to_v[int](2) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 3 (octal): ${err.msg()}', 0) }
                 return
             }
             provided_2
@@ -4884,8 +5518,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
             -15
         }
         field_3 := if arg_count > 3 {
-            provided_3 := ctx.arg_val(3).to_v[i64]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 4 (binary): ${err.msg()}', 0)
+            provided_3 := ctx.closure_arg_to_v[i64](3) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 4 (binary): ${err.msg()}', 0) }
                 return
             }
             provided_3
@@ -4893,8 +5527,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
             i64(161)
         }
         field_4 := if arg_count > 4 {
-            provided_4 := ctx.arg_val(4).to_v[f64]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 5 (floating): ${err.msg()}', 0)
+            provided_4 := ctx.closure_arg_to_v[f64](4) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 5 (floating): ${err.msg()}', 0) }
                 return
             }
             provided_4
@@ -4902,8 +5536,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
             2.0
         }
         field_5 := if arg_count > 5 {
-            provided_5 := ctx.arg_val(5).to_v[f32]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 6 (single): ${err.msg()}', 0)
+            provided_5 := ctx.closure_arg_to_v[f32](5) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 6 (single): ${err.msg()}', 0) }
                 return
             }
             provided_5
@@ -4913,8 +5547,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
         field_6 := if arg_count > 6 {
             mut provided_6 := ?string(none)
             if !ctx.arg_val(6).is_null() {
-                provided_6 = ctx.arg_val(6).to_v[string]() or {
-                    vphp.PhpException.raise_class('TypeError', 'argument 7 (option): ${err.msg()}', 0)
+                provided_6 = ctx.closure_arg_to_v[string](6) or {
+                    if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 7 (option): ${err.msg()}', 0) }
                     return
                 }
             }
@@ -4925,8 +5559,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
         field_7 := if arg_count > 7 {
             mut provided_7 := ?int(none)
             if !ctx.arg_val(7).is_null() {
-                provided_7 = ctx.arg_val(7).to_v[int]() or {
-                    vphp.PhpException.raise_class('TypeError', 'argument 8 (nullable): ${err.msg()}', 0)
+                provided_7 = ctx.closure_arg_to_v[int](7) or {
+                    if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 8 (nullable): ${err.msg()}', 0) }
                     return
                 }
             }
@@ -4935,8 +5569,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
             none
         }
         field_8 := if arg_count > 8 {
-            provided_8 := ctx.arg_val(8).to_v[[]int]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 9 (items): ${err.msg()}', 0)
+            provided_8 := ctx.closure_arg_to_v[[]int](8) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 9 (items): ${err.msg()}', 0) }
                 return
             }
             provided_8
@@ -4944,8 +5578,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
             [1, 16]
         }
         field_9 := if arg_count > 9 {
-            provided_9 := ctx.arg_val(9).to_v[[]string]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 10 (empty): ${err.msg()}', 0)
+            provided_9 := ctx.closure_arg_to_v[[]string](9) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 10 (empty): ${err.msg()}', 0) }
                 return
             }
             provided_9
@@ -4953,8 +5587,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
             []string{}
         }
         field_10 := if arg_count > 10 {
-            provided_10 := ctx.arg_val(10).to_v[map[string]int]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 11 (lookup): ${err.msg()}', 0)
+            provided_10 := ctx.closure_arg_to_v[map[string]int](10) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 11 (lookup): ${err.msg()}', 0) }
                 return
             }
             provided_10
@@ -4962,8 +5596,8 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
             {'count': 16}
         }
         field_11 := if arg_count > 11 {
-            provided_11 := ctx.arg_val(11).to_v[bool]() or {
-                vphp.PhpException.raise_class('TypeError', 'argument 12 (tail): ${err.msg()}', 0)
+            provided_11 := ctx.closure_arg_to_v[bool](11) or {
+                if !vphp.has_exception() { vphp.PhpException.raise_class('TypeError', 'argument 12 (tail): ${err.msg()}', 0) }
                 return
             }
             provided_11
@@ -4989,7 +5623,7 @@ fn vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure(v_ptr voidpt
 }
 
 fn vphp_wrap_struct_closure_v_get_struct_literal_defaults_closure(ctx vphp.Context, cb VPhpStructClosureVGetStructLiteralDefaultsClosure) {
-    ctx.create_saved_closure_with_arginfo[VPhpStructClosureVGetStructLiteralDefaultsClosure](cb, voidptr(vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure), 12, 0, C.struct_closure_arginfo_v_get_struct_literal_defaults_closure)
+    ctx.create_typed_saved_closure_with_arginfo[VPhpStructClosureVGetStructLiteralDefaultsClosure](cb, vphp_struct_closure_bridge_v_get_struct_literal_defaults_closure, 12, 0, C.struct_closure_arginfo_v_get_struct_literal_defaults_closure)
 }
 
 @[export: 'vphp_wrap_v_get_struct_literal_defaults_closure']
@@ -5085,6 +5719,14 @@ fn vphp_wrap_v_lifecycle_hook_state(ctx vphp.Context) {
     ctx.return().v[string](res)
 }
 
+@[export: 'vphp_wrap_v_test_concurrent_object_roots']
+fn vphp_wrap_v_test_concurrent_object_roots(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := test_concurrent_object_roots()
+    ctx.return().v[bool](res)
+}
+
 @[export: 'vphp_wrap_v_find_after']
 fn vphp_wrap_v_find_after(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
@@ -5132,6 +5774,50 @@ fn vphp_wrap_v_record_match(ctx vphp.Context) {
     })
 }
 
+@[export: 'vphp_wrap_v_typed_raw_string_param']
+fn vphp_wrap_v_typed_raw_string_param(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'text', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    res := v_typed_raw_string_param(arg_0)
+    ctx.return().v[string](res)
+}
+
+@[export: 'vphp_wrap_v_typed_alias_bool_param']
+fn vphp_wrap_v_typed_alias_bool_param(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'enabled', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[bool]()
+    res := v_typed_alias_bool_param(arg_0)
+    ctx.return().v[bool](res)
+}
+
+@[export: 'vphp_wrap_v_typed_bool_params']
+fn vphp_wrap_v_typed_bool_params(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'firstFlag', use_php_default: true },
+        vphp.PhpArgMeta{ index: 1, name: 'secondFlag', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[bool]()
+    arg_1 := php_args.at(1).as_v[bool]()
+    res := v_typed_bool_params(arg_0, arg_1)
+    ctx.return().v[int](res)
+}
+
 @[export: 'vphp_wrap_v_compiler_probe']
 fn vphp_wrap_v_compiler_probe(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
@@ -5140,10 +5826,58 @@ fn vphp_wrap_v_compiler_probe(ctx vphp.Context) {
     ctx.return().v[string](res)
 }
 
+@[export: 'vphp_wrap_v_compiler_probe_named_sum']
+fn vphp_wrap_v_compiler_probe_named_sum(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
+    ])
+    arg_0 := php_args.at(0).as_v_opt[VphpModuleProbeSumType]()
+    ctx.return().from_option[VphpModuleProbeSumType](fn [arg_0] () ?VphpModuleProbeSumType {
+        return v_compiler_probe_named_sum(arg_0)
+    })
+}
+
+@[export: 'vphp_wrap_v_compiler_probe_explicit_union']
+fn vphp_wrap_v_compiler_probe_explicit_union(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
+    ])
+    arg_0 := php_args.at(0).value
+    res := v_compiler_probe_explicit_union(arg_0)
+    ctx.return().v[vphp.PhpValue](res)
+}
+
+@[export: 'vphp_wrap_v_compiler_probe_intersection']
+fn vphp_wrap_v_compiler_probe_intersection(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'value' },
+    ])
+    arg_0 := php_args.at(0).value
+    res := v_compiler_probe_intersection(arg_0)
+    ctx.return().v[vphp.PhpValue](res)
+}
+
+@[export: 'vphp_wrap_v_compiler_probe_wrong_dnf_return']
+fn vphp_wrap_v_compiler_probe_wrong_dnf_return(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_compiler_probe_wrong_dnf_return()
+    ctx.return().v[vphp.PhpValue](res)
+}
+
 @[export: 'vphp_wrap_v_compiler_probe_variadic']
 fn vphp_wrap_v_compiler_probe_variadic(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
+    if !ctx.reject_named_variadic_args() {
+        return
+    }
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'args' },
     ])
@@ -5167,6 +5901,36 @@ fn vphp_wrap_v_compiler_probe_options(ctx vphp.Context) {
         count: arg_0_params_count
     }
     res := v_compiler_probe_options(arg_0_params)
+    ctx.return().v[string](res)
+}
+
+@[export: 'vphp_wrap_v_typed_string_param']
+fn vphp_wrap_v_typed_string_param(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+        vphp.PhpArgMeta{ index: 2, name: 'suffix', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
+    res := v_typed_string_param(arg_0, arg_1, arg_2)
+    ctx.return().v[string](res)
+}
+
+@[export: 'vphp_wrap_v_typed_required_string_param']
+fn vphp_wrap_v_typed_required_string_param(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'text' },
+    ])
+    arg_0 := php_args.at(0).as_v[string]()
+    res := v_typed_required_string_param(arg_0)
     ctx.return().v[string](res)
 }
 
@@ -5283,6 +6047,9 @@ fn vphp_get_class_entry_by_v_name(v_name string) voidptr {
         'Post' { C.post_ce }
         'Article' { C.article_ce }
         'Story' { C.story_ce }
+        'interface:main.ContentContract' { C.contentcontract_ce }
+        'interface:main.NamedContract' { C.demo__contracts__namedcontract_ce }
+        'interface:main.AliasContract' { C.demo__contracts__aliascontract_ce }
         'AliasBase' { C.demo__contracts__aliasbase_ce }
         'AliasWorker' { C.aliasworker_ce }
         'RuntimeDemoBaseException' { C.runtimedemo__baseexception_ce }
@@ -5290,9 +6057,14 @@ fn vphp_get_class_entry_by_v_name(v_name string) voidptr {
         'CallableProcessor' { C.callableprocessor_ce }
         'Finder' { C.finder_ce }
         'ReadonlyRecord' { C.readonlyrecord_ce }
+        'interface:main.VphpModuleProbeContract' { C.vphp__compiler__moduleprobecontract_ce }
         'VphpModuleProbeKind' { C.vphp__compiler__moduleprobekind_ce }
+        'VphpOtherProbeKind' { C.vphp__compiler__otherprobekind_ce }
         'VphpModuleProbeReadOnlyBox' { C.vphp__compiler__moduleprobereadonlybox_ce }
         'VphpModuleProbeBox' { C.vphp__compiler__moduleprobebox_ce }
+        'VphpCopyableBox' { C.vphp__compiler__copyablebox_ce }
+        'VphpTaggedBox' { C.vphp__compiler__taggedbox_ce }
+        'VphpNumberedBox' { C.vphp__compiler__numberedbox_ce }
         'VphpModuleProbeTypedConsts' { C.vphp__compiler__moduleprobetypedconsts_ce }
         'VphpModuleProbeWrapperBox' { C.vphp__compiler__moduleprobewrapperbox_ce }
         'TraitPost' { C.traitpost_ce }

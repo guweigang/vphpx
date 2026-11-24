@@ -1,5 +1,7 @@
 module vphp
 
+import vphp.zend
+
 pub struct PhpThrowable {
 mut:
 	object PhpObject
@@ -142,6 +144,15 @@ pub fn (t PhpThrowable) trace_as_string() string {
 }
 
 pub fn (t PhpThrowable) throw() {
-	mut z := t.to_zval().dup()
+	mut z := ZVal.from_ptr(t.to_zval().raw_ptr())
 	throw_exception_object(mut z)
+}
+
+// append_previous adds a disjoint Throwable chain to the end of this chain.
+pub fn (t PhpThrowable) append_previous(previous PhpThrowable) {
+	head := t.to_zval()
+	tail := previous.to_zval()
+	if head.is_object() && tail.is_object() {
+		zend.append_exception(head.raw_ptr(), tail.raw_ptr())
+	}
 }

@@ -7,7 +7,16 @@ import compiler.syntax as ast
 import compiler.php_types
 import compiler.repr
 
-pub fn collect_params_structs(stmts []ast.Stmt, table &ast.Table, decl_modules map[string]string) map[string]repr.PhpParamsStruct {
+pub fn collect_params_structs(stmts []ast.Stmt, table &ast.Table, elements []repr.PhpRepr) map[string]repr.PhpParamsStruct {
+	mut enums := map[string]repr.PhpEnumRepr{}
+	mut classes := map[string]string{}
+	for element in elements {
+		if element is repr.PhpEnumRepr {
+			enums[qualified_v_type(element.module_name, element.name)] = element
+		} else if element is repr.PhpClassRepr && !element.is_trait && !element.is_native_trait {
+			classes[qualified_v_type(element.module_name, element.name)] = element.php_name
+		}
+	}
 	mut out := map[string]repr.PhpParamsStruct{}
 	for stmt in stmts {
 		if stmt !is ast.StructDecl {
@@ -18,32 +27,86 @@ pub fn collect_params_structs(stmts []ast.Stmt, table &ast.Table, decl_modules m
 			continue
 		}
 		struct_name := strip_module(struct_decl.name)
-		module_name := decl_modules['struct:${struct_decl.name}'] or { 'main' }
+		module_name := struct_decl.module_name
 		mut params_struct := repr.PhpParamsStruct{
 			name:        struct_name
 			module_name: module_name
 		}
 		for field in struct_decl.fields {
 			field_type := strip_module(table.type_to_str(field.typ))
+			base_type := field_type.trim_left('?')
+			php_enum := enums[qualified_v_type(module_name, base_type)] or {
+				repr.PhpEnumRepr{}
+			}
+			php_name := php_types.class_lookup_name(if base_type.starts_with('&') {
+				classes[qualified_v_type(module_name, base_type[1..])]
+			} else {
+				php_enum.php_name
+			})
+			php_named_type := if php_name == '' {
+				''
+			} else if field_type.starts_with('?') {
+				'?${php_name}'
+			} else {
+				php_name
+			}
 			default_spec := php_types.PhpDefaultSpec.from_v_type(field_type)
 			literal := if field.has_default_expr {
-				parse_params_literal(field.default_expr, field_type)
+				params_field_literal(field.default_expr, field_type, php_enum)
 			} else {
 				none
 			}
 			value := literal or { ParamsLiteral{default_spec.v_expr, default_spec.php_expr} }
+			mut v_type := field_type
+			mut v_default := value.v_expr
+			local_name := base_type.trim_left('&')
+			if module_name !in ['', 'main'] && !local_name.contains('.')
+				&& table.has_declared_type(qualified_v_type(module_name, local_name)) {
+				qualified := '${module_name.all_after_last('.')}.${local_name}'
+				v_type = field_type[..field_type.len - local_name.len] + qualified
+				v_default = v_default.replace('${local_name}.', '${qualified}.').replace('?${local_name}(', '?${qualified}(')
+			}
 			params_struct.fields << repr.PhpParamsField{
 				name:             field.name
-				v_type:           field_type
-				v_default:        value.v_expr
+				v_type:           v_type
+				php_named_type:   php_named_type
+				v_default:        v_default
 				php_default:      value.php_expr
 				has_default:      field.has_default_expr
 				computed_default: field.has_default_expr && literal == none
+				is_sensitive:     field.attrs.any(it.name == 'vphp.PhpSensitiveField')
 			}
 		}
-		out[struct_name] = params_struct
+		out[repr.params_struct_key(module_name, struct_name)] = params_struct
 	}
 	return out
+}
+
+fn params_field_literal(expr ast.Expr, v_type string, php_enum repr.PhpEnumRepr) ?ParamsLiteral {
+	if enum_literal := parse_params_enum_literal(expr, v_type, php_enum) {
+		return enum_literal
+	}
+	return parse_params_literal(expr, v_type)
+}
+
+fn parse_params_enum_literal(expr ast.Expr, v_type string, php_enum repr.PhpEnumRepr) ?ParamsLiteral {
+	if php_enum.php_name == '' {
+		return none
+	}
+	if expr is ast.ParExpr {
+		return parse_params_enum_literal(*expr.expr, v_type, php_enum)
+	}
+	base_type := v_type.trim_left('?')
+	case_ref := parse_constant_enum_case(expr, base_type, php_enum.module_name) or { return none }
+	for case_ in php_enum.cases {
+		if case_.v_name != case_ref.case_name {
+			continue
+		}
+		value := '${base_type}.${case_.v_name}'
+		v_expr := if v_type.starts_with('?') { '${v_type}(${value})' } else { value }
+		return ParamsLiteral{v_expr, '${php_types.class_lookup_name(php_enum.php_name)}::${case_.php_name}'}
+	}
+	return none
 }
 
 struct ParamsLiteral {

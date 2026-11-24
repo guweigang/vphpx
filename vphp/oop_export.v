@@ -1,5 +1,6 @@
 module vphp
 
+import math
 import vphp.object
 import vphp.zend
 import vphp.zval
@@ -11,12 +12,14 @@ pub fn (ce ZendClassEntry) set_static_prop[T](name string, val T) {
 	if !ce.is_valid() {
 		return
 	}
-	$if T is int {
-		zend.set_static_long(ce.raw_ptr(), name, i64(val))
-	} $else $if T is string {
-		zend.set_static_string(ce.raw_ptr(), name, val)
-	} $else $if T is bool {
-		zend.set_static_bool(ce.raw_ptr(), name, val)
+	$if T is int || T is i64 || T is f64 || T is string || T is bool {
+		mut owned := RequestOwnedZBox.new_null()
+		defer {
+			owned.release()
+		}
+		value := owned.to_zval()
+		value.from_v[T](val) or { return }
+		C.vphp_write_static_property_value(ce.raw_ptr(), &char(name.str), usize(name.len), value.raw_ptr())
 	}
 }
 
@@ -24,12 +27,9 @@ pub fn (ce ZendClassEntry) static_prop[T](name string) T {
 	if !ce.is_valid() {
 		return T{}
 	}
-	$if T is int {
-		return int(zend.static_long(ce.raw_ptr(), name))
-	} $else $if T is string {
-		return zend.static_string(ce.raw_ptr(), name)
-	} $else $if T is bool {
-		return zend.static_bool(ce.raw_ptr(), name)
+	$if T is int || T is i64 || T is f64 || T is string || T is bool {
+		value := C.vphp_read_static_property_value(ce.raw_ptr(), &char(name.str), usize(name.len))
+		return ZVal.from_ptr(value).to_v[T]() or { T{} }
 	}
 	return T{}
 }
@@ -151,8 +151,8 @@ pub fn (obj ZendObject) bind_handlers(handlers object.ObjectHandlers, ownership 
 
 pub fn (obj ZendObject) ensure_binding_ptr(handlers object.ObjectHandlers, ownership OwnershipKind) voidptr {
 	if !obj.is_valid() {
-		return // SAFETY: nil literal in unsafe context
-		 unsafe { nil }
+		// SAFETY: nil literal in unsafe context
+		return unsafe { nil }
 	}
 	return obj.handle.ensure_binding_ptr(handlers, object_binding_ownership(ownership))
 }
@@ -166,8 +166,8 @@ pub fn (obj ZendObject) init_owned_instance(handlers object.ObjectHandlers) {
 
 pub fn (obj ZendObject) bound_v_ptr() voidptr {
 	if !obj.is_valid() {
-		return // SAFETY: nil literal in unsafe context
-		 unsafe { nil }
+		// SAFETY: nil literal in unsafe context
+		return unsafe { nil }
 	}
 	return obj.handle.bound_v_ptr()
 }
@@ -192,58 +192,49 @@ fn (obj ZendObject) read_property_with_ownership(name string, ownership Ownershi
 	return adopt_read_result_handles(obj.handle.read_property(name), ownership)
 }
 
-fn (obj ZendObject) with_scalar_prop(name string, run fn (ZVal)) bool {
+fn (obj ZendObject) scalar_prop_or[T](name string, fallback T, convert fn (ZVal) T, options object.PropertyReadOptions) T {
 	if !obj.is_valid() {
-		return false
+		return fallback
 	}
-	result := obj.handle.read_property(name)
+	result := obj.handle.read_property(name, inherited_storage: options.inherited_storage)
 	if !result.rv.is_valid() {
-		return false
+		return fallback
 	}
 	defer {
 		zval.release_request(result.rv)
 	}
 	if !result.res.is_valid() {
-		return false
+		return fallback
 	}
 	value := ZVal.from_handle(result.res)
 	if value.is_null() || value.is_undef() {
-		return false
+		return fallback
 	}
-	run(value)
-	return true
+	return convert(value)
 }
 
-pub fn (obj ZendObject) prop_string_or(name string, fallback string) string {
-	mut out := fallback
-	obj.with_scalar_prop(name, fn [mut out] (value ZVal) {
-		out = value.to_string()
-	})
-	return out
+pub fn (obj ZendObject) prop_string_or(name string, fallback string, options object.PropertyReadOptions) string {
+	return obj.scalar_prop_or(name, fallback, fn (value ZVal) string {
+		return value.to_string()
+	}, options)
 }
 
-pub fn (obj ZendObject) prop_i64_or(name string, fallback i64) i64 {
-	mut out := fallback
-	obj.with_scalar_prop(name, fn [mut out] (value ZVal) {
-		out = value.to_i64()
-	})
-	return out
+pub fn (obj ZendObject) prop_i64_or(name string, fallback i64, options object.PropertyReadOptions) i64 {
+	return obj.scalar_prop_or(name, fallback, fn (value ZVal) i64 {
+		return value.to_i64()
+	}, options)
 }
 
-pub fn (obj ZendObject) prop_bool_or(name string, fallback bool) bool {
-	mut out := fallback
-	obj.with_scalar_prop(name, fn [mut out] (value ZVal) {
-		out = value.to_bool()
-	})
-	return out
+pub fn (obj ZendObject) prop_bool_or(name string, fallback bool, options object.PropertyReadOptions) bool {
+	return obj.scalar_prop_or(name, fallback, fn (value ZVal) bool {
+		return value.to_bool()
+	}, options)
 }
 
-pub fn (obj ZendObject) prop_f64_or(name string, fallback f64) f64 {
-	mut out := fallback
-	obj.with_scalar_prop(name, fn [mut out] (value ZVal) {
-		out = value.to_f64()
-	})
-	return out
+pub fn (obj ZendObject) prop_f64_or(name string, fallback f64, options object.PropertyReadOptions) f64 {
+	return obj.scalar_prop_or(name, fallback, fn (value ZVal) f64 {
+		return value.to_f64()
+	}, options)
 }
 
 pub fn (obj ZendObject) prop_borrowed(name string) ZVal {
@@ -258,11 +249,98 @@ pub fn (obj ZendObject) prop_owned_persistent(name string) ZVal {
 	return obj.read_property_with_ownership(name, .owned_persistent)
 }
 
+pub fn (obj ZendObject) inherited_value(name string) PhpValue {
+	if !obj.is_valid() {
+		return PhpValue.null()
+	}
+	result := obj.handle.read_property(name, inherited_storage: true)
+	defer {
+		if result.rv.is_valid() {
+			zval.release_request(result.rv)
+		}
+	}
+	return PhpValue.from_zval(copy_inherited_value(result.res.raw_ptr()))
+}
+
+pub fn snapshot_inherited_value(value PhpValue) PhpValue {
+	return PhpValue.from_zval(copy_inherited_value(value.to_zval().raw_ptr()))
+}
+
+fn copy_inherited_value(source voidptr) ZVal {
+	target := ZVal.new_null()
+	C.vphp_copy_inherited_value(target.raw_ptr(), source)
+	return target
+}
+
+pub fn (obj ZendObject) sync_inherited_value(name string, before PhpValue, after PhpValue) {
+	old := before.to_zval()
+	mut current := after.to_zval()
+	if !current.is_valid() {
+		current = ZVal.new_null()
+	}
+	if C.vphp_inherited_value_unchanged(old.raw_ptr(), current.raw_ptr()) {
+		return
+	}
+	obj.sync_property_storage(name, current)
+}
+
 pub fn (obj ZendObject) set_prop(name string, value ZVal) {
 	if !obj.is_valid() || !value.is_valid() {
 		return
 	}
 	obj.handle.write_property_ptr(name, value.raw_ptr())
+}
+
+fn (obj ZendObject) sync_property_storage(name string, value ZVal) {
+	if !obj.is_valid() || !value.is_valid() {
+		return
+	}
+	obj.handle.write_inherited_property_ptr(name, value.raw_ptr())
+}
+
+fn (obj ZendObject) skip_bound_property_projection(name string) bool {
+	return unsafe {
+		C.vphp_skip_bound_property_projection(&C.zend_object(obj.raw_ptr()), &char(name.str), name.len)
+	}
+}
+
+// sync_scalar_prop writes back a scalar modified by a generated V receiver.
+pub fn (obj ZendObject) sync_scalar_prop[T](name string, before T, after T) {
+	$if T is f64 {
+		if math.f64_bits(before) == math.f64_bits(after) {
+			return
+		}
+	} $else {
+		if before == after {
+			return
+		}
+	}
+	mut owned := RequestOwnedZBox.new_null()
+	defer {
+		owned.release()
+	}
+	value := owned.to_zval()
+	value.from_v[T](after) or { return }
+	obj.sync_property_storage(name, value)
+}
+
+// init_inherited_field copies a V field default into its declared PHP slot.
+pub fn (obj ZendObject) init_inherited_field[T](owner voidptr, name string, default_value T) {
+	mut owned := RequestOwnedZBox.new_null()
+	defer {
+		owned.release()
+	}
+	value := owned.to_zval()
+	$if T is PhpValue {
+		mut initial := default_value
+		value.copy_from(initial.to_zval())
+		if initial.is_owned() {
+			initial.release()
+		}
+	} $else {
+		value.from_v[T](default_value) or { return }
+	}
+	C.vphp_init_inherited_field(obj.raw_ptr(), owner, &char(name.str), name.len, value.raw_ptr())
 }
 
 pub fn (obj ZendObject) set_prop_value(name string, value PhpValue) {

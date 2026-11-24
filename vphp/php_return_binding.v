@@ -172,16 +172,22 @@ pub fn (ret PhpReturn) struct_value[T](s T) {
 }
 
 // --- From php_return_flow.v ---
+fn raise_return_error(err IError) {
+	if !has_exception() {
+		throw_exception(err.msg(), 0)
+	}
+}
+
 pub fn (ret PhpReturn) from_result_void(f fn () !) {
 	f() or {
-		throw_exception(err.msg(), 0)
+		raise_return_error(err)
 		return
 	}
 }
 
 pub fn (ret PhpReturn) from_result[T](f fn () !T) {
 	res := f() or {
-		throw_exception(err.msg(), 0)
+		raise_return_error(err)
 		return
 	}
 	ret.v[T](res)
@@ -202,13 +208,52 @@ pub fn (ret PhpReturn) from_option[T](f fn () ?T) {
 	ret.v[T](res)
 }
 
+pub fn (ret PhpReturn) from_result_object[T](f fn () !&T, ownership OwnershipKind) {
+	value := f() or {
+		raise_return_error(err)
+		return
+	}
+	ret.return_v_object(value, ownership)
+}
+
+pub fn (ret PhpReturn) from_option_object[T](f fn () ?&T, ownership OwnershipKind) {
+	value := f() or {
+		ret.null()
+		return
+	}
+	ret.return_v_object(value, ownership)
+}
+
+pub fn (ret PhpReturn) return_v_object[T](value &T, ownership OwnershipKind) {
+	if has_exception() {
+		return
+	}
+	$for method in T.methods {
+		$if method.name == 'php_class_name' && T is $struct {
+			binding := PhpObjectBinding.new[T]()
+			ce := binding.class_entry.raw_ptr()
+			handlers := binding.handlers.raw_ptr()
+			if ownership == .borrowed {
+				zend.return_borrowed_object_ptr(ret.raw_ptr(), value, ce, handlers)
+			} else {
+				zend.return_owned_object_ptr(ret.raw_ptr(), value, ce, handlers)
+			}
+			return
+		}
+	}
+	ret.v[&T](value)
+}
+
 // --- From php_return_generic.v ---
 pub fn (ret PhpReturn) any[T](val T) {
 	ret.v[T](val)
 }
 
 pub fn (ret PhpReturn) v[T](val T) {
-	$if T is PhpValue {
+	$if T is PhpInterfaceValue {
+		ret.zval(val.php_interface_zval())
+		return
+	} $else $if T is PhpValue {
 		ret.value(val)
 		return
 	} $else $if T is PhpNull {
@@ -253,7 +298,7 @@ pub fn (ret PhpReturn) v[T](val T) {
 	} $else $if T is PhpIterable {
 		ret.zval(val.to_zval())
 		return
-	} $else $if T is PhpIterator {
+	} $else $if T is PhpIterator || T is PhpIteratorAggregate || T is PhpGenerator || T is PhpFiber || T is PhpDateInterval || T is PhpDateTimeImmutable || T is PhpDateTimeInterface || T is PhpJsonSerializable || T is PhpStringable || T is PhpCountable || T is PhpArrayAccess || T is PhpWeakMap || T is PhpWeakReference {
 		ret.zval(val.to_zval())
 		return
 	} $else $if T is PhpThrowable {
@@ -282,10 +327,7 @@ pub fn (ret PhpReturn) v[T](val T) {
 		return
 	} $else $if T is $sumtype {
 		$for variant in T.variants {
-			$if variant.typ is bool || variant.typ is int || variant.typ is i64 ||
-				variant.typ is f64 || variant.typ is string || variant.typ is []string ||
-				variant.typ is []int || variant.typ is []i64 || variant.typ is []f64 ||
-				variant.typ is []bool {
+			$if variant.typ is bool || variant.typ is int || variant.typ is i64 || variant.typ is f64 || variant.typ is string || variant.typ is []string || variant.typ is []int || variant.typ is []i64 || variant.typ is []f64 || variant.typ is []bool {
 				if val is variant {
 					payload := val
 					ret.v(payload)

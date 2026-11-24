@@ -61,16 +61,37 @@ pub fn link_class_interfaces(mut elements []repr.PhpRepr) ! {
 			el.internal_implements = uniq_non_empty(internal_ifaces)
 			el.auto_interface_bindings = uniq_non_empty(auto_ifaces)
 			elements[i] = el
+		} else if mut el is repr.PhpEnumRepr {
+			el.interfaces = uniq_non_empty(el.interfaces.map(resolve_exported_interface(interface_map,
+				it) or { it }))
+			elements[i] = el
 		}
 	}
 }
 
 pub fn link_interface_parents(mut elements []repr.PhpRepr) ! {
 	interface_map := exported_interface_names(elements)
+	mut v_interfaces := map[string]string{}
+	for el in elements {
+		if el is repr.PhpInterfaceRepr {
+			v_interfaces['${el.module_name}.${el.name}'] = el.php_name
+		}
+	}
 	for i in 0 .. elements.len {
 		mut el := elements[i]
 		if mut el is repr.PhpInterfaceRepr {
 			mut all_parents := []string{}
+			for parent_name in el.extends_v {
+				key := if parent_name.contains('.') {
+					parent_name
+				} else {
+					'${el.module_name}.${parent_name}'
+				}
+				php_name := v_interfaces[key] or {
+					return error('PHP interface ${el.php_name}: embedded V interface ${key} must be exported to PHP')
+				}
+				all_parents << php_name
+			}
 			for parent_name in el.extends_attr {
 				all_parents << (resolve_exported_interface(interface_map, parent_name) or { parent_name })
 			}

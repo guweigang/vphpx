@@ -1,5 +1,14 @@
 module zend
 
+pub fn find_request_static_state(key string) ?voidptr {
+	state := C.vphp_find_request_static_state(&char(key.str), usize(key.len))
+	return if state == 0 { none } else { state }
+}
+
+pub fn store_request_static_state(key string, state voidptr, release fn (voidptr)) {
+	C.vphp_store_request_static_state(&char(key.str), usize(key.len), state, release)
+}
+
 pub struct ZendClassEntry {
 	raw voidptr
 }

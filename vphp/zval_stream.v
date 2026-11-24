@@ -1,5 +1,7 @@
 module vphp
 
+import vphp.zend
+
 pub struct StreamMetadata {
 pub:
 	mode      string
@@ -26,16 +28,10 @@ pub fn (v ZVal) resource_type() ?string {
 }
 
 pub fn (v ZVal) stream_metadata() ?StreamMetadata {
-	if !v.is_valid() || !v.is_resource() {
-		return none
-	}
-	resource_type := v.resource_type() or { return none }
-	if resource_type != 'stream' {
-		return none
-	}
-	meta := php_fn('stream_get_meta_data').call([v])
-	if !meta.is_valid() || !meta.is_array() {
-		return none
+	resource := PhpResource.from_zval(v) or { return none }
+	mut meta := resource.stream_metadata_value() or { return none }
+	defer {
+		meta.release()
 	}
 	return StreamMetadata{
 		mode:      meta.string_at('mode', '')
@@ -48,7 +44,7 @@ pub fn (v ZVal) stream_metadata() ?StreamMetadata {
 }
 
 pub fn (v ZVal) is_stream_resource() bool {
-	return v.stream_metadata() != none
+	return v.is_valid() && zend.is_stream_resource(v.raw_ptr())
 }
 
 pub fn (v ZVal) stream_rewind() bool {

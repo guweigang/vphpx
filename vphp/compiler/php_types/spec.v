@@ -1,5 +1,21 @@
 module php_types
 
+pub fn is_sensitive_parameter_attribute(name string) bool {
+	return class_lookup_name(name).to_lower() == 'sensitiveparameter'
+}
+
+pub fn is_deprecated_attribute(name string) bool {
+	return class_lookup_name(name).to_lower() == 'deprecated'
+}
+
+pub fn is_nodiscard_attribute(name string) bool {
+	return class_lookup_name(name).to_lower() == 'nodiscard'
+}
+
+pub fn is_override_attribute(name string) bool {
+	return class_lookup_name(name).to_lower() == 'override'
+}
+
 // normalize_php_type_literal decodes namespace separators retained by legacy attributes.
 pub fn normalize_php_type_literal(name string) string {
 	return name.replace('\\\\', '\\')
@@ -12,18 +28,26 @@ pub fn class_lookup_name(name string) string {
 
 pub struct PhpTypeSpec {
 pub:
-	v_key          string
-	php_code       string
-	php_mask       string
-	mask_obj_class string
-	arg_method     string
-	arg_label      string
-	is_total_arg   bool
+	v_key        string
+	php_code     string
+	php_mask     string
+	php_class    string
+	arg_method   string
+	arg_label    string
+	is_total_arg bool
 }
 
 pub fn is_reference_parameter(v_type string, variadic bool) bool {
 	element_type := if variadic && v_type.starts_with('[]') { v_type[2..] } else { v_type }
 	return element_type.trim_left('?') in ['PhpReference', 'vphp.PhpReference']
+}
+
+pub fn accepts_named_variadic(v_type string, variadic bool) bool {
+	return variadic && v_type.trim_string_left('[]') in ['PhpArg', 'vphp.PhpArg']
+}
+
+pub fn is_reference_return(v_type string) bool {
+	return v_type.trim_left('!') in ['PhpReference', 'vphp.PhpReference']
 }
 
 pub fn normalize_v_type_key(v_type string) string {
@@ -40,7 +64,7 @@ pub fn normalize_v_type_key(v_type string) string {
 pub fn PhpTypeSpec.from_v_type(v_type string) ?PhpTypeSpec {
 	clean := normalize_v_type_key(v_type)
 	return match clean {
-		'ZVal', 'RequestBorrowedZBox', 'RequestOwnedZBox', 'PersistentOwnedZBox' {
+		'ZVal', 'RequestBorrowedZBox', 'RequestOwnedZBox', 'PersistentOwnedZBox', 'PhpArg' {
 			PhpTypeSpec{
 				v_key:    clean
 				php_code: 'IS_MIXED'
@@ -153,26 +177,122 @@ pub fn PhpTypeSpec.from_v_type(v_type string) ?PhpTypeSpec {
 		}
 		'PhpIterable' {
 			PhpTypeSpec{
-				v_key:          clean
-				php_mask:       'MAY_BE_ARRAY'
-				mask_obj_class: 'Traversable'
-				arg_method:     'iterable'
-				arg_label:      'iterable'
+				v_key:      clean
+				php_mask:   'MAY_BE_ARRAY'
+				php_class:  'Traversable'
+				arg_method: 'iterable'
+				arg_label:  'iterable'
+			}
+		}
+		'PhpGenerator' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'Generator'
+				arg_method: 'generator'
+				arg_label:  'Generator'
+			}
+		}
+		'PhpFiber' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'Fiber'
+				arg_method: 'fiber'
+				arg_label:  'Fiber'
+			}
+		}
+		'PhpDateInterval' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'DateInterval'
+				arg_method: 'date_interval'
+				arg_label:  'DateInterval'
+			}
+		}
+		'PhpDateTimeInterface' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'DateTimeInterface'
+				arg_method: 'date_time_interface'
+				arg_label:  'DateTimeInterface'
+			}
+		}
+		'PhpDateTimeImmutable' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'DateTimeImmutable'
+				arg_method: 'date_time_immutable'
+				arg_label:  'DateTimeImmutable'
+			}
+		}
+		'PhpJsonSerializable' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'JsonSerializable'
+				arg_method: 'json_serializable'
+				arg_label:  'JsonSerializable'
+			}
+		}
+		'PhpStringable' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'Stringable'
+				arg_method: 'stringable'
+				arg_label:  'Stringable'
+			}
+		}
+		'PhpCountable' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'Countable'
+				arg_method: 'countable'
+				arg_label:  'Countable'
+			}
+		}
+		'PhpArrayAccess' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'ArrayAccess'
+				arg_method: 'array_access'
+				arg_label:  'ArrayAccess'
+			}
+		}
+		'PhpWeakMap' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'WeakMap'
+				arg_method: 'weak_map'
+				arg_label:  'WeakMap'
+			}
+		}
+		'PhpWeakReference' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'WeakReference'
+				arg_method: 'weak_reference'
+				arg_label:  'WeakReference'
 			}
 		}
 		'PhpIterator' {
 			PhpTypeSpec{
-				v_key:          clean
-				php_mask:       '0'
-				mask_obj_class: 'Traversable'
-				arg_method:     'iterator'
-				arg_label:      'iterator'
+				v_key:      clean
+				php_class:  'Traversable'
+				arg_method: 'iterator'
+				arg_label:  'iterator'
+			}
+		}
+		'PhpIteratorAggregate' {
+			PhpTypeSpec{
+				v_key:      clean
+				php_class:  'IteratorAggregate'
+				arg_method: 'iterator_aggregate'
+				arg_label:  'IteratorAggregate'
 			}
 		}
 		'PhpThrowable' {
 			PhpTypeSpec{
 				v_key:      clean
 				php_code:   'IS_OBJECT'
+				php_class:  'Throwable'
 				arg_method: 'throwable'
 				arg_label:  'throwable'
 			}
@@ -181,6 +301,7 @@ pub fn PhpTypeSpec.from_v_type(v_type string) ?PhpTypeSpec {
 			PhpTypeSpec{
 				v_key:      clean
 				php_code:   'IS_MIXED'
+				php_class:  'UnitEnum'
 				arg_method: 'enum_case'
 				arg_label:  'enum case'
 			}

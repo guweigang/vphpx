@@ -1,6 +1,7 @@
 module compiler
 
 import compiler.repr
+import compiler.syntax as ast
 
 struct ParamsStructBinding {
 	var_name    string
@@ -33,7 +34,7 @@ fn (binding ParamsStructBinding) call_name() string {
 	return binding.var_name
 }
 
-fn (binding ParamsStructBinding) render_lines(returns_voidptr bool) []string {
+fn (binding ParamsStructBinding) render_lines(returns_voidptr bool, module_name string, table &ast.Table) []string {
 	mut lines := []string{}
 	mut field_vars := []string{}
 	computed := binding.fields.filter(it.source.params_computed_default).map(ComputedParamsField{
@@ -51,7 +52,7 @@ fn (binding ParamsStructBinding) render_lines(returns_voidptr bool) []string {
 		} else {
 			field_arg.source.params_v_default
 		}
-		lines << field_binding.render_lines(default_expr, returns_voidptr)
+		lines << field_binding.render_lines(default_expr, returns_voidptr, module_name, table)
 	}
 	lines << '    ${binding.var_name} := ${binding.params_type}{'
 	for offset, field_arg in binding.fields {
@@ -100,8 +101,12 @@ fn ParamsStructFieldBinding.new(arg repr.PhpArgRepr, var_name string, index int)
 	}
 }
 
-fn (binding ParamsStructFieldBinding) render_lines(default_expr string, returns_voidptr bool) []string {
+fn (binding ParamsStructFieldBinding) render_lines(default_expr string, returns_voidptr bool, module_name string, table &ast.Table) []string {
 	read := binding.read()
+	fallback := if binding.arg.use_php_default { none } else { ?string(default_expr) }
+	if lines := read.checked_object_lines(binding.var_name, fallback, returns_voidptr, module_name, table) {
+		return lines
+	}
 	value_expr := read.direct_expr() or { read.v_expr() }
 	if binding.arg.use_php_default {
 		return read.semantic_lines(binding.var_name, returns_voidptr) or {

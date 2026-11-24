@@ -54,6 +54,24 @@ pub fn (f PhpFunction) invoke(args ...PhpArgInput) PhpValue {
 	return result.take_value()
 }
 
+fn (f PhpFunction) request_owned_args(args PhpArray) RequestOwnedZBox {
+	mut name := f.to_zval()
+	defer {
+		name.release()
+	}
+	return PhpCallable.borrowed(name).request_owned_args(args)
+}
+
+pub fn (f PhpFunction) invoke_args(args PhpArray) PhpValue {
+	mut result := f.request_owned_args(args)
+	return result.take_value()
+}
+
+pub fn (f PhpFunction) call_reference_args(args PhpArray) !PhpReference {
+	mut result := f.request_owned_args(args)
+	return php_call_reference_result(mut result)
+}
+
 pub fn (f PhpFunction) call[T](args ...PhpArgInput) !T {
 	mut result := f.request_owned(...args)
 	defer {
@@ -62,13 +80,17 @@ pub fn (f PhpFunction) call[T](args ...PhpArgInput) !T {
 	return php_call_copied_result_as[T](result.to_zval())
 }
 
+pub fn (f PhpFunction) call_reference(args ...PhpArgInput) !PhpReference {
+	mut result := f.request_owned(...args)
+	return php_call_reference_result(mut result)
+}
+
 pub fn (f PhpFunction) with_result[T, R](run fn (T) R, args ...PhpArgInput) !R {
 	mut result := f.request_owned(...args)
 	defer {
 		result.release()
 	}
-	value := php_call_result_as[T](result.to_zval())!
-	return run(value)
+	return php_with_call_result[T, R](result.to_zval(), run)
 }
 
 pub fn (f PhpFunction) with_result_zval[T](run fn (ZVal) T, args ...ZVal) T {

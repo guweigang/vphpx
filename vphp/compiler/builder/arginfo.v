@@ -123,11 +123,11 @@ fn (info ArgTypeInfo) render_named_union(by_ref string, variadic string) string 
 	return 'ZEND_TYPE_INIT_CLASS_CONST_MASK("${names}", ${info.render_mask(by_ref, variadic)})'
 }
 
-fn (info ArgTypeInfo) compound_setup(symbol string, index int, by_ref string, variadic string) []string {
+fn (info ArgTypeInfo) compound_setup(arginfo string, index int, by_ref string, variadic string) []string {
 	if info.intersections.len == 0 {
 		return []
 	}
-	target := 'arginfo_${symbol}[${index}].type'
+	target := '${arginfo}[${index}].type'
 	if info.is_intersection {
 		members := info.intersections[0].map('vphp_arginfo_class_type("${c_string_escape(it)}")')
 		return ['${target} = vphp_arginfo_type_list((zend_type[]){${members.join(', ')}}, ${members.len}, _ZEND_TYPE_INTERSECTION_BIT | ${info.render_mask(by_ref, variadic)});']
@@ -164,6 +164,22 @@ fn validate_compound_type_or_panic(decl PhpTypeDecl, location string) {
 	}
 }
 
+pub fn validate_interface_signature_type(raw_type string, is_return bool) ! {
+	decl := parse_php_type_decl(raw_type)
+	if !is_return && decl.clean in ['void', 'never', 'static'] {
+		return error('${raw_type} is only valid as a return type')
+	}
+	if decl.allow_null && (decl.clean.contains_any('|&')
+		|| decl.clean in ['mixed', 'void', 'never', 'null']) {
+		return error('invalid nullable type ${raw_type}')
+	}
+	if decl.clean.contains_any('|&') {
+		_ := union_type_info(decl) or { return error('invalid compound type ${raw_type}') }
+	} else if !is_php_builtin_type(decl.clean) && !is_class_literal_type(decl.clean) {
+		return error('invalid type ${raw_type}')
+	}
+}
+
 fn render_class_type_init_literal(raw_type string, by_ref string) string {
 	mut php_type := raw_type
 	mut allow_null := '0'
@@ -175,88 +191,103 @@ fn render_class_type_init_literal(raw_type string, by_ref string) string {
 	return 'ZEND_TYPE_INIT_CLASS_CONST("${escaped}", ${allow_null}, _ZEND_ARG_INFO_FLAGS(${by_ref}, 0, 0))'
 }
 
-fn render_array_arginfo_header(c_func string, required_args int, resolved_return_type string, return_obj_type string, type_info ArgTypeInfo, mutable bool) string {
+fn render_array_arginfo_header(c_func string, required_args int, resolved_return_type string, return_obj_type string, type_info ArgTypeInfo, by_ref string, mutable bool) string {
 	storage := if mutable { 'static' } else { 'static const' }
 	header := '${storage} zend_internal_arg_info arginfo_${c_func}[] = {\n    { (const char*)(uintptr_t)(${required_args}), '
 	if type_info.intersections.len > 0 {
-		return header + 'ZEND_TYPE_INIT_NONE(0), NULL },'
+		return header + 'ZEND_TYPE_INIT_MASK(MAY_BE_ANY | _ZEND_ARG_INFO_FLAGS(${by_ref}, 0, 0)), NULL },'
 	}
 	if type_info.named_members.len > 0 {
-		return header + '${type_info.render_named_union('0', '0')}, NULL },'
+		return header + '${type_info.render_named_union(by_ref, '0')}, NULL },'
 	}
 	if type_info.mask == '' && is_class_literal_type(resolved_return_type) {
-		return header + '${render_class_type_init_literal(resolved_return_type, '0')}, NULL },'
+		return header + '${render_class_type_init_literal(resolved_return_type, by_ref)}, NULL },'
 	}
 	if return_obj_type != '' {
 		escaped := c_string_escape(php_types.normalize_php_type_literal(return_obj_type))
-		return header + 'ZEND_TYPE_INIT_CLASS_CONST("${escaped}", 0, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },'
+		return header + 'ZEND_TYPE_INIT_CLASS_CONST("${escaped}", 0, _ZEND_ARG_INFO_FLAGS(${by_ref}, 0, 0)), NULL },'
 	}
 	if type_info.mask_obj_class != '' {
 		mut mask := type_info.mask
 		if type_info.allow_null {
 			mask += '|MAY_BE_NULL'
 		}
-		return header + 'ZEND_TYPE_INIT_CLASS_CONST_MASK("${type_info.mask_obj_class}", ${mask} | _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },'
+		return header + 'ZEND_TYPE_INIT_CLASS_CONST_MASK("${type_info.mask_obj_class}", ${mask} | _ZEND_ARG_INFO_FLAGS(${by_ref}, 0, 0)), NULL },'
 	}
 	if type_info.mask != '' {
 		mut mask := type_info.mask
 		if type_info.allow_null {
 			mask += '|MAY_BE_NULL'
 		}
-		return header + 'ZEND_TYPE_INIT_MASK(${mask} | _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },'
+		return header + 'ZEND_TYPE_INIT_MASK(${mask} | _ZEND_ARG_INFO_FLAGS(${by_ref}, 0, 0)), NULL },'
 	}
 	if type_info.code != '' && type_info.code != 'IS_CALLABLE' {
 		allow_null := if type_info.allow_null { '1' } else { '0' }
-		return header + 'ZEND_TYPE_INIT_CODE(${type_info.code}, ${allow_null}, _ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },'
+		return header + 'ZEND_TYPE_INIT_CODE(${type_info.code}, ${allow_null}, _ZEND_ARG_INFO_FLAGS(${by_ref}, 0, 0)), NULL },'
 	}
-	return header + 'ZEND_TYPE_INIT_NONE(_ZEND_ARG_INFO_FLAGS(0, 0, 0)), NULL },'
+	return header + 'ZEND_TYPE_INIT_NONE(_ZEND_ARG_INFO_FLAGS(${by_ref}, 0, 0)), NULL },'
 }
 
-fn render_standard_arginfo_header(c_func string, required_args int, resolved_return_type string, return_obj_type string, type_info ArgTypeInfo) string {
+fn render_standard_arginfo_header(c_func string, required_args int, resolved_return_type string, return_obj_type string, type_info ArgTypeInfo, by_ref string) string {
 	if type_info.named_members.len > 0
 		|| (type_info.mask == '' && is_class_literal_type(resolved_return_type)) {
 		return render_array_arginfo_header(c_func, required_args, resolved_return_type,
-			return_obj_type, type_info, false)
+			return_obj_type, type_info, by_ref, false)
 	}
 	if return_obj_type != '' {
 		if return_obj_type.contains('\\') {
 			return render_array_arginfo_header(c_func, required_args, resolved_return_type,
-				return_obj_type, type_info, false)
+				return_obj_type, type_info, by_ref, false)
 		}
-		return 'ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_${c_func}, 0, ${required_args}, ${return_obj_type}, 0)'
+		return 'ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_${c_func}, ${by_ref}, ${required_args}, ${return_obj_type}, 0)'
 	}
 	if type_info.mask_obj_class != '' {
 		mut mask := type_info.mask
 		if type_info.allow_null {
 			mask += '|MAY_BE_NULL'
 		}
-		return 'ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_OBJ_TYPE_MASK_EX(arginfo_${c_func}, 0, ${required_args}, ${type_info.mask_obj_class}, ${mask})'
+		return 'ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_OBJ_TYPE_MASK_EX(arginfo_${c_func}, ${by_ref}, ${required_args}, ${type_info.mask_obj_class}, ${mask})'
 	}
 	if type_info.mask != '' {
 		mut mask := type_info.mask
 		if type_info.allow_null {
 			mask += '|MAY_BE_NULL'
 		}
-		return 'ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_${c_func}, 0, ${required_args}, ${mask})'
+		return 'ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_${c_func}, ${by_ref}, ${required_args}, ${mask})'
 	}
 	if type_info.code != '' && type_info.code != 'IS_CALLABLE' {
 		allow_null := if type_info.allow_null { '1' } else { '0' }
-		return 'ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_${c_func}, 0, ${required_args}, ${type_info.code}, ${allow_null})'
+		return 'ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_${c_func}, ${by_ref}, ${required_args}, ${type_info.code}, ${allow_null})'
 	}
-	return 'ZEND_BEGIN_ARG_INFO_EX(arginfo_${c_func}, 0, 0, ${required_args})'
+	return 'ZEND_BEGIN_ARG_INFO_EX(arginfo_${c_func}, 0, ${by_ref}, ${required_args})'
 }
 
-fn render_method_arginfo_header(c_func string, php_name string, required_args int, resolved_return_type string, return_obj_type string, type_info ArgTypeInfo, force_array bool, mutable bool) string {
+fn render_method_arginfo_header(c_func string, php_name string, required_args int, resolved_return_type string, return_obj_type string, type_info ArgTypeInfo, by_ref string, force_array bool, mutable bool) string {
 	validate_php_return_type_or_panic(resolved_return_type, php_name)
 	if php_name == '__toString' {
-		return 'ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_${c_func}, 0, 0, IS_STRING, 0)'
+		return 'ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_${c_func}, ${by_ref}, 0, IS_STRING, 0)'
 	}
 	if force_array || mutable {
 		return render_array_arginfo_header(c_func, required_args, resolved_return_type,
-			return_obj_type, type_info, mutable)
+			return_obj_type, type_info, by_ref, mutable)
 	}
 	return render_standard_arginfo_header(c_func, required_args, resolved_return_type,
-		return_obj_type, type_info)
+		return_obj_type, type_info, by_ref)
+}
+
+fn render_context_arginfo(c_func string, php_name string, spec ReturnSpec, table &ast.Table) string {
+	mut header := 'ZEND_BEGIN_ARG_INFO_EX(arginfo_${c_func}, 0, 0, 0)'
+	if spec.has_context_object_return() {
+		return_type := spec.resolved_type()
+		validate_php_return_type_or_panic(return_type, php_name)
+		info := arg_type_info(return_type, table)
+		header = if info.intersections.len > 0 {
+			render_array_arginfo_header(c_func, 0, return_type, spec.arginfo_obj_type(), info, '0', true)
+		} else {
+			render_standard_arginfo_header(c_func, 0, return_type, spec.arginfo_obj_type(), info, '0')
+		}
+	}
+	return header + '\nZEND_ARG_VARIADIC_TYPE_INFO(0, args, IS_MIXED, 0)\nZEND_END_ARG_INFO()'
 }
 
 fn render_php_default_value_literal(default_value string) string {
@@ -274,19 +305,99 @@ fn required_arg_count(args []ClassMethodArg) int {
 	return required
 }
 
-pub fn render_closure_arginfo(name string, fields []repr.PhpParamsField, required int, computed_defaults map[int]string, table &ast.Table) string {
-	mut lines := ['ZEND_BEGIN_ARG_INFO_EX(${name}_storage, 0, 0, ${required})']
+pub fn render_closure_arginfo(name string, fields []repr.PhpParamsField, required int, computed_defaults map[int]string, variadic_arg_type string, variadic_arg_name string, php_variadic_type string, returns_reference bool, php_return string, v_return string, table &ast.Table) (string, []string) {
+	mut setup := []string{}
+	named_return := closure_named_type(php_return, v_return.trim_string_left('!'))
+	named_variadic := closure_named_type(php_variadic_type, variadic_arg_type)
+	named_fields := fields.map(closure_named_type(it.php_named_type, it.v_type))
+	storage := if named_return.name != '' || named_variadic.name != '' || named_fields.any(it.name != '') {
+		'static'
+	} else {
+		'static const'
+	}
+	return_type := closure_return_arginfo(v_return, returns_reference, table)
+	mut lines := [
+		'${storage} zend_internal_arg_info ${name}_storage[] = {',
+		'{ (const char *)(uintptr_t)(${required}), ${return_type}, NULL },',
+	]
+	if named_return.name != '' {
+		setup << closure_class_arginfo_setup('${name}_storage[0].type', named_return)
+	}
 	for i, field in fields {
 		default_value := if i >= required {
 			computed_defaults[i] or { field.php_default }
 		} else {
 			''
 		}
-		lines << render_arginfo_arg_line(field.name, field.v_type, default_value, false, '0', table)
+		by_ref := php_types.is_reference_parameter(field.v_type, false)
+		if named_fields[i].name != '' {
+			setup << closure_class_arginfo_setup('${name}_storage[${i + 1}].type',
+				named_fields[i])
+		}
+		lines << render_arginfo_arg_line(field.name, if by_ref { 'mixed' } else { field.v_type },
+			default_value, false, if by_ref { '1' } else { '0' }, table)
+	}
+	if variadic_arg_type != '' {
+		by_ref := if php_types.is_reference_parameter(variadic_arg_type, true) { '1' } else { '0' }
+		typ := if variadic_arg_type in ['int', 'i64', 'string', 'bool', 'f32', 'f64'] {
+			variadic_arg_type
+		} else {
+			'mixed'
+		}
+		lines << render_arginfo_arg_line(variadic_arg_name, typ, '', true, by_ref, table)
+		if named_variadic.name != '' {
+			target := '${name}_storage[${fields.len + 1}].type'
+			setup << closure_class_arginfo_setup(target, named_variadic)
+			setup << '${target}.type_mask |= _ZEND_ARG_INFO_FLAGS(0, 1, 0);'
+		}
 	}
 	lines << 'ZEND_END_ARG_INFO()'
 	lines << 'void *${name} = (void *)${name}_storage;'
-	return lines.join('\n')
+	return lines.join('\n'), setup
+}
+
+struct ClosureNamedType {
+	name       string
+	extra_mask string
+}
+
+fn closure_named_type(explicit string, v_type string) ClosureNamedType {
+	if explicit != '' {
+		return ClosureNamedType{ name: explicit }
+	}
+	spec := php_types.PhpTypeSpec.from_v_type(v_type) or { return ClosureNamedType{} }
+	if spec.php_class == '' {
+		return ClosureNamedType{}
+	}
+	return ClosureNamedType{
+		name:       if v_type.starts_with('?') { '?' + spec.php_class } else { spec.php_class }
+		extra_mask: spec.php_mask
+	}
+}
+
+fn closure_return_arginfo(v_return string, returns_reference bool, table &ast.Table) string {
+	if returns_reference {
+		return 'ZEND_TYPE_INIT_CODE(IS_MIXED, 0, _ZEND_ARG_INFO_FLAGS(1, 0, 0))'
+	}
+	info := arg_type_info(v_return.trim_string_left('!'), table)
+	if info.code != '' && info.code != 'IS_CALLABLE' && !(info.allow_null && info.code == 'IS_VOID') {
+		nullable := if info.allow_null && info.code != 'IS_MIXED' { 1 } else { 0 }
+		return 'ZEND_TYPE_INIT_CODE(${info.code}, ${nullable}, 0)'
+	}
+	return 'ZEND_TYPE_INIT_NONE(0)'
+}
+
+fn closure_class_arginfo_setup(target string, php_type ClosureNamedType) []string {
+	class_name := c_string_escape(php_types.class_lookup_name(php_type.name.trim_left('?')))
+	// Zend's closure factory consumes runtime arginfo directly.
+	mut setup := ['${target} = vphp_arginfo_class_type("${class_name}");']
+	if php_type.extra_mask != '' {
+		setup << '${target}.type_mask |= ${php_type.extra_mask};'
+	}
+	if php_type.name.starts_with('?') {
+		setup << '${target}.type_mask |= MAY_BE_NULL;'
+	}
+	return setup
 }
 
 fn (arg ClassMethodArg) arginfo_type() string {
@@ -299,8 +410,8 @@ fn (arg ClassMethodArg) arginfo_type() string {
 	return arg.type_
 }
 
-fn compound_arginfo_setup(symbol string, return_type string, args []ClassMethodArg, table &ast.Table) []string {
-	mut lines := arg_type_info(return_type, table).compound_setup(symbol, 0, '0', '0')
+fn compound_arginfo_setup(arginfo string, spec ReturnSpec, args []ClassMethodArg, table &ast.Table) []string {
+	mut lines := arg_type_info(spec.resolved_type(), table).compound_setup(arginfo, 0, spec.arginfo_return_reference(), '0')
 	for i, arg in args {
 		by_ref := if php_types.is_reference_parameter(arg.type_, arg.is_variadic) {
 			'1'
@@ -308,8 +419,24 @@ fn compound_arginfo_setup(symbol string, return_type string, args []ClassMethodA
 			'0'
 		}
 		variadic := if arg.is_variadic { '1' } else { '0' }
-		lines << arg_type_info(arg.arginfo_type(), table).compound_setup(symbol, i + 1, by_ref, variadic)
+		lines << arg_type_info(arg.arginfo_type(), table).compound_setup(arginfo, i + 1, by_ref, variadic)
 	}
+	return lines
+}
+
+fn registered_compound_arginfo_setup(php_name string, function_table string, spec ReturnSpec, args []ClassMethodArg, table &ast.Table) []string {
+	setup := compound_arginfo_setup('(registered->common.arg_info - 1)', spec, args, table)
+	if setup.len == 0 {
+		return []
+	}
+	name := c_string_literal_bytes(php_name)
+	mut lines := [
+		'{',
+		'    zend_function *registered = zend_hash_str_find_ptr_lc(${function_table}, "${name}", sizeof("${name}")-1);',
+		'    if (!registered || !registered->common.arg_info) { return FAILURE; }',
+	]
+	lines << setup.map('    ' + it)
+	lines << '}'
 	return lines
 }
 
@@ -321,15 +448,16 @@ fn (arg ClassMethodArg) render_arginfo_line(owner_name string, table &ast.Table)
 		if by_ref { '1' } else { '0' }, table)
 }
 
+fn variadic_element_type(raw_type string, is_variadic bool) string {
+	return if is_variadic && raw_type.starts_with('[]') { raw_type[2..] } else { raw_type }
+}
+
 fn render_arginfo_arg_line(arg_name string, raw_type string, default_value string, is_variadic bool, by_ref string, table &ast.Table) string {
-	mut actual_type := raw_type
-	if is_variadic && actual_type.starts_with('[]') {
-		actual_type = actual_type[2..]
-	}
+	actual_type := variadic_element_type(raw_type, is_variadic)
 	arg_info := arg_type_info(actual_type, table)
 	default_literal := render_php_default_value_literal(default_value)
 	if arg_info.intersections.len > 0 {
-		return '{ "${arg_name}", ZEND_TYPE_INIT_NONE(_ZEND_ARG_INFO_FLAGS(${by_ref}, ${if is_variadic {
+		return '{ "${arg_name}", ZEND_TYPE_INIT_MASK(MAY_BE_ANY | _ZEND_ARG_INFO_FLAGS(${by_ref}, ${if is_variadic {
 			'1'
 		} else {
 			'0'

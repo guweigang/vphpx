@@ -1,5 +1,7 @@
 module vphp
 
+import vphp.zval
+
 // from_zval detaches a ZVal into a plain dynamic value tree.
 pub fn DynValue.from_zval(z ZVal) !DynValue {
 	if !z.is_valid() || z.is_null() || z.is_undef() {
@@ -24,7 +26,10 @@ pub fn DynValue.from_zval(z ZVal) !DynValue {
 		if state.err_msg != '' {
 			return error(state.err_msg)
 		}
-		return dyn_value_adopt_array(state.array)
+		mut array := state.array
+		array.n_next_idx = zval.array_next_index(z.handle())
+		array.next_index_from_php = true
+		return dyn_value_adopt_array(array)
 	}
 	if z.is_callable() {
 		callable := PhpCallable.from_zval(z) or { return error('zval is not callable') }
@@ -102,6 +107,9 @@ pub fn (v DynValue) to_zval(mut out ZVal) ! {
 					} else {
 						out.add_assoc_dyn_value(item.key.to_string(), item.val)!
 					}
+				}
+				if v.array.next_index_from_php {
+					zval.array_restore_next_index(out.handle(), v.array.n_next_idx)
 				}
 			}
 		}

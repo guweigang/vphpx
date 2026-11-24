@@ -23,6 +23,14 @@ echo $raw->getName(), '|', $raw->getDefaultValue(), '|', v_typed_raw_string_para
 $flag = (new ReflectionFunction('v_typed_alias_bool_param'))->getParameters()[0];
 echo $flag->getName(), '|', (int) $flag->getDefaultValue(), '|', (int) v_typed_alias_bool_param(),
     '|', (int) v_typed_alias_bool_param(enabled: false), PHP_EOL;
+$flags = new ReflectionFunction('v_typed_bool_params');
+echo $flags->getNumberOfRequiredParameters();
+foreach ($flags->getParameters() as $flag) {
+    echo '|', $flag->getName(), ':', (int) $flag->getDefaultValue();
+}
+echo PHP_EOL;
+echo v_typed_bool_params(), '|', v_typed_bool_params(secondFlag: true),
+    '|', v_typed_bool_params(secondFlag: true, firstFlag: false), PHP_EOL;
 ?>
 --EXPECT--
 1|defaultValue|string|1|1
@@ -30,3 +38,5 @@ echo $flag->getName(), '|', (int) $flag->getDefaultValue(), '|', (int) v_typed_a
 1|text|0|provided
 text|C:\tmp\$HOME|C:\tmp\$HOME
 enabled|1|1|0
+0|firstFlag:1|secondFlag:0
+2|3|1

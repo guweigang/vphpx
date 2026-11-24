@@ -35,6 +35,7 @@ fn (d &Decoder) expr(id flat.NodeId) Expr {
 		.float_literal { Expr(FloatLiteral{n.value}) }
 		.bool_literal { Expr(BoolLiteral{n.value == 'true'}) }
 		.ident { Expr(Ident{n.value}) }
+		.enum_val { Expr(EnumValueExpr{n.value}) }
 		.none_expr { Expr(Ident{'none'}) }
 		.selector { Expr(SelectorExpr{boxed(d.expr(d.tree.child(n, 0))), n.value}) }
 		.paren { Expr(ParExpr{boxed(d.expr(d.tree.child(n, 0)))}) }

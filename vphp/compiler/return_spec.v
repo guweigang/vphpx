@@ -1,6 +1,7 @@
 module compiler
 
 import compiler.php_types
+import compiler.repr
 
 pub enum RuntimeReturnKind {
 	scalar
@@ -21,15 +22,11 @@ pub mut:
 }
 
 pub fn is_constructor_method(name string) bool {
-	return name == 'construct' || name == 'init'
+	return php_method_name(name).to_lower() == '__construct'
 }
 
 pub fn php_method_name(name string) string {
-	return match name {
-		'construct', 'init' { '__construct' }
-		'str' { '__toString' }
-		else { name }
-	}
+	return repr.php_method_name(name)
 }
 
 pub fn effective_export_php_return_type(return_type string, php_return_type string, has_export bool) string {
@@ -76,7 +73,8 @@ pub fn method_runtime_return_info(owner_name string, method_name string, is_stat
 	mut info := base_runtime_return_info(return_type)
 	owner_key := php_types.normalize_export_type_key(owner_name)
 	ret_key := php_types.normalize_export_type_key(return_type)
-	if is_constructor_method(method_name) || (is_static && ret_key == owner_key) {
+	if is_constructor_method(method_name) || (is_static && !borrowed_return && ret_key == owner_key
+		&& info.kind !in [.option, .result]) {
 		info.kind = .static_factory
 		info.class_key = owner_key
 		return info
@@ -85,13 +83,26 @@ pub fn method_runtime_return_info(owner_name string, method_name string, is_stat
 		return info
 	}
 	info.class_key = ret_key
+	if borrowed_return {
+		info.owns_vptr = 'VPHP_BORROWS_VPTR'
+	}
 	if is_static {
 		info.kind = .static_object
 		return info
 	}
 	info.kind = .instance_object
-	if borrowed_return {
-		info.owns_vptr = 'VPHP_BORROWS_VPTR'
-	}
 	return info
+}
+
+fn class_method_runtime_return_info(owner &repr.PhpClassRepr, method &repr.PhpMethodRepr) RuntimeReturnInfo {
+	return_type := method.return_spec.effective_v_type()
+	if return_type.starts_with('&') && !method.is_constructor()
+		&& class_method_uses_context_arg(owner, method) {
+		return base_runtime_return_info(return_type)
+	}
+	if (owner.is_native_trait && method.is_constructor()) || (owner.is_enum && !return_type.starts_with('&')) {
+		return base_runtime_return_info(return_type)
+	}
+	return method_runtime_return_info(owner.name, method.name, method.is_static, return_type,
+		method.borrowed_return)
 }

@@ -35,7 +35,7 @@ pub fn (v ZVal) to_float() f64 {
 	return zval.get_double(v.handle())
 }
 
-// string
+// to_string uses PHP's string conversion and leaves conversion exceptions pending.
 pub fn (v ZVal) to_string() string {
 	if !v.is_valid() || v.is_null() || v.is_undef() {
 		return ''
@@ -44,16 +44,17 @@ pub fn (v ZVal) to_string() string {
 		return v.get_string()
 	}
 	if v.is_bool() {
-		return if v.get_bool() { '1' } else { '' }
+		return if v.to_bool() { '1' } else { '' }
 	}
 	if v.is_long() {
 		return v.to_i64().str()
 	}
-	if v.is_double() {
-		return v.to_f64().str()
+	mut output := RequestOwnedZBox.new_null()
+	defer {
+		output.release()
 	}
-	text := php_fn('strval').call([v])
-	if text.is_valid() && text.is_string() {
+	text := output.to_zval()
+	if zval.cast_string(v.handle(), text.handle()) {
 		return text.get_string()
 	}
 	return ''

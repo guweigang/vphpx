@@ -6,7 +6,7 @@ pub fn zval_type(v &C.zval) int {
 
 pub fn zval_type_ptr(v voidptr) int {
 	return zval_type( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) })
+	unsafe { &C.zval(v) })
 }
 
 pub fn zval_is_null(v &C.zval) bool {
@@ -15,7 +15,7 @@ pub fn zval_is_null(v &C.zval) bool {
 
 pub fn zval_is_null_ptr(v voidptr) bool {
 	return zval_is_null( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) })
+	unsafe { &C.zval(v) })
 }
 
 pub fn zval_is_callable(v &C.zval) bool {
@@ -24,7 +24,7 @@ pub fn zval_is_callable(v &C.zval) bool {
 
 pub fn zval_is_callable_ptr(v voidptr) bool {
 	return zval_is_callable( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) })
+	unsafe { &C.zval(v) })
 }
 
 pub fn zval_get_long(v &C.zval) i64 {
@@ -33,7 +33,7 @@ pub fn zval_get_long(v &C.zval) i64 {
 
 pub fn zval_get_long_ptr(v voidptr) i64 {
 	return zval_get_long( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) })
+	unsafe { &C.zval(v) })
 }
 
 pub fn zval_get_int(v &C.zval) i64 {
@@ -42,7 +42,7 @@ pub fn zval_get_int(v &C.zval) i64 {
 
 pub fn zval_get_int_ptr(v voidptr) i64 {
 	return zval_get_int( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) })
+	unsafe { &C.zval(v) })
 }
 
 pub fn zval_get_lval(v &C.zval) i64 {
@@ -51,7 +51,7 @@ pub fn zval_get_lval(v &C.zval) i64 {
 
 pub fn zval_get_lval_ptr(v voidptr) i64 {
 	return zval_get_lval( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) })
+	unsafe { &C.zval(v) })
 }
 
 pub fn zval_get_double(v &C.zval) f64 {
@@ -60,7 +60,7 @@ pub fn zval_get_double(v &C.zval) f64 {
 
 pub fn zval_get_double_ptr(v voidptr) f64 {
 	return zval_get_double( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) })
+	unsafe { &C.zval(v) })
 }
 
 pub fn zval_string_ptr(v &C.zval) &char {
@@ -84,6 +84,10 @@ pub fn zval_string_value_ptr(v voidptr) string {
 	}
 }
 
+pub fn zval_cast_string_ptr(input voidptr, output voidptr) bool {
+	return unsafe { C.vphp_cast_string(&C.zval(input), &C.zval(output)) }
+}
+
 pub fn zval_set_null(v &C.zval) {
 	// SAFETY: C bridge call vphp_set_null with valid arguments
 	unsafe { C.vphp_set_null(v) }
@@ -91,7 +95,7 @@ pub fn zval_set_null(v &C.zval) {
 
 pub fn zval_set_null_ptr(v voidptr) {
 	zval_set_null( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) })
+	unsafe { &C.zval(v) })
 }
 
 pub fn zval_set_bool(v &C.zval, b bool) {
@@ -101,7 +105,7 @@ pub fn zval_set_bool(v &C.zval, b bool) {
 
 pub fn zval_set_bool_ptr(v voidptr, b bool) {
 	zval_set_bool( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) }, b)
+	unsafe { &C.zval(v) }, b)
 }
 
 pub fn zval_set_lval(v &C.zval, val i64) {
@@ -111,7 +115,7 @@ pub fn zval_set_lval(v &C.zval, val i64) {
 
 pub fn zval_set_lval_ptr(v voidptr, val i64) {
 	zval_set_lval( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) }, val)
+	unsafe { &C.zval(v) }, val)
 }
 
 pub fn zval_set_double(v &C.zval, val f64) {
@@ -121,7 +125,7 @@ pub fn zval_set_double(v &C.zval, val f64) {
 
 pub fn zval_set_double_ptr(v voidptr, val f64) {
 	zval_set_double( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) }, val)
+	unsafe { &C.zval(v) }, val)
 }
 
 pub fn zval_set_string(v &C.zval, s string) {
@@ -131,7 +135,7 @@ pub fn zval_set_string(v &C.zval, s string) {
 
 pub fn zval_set_string_ptr(v voidptr, s string) {
 	zval_set_string( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) }, s)
+	unsafe { &C.zval(v) }, s)
 }
 
 pub fn new_string_zval(s string) &C.zval {
@@ -204,7 +208,7 @@ pub fn release_zval(z &C.zval) {
 
 pub fn release_zval_ptr(z voidptr) {
 	release_zval( // SAFETY: z is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(z) })
+	unsafe { &C.zval(z) })
 }
 
 pub fn release_persistent_zval(z &C.zval) {
@@ -213,7 +217,7 @@ pub fn release_persistent_zval(z &C.zval) {
 
 pub fn release_persistent_zval_ptr(z voidptr) {
 	release_persistent_zval( // SAFETY: z is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(z) })
+	unsafe { &C.zval(z) })
 }
 
 pub fn disown_zval(z &C.zval) {
@@ -222,7 +226,7 @@ pub fn disown_zval(z &C.zval) {
 
 pub fn disown_zval_ptr(z voidptr) {
 	disown_zval( // SAFETY: z is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(z) })
+	unsafe { &C.zval(z) })
 }
 
 pub fn copy_zval(dst &C.zval, src &C.zval) {
@@ -231,8 +235,8 @@ pub fn copy_zval(dst &C.zval, src &C.zval) {
 
 pub fn copy_zval_ptr(dst voidptr, src voidptr) {
 	copy_zval( // SAFETY: dst is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(dst) }, // SAFETY: src is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(src) })
+	unsafe { &C.zval(dst) }, // SAFETY: src is a valid zval pointer from Zend runtime
+		unsafe { &C.zval(src) })
 }
 
 pub fn foreach_zval(v &C.zval, ctx voidptr, wrapper voidptr) {
@@ -241,7 +245,7 @@ pub fn foreach_zval(v &C.zval, ctx voidptr, wrapper voidptr) {
 
 pub fn foreach_zval_ptr(v voidptr, ctx voidptr, wrapper voidptr) {
 	foreach_zval( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) }, ctx, wrapper)
+	unsafe { &C.zval(v) }, ctx, wrapper)
 }
 
 pub fn runtime_counters(autorelease_len &int, owned_len &int, obj_registry_len &u32, rev_registry_len &u32) {
@@ -254,7 +258,7 @@ pub fn reference_value(v &C.zval) &C.zval {
 
 pub fn reference_value_ptr(v voidptr) voidptr {
 	return reference_value( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) })
+	unsafe { &C.zval(v) })
 }
 
 pub fn reference_set_zval(v &C.zval, value &C.zval) {
@@ -263,8 +267,8 @@ pub fn reference_set_zval(v &C.zval, value &C.zval) {
 
 pub fn reference_set_zval_ptr(v voidptr, value voidptr) {
 	reference_set_zval( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) }, // SAFETY: value is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(value) })
+	unsafe { &C.zval(v) }, // SAFETY: value is a valid zval pointer from Zend runtime
+		unsafe { &C.zval(value) })
 }
 
 pub fn make_resource(v &C.zval, ptr voidptr, label string) {
@@ -273,7 +277,7 @@ pub fn make_resource(v &C.zval, ptr voidptr, label string) {
 
 pub fn make_resource_ptr(v voidptr, ptr voidptr, label string) {
 	make_resource( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) }, ptr, label)
+	unsafe { &C.zval(v) }, ptr, label)
 }
 
 pub fn fetch_resource(v &C.zval) voidptr {
@@ -282,5 +286,5 @@ pub fn fetch_resource(v &C.zval) voidptr {
 
 pub fn fetch_resource_ptr(v voidptr) voidptr {
 	return fetch_resource( // SAFETY: v is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(v) })
+	unsafe { &C.zval(v) })
 }

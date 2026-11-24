@@ -13,13 +13,10 @@ struct ReturnBinding {
 	effective_return string
 	kind             ReturnBindingKind
 	struct_closure   ?StructClosureBinding
+	borrowed_object  bool
 }
 
-fn ReturnBinding.new(return_type string) ReturnBinding {
-	return ReturnBinding.new_with_struct_closure(return_type, none)
-}
-
-fn ReturnBinding.new_with_struct_closure(return_type string, struct_closure ?StructClosureBinding) ReturnBinding {
+fn ReturnBinding.new(return_type string, struct_closure ?StructClosureBinding, borrowed_object bool) ReturnBinding {
 	is_result := return_type.starts_with('!')
 	is_option := return_type.starts_with('?')
 	effective_return := if is_result {
@@ -45,24 +42,23 @@ fn ReturnBinding.new_with_struct_closure(return_type string, struct_closure ?Str
 		effective_return: effective_return
 		kind:             kind
 		struct_closure:   struct_closure
+		borrowed_object:  borrowed_object
 	}
 }
 
 fn ReturnBinding.is_closure_type(effective_return string) bool {
-	return effective_return.contains('fn')
+	return effective_return.starts_with('fn (')
 }
 
 fn ReturnBinding.capture_list(names []string) string {
-	return if names.len > 0 { names.join(', ') } else { '' }
+	return names.map(it.trim_string_left('...')).join(', ')
 }
 
 fn (binding ReturnBinding) render_function_lines(v_call_name string, call_args string, arg_names []string) []string {
 	match binding.kind {
-		.result {
-			return binding.render_result_lines(v_call_name, call_args, arg_names)
-		}
-		.option {
-			return binding.render_option_lines(v_call_name, call_args, arg_names)
+		.result, .option {
+			return binding.render_fallible_call_lines('${v_call_name}(${call_args})',
+				ReturnBinding.capture_list(arg_names), [])
 		}
 		.void_ {
 			return ['    ${v_call_name}(${call_args})']
@@ -84,47 +80,45 @@ fn (binding ReturnBinding) render_value_call_lines(call_expr string) []string {
 }
 
 fn (binding ReturnBinding) render_value_result_line(result_name string) string {
+	if binding.effective_return.starts_with('&') {
+		return '    ctx.return().return_v_object[${binding.effective_return[1..]}](${result_name}, .${binding.object_ownership()})'
+	}
 	return '    ctx.return().v[${binding.effective_return}](${result_name})'
 }
 
-fn (binding ReturnBinding) render_result_lines(v_call_name string, call_args string, arg_names []string) []string {
-	capture_list := ReturnBinding.capture_list(arg_names)
-	return binding.render_result_call_lines('${v_call_name}(${call_args})', capture_list)
-}
-
-fn (binding ReturnBinding) render_result_call_lines(call_expr string, capture_list string) []string {
-	if binding.effective_return == '' || binding.effective_return == 'void' {
+fn (binding ReturnBinding) render_fallible_call_lines(call_expr string, capture_list string, setup []string) []string {
+	wrapper, prefix, propagate := if binding.kind == .result {
+		'result', '!', '!'
+	} else {
+		'option', '?', ''
+	}
+	if binding.effective_return in ['', 'void'] {
 		return [
-			'    ctx.return().from_result_void(fn [${capture_list}] () ! {',
-			'        ${call_expr}!',
+			'    ctx.return().from_${wrapper}_void(fn [${capture_list}] () ${prefix} {',
+			...setup,
+			'        ${call_expr}${propagate}',
 			'    })',
 		]
 	}
+	if binding.effective_return.starts_with('&') {
+		target := binding.effective_return[1..]
+		return [
+			'    ctx.return().from_${wrapper}_object[${target}](fn [${capture_list}] () ${prefix}&${target} {',
+			...setup,
+			'        return ${call_expr}${propagate}',
+			'    }, .${binding.object_ownership()})',
+		]
+	}
 	return [
-		'    ctx.return().from_result[${binding.effective_return}](fn [${capture_list}] () !${binding.effective_return} {',
-		'        return ${call_expr}!',
+		'    ctx.return().from_${wrapper}[${binding.effective_return}](fn [${capture_list}] () ${prefix}${binding.effective_return} {',
+		...setup,
+		'        return ${call_expr}${propagate}',
 		'    })',
 	]
 }
 
-fn (binding ReturnBinding) render_option_lines(v_call_name string, call_args string, arg_names []string) []string {
-	capture_list := ReturnBinding.capture_list(arg_names)
-	return binding.render_option_call_lines('${v_call_name}(${call_args})', capture_list)
-}
-
-fn (binding ReturnBinding) render_option_call_lines(call_expr string, capture_list string) []string {
-	if binding.effective_return == '' || binding.effective_return == 'void' {
-		return [
-			'    ctx.return().from_option_void(fn [${capture_list}] () ? {',
-			'        ${call_expr}',
-			'    })',
-		]
-	}
-	return [
-		'    ctx.return().from_option[${binding.effective_return}](fn [${capture_list}] () ?${binding.effective_return} {',
-		'        return ${call_expr}',
-		'    })',
-	]
+fn (binding ReturnBinding) object_ownership() string {
+	return if binding.borrowed_object { 'borrowed' } else { 'owned_request' }
 }
 
 fn (binding ReturnBinding) render_closure_lines(call_expr string, include_method_comment bool) []string {

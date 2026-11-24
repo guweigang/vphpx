@@ -1,7 +1,15 @@
 <?php
 declare(strict_types=1);
 
-function generate_stub(ReflectionExtension $extension, string $generatedBy = 'vphp stub'): string
+function generate_stub(
+    ReflectionExtension $extension,
+    string $generatedBy = 'vphp stub',
+    array $traitPrecedences = [],
+    array $traitAliases = [],
+    array $overrideInterfaces = [],
+    array $attributeExpressions = [],
+    array $parameterDefaults = [],
+): string
 {
     $lines = [
         '<?php',
@@ -18,9 +26,22 @@ function generate_stub(ReflectionExtension $extension, string $generatedBy = 'vp
 
     $constants = $extension->getConstants();
     ksort($constants);
-    if ($constants !== []) {
-        $lines[] = 'namespace {';
-        foreach ($constants as $name => $value) {
+    $constantsByNamespace = [];
+    foreach ($constants as $name => $value) {
+        $separator = strrpos($name, '\\');
+        $namespace = $separator === false ? '' : substr($name, 0, $separator);
+        $shortName = $separator === false ? $name : substr($name, $separator + 1);
+        $constantsByNamespace[$namespace][$shortName] = $value;
+    }
+    foreach ($constantsByNamespace as $namespace => $group) {
+        $lines[] = 'namespace' . ($namespace === '' ? '' : ' ' . $namespace) . ' {';
+        foreach ($group as $name => $value) {
+            if (PHP_VERSION_ID >= 80500) {
+                $qualifiedName = $namespace === '' ? $name : $namespace . '\\' . $name;
+                foreach (render_stub_attributes(new ReflectionConstant($qualifiedName), $attributeExpressions['constant ' . $qualifiedName] ?? []) as $attribute) {
+                    $lines[] = '    ' . $attribute;
+                }
+            }
             $lines[] = '    const ' . $name . ' = ' . render_value($value) . ';';
         }
         $lines[] = '}';
@@ -29,10 +50,14 @@ function generate_stub(ReflectionExtension $extension, string $generatedBy = 'vp
 
     $functions = $extension->getFunctions();
     ksort($functions);
-    if ($functions !== []) {
-        $lines[] = 'namespace {';
-        foreach ($functions as $function) {
-            $lines = array_merge($lines, render_function($function));
+    $functionsByNamespace = [];
+    foreach ($functions as $function) {
+        $functionsByNamespace[$function->getNamespaceName()][] = $function;
+    }
+    foreach ($functionsByNamespace as $namespace => $group) {
+        $lines[] = 'namespace' . ($namespace === '' ? '' : ' ' . $namespace) . ' {';
+        foreach ($group as $function) {
+            $lines = array_merge($lines, render_function($function, $attributeExpressions, $parameterDefaults));
             $lines[] = '';
         }
         array_pop($lines);
@@ -40,23 +65,30 @@ function generate_stub(ReflectionExtension $extension, string $generatedBy = 'vp
         $lines[] = '';
     }
 
-    $classes = sort_classes_for_stub($extension->getClasses());
-    $byNamespace = [];
-    foreach ($classes as $class) {
+    $currentNamespace = null;
+    foreach (sort_classes_for_stub($extension->getClasses()) as $class) {
         $namespace = $class->getNamespaceName();
-        $byNamespace[$namespace][] = $class;
-    }
-    ksort($byNamespace);
-
-    foreach ($byNamespace as $namespace => $group) {
-        $lines[] = 'namespace ' . $namespace . ' {';
-        foreach ($group as $class) {
-            $lines = array_merge($lines, render_class($class));
-            $lines[] = '';
+        if ($namespace !== $currentNamespace) {
+            if ($currentNamespace !== null) {
+                $lines[count($lines) - 1] = '}';
+                $lines[] = '';
+            }
+            $lines[] = 'namespace' . ($namespace === '' ? '' : ' ' . $namespace) . ' {';
+            $currentNamespace = $namespace;
         }
-        array_pop($lines);
-        $lines[] = '}';
+        $name = $class->getName();
+        $lines = array_merge($lines, render_class(
+            $class,
+            $traitPrecedences[$name] ?? [],
+            $traitAliases[$name] ?? [],
+            PHP_VERSION_ID >= 80300 ? ($overrideInterfaces[$name] ?? []) : [],
+            $attributeExpressions,
+            $parameterDefaults,
+        ));
         $lines[] = '';
+    }
+    if ($currentNamespace !== null) {
+        $lines[count($lines) - 1] = '}';
     }
 
     return rtrim(implode("\n", $lines)) . "\n";
@@ -90,6 +122,15 @@ function sort_classes_for_stub(array $classes): array
             }
         }
 
+        if ($class->isTrait()) {
+            foreach ($class->getReflectionConstants() as $constant) {
+                $value = $constant->getValue();
+                if ($value instanceof UnitEnum && isset($classes[$value::class])) {
+                    $visit($classes[$value::class]);
+                }
+            }
+        }
+
         foreach ($class->getTraitNames() as $trait) {
             if (isset($classes[$trait])) {
                 $visit($classes[$trait]);
@@ -109,24 +150,65 @@ function sort_classes_for_stub(array $classes): array
 /**
  * @return list<string>
  */
-function render_function(ReflectionFunction $function): array
+function render_function(ReflectionFunction $function, array $attributeExpressions = [], array $parameterDefaults = []): array
 {
-    [$signature, $docblock] = render_callable_signature($function);
+    [$signature, $docblock] = render_callable_signature($function, $attributeExpressions, $parameterDefaults);
     $lines = [];
     foreach ($docblock as $line) {
         $lines[] = '    ' . $line;
     }
-    foreach ($function->getAttributes() as $attribute) {
-        $lines[] = '    ' . render_php_attribute($attribute);
+    foreach (render_stub_attributes($function, $attributeExpressions[stub_callable_key($function)] ?? []) as $attribute) {
+        $lines[] = '    ' . $attribute;
     }
-    $lines[] = '    function ' . $function->getName() . $signature . ' {}';
+    $reference = $function->returnsReference() ? '&' : '';
+    $lines[] = '    function ' . $reference . $function->getShortName() . $signature . ' {}';
     return $lines;
 }
 
 /**
  * @return list<string>
  */
-function render_enum(ReflectionEnum $class): array
+function render_class_constants(ReflectionClass $class, array $attributeExpressions = []): array
+{
+    $lines = [];
+    $constants = $class->getReflectionConstants();
+    if (!$class->isEnum()) {
+        usort(
+            $constants,
+            static fn (ReflectionClassConstant $left, ReflectionClassConstant $right): int => strcmp($left->getName(), $right->getName()),
+        );
+    }
+    foreach ($constants as $constant) {
+        if ($constant->isEnumCase() || $constant->getDeclaringClass()->getName() !== $class->getName()) {
+            continue;
+        }
+        $key = $class->getName() . '::' . $constant->getName();
+        foreach (render_stub_attributes($constant, $attributeExpressions[$key] ?? []) as $attribute) {
+            $lines[] = '        ' . $attribute;
+        }
+        $visibility = $constant->isPrivate() ? 'private' : ($constant->isProtected() ? 'protected' : 'public');
+        $final = $constant->isFinal() ? ' final' : '';
+        $type = '';
+        if (method_exists($constant, 'hasType') && $constant->hasType()) {
+            $type = render_type($constant->getType()) . ' ';
+        }
+        $lines[] = sprintf(
+            '        %s%s const %s%s = %s;',
+            $visibility,
+            $final,
+            $type,
+            $constant->getName(),
+            render_value($constant->getValue()),
+        );
+    }
+
+    return $lines;
+}
+
+/**
+ * @return list<string>
+ */
+function render_enum(ReflectionEnum $class, array $attributeExpressions = [], array $parameterDefaults = []): array
 {
     $lines = [];
     $header = '    enum ' . $class->getShortName();
@@ -138,12 +220,18 @@ function render_enum(ReflectionEnum $class): array
         }
     }
 
+    $interfaces = array_diff($class->getInterfaceNames(), ['UnitEnum', 'BackedEnum']);
+    if ($interfaces !== []) {
+        $header .= ' implements ' . implode(', ', array_map('render_class_name', $interfaces));
+    }
+
     $lines[] = $header;
     $lines[] = '    {';
 
     foreach ($class->getCases() as $case) {
-        foreach ($case->getAttributes() as $attribute) {
-            $lines[] = '        ' . render_php_attribute($attribute);
+        $key = $class->getName() . '::' . $case->getName();
+        foreach (render_stub_attributes($case, $attributeExpressions[$key] ?? []) as $attribute) {
+            $lines[] = '        ' . $attribute;
         }
         if ($class->isBacked()) {
             $lines[] = sprintf('        case %s = %s;', $case->getName(), render_value($case->getBackingValue()));
@@ -152,6 +240,7 @@ function render_enum(ReflectionEnum $class): array
         }
     }
 
+    $lines = array_merge($lines, render_class_constants($class, $attributeExpressions), render_declared_methods($class, $attributeExpressions, $parameterDefaults));
     $lines[] = '    }';
     return $lines;
 }
@@ -159,15 +248,22 @@ function render_enum(ReflectionEnum $class): array
 /**
  * @return list<string>
  */
-function render_class(ReflectionClass $class): array
+function render_class(
+    ReflectionClass $class,
+    array $precedences = [],
+    array $aliases = [],
+    array $overrideInterfaces = [],
+    array $attributeExpressions = [],
+    array $parameterDefaults = [],
+): array
 {
     $lines = [];
-    foreach ($class->getAttributes() as $attribute) {
-        $lines[] = '    ' . render_php_attribute($attribute);
+    foreach (render_stub_attributes($class, $attributeExpressions['class ' . $class->getName()] ?? []) as $attribute) {
+        $lines[] = '    ' . $attribute;
     }
     if (method_exists($class, 'isEnum') && $class->isEnum()) {
         $enum = $class instanceof ReflectionEnum ? $class : new ReflectionEnum($class->getName());
-        return array_merge($lines, render_enum($enum));
+        return array_merge($lines, render_enum($enum, $attributeExpressions, $parameterDefaults));
     }
     $header = '    ';
     if ($class->isFinal() && !$class->isTrait()) {
@@ -197,6 +293,16 @@ function render_class(ReflectionClass $class): array
     }
 
     $interfaces = $class->getInterfaceNames();
+    if ($overrideInterfaces !== []) {
+        $seen = array_fill_keys(array_map('strtolower', $interfaces), true);
+        foreach ($overrideInterfaces as $name) {
+            $key = strtolower($name);
+            if (!isset($seen[$key])) {
+                $interfaces[] = $name;
+                $seen[$key] = true;
+            }
+        }
+    }
     if (!$class->isInterface() && $interfaces !== []) {
         $header .= ' implements ' . implode(', ', array_map('render_class_name', $interfaces));
     } elseif ($class->isInterface()) {
@@ -212,33 +318,44 @@ function render_class(ReflectionClass $class): array
     $lines[] = $header;
     $lines[] = '    {';
 
-    $constants = $class->getReflectionConstants();
-    usort(
-        $constants,
-        static fn (ReflectionClassConstant $left, ReflectionClassConstant $right): int => strcmp($left->getName(), $right->getName()),
-    );
-    foreach ($constants as $constant) {
-        if ($constant->getDeclaringClass()->getName() !== $class->getName()) {
-            continue;
+    $traits = array_map('render_class_name', $class->getTraitNames());
+    $availableRule = static fn (array $rule): bool => PHP_VERSION_ID >= ($rule['min_php_version'] ?? 0)
+        && (empty($rule['max_php_version_exclusive']) || PHP_VERSION_ID < $rule['max_php_version_exclusive']);
+    $precedences = array_filter($precedences, $availableRule);
+    $aliases = array_filter($aliases, $availableRule);
+    if ($aliases === []) {
+        foreach ($class->getTraitAliases() as $alias => $source) {
+            [$trait, $method] = explode('::', $source, 2);
+            $aliases[] = ['trait_name' => $trait, 'method' => $method, 'alias' => $alias, 'visibility' => ''];
         }
-        foreach ($constant->getAttributes() as $attribute) {
-            $lines[] = '        ' . render_php_attribute($attribute);
-        }
-        $visibility = $constant->isPrivate() ? 'private' : ($constant->isProtected() ? 'protected' : 'public');
-        $final = $constant->isFinal() ? ' final' : '';
-        $type = '';
-        if (method_exists($constant, 'hasType') && $constant->hasType()) {
-            $type = render_type($constant->getType()) . ' ';
-        }
-        $lines[] = sprintf(
-            '        %s%s const %s%s = %s;',
-            $visibility,
-            $final,
-            $type,
-            $constant->getName(),
-            render_value($constant->getValue()),
-        );
     }
+    if (PHP_VERSION_ID < 80300) {
+        $aliases = array_filter($aliases, static fn (array $rule): bool => $rule['visibility'] !== '' || $rule['alias'] !== '');
+    }
+    if ($precedences !== [] || $aliases !== []) {
+        $lines[] = '        use ' . implode(', ', $traits) . ' {';
+        foreach ($precedences as $rule) {
+            $excluded = implode(', ', array_map('render_class_name', $rule['excluded_traits']));
+            $lines[] = '            ' . render_class_name($rule['trait_name']) . '::' . $rule['method']
+                . ' insteadof ' . $excluded . ';';
+        }
+        foreach ($aliases as $rule) {
+            // PHP accepts one modifier in an as rule. The reflected method declaration retains final for a mixed rule.
+            $modifier = $rule['visibility'];
+            if ($modifier === '' && PHP_VERSION_ID >= 80300 && ($rule['is_final'] ?? false)) {
+                $modifier = 'final';
+            }
+            $target = trim($modifier . ' ' . $rule['alias']);
+            $lines[] = '            ' . render_class_name($rule['trait_name']) . '::' . $rule['method'] . ' as ' . $target . ';';
+        }
+        $lines[] = '        }';
+    } else {
+        foreach ($traits as $trait) {
+            $lines[] = '        use ' . $trait . ';';
+        }
+    }
+
+    $lines = array_merge($lines, render_class_constants($class, $attributeExpressions));
 
     $properties = $class->getProperties();
     usort(
@@ -260,22 +377,85 @@ function render_class(ReflectionClass $class): array
         if ($type === '' && $requiresType) {
             $type = 'mixed ';
         }
-        foreach ($property->getAttributes() as $attribute) {
-            $lines[] = '        ' . render_php_attribute($attribute);
+        $key = $class->getName() . '::$' . $property->getName();
+        foreach (render_stub_attributes($property, $attributeExpressions[$key] ?? []) as $attribute) {
+            $lines[] = '        ' . $attribute;
         }
         $visibility = $property->isPrivate() ? 'private' : ($property->isProtected() ? 'protected' : 'public');
+        if (PHP_VERSION_ID >= 80400 && !$property->isReadOnly()) {
+            if ($property->isPrivateSet()) {
+                $visibility .= ' private(set)';
+            } elseif ($property->isProtectedSet()) {
+                $visibility .= ' protected(set)';
+            }
+        }
         $static = $property->isStatic() ? ' static' : '';
         $readonly = ($property->isReadOnly() && !$class->isReadOnly()) ? ' readonly' : '';
-        $lines[] = sprintf(
-            '        %s%s%s %s$%s;',
+        $final = PHP_VERSION_ID >= 80400 && $property->isFinal() && !$property->isPrivateSet()
+            ? 'final ' : '';
+        $abstract = PHP_VERSION_ID >= 80400 && !$class->isInterface() && $property->isAbstract()
+            ? 'abstract ' : '';
+        $declaration = sprintf(
+            '        %s%s%s%s%s %s$%s%s',
+            $abstract,
+            $final,
             $visibility,
             $static,
             $readonly,
             $type,
             $property->getName(),
+            render_property_default($property),
         );
+        $ownHooks = PHP_VERSION_ID >= 80400
+            ? array_filter($property->getHooks(), static fn (ReflectionMethod $hook): bool =>
+                $hook->getDeclaringClass()->getName() === $class->getName())
+            : [];
+        if ($ownHooks !== []) {
+            $lines[] = $declaration . ' {';
+            foreach ($ownHooks as $operation => $hook) {
+                $hookKey = stub_callable_key($hook);
+                foreach (render_stub_attributes($hook, $attributeExpressions[$hookKey] ?? []) as $attribute) {
+                    $lines[] = '            ' . $attribute;
+                }
+                $reference = $operation === 'get' && $hook->returnsReference() ? '&' : '';
+                if ($hook->isAbstract()) {
+                    $lines[] = '            ' . $reference . $operation . ';';
+                    continue;
+                }
+                $modifier = $hook->isFinal() ? 'final ' : '';
+                $backing = '$this->' . $property->getName();
+                if ($operation === 'get') {
+                    $body = $property->isVirtual() ? 'throw new \\LogicException();' : 'return ' . $backing . ';';
+                    $lines[] = '            ' . $modifier . $reference . 'get { ' . $body . ' }';
+                } else {
+                    $parameter = $hook->getParameters()[0];
+                    $parameterType = $parameter->getType();
+                    $value = '$' . $parameter->getName();
+                    $signature = $parameterType === null ? $value : render_type($parameterType) . ' ' . $value;
+                    $attributes = render_stub_attributes($parameter, $attributeExpressions[$hookKey . ' ' . $value] ?? []);
+                    $signature = implode(' ', [...$attributes, $signature]);
+                    $body = $property->isVirtual() ? '' : ' ' . $backing . ' = ' . $value . '; ';
+                    $lines[] = '            ' . $modifier . 'set(' . $signature . ') {' . $body . '}';
+                }
+            }
+            $lines[] = '        }';
+        } else {
+            $lines[] = $declaration . ';';
+        }
     }
 
+    $lines = array_merge($lines, render_declared_methods($class, $attributeExpressions, $parameterDefaults));
+
+    $lines[] = '    }';
+    return $lines;
+}
+
+/**
+ * @return list<string>
+ */
+function render_declared_methods(ReflectionClass $class, array $attributeExpressions = [], array $parameterDefaults = []): array
+{
+    $lines = [];
     $methods = $class->getMethods();
     usort(
         $methods,
@@ -286,12 +466,18 @@ function render_class(ReflectionClass $class): array
             continue;
         }
 
-        [$signature, $docblock] = render_callable_signature($method);
+        if ($class instanceof ReflectionEnum
+            && ($method->getName() === 'cases'
+                || ($class->isBacked() && in_array($method->getName(), ['from', 'tryFrom'], true)))) {
+            continue;
+        }
+
+        [$signature, $docblock] = render_callable_signature($method, $attributeExpressions, $parameterDefaults);
         foreach ($docblock as $line) {
             $lines[] = '        ' . $line;
         }
-        foreach ($method->getAttributes() as $attribute) {
-            $lines[] = '        ' . render_php_attribute($attribute);
+        foreach (render_stub_attributes($method, $attributeExpressions[stub_callable_key($method)] ?? []) as $attribute) {
+            $lines[] = '        ' . $attribute;
         }
 
         $prefix = '        ';
@@ -314,23 +500,28 @@ function render_class(ReflectionClass $class): array
             continue;
         }
 
-        $lines[] = $prefix . 'function ' . $reference . $method->getName() . $signature . ' {}';
+        $body = $method->getName() === 'isDynamic' && is_dynamic_default_class($class)
+            ? ' { return true; }'
+            : ' {}';
+        $lines[] = $prefix . 'function ' . $reference . $method->getName() . $signature . $body;
     }
 
-    $lines[] = '    }';
     return $lines;
 }
 
 /**
  * @return array{0:string,1:list<string>}
  */
-function render_callable_signature(ReflectionFunctionAbstract $function): array
+function render_callable_signature(ReflectionFunctionAbstract $function, array $attributeExpressions = [], array $parameterDefaults = []): array
 {
     $params = [];
     $docblock = [];
+    $callable = stub_callable_key($function);
     foreach ($function->getParameters() as $parameter) {
-        [$rendered, $paramDoc] = render_parameter($parameter, $function);
-        $attributes = array_map('render_php_attribute', $parameter->getAttributes());
+        $paramName = $parameter->getName();
+        [$rendered, $paramDoc] = render_parameter($parameter, $function, $parameterDefaults[$callable][$paramName] ?? '');
+        $key = $callable . ' $' . $paramName;
+        $attributes = render_stub_attributes($parameter, $attributeExpressions[$key] ?? []);
         $params[] = implode(' ', [...$attributes, $rendered]);
         if ($paramDoc !== null) {
             $docblock[] = ' * @param ' . $paramDoc . ' $' . $parameter->getName();
@@ -362,7 +553,7 @@ function render_callable_signature(ReflectionFunctionAbstract $function): array
 /**
  * @return array{0:string,1:?string}
  */
-function render_parameter(ReflectionParameter $parameter, ?ReflectionFunctionAbstract $function = null): array
+function render_parameter(ReflectionParameter $parameter, ?ReflectionFunctionAbstract $function = null, string $source = ''): array
 {
     $reference = $parameter->isPassedByReference() ? '&' : '';
     $variadic = $parameter->isVariadic() ? '...' : '';
@@ -385,13 +576,105 @@ function render_parameter(ReflectionParameter $parameter, ?ReflectionFunctionAbs
     }
 
     if ($parameter->isDefaultValueAvailable()) {
-        $default = $parameter->isDefaultValueConstant()
-            ? $parameter->getDefaultValueConstantName()
-            : render_value($parameter->getDefaultValue());
+        $default = render_stub_default_expression($source);
+        if ($default !== null) {
+            return [($type !== null ? $type . ' ' : '') . $reference . $name . ' = ' . $default, null];
+        }
+        if ($parameter->isDefaultValueConstant()) {
+            $default = $parameter->getDefaultValueConstantName();
+            $separator = strpos($default, '::');
+            $scope = $separator === false ? '' : strtolower(substr($default, 0, $separator));
+            if (!str_starts_with($default, '\\') && !in_array($scope, ['self', 'parent', 'static'], true)) {
+                // Write reflected constant names as absolute names in the generated namespace.
+                $default = '\\' . $default;
+            }
+        } else {
+            $value = $parameter->getDefaultValue();
+            $default = is_object($value) && is_dynamic_default_class(new ReflectionClass($value))
+                ? 'new ' . render_class_name($value::class) . '(0, 0)'
+                : render_value($value);
+        }
         return [($type !== null ? $type . ' ' : '') . $reference . $name . ' = ' . $default, null];
     }
 
     return [$reference . $name . ' = null', $type];
+}
+
+// Zend compiles internal arginfo defaults outside the exported PHP namespace.
+// Qualify names in the stub so the expression resolves in the same scope.
+function render_stub_default_expression(string $source): ?string
+{
+    if ($source === '' || !function_exists('token_get_all')) {
+        return null;
+    }
+
+    $tokens = token_get_all('<?php ' . $source);
+    array_shift($tokens);
+    $indices = array_keys(array_filter($tokens, static fn ($token): bool =>
+        !is_array($token) || !in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)));
+    $symbolic = false;
+    foreach ($indices as $position => $index) {
+        $token = $tokens[$index];
+        if ($token === ';') {
+            return null;
+        }
+        if (!is_array($token)) {
+            continue;
+        }
+        [$kind, $text] = $token;
+        if (in_array($kind, [T_LINE, T_FILE, T_DIR, T_NS_C, T_CLASS_C, T_TRAIT_C, T_FUNC_C, T_METHOD_C,
+            T_OPEN_TAG, T_OPEN_TAG_WITH_ECHO, T_CLOSE_TAG], true)
+            || (defined('T_PROPERTY_C') && $kind === T_PROPERTY_C)) {
+            // The declaration's source context can differ from the stub's.
+            return null;
+        }
+
+        if (in_array($kind, [T_NEW, T_NAME_FULLY_QUALIFIED], true)) {
+            $symbolic = true;
+        } elseif ($kind === T_NAME_QUALIFIED || $kind === T_NAME_RELATIVE) {
+            $tokens[$index][1] = $kind === T_NAME_QUALIFIED ? '\\' . $text : substr($text, strlen('namespace'));
+            $symbolic = true;
+        } elseif ($kind === T_STRING) {
+            $previous = $tokens[$indices[$position - 1] ?? -1] ?? null;
+            $next = $tokens[$indices[$position + 1] ?? -1] ?? null;
+            $name = strtolower($text);
+            if (($previous[0] ?? null) === T_DOUBLE_COLON
+                || ($next === ':' && in_array($previous, ['(', ','], true))
+                || in_array($name, ['true', 'false', 'null'], true)) {
+                continue;
+            }
+            if (!in_array($name, ['self', 'parent', 'static'], true)
+                || (($next[0] ?? null) !== T_DOUBLE_COLON && ($previous[0] ?? null) !== T_NEW)) {
+                $tokens[$index][1] = '\\' . $text;
+            }
+            $symbolic = true;
+        }
+    }
+    return $symbolic
+        ? implode('', array_map(static fn ($token): string => is_array($token) ? $token[1] : $token, $tokens))
+        : null;
+}
+
+function is_dynamic_default_class(ReflectionClass $class): bool
+{
+    return $class->isInternal() && $class->isFinal()
+        && str_starts_with($class->getName(), 'VPHP\\Internal\\')
+        && str_ends_with($class->getName(), '_ClosureDefault')
+        && $class->hasMethod('isDynamic');
+}
+
+function render_property_default(ReflectionProperty $property): string
+{
+    if (!$property->hasDefaultValue() || ($property->isReadOnly() && PHP_VERSION_ID < 80600)) {
+        return '';
+    }
+
+    $value = $property->getDefaultValue();
+    if ($value === null) {
+        // Some internal properties expose a null slot even when their type disallows null.
+        return $property->getType()?->allowsNull() ? ' = null' : '';
+    }
+    return is_scalar($value) || is_array($value) ? ' = ' . render_value($value) : '';
 }
 
 function property_type_contains_callable(?ReflectionType $type): bool
@@ -452,14 +735,38 @@ function render_class_name(string $name): string
     return '\\' . ltrim($name, '\\');
 }
 
-function render_php_attribute(ReflectionAttribute $attribute): string
+function stub_callable_key(ReflectionFunctionAbstract $function): string
 {
-    $args = [];
-    foreach ($attribute->getArguments() as $key => $value) {
-        $args[] = (is_string($key) ? $key . ': ' : '') . render_value($value);
+    if ($function instanceof ReflectionMethod) {
+        return $function->getDeclaringClass()->getName() . '::' . $function->getName() . '()';
     }
-    return '#[' . render_class_name($attribute->getName())
-        . ($args === [] ? '' : '(' . implode(', ', $args) . ')') . ']';
+    return 'function ' . $function->getName();
+}
+
+/**
+ * @param array<string, list<string>> $expressions
+ * @return list<string>
+ */
+function render_stub_attributes(object $owner, array $expressions): array
+{
+    $attributes = [];
+    $offsets = [];
+    foreach ($owner->getAttributes() as $attribute) {
+        $name = $attribute->getName();
+        $offset = $offsets[$name] ?? 0;
+        $offsets[$name] = $offset + 1;
+        $arguments = $expressions[$name][$offset] ?? '';
+        if ($arguments === '') {
+            $args = [];
+            foreach ($attribute->getArguments() as $key => $value) {
+                $args[] = (is_string($key) ? $key . ': ' : '') . render_value($value);
+            }
+            $arguments = implode(', ', $args);
+        }
+        $attributes[] = '#[' . render_class_name($name)
+            . ($arguments === '' ? '' : '(' . $arguments . ')') . ']';
+    }
+    return $attributes;
 }
 
 /**

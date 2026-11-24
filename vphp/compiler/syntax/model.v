@@ -14,6 +14,7 @@ pub:
 	call_name     string
 	call_arg_name string
 	has_arg       bool
+	args          map[string]string
 }
 
 pub fn find_attr(attrs []Attr, name string) ?Attr {
@@ -25,9 +26,17 @@ pub fn find_attr(attrs []Attr, name string) ?Attr {
 	return none
 }
 
+// The V frontend encodes named arguments as attributes in the flat AST.
+pub fn find_attr_arg(attrs []Attr, schema string, field string) ?string {
+	attr := find_attr(attrs, schema) or { return none }
+	return attr.args[field] or { return none }
+}
+
 pub struct Table {
 mut:
-	symbols map[string]Symbol
+	symbols        map[string]Symbol
+	export_schemas map[string][]ExportAttributeField
+	type_aliases   map[string]string
 }
 
 pub fn new_table() &Table {
@@ -38,8 +47,30 @@ pub fn (t &Table) find_sym(name string) ?Symbol {
 	return t.symbols[name]
 }
 
+pub fn (t &Table) has_declared_type(name string) bool {
+	return name in t.symbols
+}
+
 pub fn (t &Table) get_type_name(typ string) string {
 	return typ.trim_left('?!&')
+}
+
+// resolve_type_alias returns the underlying spelling and its declaring module.
+pub fn (t &Table) resolve_type_alias(name string, module_name string) (string, string) {
+	mut typ := name
+	mut origin := module_name
+	mut visited := map[string]bool{}
+	for {
+		key := if typ.contains('.') { typ } else { '${origin}.${typ}' }
+		if key in visited {
+			return name, module_name
+		}
+		target := t.type_aliases[key] or { return typ, origin }
+		visited[key] = true
+		typ = target
+		origin = key.all_before_last('.')
+	}
+	return typ, origin
 }
 
 pub fn (t &Table) type_to_str(typ string) string {
@@ -85,6 +116,7 @@ pub type Expr = ArrayLiteral
 	| BoolLiteral
 	| CallExpr
 	| CastExpr
+	| EnumValueExpr
 	| FloatLiteral
 	| Ident
 	| IfExpr
@@ -116,6 +148,7 @@ pub:
 pub struct FnDecl {
 pub:
 	name                  string
+	module_name           string
 	attrs                 []Attr
 	params                []Param
 	return_type           string
@@ -131,6 +164,7 @@ pub:
 pub struct StructDecl {
 pub:
 	name             string
+	module_name      string
 	attrs            []Attr
 	fields           []Field
 	embeds           []Param
@@ -157,16 +191,19 @@ pub:
 
 pub struct InterfaceDecl {
 pub:
-	name    string
-	attrs   []Attr
-	methods []FnDecl
+	name        string
+	module_name string
+	attrs       []Attr
+	methods     []FnDecl
+	embeds      []string
 }
 
 pub struct EnumDecl {
 pub:
-	name   string
-	attrs  []Attr
-	fields []ValueField
+	name         string
+	attrs        []Attr
+	fields       []ValueField
+	backing_type string
 }
 
 pub struct ConstDecl {
@@ -226,6 +263,11 @@ pub:
 }
 
 pub struct Ident {
+pub:
+	name string
+}
+
+pub struct EnumValueExpr {
 pub:
 	name string
 }

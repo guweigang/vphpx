@@ -89,11 +89,12 @@ pub struct C.zend_reference {}
 @[typedef]
 pub struct C.vphp_class_handlers {
 pub mut:
-	v_ptr         voidptr
-	prop_handler  ClassPropertyHandler
-	write_handler ClassPropertyHandler
-	sync_handler  ClassSyncHandler
-	new_raw       ClassAllocateHandler
-	cleanup_raw   ClassReleaseHandler
-	free_raw      ClassReleaseHandler
+	v_ptr          voidptr
+	prop_handler   ClassPropertyHandler
+	write_handler  ClassPropertyHandler
+	sync_handler   ClassSyncHandler
+	new_raw        ClassAllocateHandler
+	cleanup_raw    ClassReleaseHandler
+	free_raw       ClassReleaseHandler
+	init_php_state ClassReleaseHandler
 }

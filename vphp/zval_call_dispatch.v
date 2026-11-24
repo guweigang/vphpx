@@ -11,8 +11,18 @@ struct ZendCallableCall {
 	callable ZVal
 }
 
+struct ZendCallableArgsCall {
+	callable ZVal
+	args     ZVal
+}
+
 struct ZendConstructCall {
 	class_name ZVal
+}
+
+struct ZendConstructArgsCall {
+	class_name string
+	args       ZVal
 }
 
 struct ZendStaticMethodCall {
@@ -20,7 +30,9 @@ struct ZendStaticMethodCall {
 	method     string
 }
 
-type ZendCallTarget = ZendCallableCall
+type ZendCallTarget = ZendCallableArgsCall
+	| ZendCallableCall
+	| ZendConstructArgsCall
 	| ZendConstructCall
 	| ZendMethodCall
 	| ZendStaticMethodCall
@@ -33,9 +45,15 @@ fn invoke_zval_call_target(target ZendCallTarget, retval voidptr, count int, par
 		ZendCallableCall {
 			zend.call_callable_ptr(target.callable.raw_ptr(), retval, count, params)
 		}
+		ZendCallableArgsCall {
+			zend.call_callable_args_ptr(target.callable.raw_ptr(), retval, target.args.raw_ptr())
+		}
 		ZendConstructCall {
 			class_name := target.class_name.get_string()
 			zend.new_instance_named(class_name, retval, count, params)
+		}
+		ZendConstructArgsCall {
+			zend.new_instance_args(target.class_name, retval, target.args.raw_ptr())
 		}
 		ZendStaticMethodCall {
 			class_name := target.class_name.get_string()

@@ -305,6 +305,8 @@ pub fn (v DynValue) to_request_escapable() !DynValue {
 						out.set_str(item.key.to_string(), escapable)
 					}
 				}
+				out.n_next_idx = v.array.n_next_idx
+				out.next_index_from_php = v.array.next_index_from_php
 			}
 			dyn_value_adopt_array(out)
 		}

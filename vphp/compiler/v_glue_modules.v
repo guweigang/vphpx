@@ -23,7 +23,7 @@ fn (v_glue VGenerator) generate_module_bridges(elements []repr.PhpRepr, module_d
 	mut enums_by_module := map[string][]repr.PhpEnumRepr{}
 	for el in elements {
 		if el is repr.PhpClassRepr {
-			if el.is_trait || el.module_name == '' || el.module_name == 'main' {
+			if (el.is_trait && !el.is_native_trait) || el.module_name == '' || el.module_name == 'main' {
 				continue
 			}
 			classes_by_module[el.module_name] << el
@@ -59,7 +59,7 @@ fn (v_glue VGenerator) generate_module_bridges(elements []repr.PhpRepr, module_d
 		out.write_string('module ${module_name}\n\n')
 		out.write_string('import vphp\n')
 		out.write_string('import vphp.object\n\n')
-		imports := v_glue.module_glue_imports(classes, funcs, module_name, module_dirs)
+		imports := v_glue.module_glue_imports([...classes, ...enums.map(it.method_owner())], funcs, module_name, module_dirs)
 		for imported in imports {
 			out.write_string('import ${imported}\n')
 		}
@@ -68,6 +68,9 @@ fn (v_glue VGenerator) generate_module_bridges(elements []repr.PhpRepr, module_d
 		}
 		out.write_string('#include "php_bridge.h"\n\n')
 		for class in classes {
+			if class.is_trait {
+				continue
+			}
 			out.write_string('__global C.${class.c_name().to_lower()}_ce &C.zend_class_entry\n')
 		}
 		if classes.len > 0 {
@@ -76,6 +79,9 @@ fn (v_glue VGenerator) generate_module_bridges(elements []repr.PhpRepr, module_d
 		for class in classes {
 			out.write_string(v_glue.gen_class_glue_for_module(class, module_name).join('\n'))
 			out.write_string('\n\n')
+			if class.is_trait {
+				continue
+			}
 			out.write_string('pub fn (val ${class.name}) php_class_name() string {\n')
 			out.write_string("    return '${class.php_name.replace("'", "\\'")}'\n")
 			out.write_string('}\n\n')
@@ -85,9 +91,7 @@ fn (v_glue VGenerator) generate_module_bridges(elements []repr.PhpRepr, module_d
 			out.write_string('\n\n')
 		}
 		for enum_el in enums {
-			out.write_string('pub fn (val ${enum_el.name}) php_class_name() string {\n')
-			out.write_string("    return '${enum_el.php_name.replace("'", "\\'")}'\n")
-			out.write_string('}\n\n')
+			out.write_string(v_glue.gen_enum_glue(&enum_el).join('\n') + '\n\n')
 		}
 		os.write_file(os.join_path(module_dir, 'vphp_bridge.v'), out.str())!
 	}
@@ -96,34 +100,45 @@ fn (v_glue VGenerator) generate_module_bridges(elements []repr.PhpRepr, module_d
 fn (v_glue VGenerator) module_glue_imports(classes []repr.PhpClassRepr, funcs []repr.PhpFuncRepr, current_module string, module_dirs map[string]string) []string {
 	mut imports := []string{}
 	for class in classes {
+		if parent := class.inherited_receiver_parent {
+			if parent.module_name !in ['', 'main', current_module] {
+				imports << parent.module_name
+			}
+		}
+		imports << v_glue.modules_in_type_ref(class.shadow_const_type, current_module, module_dirs)
+		imports << v_glue.modules_in_type_ref(class.shadow_static_type, current_module, module_dirs)
 		for prop in class.properties {
 			imports << v_glue.modules_in_type_ref(prop.v_type, current_module, module_dirs)
 		}
 		for method in class.methods {
-			imports << v_glue.modules_in_type_ref(method.return_spec.effective_v_type(),
+			imports << v_glue.modules_in_type_ref(method.trait_static_receiver, current_module,
+				module_dirs)
+			imports << v_glue.callable_glue_imports(method.args, method.return_spec.effective_v_type(),
 				current_module, module_dirs)
-			for arg in method.args {
-				imports << v_glue.modules_in_type_ref(arg.v_type, current_module, module_dirs)
-				if arg.source.params_type != '' {
-					imports << v_glue.modules_in_type_ref(arg.source.params_type, current_module,
-						module_dirs)
-				}
-			}
 		}
 	}
 	for func in funcs {
-		imports << v_glue.modules_in_type_ref(func.return_spec.effective_v_type(), current_module,
-			module_dirs)
-		for arg in func.args {
-			imports << v_glue.modules_in_type_ref(arg.v_type, current_module, module_dirs)
-			if arg.source.params_type != '' {
-				imports << v_glue.modules_in_type_ref(arg.source.params_type, current_module,
-					module_dirs)
-			}
-		}
+		imports << v_glue.callable_glue_imports(func.args, func.return_spec.effective_v_type(),
+			current_module, module_dirs)
 	}
 	imports.sort()
 	return uniq_lines(imports)
+}
+
+fn (g VGenerator) callable_glue_imports(args []repr.PhpArgRepr, return_type string, current_module string, module_dirs map[string]string) []string {
+	mut imports := g.modules_in_type_ref(return_type, current_module, module_dirs)
+	for arg in args {
+		imports << g.modules_in_type_ref(arg.v_type, current_module, module_dirs)
+		imports << g.modules_in_type_ref(arg.source.params_type, current_module, module_dirs)
+	}
+	if closure := StructClosureBinding.new('', return_type, current_module, g.params_structs, g.table) {
+		if closure.kind == .params_struct {
+			for field in closure.fields {
+				imports << g.modules_in_type_ref(field.v_type, current_module, module_dirs)
+			}
+		}
+	}
+	return imports
 }
 
 fn (v_glue VGenerator) modules_in_type_ref(type_ref string, current_module string, module_dirs map[string]string) []string {
@@ -169,4 +184,14 @@ pub fn (c Compiler) class_php_map() map[string]string {
 		}
 	}
 	return m
+}
+
+fn (c Compiler) interface_php_map() map[string]string {
+	mut names := c.external_interfaces.clone()
+	for element in c.elements {
+		if element is repr.PhpInterfaceRepr {
+			names['${element.module_name}.${element.name}'] = element.php_name
+		}
+	}
+	return names
 }

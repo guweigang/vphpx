@@ -1,8 +1,34 @@
 module vphp
 
+import vphp.zend
+
 pub struct PhpReference {
 mut:
 	value PhpValueZBox
+}
+
+// hook_backing returns the current &get hook's reference to its Zend backing slot.
+pub fn PhpReference.hook_backing() PhpReference {
+	return PhpReference.from_zval(ZVal.from_ptr(zend.current_hook_backing_reference())) or {
+		PhpReference{}
+	}
+}
+
+// hook_storage borrows a writable PHP storage property on the current hook receiver.
+pub fn PhpReference.hook_storage(name string) PhpReference {
+	return PhpReference.from_zval(ZVal.from_ptr(zend.current_hook_storage_reference(name))) or {
+		PhpReference{}
+	}
+}
+
+// this_property borrows a declared PHP storage slot writable from the current instance method.
+pub fn PhpReference.this_property(name string) !PhpReference {
+	return PhpReference.must_from_zval(ZVal.from_ptr(zend.current_property_reference(name)))
+}
+
+// static_property borrows a PHP static slot on the current method's called class.
+pub fn PhpReference.static_property(name string) !PhpReference {
+	return PhpReference.must_from_zval(ZVal.from_ptr(zend.current_static_property_reference(name)))
 }
 
 pub fn PhpReference.from_zval(z ZVal) ?PhpReference {
@@ -43,6 +69,13 @@ pub fn PhpReference.from_persistent_zval(z ZVal) ?PhpReference {
 
 pub fn (r PhpReference) to_zval() ZVal {
 	return r.value.to_zval()
+}
+
+// to_value keeps the reference cell available to reference-aware APIs.
+pub fn (r PhpReference) to_value() PhpValue {
+	return PhpValue{
+		value: r.value.clone()
+	}
 }
 
 pub fn (r PhpReference) to_borrowed() PhpReference {

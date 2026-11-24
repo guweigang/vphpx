@@ -11,6 +11,9 @@ print_r(VPhp\Task::list());
 $t = VPhp\Task::spawn("AnalyzeTask", "SH600519", 100);
 $res = VPhp\Task::wait($t);
 print_r($res);
+if (VPhp\Task::wait($t) !== $res) {
+    throw new RuntimeException('Waiting again changed the native task result');
+}
 --EXPECT--
 Array
 (

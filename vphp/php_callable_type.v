@@ -212,6 +212,49 @@ pub fn (c PhpCallable) invoke(args ...PhpArgInput) PhpValue {
 	return result.take_value()
 }
 
+// invoke_by_value returns an owned result and reads through a top-level PHP reference.
+pub fn (c PhpCallable) invoke_by_value(args ...PhpArgInput) PhpValue {
+	mut result := c.invoke(...args)
+	return PhpValue.adopt_zval(result.take_zval_by_value())
+}
+
+fn (c PhpCallable) request_owned_args(args PhpArray) RequestOwnedZBox {
+	result := call_zval_target(ZendCallableArgsCall{
+		callable: c.to_zval()
+		args:     args.to_zval()
+	}, []ZVal{}, .owned_request)
+	return RequestOwnedZBox.adopt_zval(result)
+}
+
+// invoke_args uses PHP's argument-array rules for positional and named keys.
+pub fn (c PhpCallable) invoke_args(args PhpArray) PhpValue {
+	mut result := c.request_owned_args(args)
+	return result.take_value()
+}
+
+// invoke_args_by_value reads the result by value while preserving references in the arguments.
+pub fn (c PhpCallable) invoke_args_by_value(args PhpArray) PhpValue {
+	mut result := c.invoke_args(args)
+	return PhpValue.adopt_zval(result.take_zval_by_value())
+}
+
+// invoke_forwarded preserves names from an exported ...PhpArg tail.
+pub fn (c PhpCallable) invoke_forwarded(args []PhpArg) PhpValue {
+	mut arguments := PhpArray.new()
+	defer {
+		arguments.release()
+	}
+	for arg in args {
+		value := arg.zval_or_null()
+		if name := arg.variadic_name() {
+			arguments.assoc_zval(name, value)
+		} else {
+			arguments.next_zval(value)
+		}
+	}
+	return c.invoke_args(arguments)
+}
+
 pub fn (c PhpCallable) call[T](args ...PhpArgInput) !T {
 	mut result := c.request_owned(...args)
 	defer {
@@ -220,13 +263,22 @@ pub fn (c PhpCallable) call[T](args ...PhpArgInput) !T {
 	return php_call_copied_result_as[T](result.to_zval())
 }
 
+pub fn (c PhpCallable) call_reference(args ...PhpArgInput) !PhpReference {
+	mut result := c.request_owned(...args)
+	return php_call_reference_result(mut result)
+}
+
+pub fn (c PhpCallable) call_reference_args(args PhpArray) !PhpReference {
+	mut result := c.request_owned_args(args)
+	return php_call_reference_result(mut result)
+}
+
 pub fn (c PhpCallable) with_result[T, R](run fn (T) R, args ...PhpArgInput) !R {
 	mut result := c.request_owned(...args)
 	defer {
 		result.release()
 	}
-	value := php_call_result_as[T](result.to_zval())!
-	return run(value)
+	return php_with_call_result[T, R](result.to_zval(), run)
 }
 
 pub fn (c PhpCallable) with_result_zval[T](run fn (ZVal) T, args ...ZVal) T {

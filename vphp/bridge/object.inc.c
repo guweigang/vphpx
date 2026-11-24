@@ -4,13 +4,30 @@ static ZEND_NAMED_FUNCTION(vphp_abstract_static_placeholder) {
                    ZSTR_VAL(EX(func)->common.function_name));
 }
 
+void vphp_inherit_class_before_properties(zend_class_entry *registered,
+                                         zend_class_entry *parent) {
+  zend_do_inheritance(registered, parent);
+  // The generated registration declares the child's properties after inheritance.
+  if (parent->default_properties_count > 0) {
+    size_t size = parent->default_properties_count * sizeof(*parent->properties_info_table);
+    registered->properties_info_table = pemalloc(size, 1);
+    memcpy(registered->properties_info_table, parent->properties_info_table, size);
+  }
+}
+
 zend_class_entry *vphp_register_class_with_abstract_statics(
     zend_class_entry *ce, zend_class_entry *parent) {
   const zend_function_entry *methods = ce->info.internal.builtin_functions;
   const uint32_t abstract_static = ZEND_ACC_ABSTRACT | ZEND_ACC_STATIC;
   size_t count = 0;
+  bool has_abstract_static = false;
   while (methods[count].fname) {
+    has_abstract_static |= (methods[count].flags & abstract_static) == abstract_static;
     count++;
+  }
+  if (!has_abstract_static) {
+    return parent ? zend_register_internal_class_ex(ce, parent)
+                  : zend_register_internal_class(ce);
   }
   zend_function_entry *entries = safe_emalloc(count + 1, sizeof(*entries), 0);
   memcpy(entries, methods, (count + 1) * sizeof(*entries));
@@ -44,13 +61,7 @@ zend_class_entry *vphp_register_class_with_abstract_statics(
   registered->ce_flags |= ZEND_ACC_IMPLICIT_ABSTRACT_CLASS | ZEND_ACC_EXPLICIT_ABSTRACT_CLASS;
 
   if (parent) {
-    zend_do_inheritance(registered, parent);
-    // The generated registration declares the child's properties after inheritance.
-    if (parent->default_properties_count > 0) {
-      size_t size = parent->default_properties_count * sizeof(*parent->properties_info_table);
-      registered->properties_info_table = pemalloc(size, 1);
-      memcpy(registered->properties_info_table, parent->properties_info_table, size);
-    }
+    vphp_inherit_class_before_properties(registered, parent);
   }
   return registered;
 }
@@ -179,6 +190,113 @@ void vphp_register_object(void *v_ptr, zend_object *obj) {
   zend_hash_index_update_ptr(&vphp_reverse_registry, (zend_ulong)obj, v_ptr);
 }
 
+/* The PHP object is the sole owner of this slot. Borrowed wrappers may
+ * disappear or be recreated while their V owner remains alive. */
+zval *vphp_owned_object_php_state(void *v_ptr) {
+  if (v_ptr == NULL || !vphp_registry_initialized) {
+    return NULL;
+  }
+  zend_object *obj = zend_hash_index_find_ptr(&vphp_object_registry, (zend_ulong)v_ptr);
+  if (!vphp_object_uses_inline_wrapper(obj)) {
+    return NULL;
+  }
+  vphp_object_wrapper *wrapper = vphp_binding_for_obj(obj, 0);
+  if (!wrapper->owns_v_ptr || wrapper->v_ptr != v_ptr) {
+    return NULL;
+  }
+  if (Z_ISUNDEF(wrapper->php_state)) {
+    array_init(&wrapper->php_state);
+  }
+  return &wrapper->php_state;
+}
+
+static bool vphp_weak_map_accepts_key(zval *map, zval *key) {
+  return !EG(exception) && map && key && Z_TYPE_P(map) == IS_OBJECT &&
+      Z_TYPE_P(key) == IS_OBJECT &&
+      zend_string_equals_literal(Z_OBJCE_P(map)->name, "WeakMap");
+}
+
+zval *vphp_weak_map_find(zval *map, zval *key, bool reference) {
+  if (!vphp_weak_map_accepts_key(map, key)) {
+    return NULL;
+  }
+  // BP_VAR_IS keeps an absent key silent while preserving a stored null.
+  zval scratch;
+  ZVAL_UNDEF(&scratch);
+  zend_object *object = Z_OBJ_P(map);
+  zval *value = object->handlers->read_dimension(object, key, BP_VAR_IS, &scratch);
+  zval *copy = NULL;
+  if (value && !Z_ISUNDEF_P(value) && !EG(exception) &&
+      (!reference || Z_ISREF_P(value))) {
+    copy = vphp_new_zval();
+    if (reference) {
+      ZVAL_COPY(copy, value);
+    } else {
+      ZVAL_COPY_DEREF(copy, value);
+    }
+  }
+  zval_ptr_dtor(&scratch);
+  return copy;
+}
+
+bool vphp_weak_map_bind_reference(zval *map, zval *key, zval *reference) {
+  if (!vphp_weak_map_accepts_key(map, key) || !reference || !Z_ISREF_P(reference)) {
+    return false;
+  }
+  // Publishing static state and replacing a value can both run PHP destructors.
+  zval map_copy, key_copy, ref_copy;
+  ZVAL_COPY(&map_copy, map);
+  ZVAL_COPY(&key_copy, key);
+  ZVAL_COPY(&ref_copy, reference);
+  vphp_static_sync *sync = vphp_suspend_static_sync();
+  zend_object *object = Z_OBJ(map_copy);
+  bool bound = !EG(exception);
+#if PHP_VERSION_ID < 80600
+  // A reference assignment requires an existing key before PHP 8.6.
+  if (bound) {
+    zval scratch;
+    ZVAL_UNDEF(&scratch);
+    zval *value = object->handlers->read_dimension(object, &key_copy, BP_VAR_IS, &scratch);
+    bound = value && !Z_ISUNDEF_P(value) && !EG(exception);
+    zval_ptr_dtor(&scratch);
+  }
+#endif
+  if (bound) {
+    object->handlers->write_dimension(object, &key_copy, &ref_copy);
+  }
+  zval_ptr_dtor(&ref_copy);
+  zval_ptr_dtor(&key_copy);
+  zval_ptr_dtor(&map_copy);
+  vphp_resume_static_sync(sync);
+  return bound && !EG(exception);
+}
+
+bool vphp_lazy_objects_supported(void) {
+#if PHP_VERSION_ID >= 80400
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool vphp_clone_with_supported(void) {
+#if PHP_VERSION_ID >= 80500
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool vphp_object_is_uninitialized_lazy(zval *value) {
+#if PHP_VERSION_ID >= 80400
+  return value && Z_TYPE_P(value) == IS_OBJECT &&
+      !zend_lazy_object_initialized(Z_OBJ_P(value));
+#else
+  (void)value;
+  return false;
+#endif
+}
+
 void vphp_return_obj(zval *return_value, void *v_ptr, zend_class_entry *ce) {
   char debug_buf[256];
   int debug_on = vphp_bridge_debug_enabled();
@@ -282,7 +400,15 @@ void vphp_return_bound_object(zval *return_value, void *v_ptr,
   }
   vphp_return_obj(return_value, v_ptr, ce);
   if (Z_TYPE_P(return_value) == IS_OBJECT && h != NULL) {
-    vphp_bind_handlers_with_ownership(Z_OBJ_P(return_value), h, owns_v_ptr);
+    zend_object *object = Z_OBJ_P(return_value);
+    vphp_object_wrapper *wrapper = vphp_binding_for_obj(object, 0);
+    bool initialize = v_ptr && owns_v_ptr == VPHP_OWNS_VPTR &&
+        h->init_php_state && vphp_object_uses_inline_wrapper(object) &&
+        !wrapper->owns_v_ptr;
+    vphp_bind_handlers_with_ownership(object, h, owns_v_ptr);
+    if (initialize && !EG(exception)) {
+      h->init_php_state(v_ptr);
+    }
   }
   if (debug_on) {
     snprintf(debug_buf, sizeof(debug_buf),
@@ -371,8 +497,7 @@ void *vphp_get_v_ptr_from_zval(zval *zv) {
   if (!zv || Z_TYPE_P(zv) != IS_OBJECT) {
     return NULL;
   }
-  vphp_object_wrapper *wrapper = vphp_obj_from_obj(Z_OBJ_P(zv));
-  return wrapper ? wrapper->v_ptr : NULL;
+  return vphp_bound_object_pointer(Z_OBJ_P(zv));
 }
 
 static const zend_object_handlers *vphp_original_handlers_for(zend_object *obj) {
@@ -387,6 +512,13 @@ static const zend_object_handlers *vphp_original_handlers_for(zend_object *obj) 
   }
   return zend_get_std_object_handlers();
 }
+
+static int vphp_has_property(zend_object *object, zend_string *member, int mode,
+                             void **cache_slot);
+static void vphp_unset_property(zend_object *object, zend_string *member,
+                                void **cache_slot);
+static zval *vphp_get_property_ptr_ptr(zend_object *object, zend_string *member,
+                                       int type, void **cache_slot);
 
 static zend_object_handlers *vphp_clone_inherited_handlers(
     const zend_object_handlers *original_handlers) {
@@ -404,6 +536,9 @@ static zend_object_handlers *vphp_clone_inherited_handlers(
   memcpy(cloned, original_handlers, sizeof(zend_object_handlers));
   cloned->read_property = vphp_read_property;
   cloned->write_property = vphp_write_property;
+  cloned->has_property = vphp_has_property;
+  cloned->unset_property = vphp_unset_property;
+  cloned->get_property_ptr_ptr = vphp_get_property_ptr_ptr;
   cloned->get_properties = vphp_get_properties;
   zend_hash_index_update_ptr(&vphp_inherited_handler_registry,
                              (zend_ulong)original_handlers, cloned);
@@ -480,6 +615,10 @@ void vphp_free_object_handler(zend_object *obj) {
     cleanup_raw = wrapper->cleanup_raw;
     free_raw = wrapper->free_raw;
     owns_v_ptr = wrapper->owns_v_ptr;
+    if (wrapper->unset_bound_properties != NULL) {
+      zend_array_release(wrapper->unset_bound_properties);
+      wrapper->unset_bound_properties = NULL;
+    }
   }
   if (debug_on) {
     snprintf(debug_buf, sizeof(debug_buf),
@@ -561,6 +700,10 @@ void vphp_free_object_handler(zend_object *obj) {
     wrapper->write_handler = NULL;
     wrapper->sync_handler = NULL;
     wrapper->original_handlers = NULL;
+    zval php_state;
+    ZVAL_COPY_VALUE(&php_state, &wrapper->php_state);
+    ZVAL_UNDEF(&wrapper->php_state);
+    zval_ptr_dtor(&php_state);
     if (debug_on) {
       snprintf(debug_buf, sizeof(debug_buf),
                "vphp_free_object_handler clear_inline_wrapper done obj=%p class=%s wrapper=%p",
@@ -658,74 +801,562 @@ void vphp_free_object_handler(zend_object *obj) {
   }
 }
 
-zval *vphp_read_property(zend_object *object, zend_string *member, int type,
-                         void **cache_slot, zval *rv) {
+#if PHP_VERSION_ID >= 80400
+static bool vphp_has_zend_property_operation(zend_object *object,
+                                            zend_string *member,
+                                            zend_property_hook_kind kind) {
+  if (!object->ce->num_hooked_props) {
+    return false;
+  }
+  const zend_property_info *prop =
+      zend_hash_find_ptr(&object->ce->properties_info, member);
+  return prop && prop->hooks &&
+      ((prop->flags & ZEND_ACC_VIRTUAL) || prop->hooks[kind]);
+}
+#endif
+
+static bool vphp_property_was_unset(const vphp_object_wrapper *wrapper,
+                                    zend_string *member) {
+  return wrapper->unset_bound_properties != NULL &&
+      zend_hash_exists(wrapper->unset_bound_properties, member);
+}
+
+static bool vphp_read_v_field(vphp_object_wrapper *wrapper,
+                             zend_string *member, zval *rv) {
+  if (!wrapper->v_ptr || !wrapper->prop_handler) {
+    return false;
+  }
+  ZVAL_UNDEF(rv);
+  wrapper->prop_handler(wrapper->v_ptr, ZSTR_VAL(member),
+                        (int)ZSTR_LEN(member), rv);
+  return !Z_ISUNDEF_P(rv);
+}
+
+static bool vphp_read_bound_property(vphp_object_wrapper *wrapper,
+                                     zend_string *member, zval *rv) {
+  return !vphp_property_was_unset(wrapper, member) &&
+      vphp_read_v_field(wrapper, member, rv);
+}
+
+static zend_property_info *vphp_reference_property_info(zend_object *object,
+                                                        zend_string *member) {
+  zend_property_info *info = zend_hash_find_ptr(&object->ce->properties_info, member);
+  if (info == NULL || !(info->flags & ZEND_ACC_PUBLIC) ||
+      (info->flags & (ZEND_ACC_STATIC | ZEND_ACC_READONLY))) {
+    return NULL;
+  }
+#if PHP_VERSION_ID >= 80400
+  if (info->hooks || (info->flags & ZEND_ACC_VIRTUAL)) {
+    return NULL;
+  }
+#endif
+  return info;
+}
+
+static bool vphp_is_reference_slot(zend_object *object,
+                                   const vphp_object_wrapper *wrapper,
+                                   zend_string *member) {
+  zend_property_info *info = wrapper->may_have_bound_references
+      ? vphp_reference_property_info(object, member) : NULL;
+  return info && Z_ISREF_P(OBJ_PROP(object, info->offset));
+}
+
+bool vphp_skip_bound_property_projection(zend_object *obj, const char *name,
+                                         int name_len) {
+  const vphp_object_wrapper *wrapper = vphp_obj_from_obj(obj);
+  if (wrapper->unset_bound_properties != NULL &&
+      zend_hash_str_exists(wrapper->unset_bound_properties, name, name_len)) {
+    return true;
+  }
+  if (!wrapper->may_have_bound_references) {
+    return false;
+  }
+  zend_string *member = zend_string_init(name, name_len, 0);
+  bool referenced = vphp_is_reference_slot(obj, wrapper, member);
+  zend_string_release(member);
+  return referenced;
+}
+
+static zval *vphp_read_referenced_v_field(zend_object *object,
+                                          vphp_object_wrapper *wrapper,
+                                          int index, zval *current) {
+  zval *slot = OBJ_PROP_NUM(object, index);
+  if (!Z_ISREF_P(slot)) {
+    return NULL;
+  }
+  zend_property_info *info = object->ce->properties_info_table[index];
+  if (!info || !vphp_reference_property_info(object, info->name) ||
+      !vphp_read_v_field(wrapper, info->name, current)) {
+    return NULL;
+  }
+  return slot;
+}
+
+static int vphp_compare_bound_reference_values(const void *previous, const void *current) {
+  zval *before = (zval *)previous;
+  zval *after = (zval *)current;
+  // Keep nested references as identities. This also avoids recursing into
+  // a PHP array that reaches itself through a reference.
+  if (Z_ISREF_P(before) || Z_ISREF_P(after)) {
+    return !(Z_ISREF_P(before) && Z_ISREF_P(after) &&
+             Z_REF_P(before) == Z_REF_P(after));
+  }
+  if (vphp_inherited_value_unchanged(before, after)) {
+    return 0;
+  }
+  // A detached V array can materialize a fresh Zend array on every read.
+  if (Z_TYPE_P(before) == IS_ARRAY && Z_TYPE_P(after) == IS_ARRAY &&
+      Z_ARRVAL_P(before)->nNextFreeElement == Z_ARRVAL_P(after)->nNextFreeElement) {
+    return zend_hash_compare(Z_ARRVAL_P(before), Z_ARRVAL_P(after),
+                             vphp_compare_bound_reference_values, true);
+  }
+  return 1;
+}
+
+static void vphp_import_bound_references(zend_object *object, HashTable **baseline) {
   vphp_object_wrapper *wrapper = vphp_obj_from_obj(object);
-  if (wrapper->v_ptr && wrapper->prop_handler) {
-    ZVAL_UNDEF(rv);
-    wrapper->prop_handler(wrapper->v_ptr, ZSTR_VAL(member),
-                          (int)ZSTR_LEN(member), rv);
-    if (Z_TYPE_P(rv) != IS_UNDEF) {
-      return rv;
+  if (baseline && *baseline != NULL) {
+    zend_hash_clean(*baseline);
+  }
+  if (!wrapper->may_have_bound_references) {
+    return;
+  }
+  for (int index = 0; index < object->ce->default_properties_count; index++) {
+    zval current;
+    zval *slot = vphp_read_referenced_v_field(object, wrapper, index, &current);
+    if (slot == NULL) {
+      continue;
+    }
+    zend_string *name = object->ce->properties_info_table[index]->name;
+    if (vphp_property_was_unset(wrapper, name)) {
+      zend_hash_del(wrapper->unset_bound_properties, name);
+    }
+    if (vphp_compare_bound_reference_values(&current, Z_REFVAL_P(slot)) != 0) {
+      wrapper->write_handler(wrapper->v_ptr, ZSTR_VAL(name), (int)ZSTR_LEN(name),
+                             Z_REFVAL_P(slot));
+      if (baseline) {
+        zval_ptr_dtor(&current);
+        if (!vphp_read_v_field(wrapper, name, &current)) {
+          continue;
+        }
+      }
+    }
+    if (baseline) {
+      if (*baseline == NULL) {
+        *baseline = zend_new_array(1);
+      }
+      zval snapshot;
+      ZVAL_COPY_DEREF(&snapshot, &current);
+      zend_hash_index_update(*baseline, index, &snapshot);
+    }
+    zval_ptr_dtor(&current);
+  }
+}
+
+typedef struct vphp_bound_reference_update {
+  struct vphp_bound_reference_update *next;
+  zend_object *object;
+  int index;
+  zval reference;
+  zval value;
+} vphp_bound_reference_update;
+
+typedef struct vphp_reference_object {
+  struct vphp_reference_object *next;
+  zend_object *object;
+  vphp_task_native_pin *pin;
+  HashTable *baseline;
+} vphp_reference_object;
+
+typedef struct {
+  vphp_static_sync sync;
+  vphp_reference_object *objects;
+} vphp_reference_scope;
+
+static vphp_bound_reference_update **vphp_collect_bound_reference_updates(
+    vphp_reference_object *entry, vphp_bound_reference_update **tail) {
+  if (entry->baseline == NULL) {
+    return tail;
+  }
+  zend_object *object = entry->object;
+  vphp_object_wrapper *wrapper = vphp_obj_from_obj(object);
+  if (!wrapper->may_have_bound_references || !wrapper->write_handler) {
+    return tail;
+  }
+  for (int index = 0; index < object->ce->default_properties_count; index++) {
+    zval *baseline = zend_hash_index_find(entry->baseline, index);
+    if (!baseline) {
+      continue;
+    }
+    zval current;
+    zval *slot = vphp_read_referenced_v_field(object, wrapper, index, &current);
+    if (slot == NULL) {
+      continue;
+    }
+    if (vphp_compare_bound_reference_values(baseline, &current) != 0 &&
+        vphp_compare_bound_reference_values(Z_REFVAL_P(slot), &current) != 0) {
+      vphp_bound_reference_update *update = emalloc(sizeof(*update));
+      update->next = NULL;
+      update->object = object;
+      update->index = index;
+      ZVAL_COPY(&update->reference, slot);
+      ZVAL_COPY_DEREF(&update->value, &current);
+      *tail = update;
+      tail = &update->next;
+    }
+    zval_ptr_dtor(&current);
+  }
+  return tail;
+}
+
+static void vphp_import_reference_scope(void *target) {
+  vphp_reference_scope *scope = target;
+  for (vphp_reference_object *entry = scope->objects; entry; entry = entry->next) {
+    vphp_import_bound_references(entry->object, &entry->baseline);
+  }
+}
+
+static void vphp_export_reference_scope(void *target) {
+  vphp_reference_scope *scope = target;
+  vphp_bound_reference_update *updates = NULL;
+  vphp_bound_reference_update **tail = &updates;
+  // Compare against the V values at entry. A static table or another object
+  // may already have written to the same PHP reference at this boundary.
+  for (vphp_reference_object *entry = scope->objects; entry; entry = entry->next) {
+    tail = vphp_collect_bound_reference_updates(entry, tail);
+  }
+  zend_object *pending_exception = EG(exception);
+  EG(exception) = NULL;
+  while (updates != NULL) {
+    vphp_bound_reference_update *update = updates;
+    updates = update->next;
+    zval *slot = OBJ_PROP_NUM(update->object, update->index);
+    if (!EG(exception) && Z_ISREF_P(slot) &&
+        Z_REF_P(slot) == Z_REF(update->reference)) {
+      zval previous;
+      ZVAL_COPY(&previous, Z_REFVAL_P(slot));
+      zend_try_assign_typed_ref_ex(Z_REF_P(slot), &update->value, true);
+      zval_ptr_dtor(&previous);
+    } else {
+      zval_ptr_dtor(&update->value);
+    }
+    zval_ptr_dtor(&update->reference);
+    efree(update);
+  }
+  for (vphp_reference_object *entry = scope->objects; entry; entry = entry->next) {
+    vphp_import_bound_references(entry->object, NULL);
+    if (entry->baseline != NULL) {
+      zend_array_release(entry->baseline);
+      entry->baseline = NULL;
+    }
+  }
+  if (pending_exception != NULL) {
+    if (EG(exception)) {
+      zend_clear_exception();
+    }
+    EG(exception) = pending_exception;
+  }
+}
+
+static void vphp_track_reference_object(zend_object *object,
+                                         vphp_object_wrapper *wrapper,
+                                         zend_execute_data *call) {
+  if (!wrapper->v_ptr || !wrapper->prop_handler || !wrapper->write_handler) {
+    return;
+  }
+  if (!call || !call->func || call->func->type != ZEND_INTERNAL_FUNCTION ||
+      vphp_runtime_internal_call_depth == 0) {
+    vphp_import_bound_references(object, NULL);
+    return;
+  }
+
+  vphp_reference_scope *scope = NULL;
+  vphp_static_sync **link = &vphp_active_static_request()->sync;
+  for (vphp_static_sync *sync = *link; sync; sync = sync->previous) {
+    if (sync->from_php == vphp_import_reference_scope) {
+      vphp_reference_scope *active = sync->ce;
+      for (vphp_reference_object *entry = active->objects; entry; entry = entry->next) {
+        if (entry->object == object) {
+          return;
+        }
+      }
+      if (sync->call == call) {
+        scope = active;
+      }
+    }
+    if (sync->call == call) {
+      link = &sync->previous;
+    }
+  }
+  if (scope == NULL) {
+    scope = emalloc(sizeof(*scope));
+    scope->sync = (vphp_static_sync){
+        .previous = *link,
+        .call = call,
+        .ce = scope,
+        .from_php = vphp_import_reference_scope,
+        .to_php = vphp_export_reference_scope,
+    };
+    scope->objects = NULL;
+    // Keep generated static-table scopes on top so their defers can pop first.
+    *link = &scope->sync;
+  }
+  vphp_reference_object *entry = emalloc(sizeof(*entry));
+  entry->object = object;
+  entry->next = scope->objects;
+  entry->baseline = NULL;
+  entry->pin = vphp_pin_native_receiver(object);
+  scope->objects = entry;
+  vphp_import_bound_references(object, &entry->baseline);
+}
+
+void *vphp_bound_object_pointer(zend_object *object) {
+  vphp_object_wrapper *wrapper = vphp_obj_from_obj(object);
+  if (!wrapper || !wrapper->v_ptr) {
+    return NULL;
+  }
+  vphp_track_reference_object(object, wrapper, EG(current_execute_data));
+  return wrapper->v_ptr;
+}
+
+static void vphp_track_instance_receiver(zend_execute_data *execute_data) {
+  if (execute_data && Z_TYPE(execute_data->This) == IS_OBJECT) {
+    zend_object *object = Z_OBJ(execute_data->This);
+    vphp_track_reference_object(object, vphp_obj_from_obj(object), execute_data);
+  }
+}
+
+static void vphp_finish_reference_scope(zend_execute_data *execute_data) {
+  vphp_static_sync *sync = vphp_active_static_request()->sync;
+  if (!sync || sync->call != execute_data ||
+      sync->from_php != vphp_import_reference_scope) {
+    return;
+  }
+  vphp_reference_scope *scope = sync->ce;
+  vphp_reference_object *entry = scope->objects;
+  vphp_end_static_sync(sync);
+  while (entry != NULL) {
+    vphp_reference_object *next = entry->next;
+    vphp_unpin_native_receiver(entry->object, entry->pin);
+    efree(entry);
+    entry = next;
+  }
+}
+
+static uint8_t vphp_current_user_opcode(void) {
+  zend_execute_data *execute_data = EG(current_execute_data);
+  if (!execute_data || !execute_data->func ||
+      execute_data->func->type != ZEND_USER_FUNCTION || !execute_data->opline) {
+    return ZEND_NOP;
+  }
+  return execute_data->opline->opcode;
+}
+
+static bool vphp_is_property_update_opcode(void) {
+  switch (vphp_current_user_opcode()) {
+    case ZEND_ASSIGN_OBJ_OP:
+    case ZEND_PRE_INC_OBJ:
+    case ZEND_PRE_DEC_OBJ:
+    case ZEND_POST_INC_OBJ:
+    case ZEND_POST_DEC_OBJ:
+      return true;
+    default:
+      return false;
+  }
+}
+
+static zval *vphp_get_property_ptr_ptr(zend_object *object, zend_string *member,
+                                       int type, void **cache_slot) {
+  vphp_object_wrapper *wrapper = vphp_obj_from_obj(object);
+  bool active_reference = vphp_is_reference_slot(object, wrapper, member);
+  if (type == BP_VAR_RW && !active_reference && vphp_is_property_update_opcode()) {
+    zval current;
+    if (vphp_read_bound_property(wrapper, member, &current)) {
+      zval_ptr_dtor(&current);
+      // The VM can implement these operations through read and write handlers.
+      // Other opcodes can require a writable Zend slot for a PHP reference.
+      return NULL;
     }
   }
   const zend_object_handlers *handlers =
       vphp_fallback_handlers(vphp_original_handlers_for(object));
-  if (handlers->read_property != NULL) {
-    return handlers->read_property(object, member, type, cache_slot, rv);
+  zend_property_info *info = type == BP_VAR_W && wrapper->write_handler &&
+      handlers->get_property_ptr_ptr == zend_std_get_property_ptr_ptr
+      ? vphp_reference_property_info(object, member) : NULL;
+  zval current;
+  bool bound = info && vphp_read_v_field(wrapper, member, &current);
+  if (bound) {
+    wrapper->may_have_bound_references = true;
+    if (!active_reference && !vphp_property_was_unset(wrapper, member)) {
+      zend_std_write_property(object, member, &current, NULL);
+    }
+    zval_ptr_dtor(&current);
+    if (EG(exception)) {
+      return &EG(error_zval);
+    }
   }
-  return zend_get_std_object_handlers()->read_property(object, member, type,
-                                                       cache_slot, rv);
+  zval *slot = handlers->get_property_ptr_ptr != NULL
+      ? handlers->get_property_ptr_ptr(object, member, type, cache_slot)
+      : NULL;
+  if (bound && cache_slot != NULL) {
+    // Leave the type information available to the VM without caching the slot.
+    cache_slot[0] = NULL;
+  }
+  return slot;
+}
+
+static bool vphp_uses_standard_property_storage(zend_object *object) {
+  const zend_object_handlers *handlers = object->handlers;
+  if (handlers->get_property_ptr_ptr == vphp_get_property_ptr_ptr) {
+    handlers = vphp_original_handlers_for(object);
+  }
+  return handlers->get_property_ptr_ptr == zend_std_get_property_ptr_ptr;
+}
+
+zval *vphp_read_property(zend_object *object, zend_string *member, int type,
+                         void **cache_slot, zval *rv) {
+  vphp_object_wrapper *wrapper = vphp_obj_from_obj(object);
+  bool use_v_handler = !vphp_is_reference_slot(object, wrapper, member);
+#if PHP_VERSION_ID >= 80400
+  use_v_handler = use_v_handler &&
+      !vphp_has_zend_property_operation(object, member, ZEND_PROPERTY_HOOK_GET);
+#endif
+  if (use_v_handler && vphp_read_bound_property(wrapper, member, rv)) {
+    return rv;
+  }
+  const zend_object_handlers *handlers =
+      vphp_fallback_handlers(vphp_original_handlers_for(object));
+  // A cached read could bypass this bridge after an unset or unbound read.
+  if (handlers->read_property != NULL) {
+    return handlers->read_property(object, member, type, NULL, rv);
+  }
+  return zend_std_read_property(object, member, type, NULL, rv);
+}
+
+static zval *vphp_dispatch_property_read(zend_object *obj, const char *name,
+                                         int name_len, zval *rv,
+                                         const zend_object_handlers *handlers) {
+  if (EG(exception)) {
+    return NULL;
+  }
+  zend_string *member = zend_string_init(name, name_len, 0);
+  vphp_static_sync *sync = vphp_suspend_static_sync();
+  zval *out = NULL;
+  if (!EG(exception)) {
+    out = handlers->read_property != NULL
+        ? handlers->read_property(obj, member, BP_VAR_R, NULL, rv)
+        : zend_get_std_object_handlers()->read_property(
+              obj, member, BP_VAR_R, NULL, rv);
+  }
+  vphp_resume_static_sync(sync);
+  zend_string_release(member);
+  if (EG(exception)) {
+    return NULL;
+  }
+  if (out != NULL && Z_ISREF_P(out)) {
+    if (out == rv) {
+      zval value;
+      ZVAL_COPY_DEREF(&value, rv);
+      zval_ptr_dtor(rv);
+      ZVAL_COPY_VALUE(rv, &value);
+    } else {
+      ZVAL_DEREF(out);
+    }
+  }
+  return out;
 }
 
 zval *vphp_read_property_compat(zend_object *obj, const char *name, int name_len,
                                 zval *rv) {
-  zend_string *member = zend_string_init(name, name_len, 0);
+  return vphp_dispatch_property_read(obj, name, name_len, rv, obj->handlers);
+}
+
+zval *vphp_read_inherited_property(zend_object *obj, const char *name,
+                                    int name_len, zval *rv) {
   const zend_object_handlers *handlers =
       vphp_fallback_handlers(vphp_original_handlers_for(obj));
-  zval *out = handlers->read_property != NULL
-                  ? handlers->read_property(obj, member, BP_VAR_R, NULL, rv)
-                  : zend_get_std_object_handlers()->read_property(
-                        obj, member, BP_VAR_R, NULL, rv);
-  zend_string_release(member);
-  return out;
+  return vphp_dispatch_property_read(obj, name, name_len, rv, handlers);
+}
+
+static zval *vphp_call_property_write(zend_object *obj, zend_string *member,
+                                      zval *value, void **cache_slot,
+                                      const zend_object_handlers *handlers) {
+  return handlers->write_property != NULL
+      ? handlers->write_property(obj, member, value, cache_slot)
+      : zend_get_std_object_handlers()->write_property(
+            obj, member, value, cache_slot);
 }
 
 void vphp_write_property_compat(zend_object *obj, const char *name, int name_len,
                                 zval *value) {
+  if (EG(exception)) {
+    return;
+  }
   zend_string *member = zend_string_init(name, name_len, 0);
+  vphp_static_sync *sync = vphp_suspend_static_sync();
+  if (!EG(exception)) {
+    vphp_call_property_write(obj, member, value, NULL, obj->handlers);
+  }
+  vphp_resume_static_sync(sync);
+  zend_string_release(member);
+}
+
+void vphp_write_inherited_property(zend_object *obj, const char *name,
+                                    int name_len, zval *value) {
   const zend_object_handlers *handlers =
       vphp_fallback_handlers(vphp_original_handlers_for(obj));
-  if (handlers->write_property != NULL) {
-    handlers->write_property(obj, member, value, NULL);
-  } else {
-    zend_get_std_object_handlers()->write_property(obj, member, value, NULL);
-  }
+  zend_string *member = zend_string_init(name, name_len, 0);
+  // Generated receiver cleanup can commit a field with an exception pending.
+  vphp_call_property_write(obj, member, value, NULL, handlers);
   zend_string_release(member);
+}
+
+static int vphp_has_property(zend_object *object, zend_string *member, int mode,
+                             void **cache_slot) {
+  vphp_object_wrapper *wrapper = vphp_obj_from_obj(object);
+  bool use_v_handler = mode != ZEND_PROPERTY_EXISTS &&
+      !vphp_is_reference_slot(object, wrapper, member);
+#if PHP_VERSION_ID >= 80400
+  use_v_handler = use_v_handler &&
+      !vphp_has_zend_property_operation(object, member, ZEND_PROPERTY_HOOK_GET);
+#endif
+  zval current;
+  if (use_v_handler &&
+      vphp_read_bound_property(wrapper, member, &current)) {
+    zval *value = &current;
+    ZVAL_DEREF(value);
+    int result = mode == ZEND_PROPERTY_ISSET
+        ? Z_TYPE_P(value) != IS_NULL : zend_is_true(value);
+    zval_ptr_dtor(&current);
+    return result;
+  }
+  const zend_object_handlers *handlers =
+      vphp_fallback_handlers(vphp_original_handlers_for(object));
+  return handlers->has_property != NULL
+      ? handlers->has_property(object, member, mode, NULL)
+      : zend_std_has_property(object, member, mode, NULL);
+}
+
+static int vphp_dispatch_has_property(zend_object *obj, const char *name,
+                                      int name_len, int mode) {
+  if (EG(exception)) {
+    return 0;
+  }
+  zend_string *member = zend_string_init(name, name_len, 0);
+  vphp_static_sync *sync = vphp_suspend_static_sync();
+  int result = !EG(exception) &&
+      obj->handlers->has_property(obj, member, mode, NULL);
+  vphp_resume_static_sync(sync);
+  zend_string_release(member);
+  return result;
 }
 
 int vphp_has_property_compat(zend_object *obj, const char *name, int name_len) {
-  zend_string *member = zend_string_init(name, name_len, 0);
-  const zend_object_handlers *handlers =
-      vphp_fallback_handlers(vphp_original_handlers_for(obj));
-  int out = handlers->has_property != NULL
-                ? handlers->has_property(obj, member, ZEND_PROPERTY_EXISTS, NULL)
-                : zend_get_std_object_handlers()->has_property(
-                      obj, member, ZEND_PROPERTY_EXISTS, NULL);
-  zend_string_release(member);
-  return out;
+  return vphp_dispatch_has_property(obj, name, name_len, ZEND_PROPERTY_EXISTS);
 }
 
 int vphp_isset_property_compat(zend_object *obj, const char *name, int name_len) {
-  zend_string *member = zend_string_init(name, name_len, 0);
-  const zend_object_handlers *handlers =
-      vphp_fallback_handlers(vphp_original_handlers_for(obj));
-  int out = handlers->has_property != NULL
-                ? handlers->has_property(obj, member, ZEND_PROPERTY_ISSET, NULL)
-                : zend_get_std_object_handlers()->has_property(
-                      obj, member, ZEND_PROPERTY_ISSET, NULL);
-  zend_string_release(member);
-  return out;
+  return vphp_dispatch_has_property(obj, name, name_len, ZEND_PROPERTY_ISSET);
 }
 
 typedef struct {
@@ -1347,15 +1978,50 @@ void vphp_release_plain_object_state(void *handle) {
   }
 }
 
-void vphp_unset_property_compat(zend_object *obj, const char *name, int name_len) {
-  zend_string *member = zend_string_init(name, name_len, 0);
-  const zend_object_handlers *handlers =
-      vphp_fallback_handlers(vphp_original_handlers_for(obj));
-  if (handlers->unset_property != NULL) {
-    handlers->unset_property(obj, member, NULL);
-  } else {
-    zend_get_std_object_handlers()->unset_property(obj, member, NULL);
+static void vphp_unset_property(zend_object *object, zend_string *member,
+                                void **cache_slot) {
+  vphp_object_wrapper *wrapper = vphp_obj_from_obj(object);
+  zend_property_info *info = zend_get_property_info(object->ce, member, true);
+  zval current;
+  bool bound = info && info != ZEND_WRONG_PROPERTY_INFO &&
+      (info->flags & ZEND_ACC_PUBLIC) && !(info->flags & ZEND_ACC_STATIC);
+#if PHP_VERSION_ID >= 80400
+  bound = bound && info->hooks == NULL;
+#endif
+  bound = bound && vphp_read_bound_property(wrapper, member, &current);
+  if (bound) {
+    zval_ptr_dtor(&current);
+    if (info->flags & ZEND_ACC_READONLY) {
+      zend_throw_error(NULL, "Cannot unset readonly property %s::$%s",
+                       ZSTR_VAL(info->ce->name), ZSTR_VAL(member));
+      return;
+    }
   }
+  const zend_object_handlers *handlers =
+      vphp_fallback_handlers(vphp_original_handlers_for(object));
+  if (handlers->unset_property != NULL) {
+    handlers->unset_property(object, member, cache_slot);
+  } else {
+    zend_std_unset_property(object, member, cache_slot);
+  }
+  if (bound && !EG(exception) && Z_ISUNDEF_P(OBJ_PROP(object, info->offset))) {
+    if (wrapper->unset_bound_properties == NULL) {
+      wrapper->unset_bound_properties = zend_new_array(1);
+    }
+    zend_hash_add_empty_element(wrapper->unset_bound_properties, member);
+  }
+}
+
+void vphp_unset_property_compat(zend_object *obj, const char *name, int name_len) {
+  if (EG(exception)) {
+    return;
+  }
+  zend_string *member = zend_string_init(name, name_len, 0);
+  vphp_static_sync *sync = vphp_suspend_static_sync();
+  if (!EG(exception)) {
+    obj->handlers->unset_property(obj, member, NULL);
+  }
+  vphp_resume_static_sync(sync);
   zend_string_release(member);
 }
 
@@ -1365,21 +2031,62 @@ zval *vphp_write_property(zend_object *object, zend_string *member, zval *value,
   zend_property_info *prop_info =
       zend_get_property_info(object->ce, member, /* silent */ true);
   if (prop_info && prop_info != ZEND_WRONG_PROPERTY_INFO &&
-      (prop_info->flags & ZEND_ACC_READONLY)) {
-    vphp_zend_readonly_property_modification_error(object, member, prop_info);
-    return &EG(error_zval);
+      (prop_info->flags & ZEND_ACC_READONLY) && wrapper->v_ptr &&
+      wrapper->prop_handler) {
+    // Zend owns initialization and write checks for PHP-only properties.
+    // A V-backed readonly field already has a value outside the Zend slot.
+    zval current;
+    ZVAL_UNDEF(&current);
+    wrapper->prop_handler(wrapper->v_ptr, ZSTR_VAL(member),
+                          (int)ZSTR_LEN(member), &current);
+    if (!Z_ISUNDEF(current)) {
+      zval_ptr_dtor(&current);
+      vphp_zend_readonly_property_modification_error(object, member, prop_info);
+      return &EG(error_zval);
+    }
   }
-  if (wrapper->v_ptr && wrapper->write_handler) {
-    wrapper->write_handler(wrapper->v_ptr, ZSTR_VAL(member),
-                           (int)ZSTR_LEN(member), value);
-  }
+  bool use_v_handler = wrapper->v_ptr && wrapper->write_handler;
+#if PHP_VERSION_ID >= 80400
+  use_v_handler = use_v_handler &&
+      !vphp_has_zend_property_operation(object, member, ZEND_PROPERTY_HOOK_SET);
+#endif
   const zend_object_handlers *handlers =
       vphp_fallback_handlers(vphp_original_handlers_for(object));
-  if (handlers->write_property != NULL) {
-    return handlers->write_property(object, member, value, cache_slot);
+  bool was_unset = vphp_property_was_unset(wrapper, member);
+  // Zend's cached assignment writes the slot directly and skips the V setter.
+  zval *written = vphp_call_property_write(object, member, value, NULL, handlers);
+  // Zend validates the assignment and exposes the value after type coercion.
+  if (use_v_handler && written != NULL && written != &EG(error_zval) &&
+      !EG(exception)) {
+    zval *assigned = written;
+    if (was_unset) {
+      // A magic setter can accept the write without initializing the slot.
+      if (!prop_info || prop_info == ZEND_WRONG_PROPERTY_INFO) {
+        return written;
+      }
+      assigned = OBJ_PROP(object, prop_info->offset);
+      if (Z_ISUNDEF_P(assigned)) {
+        return written;
+      }
+      zend_hash_del(wrapper->unset_bound_properties, member);
+    }
+    ZVAL_DEREF(assigned);
+    wrapper->write_handler(wrapper->v_ptr, ZSTR_VAL(member),
+                           (int)ZSTR_LEN(member), assigned);
+    if (!was_unset && Z_TYPE_P(value) != Z_TYPE_P(assigned) &&
+        vphp_current_user_opcode() == ZEND_ASSIGN_OBJ_OP) {
+      zval current;
+      if (vphp_read_bound_property(wrapper, member, &current)) {
+        zval_ptr_dtor(&current);
+        // The VM returns this temporary from the compound assignment.
+        zval result;
+        ZVAL_COPY(&result, assigned);
+        zval_ptr_dtor(value);
+        ZVAL_COPY_VALUE(value, &result);
+      }
+    }
   }
-  return zend_get_std_object_handlers()->write_property(object, member, value,
-                                                        cache_slot);
+  return written;
 }
 
 HashTable *vphp_get_properties(zend_object *object) {
@@ -1397,15 +2104,41 @@ HashTable *vphp_get_properties(zend_object *object) {
   return props;
 }
 
+static HashTable *vphp_get_gc(zend_object *object, zval **table, int *n) {
+  /* Trace the real property slots without running the V property synchronizer. */
+  HashTable *properties = object->properties;
+  *table = properties ? NULL : object->properties_table;
+  *n = properties ? 0 : object->ce->default_properties_count;
+  vphp_object_wrapper *wrapper = vphp_binding_for_obj(object, 0);
+  if (!Z_REFCOUNTED(wrapper->php_state)) {
+    return properties;
+  }
+
+  zend_get_gc_buffer *buffer = zend_get_gc_buffer_create();
+  for (int i = 0; i < *n; i++) {
+    zend_get_gc_buffer_add_zval(buffer, &(*table)[i]);
+  }
+  zend_get_gc_buffer_add_zval(buffer, &wrapper->php_state);
+  zend_get_gc_buffer_use(buffer, table, n);
+  return properties;
+}
+
 void vphp_init_handlers() {
   memcpy(&vphp_obj_handlers, zend_get_std_object_handlers(),
          sizeof(zend_object_handlers));
   vphp_obj_handlers.offset = offsetof(vphp_object_wrapper, std);
   vphp_obj_handlers.clone_obj = NULL;
+#if PHP_VERSION_ID >= 80500
+  vphp_obj_handlers.clone_obj_with = NULL;
+#endif
   vphp_obj_handlers.free_obj = vphp_free_object_handler;
+  vphp_obj_handlers.get_gc = vphp_get_gc;
   vphp_obj_handlers.read_property = vphp_read_property;
   vphp_obj_handlers.get_properties = vphp_get_properties;
   vphp_obj_handlers.write_property = vphp_write_property;
+  vphp_obj_handlers.has_property = vphp_has_property;
+  vphp_obj_handlers.unset_property = vphp_unset_property;
+  vphp_obj_handlers.get_property_ptr_ptr = vphp_get_property_ptr_ptr;
 }
 
 void vphp_init_cloneable_object_handlers(zend_object_handlers *handlers,
@@ -1415,12 +2148,16 @@ void vphp_init_cloneable_object_handlers(zend_object_handlers *handlers,
   }
   *handlers = vphp_obj_handlers;
   handlers->clone_obj = clone_obj;
+#if PHP_VERSION_ID >= 80500
+  handlers->clone_obj_with = zend_objects_clone_obj_with;
+#endif
 }
 
 zend_object *vphp_clone_bound_object(zend_object *source,
                                       vphp_class_handlers *handlers,
                                       void (*clone_into)(void *, void *)) {
-  void *source_ptr = vphp_obj_from_obj(source)->v_ptr;
+  vphp_object_wrapper *source_binding = vphp_obj_from_obj(source);
+  void *source_ptr = source_binding->v_ptr;
   zend_object *target = source->ce->create_object(source->ce);
   if (source_ptr == NULL) {
     zend_throw_error(NULL, "Cannot clone uninitialized VPHP object of class %s",
@@ -1433,8 +2170,17 @@ zend_object *vphp_clone_bound_object(zend_object *source,
                      ZSTR_VAL(source->ce->name));
     return target;
   }
+  vphp_import_bound_references(source, NULL);
   clone_into(source_ptr, binding->v_ptr);
+  if (!EG(exception) && handlers->init_php_state) {
+    handlers->init_php_state(binding->v_ptr);
+  }
   if (!EG(exception)) {
+    binding->may_have_bound_references = source_binding->may_have_bound_references;
+    if (source_binding->unset_bound_properties != NULL) {
+      binding->unset_bound_properties =
+          zend_array_dup(source_binding->unset_bound_properties);
+    }
     zend_objects_clone_members(target, source);
   }
   return target;
@@ -1453,6 +2199,10 @@ zend_object *vphp_create_object_handler(zend_class_entry *ce) {
   obj->cleanup_raw = NULL;
   obj->free_raw = NULL;
   obj->original_handlers = NULL;
+  obj->unset_bound_properties = NULL;
+  obj->may_have_bound_references = false;
+  obj->instance_handlers = NULL;
+  ZVAL_UNDEF(&obj->php_state);
   zend_object_std_init(&obj->std, ce);
   object_properties_init(&obj->std, ce);
   obj->std.handlers = &vphp_obj_handlers;
@@ -1471,7 +2221,9 @@ zend_object *vphp_create_inherited_object_handler(zend_class_entry *ce) {
   obj = vphp_resolve_inherited_parent_object(ce,
                                              vphp_create_inherited_object_handler);
   if (obj == NULL) {
-    return vphp_create_object_handler(ce);
+    obj = vphp_create_object_handler(ce);
+    vphp_init_inherited_fields(obj, ce);
+    return obj;
   }
   vphp_apply_auto_interface_bindings_for_class(ce);
   original_handlers = obj->handlers;
@@ -1485,6 +2237,7 @@ zend_object *vphp_create_inherited_object_handler(zend_class_entry *ce) {
     }
     obj->handlers = cloned_handlers;
   }
+  vphp_init_inherited_fields(obj, ce);
   return obj;
 }
 
@@ -1542,6 +2295,15 @@ vphp_object_wrapper *vphp_ensure_instance_binding(zend_object *obj,
   if (wrapper == &vphp_null_wrapper) {
     return wrapper;
   }
+  /* Inherited methods use the embedded parent payload at offset zero.
+   * The existing binding still owns and manages the full derived payload. */
+  if (wrapper->v_ptr && wrapper->owns_v_ptr &&
+      vphp_object_uses_inline_wrapper(obj)) {
+    return wrapper;
+  }
+  if (!wrapper->v_ptr && wrapper->instance_handlers) {
+    h = wrapper->instance_handlers();
+  }
   wrapper->cleanup_raw = h->cleanup_raw;
   wrapper->free_raw = h->free_raw;
   wrapper->prop_handler = h->prop_handler;
@@ -1582,6 +2344,10 @@ vphp_object_wrapper *vphp_ensure_borrowed_instance_binding(
 void vphp_init_owned_instance(zend_object *obj, vphp_class_handlers *h) {
   vphp_object_wrapper *wrapper = vphp_binding_for_obj(obj, 1);
   if (wrapper == &vphp_null_wrapper || h == NULL) {
+    return;
+  }
+  if (wrapper->instance_handlers) {
+    vphp_ensure_owned_instance_binding(obj, h);
     return;
   }
   if (wrapper->v_ptr == NULL && h->new_raw != NULL) {

@@ -1,5 +1,13 @@
 module vphp
 
+import vphp.zend
+
+// owned_object_php_state returns a borrowed array traced by PHP's collector.
+// The inline PHP wrapper must own v_ptr and remain alive while the array is used.
+pub fn owned_object_php_state(v_ptr voidptr) ?PhpArray {
+	return PhpArray.from_zval(ZVal.from_ptr(zend.owned_object_php_state_ptr(v_ptr)))
+}
+
 pub struct PhpObject {
 mut:
 	value PhpValueZBox
@@ -183,6 +191,20 @@ pub fn (o PhpObject) clone() PhpObject {
 	return PhpObject{
 		value: o.value.clone()
 	}
+}
+
+// clone_with creates a PHP clone using Zend's property update rules.
+pub fn (o PhpObject) clone_with(properties PhpArray) !PhpObject {
+	if !zend.clone_with_supported() {
+		return error('PHP clone with updated properties requires PHP 8.5 or newer')
+	}
+	clone := PhpFunction.find('clone') or { return error('The PHP clone function is unavailable') }
+	mut result := clone.invoke(o, properties)
+	if has_exception() || !result.is_object() {
+		result.release()
+		return error('PHP clone did not return an object')
+	}
+	return PhpObject.adopt_zval(result.take_zval()) or { error('could not adopt the PHP clone') }
 }
 
 pub fn (o PhpObject) clone_request_owned() RequestOwnedZBox {

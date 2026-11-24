@@ -33,22 +33,22 @@ fn test_parse_attr_list_empty_input() {
 	assert parse_attr_list('').len == 0
 }
 
-fn test_parse_php_arg_types_simple() {
-	result := parse_php_arg_types('name=string, age=int')
+fn test_parse_php_arg_name_values_simple() {
+	result := parse_php_arg_name_values('name=string, age=int')
 	assert result.len == 2
 	assert result['name'] == 'string'
 	assert result['age'] == 'int'
 }
 
-fn test_parse_php_arg_types_with_spaces() {
-	result := parse_php_arg_types('  name  =  string  ,  age  =  int  ')
+fn test_parse_php_arg_name_values_with_spaces() {
+	result := parse_php_arg_name_values('  name  =  string  ,  age  =  int  ')
 	assert result.len == 2
 	assert result['name'] == 'string'
 	assert result['age'] == 'int'
 }
 
-fn test_parse_php_arg_types_empty_input() {
-	assert parse_php_arg_types('').len == 0
+fn test_parse_php_arg_name_values_empty_input() {
+	assert parse_php_arg_name_values('').len == 0
 }
 
 fn test_parse_php_prop_map_simple() {
@@ -73,21 +73,21 @@ fn test_parse_php_prop_attr_basic() {
 	result := parse_php_prop_attr('property_name')
 	assert result != none
 	assert result or { panic('expected result') }.name == 'property_name'
-	assert result or { panic('expected result') }.v_type == 'mixed'
+	assert result or { panic('expected result') }.php_type == 'mixed'
 }
 
 fn test_parse_php_prop_attr_with_type() {
 	result := parse_php_prop_attr('count: int')
 	assert result != none
 	assert result or { panic('expected result') }.name == 'count'
-	assert result or { panic('expected result') }.v_type == 'int'
+	assert result or { panic('expected result') }.php_type == 'int'
 }
 
 fn test_parse_php_prop_attr_quoted() {
 	result := parse_php_prop_attr("'my_prop: string'")
 	assert result != none
 	assert result or { panic('expected result') }.name == 'my_prop'
-	assert result or { panic('expected result') }.v_type == 'string'
+	assert result or { panic('expected result') }.php_type == 'string'
 }
 
 fn test_parse_php_prop_attr_empty_input() {

@@ -7,6 +7,9 @@ import v.pref
 
 // Keep the V parser API and flat node layout at the boundary of the generator.
 pub fn parse_file(path string, mut table Table) !File {
+	if table.export_schemas.len == 0 {
+		table.export_schemas = load_export_attribute_schemas()!
+	}
 	mut prefs := pref.new_preferences()
 	prefs.enable_globals = true
 	// Read source declarations even in inactive compile-time branches.
@@ -22,9 +25,10 @@ pub fn parse_file(path string, mut table Table) !File {
 }
 
 struct Decoder {
-	tree    &flat.FlatAst
-	attrs   map[int][]Attr
-	imports map[string]string
+	tree           &flat.FlatAst
+	attrs          map[int][]Attr
+	imports        map[string]string
+	export_schemas map[string][]ExportAttributeField
 }
 
 fn decode_file(tree &flat.FlatAst, mut table Table) !File {
@@ -32,7 +36,10 @@ fn decode_file(tree &flat.FlatAst, mut table Table) !File {
 	for id in tree.file_node_ids {
 		file := tree.node(flat.NodeId(id))
 		if file.children_count > 0 {
-			file_imports[int(file.pos.id)] = decode_import_aliases(tree, file)
+			imports := decode_import_aliases(tree, file)
+			validate_attribute_spelling(tree.formatter_file_sources[file.pos.id], imports,
+				table.export_schemas)!
+			file_imports[int(file.pos.id)] = imports
 		}
 	}
 	mut attrs := map[int][]Attr{}
@@ -40,7 +47,7 @@ fn decode_file(tree &flat.FlatAst, mut table Table) !File {
 		if node.kind == .directive && node.value.starts_with('@attributes:') {
 			id := node.value.all_after(':').int()
 			imports := file_imports[int(tree.node(flat.NodeId(id)).pos.id)]
-			attrs[id] = decode_source_attrs(node.generic_params(), imports)!
+			attrs[id] = decode_source_attrs(node.generic_params(), imports, table.export_schemas)!
 		}
 	}
 	mut module_name := 'main'
@@ -48,7 +55,7 @@ fn decode_file(tree &flat.FlatAst, mut table Table) !File {
 	for id in tree.file_node_ids {
 		file := tree.node(flat.NodeId(id))
 		children := tree.children_of(file)
-		d := Decoder{tree, attrs, file_imports[int(file.pos.id)]}
+		d := Decoder{tree, attrs, file_imports[int(file.pos.id)], table.export_schemas}
 		for child in children {
 			node := tree.node(child)
 			match node.kind {
@@ -56,32 +63,39 @@ fn decode_file(tree &flat.FlatAst, mut table Table) !File {
 					module_name = node.value
 				}
 				.fn_decl {
-					stmts << d.function(child)
+					stmts << d.function(child, module_name)
 				}
 				.struct_decl {
-					decl := d.structure(child)!
+					decl := d.structure(child, module_name)!
 					table.register(module_name, decl.name, Symbol{ kind: .struct_, info: Struct{decl.fields} })
 					stmts << decl
 				}
 				.interface_decl {
 					mut methods := []FnDecl{}
-					for method in tree.children_of(node) {
-						if tree.node(method).op == .dot {
-							methods << d.function(method)
+					mut embeds := []string{}
+					for member_id in tree.children_of(node) {
+						member := tree.node(member_id)
+						if member.op == .dot {
+							methods << d.function(member_id, module_name)
+						} else if member.kind == .interface_field && member.typ_text() == '' {
+							embeds << d.type_name(member.value)
 						}
 					}
 					stmts << InterfaceDecl{
-						name:    node.value
-						attrs:   attrs[int(child)]
-						methods: methods
+						name:        node.value
+						module_name: module_name
+						attrs:       attrs[int(child)]
+						methods:     methods
+						embeds:      embeds
 					}
 				}
 				.enum_decl {
 					table.register(module_name, node.value, Symbol{ kind: .enum })
 					stmts << EnumDecl{
-						name:   node.value
-						attrs:  attrs[int(child)]
-						fields: d.enum_fields(node)!
+						name:         node.value
+						attrs:        attrs[int(child)]
+						fields:       d.enum_fields(node)!
+						backing_type: flat.source_type_name(node.enum_backing_type_id())
 					}
 				}
 				.const_decl {
@@ -94,6 +108,8 @@ fn decode_file(tree &flat.FlatAst, mut table Table) !File {
 							kind: .sum_type
 							info: SumType{variants}
 						})
+					} else if node.typ_text() != '' && node.generic_params().len == 0 {
+						table.type_aliases['${module_name}.${node.value}'] = d.type_name(node.typ_text())
 					}
 				}
 				else {}
@@ -118,7 +134,7 @@ fn decode_import_aliases(tree &flat.FlatAst, file flat.Node) map[string]string {
 	return imports
 }
 
-fn decode_source_attrs(raw []string, imports map[string]string) ![]Attr {
+fn decode_source_attrs(raw []string, imports map[string]string, export_schemas map[string][]ExportAttributeField) ![]Attr {
 	mut attrs := decode_attrs(raw)
 	for index, attr in attrs {
 		mut resolved := attr
@@ -127,48 +143,14 @@ fn decode_source_attrs(raw []string, imports map[string]string) ![]Attr {
 				resolved = Attr{ ...resolved, name: module_name + attr.name[dot..] }
 			}
 		}
-		if resolved.has_arg && resolved.name in ['vphp.PhpStringParam_default_value', 'vphp.PhpArgNames',
-			'vphp.PhpArgNames_names', 'vphp.PhpArgTypes', 'vphp.PhpArgTypes_types',
-			'vphp.PhpArgDefaults', 'vphp.PhpArgDefaults_defaults', 'vphp.PhpExportFunction_name',
-			'vphp.PhpExportMethod_name', 'vphp.PhpArgType', 'vphp.PhpArgType_v_name',
-			'vphp.PhpArgType_php_type', 'vphp.PhpArgType_1', 'vphp.PhpArgName', 'vphp.PhpArgName_v_name',
-			'vphp.PhpArgName_php_name', 'vphp.PhpArgName_1', 'vphp.PhpArgDefault',
-			'vphp.PhpArgDefault_v_name', 'vphp.PhpArgDefault_default_value', 'vphp.PhpArgDefault_1',
-			'vphp.PhpReturnType', 'vphp.PhpReturnType_php_type', 'vphp.PhpExportClass',
-			'vphp.PhpExportClass_name', 'vphp.PhpExportInterface', 'vphp.PhpExportInterface_name',
-			'vphp.PhpExportEnum', 'vphp.PhpExportEnum_name', 'vphp.PhpExtends', 'vphp.PhpExtends_name',
-			'vphp.PhpExtendsInterfaces', 'vphp.PhpExtendsInterfaces_names', 'vphp.PhpImplements',
-			'vphp.PhpImplements_names', 'vphp.PhpProperty', 'vphp.PhpProperty_name',
-			'vphp.PhpDeclaredProperty', 'vphp.PhpDeclaredProperty_name',
-			'vphp.PhpDeclaredProperty_v_type', 'vphp.PhpDeclaredProperty_1',
-			'vphp.PhpDeclaredReadonlyProperty', 'vphp.PhpDeclaredReadonlyProperty_name',
-			'vphp.PhpDeclaredReadonlyProperty_v_type', 'vphp.PhpDeclaredReadonlyProperty_visibility',
-			'vphp.PhpDeclaredReadonlyProperty_1', 'vphp.PhpDeclaredReadonlyProperty_2',
-			'vphp.PhpClassConstants', 'vphp.PhpClassConstants_source', 'vphp.PhpClassStatics',
-			'vphp.PhpClassStatics_source', 'vphp.PhpExportTask', 'vphp.PhpExportTask_name',
-			'vphp.PhpClassAttribute', 'vphp.PhpClassAttribute_name', 'vphp.PhpClassAttribute_args',
-			'vphp.PhpClassAttribute_1', 'vphp.PhpParameterAttribute',
-			'vphp.PhpParameterAttribute_v_name', 'vphp.PhpParameterAttribute_name',
-			'vphp.PhpParameterAttribute_args', 'vphp.PhpParameterAttribute_1',
-			'vphp.PhpParameterAttribute_2', 'vphp.PhpCallableAttribute',
-			'vphp.PhpCallableAttribute_name', 'vphp.PhpCallableAttribute_args',
-			'vphp.PhpCallableAttribute_1', 'vphp.PhpPropertyAttribute', 'vphp.PhpPropertyAttribute_name',
-			'vphp.PhpPropertyAttribute_args', 'vphp.PhpPropertyAttribute_1',
-			'vphp.PhpClassConstantAttribute', 'vphp.PhpClassConstantAttribute_name',
-			'vphp.PhpClassConstantAttribute_args', 'vphp.PhpClassConstantAttribute_1',
-			'vphp.PhpEnumCaseAttribute', 'vphp.PhpEnumCaseAttribute_name',
-			'vphp.PhpEnumCaseAttribute_args', 'vphp.PhpEnumCaseAttribute_1',
-			'vphp.PhpInterfaceAttribute', 'vphp.PhpInterfaceAttribute_name',
-			'vphp.PhpInterfaceAttribute_args', 'vphp.PhpInterfaceAttribute_1', 'vphp.PhpEnumAttribute',
-			'vphp.PhpEnumAttribute_name', 'vphp.PhpEnumAttribute_args', 'vphp.PhpEnumAttribute_1'] {
-			spelling := raw[index].all_after(':').trim_space()
-			value := parse_string_attr_literal(spelling) or {
-				return error('${resolved.name} must be a V string literal')
+		if resolved.has_arg && resolved.name in ['php_function', 'vphp.PhpExportFunction'] {
+			if value := parse_string_attr_literal(raw[index].all_after(':').trim_space()) {
+				resolved = Attr{ ...resolved, arg: value }
 			}
-			resolved = Attr{ ...resolved, arg: value }
 		}
 		attrs[index] = resolved
 	}
+	attrs = bind_export_attribute_args(attrs, raw, export_schemas)!
 	normalize_export_attrs(mut attrs)
 	return attrs
 }
@@ -190,7 +172,6 @@ fn normalize_export_attrs(mut attrs []Attr) {
 			'vphp.PhpArgDefaults' { 'php_arg_default' }
 			else { continue }
 		}
-		mut name := attr.arg
 		field := match legacy_name {
 			'php_implements' { 'names' }
 			'php_extends' {
@@ -202,9 +183,7 @@ fn normalize_export_attrs(mut attrs []Attr) {
 			'php_arg_default' { 'defaults' }
 			else { 'name' }
 		}
-		if index + 1 < attrs.len && attrs[index + 1].name == '${attr.name}_${field}' {
-			name = attrs[index + 1].arg
-		}
+		name := attr.args[field]
 		// Type names retain the escaped spelling used by registration and C symbols.
 		attrs[index] = Attr{
 			name:    legacy_name
@@ -298,12 +277,12 @@ fn decode_attrs(raw []string) []Attr {
 				break
 			}
 		}
-		result << Attr{name, arg, call_name, call_arg, true}
+		result << Attr{ name: name, arg: arg, call_name: call_name, call_arg_name: call_arg, has_arg: true }
 	}
 	return result
 }
 
-fn (d &Decoder) function(id flat.NodeId) FnDecl {
+fn (d &Decoder) function(id flat.NodeId, module_name string) FnDecl {
 	node := d.tree.node(id)
 	mut params := []Param{}
 	mut body := []flat.NodeId{}
@@ -340,6 +319,7 @@ fn (d &Decoder) function(id flat.NodeId) FnDecl {
 	attrs := d.attrs[int(id)]
 	return FnDecl{
 		name:                  name
+		module_name:           module_name
 		attrs:                 attrs
 		params:                params
 		return_type:           d.type_name(node.typ_text())
@@ -353,7 +333,7 @@ fn (d &Decoder) function(id flat.NodeId) FnDecl {
 	}
 }
 
-fn (d &Decoder) structure(id flat.NodeId) !StructDecl {
+fn (d &Decoder) structure(id flat.NodeId, module_name string) !StructDecl {
 	node := d.tree.node(id)
 	mut fields := []Field{}
 	mut embeds := []Param{}
@@ -380,7 +360,7 @@ fn (d &Decoder) structure(id flat.NodeId) !StructDecl {
 			name:             field.value
 			typ:              d.type_name(field.typ_text())
 			attrs:            if meta.len > 1 {
-				decode_source_attrs(meta[1..], d.imports)!
+				decode_source_attrs(meta[1..], d.imports, d.export_schemas)!
 			} else {
 				[]Attr{}
 			}
@@ -391,7 +371,15 @@ fn (d &Decoder) structure(id flat.NodeId) !StructDecl {
 			default_expr:     d.expr(d.tree.child(field, 0))
 		}
 	}
-	return StructDecl{node.value, d.attrs[int(id)], fields, embeds, implements_types, implements_types.len > 0}
+	return StructDecl{
+		name:             node.value
+		module_name:      module_name
+		attrs:            d.attrs[int(id)]
+		fields:           fields
+		embeds:           embeds
+		implements_types: implements_types
+		is_implements:    implements_types.len > 0
+	}
 }
 
 fn (d &Decoder) field_comments(field &flat.Node) []Comment {
@@ -430,7 +418,7 @@ fn (d &Decoder) enum_fields(node &flat.Node) ![]ValueField {
 			name:     field.value
 			expr:     d.expr(d.tree.child(field, 0))
 			has_expr: field.children_count > 0
-			attrs:    decode_source_attrs(field.generic_params(), d.imports)!
+			attrs:    decode_source_attrs(field.generic_params(), d.imports, d.export_schemas)!
 		}
 	}
 	return result
