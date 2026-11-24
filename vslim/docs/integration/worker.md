@@ -179,10 +179,11 @@ dispatch 完成后，VSlim 会自动把请求里的 tracing 信息补到响应�
 
 ## worker 场景下的 handler 返回值
 
-worker facade 层最终会把结果归一化成 `VSlim\VHttpd\Response` 或 map。当前支持：
+worker facade 可以返回缓冲响应或流响应。handler 支持以下返回值。
 
 - `VSlim\VHttpd\Response`
 - `Psr\Http\Message\ResponseInterface`
+- `VSlim\Stream\Response` 或 `VHttpd\PhpWorker\StreamResponse`
 - `string`
 - `array`
 
@@ -196,6 +197,8 @@ return [
     'body' => '{"ok":true}',
 ];
 ```
+
+PSR-7 响应使用文件、PHP stream resource 或用户态流作为正文时，worker 会在中间件结束后按块读取。可定位的正文从开头发送，管道等不可定位的正文从当前游标发送。VSlim 的内存流继续使用缓冲响应。HEAD 和无正文状态只传递状态码和响应头。
 
 ## 请求校验
 

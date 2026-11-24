@@ -7,11 +7,11 @@ import vphp
 @[heap]
 pub struct VSlimValidator {
 mut:
-	input_data     map[string]vphp.DynValue @[vphp.PhpProperty; vphp.PhpProperty_name: 'inputData']
-	rule_map       map[string][]string      @[vphp.PhpProperty; vphp.PhpProperty_name: 'ruleMap']
-	error_map      map[string][]string      @[vphp.PhpProperty; vphp.PhpProperty_name: 'errorMap']
-	validated_data map[string]vphp.DynValue @[vphp.PhpProperty; vphp.PhpProperty_name: 'validatedData']
-	validation_ran bool                     @[vphp.PhpProperty; vphp.PhpProperty_name: 'validationRan']
+	input_data     map[string]vphp.DynValue @[vphp.PhpProperty(name: 'inputData')]
+	rule_map       map[string][]string      @[vphp.PhpProperty(name: 'ruleMap')]
+	error_map      map[string][]string      @[vphp.PhpProperty(name: 'errorMap')]
+	validated_data map[string]vphp.DynValue @[vphp.PhpProperty(name: 'validatedData')]
+	validation_ran bool                     @[vphp.PhpProperty(name: 'validationRan')]
 }
 
 @[vphp.PhpExportMethod(name: '')]

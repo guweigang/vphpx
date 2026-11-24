@@ -103,6 +103,71 @@ $closeFrames = $readFrames($server, $method, [
 ]);
 echo ($closeFrames[0]['event'] ?? '') . PHP_EOL;
 
+foreach (['reject', 'close'] as $terminal) {
+    $router = new VSlim\App();
+    $handler = new VSlim\WebSocket\App();
+    $calls = 0;
+    $handler->onOpen(static function ($conn) use ($handler, $terminal): string {
+        $handler->join('pending', $conn);
+        if ($terminal === 'reject') {
+            $conn->reject(401, 'denied');
+        } else {
+            $conn->close(1000, 'closed before accept');
+        }
+        return 'ignored after the connection ends';
+    });
+    $handler->onMessage(static function () use (&$calls): void { ++$calls; });
+    $router->websocket('/terminal', $handler);
+    $connection = new VHttpd\PhpWorker\WebSocket\Connection(null, 'terminal');
+    $open = ['id' => 'terminal', 'event' => 'open', 'path' => '/terminal'];
+    if ($router->handleWebSocket(frame: $open, conn: $connection) !== 'ignored after the connection ends'
+        || array_column($connection->frames(), 'event') !== [$terminal]
+        || $handler->hasConnection($connection) || $handler->members('pending') !== []) {
+        throw new RuntimeException("The open callback kept a connection that sent $terminal");
+    }
+    $router->handleWebSocket(['id' => 'terminal', 'event' => 'message'], $connection);
+    if ($calls !== 0) {
+        throw new RuntimeException("The route binding survived the $terminal frame");
+    }
+    $unretained = WeakReference::create($connection);
+    unset($connection);
+    if ($unretained->get() !== null) {
+        throw new RuntimeException("A connection that sent $terminal remained rooted");
+    }
+}
+
+foreach ([false, true] as $closeInOpen) {
+    $handler = new VSlim\WebSocket\App();
+    $handler->onOpen(static function ($conn) use ($handler, $closeInOpen): bool {
+        $handler->join('active', $conn);
+        $conn->accept();
+        $conn->reject();
+        if ($closeInOpen) {
+            $conn->close();
+        }
+        return false;
+    });
+    $closeCalls = 0;
+    $handler->onMessage(static fn (): string => 'still connected');
+    $handler->onClose(static function () use (&$closeCalls): void { ++$closeCalls; });
+    $router = new VSlim\App();
+    $router->websocket('/active', $handler);
+    $connection = new VHttpd\PhpWorker\WebSocket\Connection(null, 'active');
+    $result = $router->handleWebSocket(['id' => 'active', 'event' => 'open', 'path' => '/active'], $connection);
+    $events = $closeInOpen ? ['accept', 'close'] : ['accept'];
+    if ($result !== false || array_column($connection->frames(), 'event') !== $events
+        || !$handler->hasConnection($connection) || $handler->members('active') !== ['active']) {
+        throw new RuntimeException('The worker did not preserve an accepted connection');
+    }
+    if (!$closeInOpen && $router->handleWebSocket(['id' => 'active', 'event' => 'message'], $connection) !== 'still connected') {
+        throw new RuntimeException('The accepted route could not dispatch a message');
+    }
+    $router->handleWebSocket(['id' => 'active', 'event' => 'close'], $connection);
+    if ($closeCalls !== 1 || $handler->hasConnection($connection) || $handler->members('active') !== []) {
+        throw new RuntimeException('The accepted connection did not dispatch close and release its state');
+    }
+}
+
 @unlink($app);
 ?>
 --EXPECT--

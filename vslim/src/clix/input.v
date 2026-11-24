@@ -92,7 +92,7 @@ fn (mut cli VSlimCliApp) resolve_command_input(runtime vphp.PhpValue, raw_args [
 	if !command_has_definition(runtime) {
 		return unparsed_input(raw_args)
 	}
-	def := read_command_definition(runtime) or {
+	def := read_command_definition(runtime, false) or {
 		return cli_command_input_error(none, program, command_name, err.msg())
 	}
 	return def.parse_command_input(raw_args) or {

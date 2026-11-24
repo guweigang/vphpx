@@ -101,14 +101,25 @@ fn (mut cli VSlimCliApp) bootstrap_dir_apply(path string) ! {
 
 fn (mut cli VSlimCliApp) configure_bootstrap_spec(spec vphp.PhpValue, mut progress supportx.BootstrapProgress) !bool {
 	iterable := spec.as_iterable() or { return error('bootstrap spec must be iterable') }
-	mut normalized := progress.normalize('cli:spec', iterable)!
+	mut normalized := progress.normalize_entries('cli:spec', iterable)!
 	defer {
 		normalized.release()
 	}
 	if vphp.has_exception() {
 		return error('CLI bootstrap spec evaluation failed')
 	}
-	config := supportx.app_bootstrap_spec(normalized)
+	mut options := vphp.PhpArray.new()
+	defer {
+		options.release()
+	}
+	for item in normalized.value_items() {
+		pair := item.as_array() or { return error('invalid CLI bootstrap entry') }
+		key := pair.get_index(0)
+		if key.is_string() && key.get_string() in ['commands', 'boot'] {
+			options.set_zval(key.get_string(), pair.get_index(1))
+		}
+	}
+	config := supportx.app_bootstrap_spec(options)
 	boot := config.boot_option()
 	if commands := config.lookup(['commands']) {
 		command_iter := commands.as_iterable() or {
@@ -116,7 +127,7 @@ fn (mut cli VSlimCliApp) configure_bootstrap_spec(spec vphp.PhpValue, mut progre
 		}
 		cli.apply_bootstrap_command_many(command_iter, mut progress)!
 	} else if !boot.is_present() {
-		cli.apply_command_array(normalized, mut progress)!
+		cli.apply_command_entries(normalized, mut progress)!
 		return false
 	}
 	enabled := boot.enabled()

@@ -15,7 +15,7 @@ mut:
 	command_hidden     map[string]bool                        @[vphp.PhpIgnoreField]
 	command_canonical  map[string]string                      @[vphp.PhpIgnoreField]
 	bootstrap_progress map[string]&supportx.BootstrapProgress @[vphp.PhpIgnoreField]
-	project_root       string @[vphp.PhpProperty; vphp.PhpProperty_name: 'projectRoot']
+	project_root       string @[vphp.PhpProperty(name: 'projectRoot')]
 	command_context    &CliCommandContext = &CliCommandContext{} @[vphp.PhpIgnoreField]
 	invocation_depth   int @[vphp.PhpIgnoreField]
 }

@@ -2,11 +2,10 @@ module httpx
 
 import vphp
 
-@[vphp.PhpArgType(v_name: 'response', php_type: 'Psr\\Http\\Message\\ResponseInterface')]
 @[vphp.PhpReturnType(php_type: 'VSlim\\VHttpd\\Response')]
 @[vphp.PhpExportMethod(name: 'toVSlimResponse')]
-pub fn VSlimPsr7Adapter.to_vslim_response(response vphp.PhpValue) &VSlimResponse {
-	return VSlimPsr7Response.from_value(response).to_vslim_response().boxed_snapshot()
+pub fn VSlimPsr7Adapter.to_vslim_response(response PsrResponse) &VSlimResponse {
+	return VSlimPsr7Response.from_value(response.to_value()).to_vslim_response().boxed_snapshot()
 }
 
 @[vphp.PhpExportMethod(name: 'toVSlimRequest')]
@@ -102,7 +101,7 @@ pub fn VSlimPsr7Adapter.to_worker_envelope(request vphp.PhpValue) vphp.PhpArray 
 
 fn adapter_read_request_target(request vphp.PhpValue) string {
 	if request.method_exists('getRequestTarget') {
-		mut target := request.call_method('getRequestTarget')
+		mut target := value_subject(request).adapter_read_method_or_prop('getRequestTarget', '')
 		defer {
 			target.release()
 		}
@@ -142,7 +141,7 @@ fn adapter_read_request_target(request vphp.PhpValue) string {
 
 fn adapter_read_body(request vphp.PhpValue) string {
 	if request.method_exists('getBody') {
-		mut body := request.call_method('getBody')
+		mut body := value_subject(request).adapter_read_method_or_prop('getBody', '')
 		defer {
 			body.release()
 		}
@@ -238,7 +237,7 @@ fn adapter_read_uri_part(request vphp.PhpValue, getter string, property string, 
 	if uri.is_valid() && uri.is_object() {
 		if uri.method_exists(getter) {
 			uri_obj := uri.as_object() or { return default_value }
-			mut value := uri_obj.call_method(getter)
+			mut value := uri_obj.call_method_by_value(getter)
 			defer {
 				value.release()
 			}
@@ -265,14 +264,7 @@ fn adapter_read_uri_part(request vphp.PhpValue, getter string, property string, 
 }
 
 fn (subject PhpValueSubject) adapter_read_uri_object() vphp.PhpValue {
-	request := subject.value
-	if request.method_exists('getUri') {
-		return request.call_method('getUri').owned()
-	}
-	if request.property_exists('uri') {
-		return request.prop_value('uri').owned()
-	}
-	return vphp.PhpValue.null()
+	return subject.adapter_read_method_or_prop('getUri', 'uri')
 }
 
 fn adapter_read_string(request vphp.PhpValue, getter string, property string, default_value string) string {
@@ -288,10 +280,15 @@ fn adapter_read_string(request vphp.PhpValue, getter string, property string, de
 
 fn (subject PhpValueSubject) adapter_read_method_or_prop(getter string, property string) vphp.PhpValue {
 	request := subject.value
-	if request.method_exists(getter) {
-		return request.call_method(getter).owned()
+	if mut object := request.as_object() {
+		defer {
+			object.release()
+		}
+		if object.method_exists(getter) {
+			return object.call_method_by_value(getter)
+		}
 	}
-	if request.property_exists(property) {
+	if property != '' && request.property_exists(property) {
 		return request.prop_value(property).owned()
 	}
 	return vphp.PhpValue.null()

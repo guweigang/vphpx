@@ -2,8 +2,15 @@
 VSlim normalizes arrays and Traversable once and applies bootstrap boot options after routes or commands
 --SKIPIF--
 <?php if (!extension_loaded('vslim')) print 'skip'; ?>
+--INI--
+disable_functions=iterator_to_array
 --FILE--
 <?php
+function iterator_to_array(): never
+{
+    throw new LogicException('Native iterable collection must not call a global PHP function');
+}
+
 final class BootstrapSpecProbe
 {
     public function __construct(private ?WeakReference $cli = null) {}
@@ -24,6 +31,13 @@ function specInput(array $spec, bool $traversable): iterable
         ++$GLOBALS['iterations'];
         yield from $spec;
     })();
+}
+
+function repeatedPositions(array $values): Generator
+{
+    foreach ($values as $value) {
+        yield 8 => $value;
+    }
 }
 
 $root = sys_get_temp_dir() . '/vslim-bootstrap-iteration-' . bin2hex(random_bytes(8));
@@ -80,6 +94,7 @@ try {
 return (static function (): Generator {
     ++$GLOBALS['iterations'];
     yield 'providers' => [\App\Providers\Nested\SinglePassProvider::class];
+    yield 'boot' => true;
     yield 'boot' => false;
 })();
 PHP);
@@ -87,6 +102,41 @@ PHP);
     $app = new VSlim\App();
     $app->bootstrapFile($root . '/app.php');
     echo 'project|', $app->providerCount(), '|', (int) $app->booted(), '|', $GLOBALS['iterations'], PHP_EOL;
+
+    $events = [];
+    $firstProvider = new class ($events) {
+        public function __construct(private array &$events) {}
+        public function register(): void { $this->events[] = 'provider-a'; }
+    };
+    $secondProvider = new class ($events) {
+        public function __construct(private array &$events) {}
+        public function register(): void { $this->events[] = 'provider-b'; }
+    };
+    $firstModule = new class ($events) {
+        public function __construct(private array &$events) {}
+        public function register(): void { $this->events[] = 'module-a'; }
+    };
+    $secondModule = new class ($events) {
+        public function __construct(private array &$events) {}
+        public function register(): void { $this->events[] = 'module-b'; }
+    };
+    $app = new VSlim\App();
+    $app->bootstrap([
+        'providers' => repeatedPositions([$firstProvider, $secondProvider]),
+        'modules' => repeatedPositions([$firstModule, $secondModule]),
+        'routes' => repeatedPositions([
+            static function (VSlim\App $app) use (&$events): void {
+                $events[] = 'route-a';
+                $app->get('/position-a', static fn () => 'a');
+            },
+            static function (VSlim\App $app) use (&$events): void {
+                $events[] = 'route-b';
+                $app->get('/position-b', static fn () => 'b');
+            },
+        ]),
+    ]);
+    echo 'positions|', $app->providerCount(), '|', $app->moduleCount(), '|',
+        $app->dispatch('GET', '/position-b')->body, '|', implode(',', $events), PHP_EOL;
 } finally {
     $files = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
@@ -113,3 +163,4 @@ web|traversable|false|0|second|route-a,route-b,boot|1
 cli|traversable|false|0|beta,alpha||1
 shorthand|only|1
 project|1|0|1
+positions|2|2|b|provider-a,provider-b,module-a,module-b,route-a,route-b

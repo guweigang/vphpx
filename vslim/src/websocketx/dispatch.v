@@ -3,7 +3,10 @@ module websocketx
 import vphp
 
 pub fn is_live_handler_value(handler vphp.PhpValue) bool {
-	if obj := handler.as_object() {
+	if mut obj := handler.as_object() {
+		defer {
+			obj.release()
+		}
 		return is_live_handler_object(obj)
 	}
 	return false
@@ -21,27 +24,44 @@ pub fn is_supported_handler_value(handler vphp.PhpValue) bool {
 	if handler.is_callable() || handler.is_string() || handler.is_array() {
 		return true
 	}
-	if obj := handler.as_object() {
-		return obj.method_exists('handleWebSocket') || obj.method_exists('onOpen')
-			|| obj.method_exists('onMessage') || obj.method_exists('onClose')
-			|| is_live_handler_object(obj)
+	if mut obj := handler.as_object() {
+		defer {
+			obj.release()
+		}
+		return has_websocket_methods(obj) || is_live_handler_object(obj)
 	}
 	return false
+}
+
+fn has_websocket_methods(handler vphp.PhpObject) bool {
+	return handler.method_exists('handleWebSocket') || handler.method_exists('onOpen')
+		|| handler.method_exists('onMessage') || handler.method_exists('onClose')
 }
 
 pub fn dispatch_handler_value(handler vphp.PhpValue, event string, frame vphp.PhpArray, conn vphp.PhpObject) vphp.PhpValue {
 	if !handler.is_valid() {
 		return vphp.PhpValue.null()
 	}
-	if obj := handler.as_object() {
-		return dispatch_handler_object(obj, event, frame, conn)
+	if mut obj := handler.as_object() {
+		defer {
+			obj.release()
+		}
+		if is_live_handler_object(obj) {
+			return vphp.PhpValue.null()
+		}
+		if has_websocket_methods(obj) {
+			return dispatch_handler_object(obj, event, frame, conn)
+		}
 	}
-	if callable := handler.as_callable() {
+	if mut callable := handler.as_callable() {
+		defer {
+			callable.release()
+		}
 		mut frame_scope := vphp.PhpScope.frame()
 		defer {
 			frame_scope.release()
 		}
-		return callable.invoke(...handler_args(mut frame_scope, event, frame, conn))
+		return callable.invoke_by_value(...handler_args(mut frame_scope, event, frame, conn))
 	}
 	return vphp.PhpValue.null()
 }
@@ -53,9 +73,12 @@ pub fn dispatch_service_handler(service vphp.PhpValue, method string, event stri
 		defer {
 			frame_scope.release()
 		}
-		service_obj := service.as_object() or { return vphp.PhpValue.null() }
-		return service_obj.call_method(clean_method, ...handler_args(mut frame_scope, event, frame,
-			conn))
+		mut service_obj := service.as_object() or { return vphp.PhpValue.null() }
+		defer {
+			service_obj.release()
+		}
+		return service_obj.call_method_by_value(clean_method, ...handler_args(mut frame_scope, event,
+			frame, conn))
 	}
 	return dispatch_handler_value(service, event, frame, conn)
 }
@@ -65,12 +88,12 @@ pub fn dispatch_handler_object(handler vphp.PhpObject, event string, frame vphp.
 		return vphp.PhpValue.null()
 	}
 	if handler.method_exists('handleWebSocket') {
-		return handler.call_method('handleWebSocket', frame, conn)
+		return handler.call_method_by_value('handleWebSocket', frame, conn)
 	}
 	match event {
 		'open' {
 			if handler.method_exists('onOpen') {
-				return handler.call_method('onOpen', conn, frame)
+				return handler.call_method_by_value('onOpen', conn, frame)
 			}
 		}
 		'message' {
@@ -79,7 +102,7 @@ pub fn dispatch_handler_object(handler vphp.PhpObject, event string, frame vphp.
 				defer {
 					frame_scope.release()
 				}
-				return handler.call_method('onMessage', ...handler_args(mut frame_scope, event,
+				return handler.call_method_by_value('onMessage', ...handler_args(mut frame_scope, event,
 					frame, conn))
 			}
 		}
@@ -89,7 +112,7 @@ pub fn dispatch_handler_object(handler vphp.PhpObject, event string, frame vphp.
 				defer {
 					frame_scope.release()
 				}
-				return handler.call_method('onClose', ...handler_args(mut frame_scope, event,
+				return handler.call_method_by_value('onClose', ...handler_args(mut frame_scope, event,
 					frame, conn))
 			}
 		}

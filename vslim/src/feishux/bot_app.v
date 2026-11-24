@@ -7,11 +7,19 @@ const feishu_namespace = 'VHttpd\\Upstream\\WebSocket\\Feishu'
 
 @[vphp.PhpExportClass(name: 'VSlim\\App\\Feishu\\BotApp')]
 @[vphp.PhpFinalClass]
-@[vphp.PhpDeclaredReadonlyProperty(name: 'handler', v_type: 'VSlim\\App\\Feishu\\BotHandler', visibility: 'private')]
 @[vphp.PhpZendPropertyCopy]
 @[vphp.PhpClassAttribute(name: 'VHttpd\\Attribute\\Dispatchable', args: '"websocket_upstream"')]
 @[heap]
 pub struct VSlimFeishuBotApp {}
+
+const bot_app_properties = vphp.PhpDeclaredProperties[VSlimFeishuBotApp]{
+	properties: [vphp.PhpDeclaredPropertySpec{
+		name:        'handler'
+		php_type:    'VSlim\\App\\Feishu\\BotHandler'
+		visibility:  .private
+		is_readonly: true
+	}]
+}
 
 @[vphp.PhpExportMethod(name: '')]
 @[vphp.PhpArgType(v_name: 'handler', php_type: 'VSlim\\App\\Feishu\\BotHandler')]

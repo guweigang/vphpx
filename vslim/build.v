@@ -1,5 +1,6 @@
 import os
 import strings
+import json2
 import v.cmdexec
 import vphp.compiler
 
@@ -413,12 +414,19 @@ fn main() {
 			os.norm_path(os.join_path(project_root, configured_output))
 		}
 	} else {
-		os.join_path(project_root, '${ext_name}.so')
+		filename := if os.user_os() == 'windows' && emit_only {
+			'php_${ext_name}.dll'
+		} else {
+			'${ext_name}.so'
+		}
+		os.join_path(project_root, filename)
 	}
 	gc_mode := detect_v_gc_mode()
 	println('🛠️  2. 转译 V 逻辑为 C -> ${transpiled_c}')
 	println('   使用 V GC 模式: ${gc_mode}')
+	expressions_sidecar := '${output_so}.stub-expressions.json'
 	os.rm(output_so) or {}
+	os.rm(expressions_sidecar) or {}
 	os.rm(legacy_transpiled_c) or {}
 
 	v_module_path := detect_v_module_path()
@@ -435,23 +443,41 @@ fn main() {
 		exit(1)
 	}
 
+	if !emit_only {
+		println('🛠️  3. GCC 最终链接...')
+		link_extension(ext_name, transpiled_c, output_so, gc_mode) or {
+			eprintln('❌ GCC 编译失败: ${err.msg()}')
+			exit(1)
+		}
+
+		if !os.exists(output_so) {
+			eprintln('❌ 错误：${output_so} 未生成！')
+			exit(1)
+		}
+	}
+
+	os.write_file(expressions_sidecar, json2.encode(vphp_c.stub_expressions())) or {
+		eprintln('❌ 无法写入 stub 表达式元数据: ${err.msg()}')
+		exit(1)
+	}
+	declarations := vphp_c.userland_class_declarations()
+	classes_sidecar := '${output_so}.classes.php'
+	if declarations != '' {
+		os.write_file(classes_sidecar, '${compiler.userland_classes_header}\n${declarations}\n') or {
+			eprintln('❌ 无法写入 PHP 用户态类: ${err.msg()}')
+			exit(1)
+		}
+	} else {
+		compiler.remove_stale_userland_classes(classes_sidecar) or {
+			eprintln('❌ 无法清理 PHP 用户态类: ${err.msg()}')
+			exit(1)
+		}
+	}
 	if emit_only {
 		println('✅ 已生成扩展桥接源码（emit-only 模式），跳过最终本地链接。')
-		return
+	} else {
+		println('✅ 构建成功！${output_so} 已就绪。')
 	}
-
-	println('🛠️  3. GCC 最终链接...')
-	link_extension(ext_name, transpiled_c, output_so, gc_mode) or {
-		eprintln('❌ GCC 编译失败: ${err.msg()}')
-		exit(1)
-	}
-
-	if !os.exists(output_so) {
-		eprintln('❌ 错误：${output_so} 未生成！')
-		exit(1)
-	}
-
-	println('✅ 构建成功！${output_so} 已就绪。')
 }
 
 fn link_extension(ext_name string, transpiled_c string, output_so string, gc_mode string) ! {
@@ -497,6 +523,8 @@ fn link_extension(ext_name string, transpiled_c string, output_so string, gc_mod
 	args << libs
 	if is_macos {
 		args << ['-undefined', 'dynamic_lookup']
+	} else if os.user_os() == 'linux' {
+		args << '-Wl,-z,nodelete'
 	}
 	args << '-fvisibility=default'
 	println('执行命令: ${cmdexec.display(args[0], args[1..])}')

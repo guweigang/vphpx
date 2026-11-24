@@ -8,7 +8,7 @@ pub struct VSlimResponse {
 pub mut:
 	status       int
 	body         string
-	content_type string @[vphp.PhpProperty; vphp.PhpProperty_name: 'contentType']
+	content_type string @[vphp.PhpProperty(name: 'contentType')]
 	headers      map[string]string
 }
 

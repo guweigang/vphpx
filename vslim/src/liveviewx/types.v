@@ -7,7 +7,7 @@ import vphp
 pub struct VSlimLiveView {
 mut:
 	host    VSlimViewHost
-	root_id string @[vphp.PhpProperty; vphp.PhpProperty_name: 'rootId']
+	root_id string @[vphp.PhpProperty(name: 'rootId')]
 	sockets map[string]&VSlimLiveSocket
 }
 
@@ -25,6 +25,6 @@ mut:
 @[heap]
 pub struct VSlimLiveComponentState {
 mut:
-	component_id string @[vphp.PhpProperty; vphp.PhpProperty_name: 'componentId']
+	component_id string @[vphp.PhpProperty(name: 'componentId')]
 	socket_ref   &VSlimLiveSocket = unsafe { nil } @[vphp.PhpIgnoreField]
 }

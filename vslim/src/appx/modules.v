@@ -33,7 +33,7 @@ fn (mut app VSlimApp) register_components(values vphp.PhpIterable, kind AppCompo
 }
 
 fn (mut app VSlimApp) register_bootstrap_components(values vphp.PhpIterable, kind AppComponentKind, step string, mut progress supportx.BootstrapProgress) ! {
-	mut normalized := progress.normalize(step + ':list', values)!
+	mut normalized := progress.normalize_values(step + ':list', values)!
 	defer {
 		normalized.release()
 	}

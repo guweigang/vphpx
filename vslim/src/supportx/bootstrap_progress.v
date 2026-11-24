@@ -7,9 +7,9 @@ import vphp
 pub struct BootstrapProgress {
 	enabled bool
 mut:
-	active    bool
-	completed map[string]bool
-	values    map[string]vphp.PhpValue
+	active     bool
+	completed  map[string]bool
+	values     map[string]vphp.PhpValue
 	file_lists map[string][]string
 }
 
@@ -193,6 +193,20 @@ pub fn (mut p BootstrapProgress) normalize(step string, iterable vphp.PhpIterabl
 }
 
 pub fn (mut p BootstrapProgress) normalize_for_retry(step string, iterable vphp.PhpIterable) !(vphp.PhpArray, bool) {
+	return p.normalize_iterable(step, iterable, .keyed)
+}
+
+pub fn (mut p BootstrapProgress) normalize_entries(step string, iterable vphp.PhpIterable) !vphp.PhpArray {
+	normalized, _ := p.normalize_iterable(step, iterable, .entries)!
+	return normalized
+}
+
+pub fn (mut p BootstrapProgress) normalize_values(step string, iterable vphp.PhpIterable) !vphp.PhpArray {
+	normalized, _ := p.normalize_iterable(step, iterable, .values)!
+	return normalized
+}
+
+fn (mut p BootstrapProgress) normalize_iterable(step string, iterable vphp.PhpIterable, shape BootstrapIterableShape) !(vphp.PhpArray, bool) {
 	if mut value := p.value(step) {
 		defer {
 			value.release()
@@ -200,7 +214,9 @@ pub fn (mut p BootstrapProgress) normalize_for_retry(step string, iterable vphp.
 		normalized := value.as_array() or { return error('bootstrap list must be iterable') }
 		return normalized, false
 	}
-	mut normalized, unchanged := evaluate_bootstrap_iterable(iterable)!
+	mut normalized, unchanged := evaluate_bootstrap_iterable(iterable, shape) or {
+		return error('bootstrap spec must be iterable')
+	}
 	if vphp.has_exception() {
 		normalized.release()
 		return error('bootstrap list evaluation failed')

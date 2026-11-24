@@ -83,8 +83,8 @@ pub fn (mut c VSlimController) set_app(app vphp.PhpObject) &VSlimController {
 
 @[vphp.PhpExportMethod(name: 'setView')]
 @[vphp.PhpBorrowedReturn]
-pub fn (mut c VSlimController) set_view(view &viewx.VSlimView) &VSlimController {
-	c.view_ref = view
+pub fn (mut c VSlimController) set_view(view ?&viewx.VSlimView) &VSlimController {
+	c.view_ref = view or { unsafe { nil } }
 	return &c
 }
 

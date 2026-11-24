@@ -6,11 +6,13 @@ VSlim validator validates array input and returns validated fields
 <?php
 $factory = new ReflectionMethod(VSlim\Validate\Validator::class, 'make');
 $parameters = $factory->getParameters();
+$validatorClass = new ReflectionClass(VSlim\Validate\Validator::class);
 if (!$factory->isStatic() || (string) $factory->getReturnType() !== VSlim\Validate\Validator::class
     || $factory->getNumberOfRequiredParameters() !== 2
     || $parameters[0]->getName() !== 'data' || (string) $parameters[0]->getType() !== 'mixed'
     || $parameters[1]->getName() !== 'rules' || (string) $parameters[1]->getType() !== 'array'
-    || !(new ReflectionProperty(VSlim\Validate\Validator::class, 'validationRan'))->isProtected()) {
+    || !$validatorClass->getProperty('validationRan')->isProtected()
+    || !$validatorClass->getProperty('inputData')->isProtected() || $validatorClass->hasProperty('input_data')) {
     throw new RuntimeException('Unexpected validator signature');
 }
 

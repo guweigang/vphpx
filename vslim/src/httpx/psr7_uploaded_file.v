@@ -5,14 +5,26 @@ import vphp
 @[vphp.PhpArgNames(names: 'default_stream=defaultStream,default_size=defaultSize,default_error=defaultError,default_client_filename=defaultClientFilename,default_client_media_type=defaultClientMediaType')]
 @[vphp.PhpExportMethod(name: '')]
 pub fn (mut u VSlimPsr7UploadedFile) construct(default_stream vphp.PhpValue, default_size ?int, default_error int, default_client_filename ?string, default_client_media_type ?string) &VSlimPsr7UploadedFile {
-	u.stream_ref = VSlimPsr7Stream.from_value(default_stream)
-	u.size_hint = uploaded_file_size_hint(default_size, u.stream_ref)
-	u.error_code = normalize_uploaded_file_error(default_error)
-	u.client_filename = default_client_filename or { '' }
-	u.client_media_type = default_client_media_type or { '' }
+	u.init_stream(VSlimPsr7Stream.from_value(default_stream), default_stream, default_size,
+		default_error, default_client_filename, default_client_media_type)
+	return &u
+}
+
+fn (mut u VSlimPsr7UploadedFile) init_stream(stream &VSlimPsr7Stream, owner vphp.PhpValue, size ?int, error int, client_filename ?string, client_media_type ?string) {
+	if state := vphp.owned_object_php_state(u) {
+		if stream.native_backed {
+			state.set_value('stream', owner)
+		} else {
+			state.remove('stream')
+		}
+	}
+	u.stream_ref = stream
+	u.size_hint = uploaded_file_size_hint(size, stream)
+	u.error_code = normalize_uploaded_file_error(error)
+	u.client_filename = client_filename or { '' }
+	u.client_media_type = client_media_type or { '' }
 	u.moved = false
 	u.target_path = ''
-	return &u
 }
 
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\StreamInterface')]
@@ -61,7 +73,7 @@ pub fn (u &VSlimPsr7UploadedFile) move_to(target_path vphp.PhpValue) {
 		u.stream_ref
 	}
 	content := stream.stream_string()
-	size := if u.size_hint >= 0 { u.size_hint } else { content.len }
+	size := if u.size_hint >= 0 { u.size_hint } else { i64(content.len) }
 	mut path_arg := vphp.PhpString.of(path)
 	mut content_arg := vphp.PhpString.of(content)
 	defer {
@@ -84,10 +96,13 @@ pub fn (u &VSlimPsr7UploadedFile) move_to(target_path vphp.PhpValue) {
 		writable.moved = true
 		writable.stream_ref = nil
 	}
+	if state := vphp.owned_object_php_state(u) {
+		state.remove('stream')
+	}
 }
 
 @[vphp.PhpExportMethod(name: 'getSize')]
-pub fn (u &VSlimPsr7UploadedFile) get_size() ?int {
+pub fn (u &VSlimPsr7UploadedFile) get_size() ?i64 {
 	if u.size_hint >= 0 {
 		return u.size_hint
 	}
@@ -125,7 +140,9 @@ pub fn (u &VSlimPsr7UploadedFile) str() string {
 
 pub fn (mut u VSlimPsr7UploadedFile) cleanup() {
 	if u.stream_ref != unsafe { nil } {
-		vphp.unregister_vptr_root(u.stream_ref)
+		if !u.stream_ref.native_backed {
+			vphp.unregister_vptr_root(u.stream_ref)
+		}
 		u.stream_ref = unsafe { nil }
 	}
 }

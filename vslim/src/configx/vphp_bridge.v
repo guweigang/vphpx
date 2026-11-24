@@ -48,12 +48,12 @@ pub fn vslim_config_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_config_construct']
-pub fn vphp_wrap_vslim_config_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_config_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimConfig](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_config_load']
 pub fn vphp_wrap_vslim_config_load(ptr voidptr, ctx vphp.Context) voidptr {
@@ -305,13 +305,13 @@ pub fn vphp_wrap_vslim_config_all_json(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_config_handlers']
 pub fn vslim_config_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_config_get_prop),
-        write_handler: voidptr(vslim_config_set_prop),
-        sync_handler: voidptr(vslim_config_sync_props),
-        new_raw: voidptr(vslim_config_new_raw),
-        cleanup_raw: voidptr(vslim_config_cleanup_raw),
-        free_raw: voidptr(vslim_config_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_config_get_prop,
+        write_handler: vslim_config_set_prop,
+        sync_handler: vslim_config_sync_props,
+        new_raw: vslim_config_new_raw,
+        cleanup_raw: vslim_config_cleanup_raw,
+        free_raw: vslim_config_free_raw
     )
 }
 pub fn VSlimConfig.php_class_entry() vphp.ZendClassEntry {

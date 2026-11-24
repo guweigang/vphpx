@@ -3,6 +3,7 @@ module sessionx
 import configx
 import containerx
 import httpx
+import middlewarex
 import vphp
 
 pub fn VSlimSessionStartMiddleware.from_container(container &containerx.VSlimContainer) &VSlimSessionStartMiddleware {
@@ -194,18 +195,15 @@ pub fn (mut middleware VSlimSessionStartMiddleware) set_app(app vphp.PhpValue) &
 	return &middleware
 }
 
-@[vphp.PhpArgTypes(types: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface')]
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
 @[vphp.PhpExportMethod(name: '')]
-pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &httpx.VSlimPsr7Response {
+pub fn (middleware &VSlimSessionStartMiddleware) process(request httpx.PsrServerRequest, handler middlewarex.PsrRequestHandler) &httpx.VSlimPsr7Response {
 	container := middleware_container_or_error(middleware.container_ref, 'Session middleware') or {
 		return httpx.VSlimPsr7Response.text(500, err.msg())
 	}
-	if !request.is_valid() {
-		return httpx.VSlimPsr7Response.text(500, 'Session middleware request is not an object')
-	}
-	mut session := session_for_request(container, request)
-	mut result := handler.call_method('handle', request)
+	request_object := request.to_object()
+	mut session := session_for_request(container, request_object)
+	mut result := handler.to_object().call_method('handle', request_object)
 	defer {
 		result.release()
 	}
@@ -254,17 +252,14 @@ pub fn (middleware &VSlimAuthRequireMiddleware) redirect_path_value() string {
 	return middleware.redirect_path.trim_space()
 }
 
-@[vphp.PhpArgTypes(types: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface')]
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
 @[vphp.PhpExportMethod(name: '')]
-pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &httpx.VSlimPsr7Response {
+pub fn (middleware &VSlimAuthRequireMiddleware) process(request httpx.PsrServerRequest, handler middlewarex.PsrRequestHandler) &httpx.VSlimPsr7Response {
 	container := middleware_container_or_error(middleware.container_ref, 'Auth middleware') or {
 		return httpx.VSlimPsr7Response.text(500, err.msg())
 	}
-	if !request.is_valid() {
-		return httpx.VSlimPsr7Response.text(500, 'Auth middleware request is not an object')
-	}
-	mut guard := auth_for_request(container, request)
+	request_object := request.to_object()
+	mut guard := auth_for_request(container, request_object)
 	if !guard.check() {
 		return psr7_auth_unauthorized_response(auth_redirect_to(container, middleware.redirect_path))
 	}
@@ -273,11 +268,11 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.PhpObject, 
 	defer {
 		user_id_arg.release()
 	}
-	mut next_request := request.with_attribute('auth.user_id', user_id_arg)
+	mut next_request := request_object.with_attribute('auth.user_id', user_id_arg)
 	defer {
 		next_request.release()
 	}
-	mut user := auth_user(container, request)
+	mut user := auth_user(container, request_object)
 	defer {
 		user.release()
 	}
@@ -286,7 +281,7 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.PhpObject, 
 		next_request.release()
 		next_request = enriched
 	}
-	mut result := handler.call_method('handle', next_request)
+	mut result := handler.to_object().call_method('handle', next_request)
 	defer {
 		result.release()
 	}
@@ -334,21 +329,18 @@ pub fn (middleware &VSlimAuthGuestMiddleware) redirect_path_value() string {
 	return middleware.redirect_path.trim_space()
 }
 
-@[vphp.PhpArgTypes(types: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface')]
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
 @[vphp.PhpExportMethod(name: '')]
-pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &httpx.VSlimPsr7Response {
+pub fn (middleware &VSlimAuthGuestMiddleware) process(request httpx.PsrServerRequest, handler middlewarex.PsrRequestHandler) &httpx.VSlimPsr7Response {
 	container := middleware_container_or_error(middleware.container_ref, 'Guest middleware') or {
 		return httpx.VSlimPsr7Response.text(500, err.msg())
 	}
-	if !request.is_valid() {
-		return httpx.VSlimPsr7Response.text(500, 'Guest middleware request is not an object')
-	}
-	mut guard := auth_for_request(container, request)
+	request_object := request.to_object()
+	mut guard := auth_for_request(container, request_object)
 	if !guard.guest() {
 		return psr7_auth_guest_redirect(auth_redirect_to(container, middleware.redirect_path))
 	}
-	mut result := handler.call_method('handle', request)
+	mut result := handler.to_object().call_method('handle', request_object)
 	defer {
 		result.release()
 	}
@@ -427,23 +419,20 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) message() string {
 	return middleware.message.trim_space()
 }
 
-@[vphp.PhpArgTypes(types: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface')]
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
 @[vphp.PhpExportMethod(name: '')]
-pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &httpx.VSlimPsr7Response {
+pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request httpx.PsrServerRequest, handler middlewarex.PsrRequestHandler) &httpx.VSlimPsr7Response {
 	container := middleware_container_or_error(middleware.container_ref, 'Ability middleware') or {
 		return httpx.VSlimPsr7Response.text(500, err.msg())
 	}
 	if middleware.ability() == '' {
 		return httpx.VSlimPsr7Response.text(500, 'Ability middleware ability is not configured')
 	}
-	if !request.is_valid() {
-		return httpx.VSlimPsr7Response.text(500, 'Ability middleware request is not an object')
-	}
-	if !can(container, middleware.ability(), request) {
+	request_object := request.to_object()
+	if !can(container, middleware.ability(), request_object) {
 		return httpx.VSlimPsr7Response.text(middleware.status(), middleware.message())
 	}
-	mut result := handler.call_method('handle', request)
+	mut result := handler.to_object().call_method('handle', request_object)
 	defer {
 		result.release()
 	}

@@ -2,6 +2,57 @@ module httpx
 
 import vphp
 
+const response_envelope_fields = ['status', 'body', 'content_type', 'headers']
+
+fn stringable_route_body(result vphp.PhpValue) ?string {
+	mut body := result.as_stringable() or { return none }
+	defer {
+		body.release()
+	}
+	return body.stringify() or { none }
+}
+
+fn json_serializable_route_body(result vphp.PhpValue) ?string {
+	if vphp.has_exception() {
+		return none
+	}
+	mut body := result.as_json_serializable() or { return none }
+	defer {
+		body.release()
+	}
+	return body.encode() or { none }
+}
+
+fn response_envelope(result vphp.PhpValue, fields []string) ?vphp.PhpArray {
+	if array := result.as_array() {
+		return array
+	}
+	mut access := result.as_array_access() or { return none }
+	defer {
+		access.release()
+	}
+	mut envelope := vphp.PhpArray.new()
+	for field in fields {
+		mut key := vphp.PhpString.of(field)
+		defer {
+			key.release()
+		}
+		exists := access.has(key) or {
+			envelope.release()
+			return none
+		}
+		if exists {
+			mut value := access.get(key) or {
+				envelope.release()
+				return none
+			}
+			envelope.set(field, value)
+			value.release()
+		}
+	}
+	return envelope
+}
+
 fn response_from_object_props(object vphp.PhpObject) ?VSlimResponse {
 	mut status_value := object.prop_value('status')
 	mut body_value := object.prop_value('body')
@@ -73,7 +124,10 @@ pub fn VSlimResponse.from_route_result(result vphp.PhpValue) (VSlimResponse, boo
 	if result.is_string() {
 		return VSlimResponse.text(200, result.to_string()), true
 	}
-	if arr := result.as_array() {
+	if mut arr := response_envelope(result, response_envelope_fields) {
+		defer {
+			arr.release()
+		}
 		mut headers := map[string]string{}
 		if headers_value := arr.value('headers') {
 			if headers_array := headers_value.as_array() {
@@ -97,16 +151,24 @@ pub fn VSlimResponse.from_route_result(result vphp.PhpValue) (VSlimResponse, boo
 			headers:      snapshot_string_map(headers)
 		}, true
 	}
+	if body := stringable_route_body(result) {
+		return VSlimResponse.text(200, body), true
+	}
+	if body := json_serializable_route_body(result) {
+		return VSlimResponse.json(200, body), true
+	}
 	return VSlimResponse{}, false
 }
 
-pub fn VSlimPsr7Response.from_route_result(result vphp.PhpValue) (&VSlimPsr7Response, bool) {
+pub fn VSlimPsr7Response.from_route_result(result vphp.PhpValue, options Psr7ResponseImportOptions) (&VSlimPsr7Response, bool) {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
 		return VSlimPsr7Response.text(200, ''), true
 	}
 	if object := result.as_object() {
-		if object.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
-			return VSlimPsr7Response.from_value(result), true
+		if object.is_instance_of('VSlim\\Psr7\\Response')
+			|| object.is_instance_of('VSlimPsr7Response')
+			|| object.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
+			return VSlimPsr7Response.from_value(result, options), true
 		}
 		if object.is_instance_of('VSlim\\VHttpd\\Response')
 			|| object.is_instance_of('VSlimResponse') {
@@ -126,7 +188,10 @@ pub fn VSlimPsr7Response.from_route_result(result vphp.PhpValue) (&VSlimPsr7Resp
 	if result.is_string() {
 		return VSlimPsr7Response.text(200, result.to_string()), true
 	}
-	if arr := result.as_array() {
+	if mut arr := response_envelope(result, response_envelope_fields) {
+		defer {
+			arr.release()
+		}
 		mut headers := map[string][]string{}
 		mut header_names := map[string]string{}
 		if headers_value := arr.value('headers') {
@@ -158,6 +223,12 @@ pub fn VSlimPsr7Response.from_route_result(result vphp.PhpValue) (&VSlimPsr7Resp
 			body_ref:         VSlimPsr7Stream.from_content(body)
 		}, true
 	}
+	if body := stringable_route_body(result) {
+		return VSlimPsr7Response.text(200, body), true
+	}
+	if body := json_serializable_route_body(result) {
+		return VSlimPsr7Response.json(200, body), true
+	}
 	return unsafe { nil }, false
 }
 
@@ -180,8 +251,14 @@ pub fn VSlimResponse.body_from_route_result(result vphp.PhpValue) (string, bool)
 	if result.is_string() {
 		return result.to_string(), true
 	}
-	if arr := result.as_array() {
+	if mut arr := response_envelope(result, ['body']) {
+		defer {
+			arr.release()
+		}
 		return arr.string_at('body', ''), true
+	}
+	if body := stringable_route_body(result) {
+		return body, true
 	}
 	return '', false
 }

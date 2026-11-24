@@ -93,6 +93,34 @@ generatorAttempt('side-effect', $app, $run);
 generatorAttempt('side-effect', $app, $run);
 $generator = $make();
 generatorAttempt('side-effect', $app, $run);
+
+$app = new VSlim\App();
+$failure = new DomainException('iteration failed');
+$spec = new class($app, $failure) implements IteratorAggregate {
+    private int $attempt = 0;
+    public function __construct(private VSlim\App $app, private Throwable $failure) {}
+    public function getIterator(): Traversable
+    {
+        if (++$this->attempt === 1) {
+            $this->app->getNamed('discarded', '/discarded', static fn () => 'discarded');
+            yield 'routes' => generatorRoute('partial');
+            throw $this->failure;
+        }
+        yield 'routes' => generatorRoute('complete');
+    }
+};
+try {
+    $app->bootstrap($spec);
+    throw new RuntimeException('VSlim accepted a partial iterable bootstrap spec');
+} catch (DomainException $error) {
+    if ($error !== $failure || $app->routeNames() !== []) {
+        throw new RuntimeException('Iterable bootstrap lost the original exception or failed to roll back');
+    }
+}
+$app->bootstrap($spec);
+if ($app->routeNames() !== ['complete']) {
+    throw new RuntimeException('A failed iterable bootstrap affected its retry');
+}
 ?>
 --EXPECT--
 web|outer failed|prefix,iterate,yielded|prefix

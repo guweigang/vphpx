@@ -58,6 +58,22 @@ final class VSlimJobRuntimePhptFailingJob
     }
 }
 
+final class VSlimJobRuntimePhptFailingConstructor
+{
+    public static int $constructed = 0;
+    public static int $handled = 0;
+    public static int $destroyed = 0;
+
+    public function __construct()
+    {
+        ++self::$constructed;
+        throw new RuntimeException('planned constructor failure');
+    }
+
+    public function handle(array $payload): void { ++self::$handled; }
+    public function __destruct() { ++self::$destroyed; }
+}
+
 $cfg = (new VSlim\Database\Config())
     ->setDriver('mysql')
     ->setHost((string) getenv('VSLIM_DB_HOST'))
@@ -168,6 +184,31 @@ echo "failed-status=" . ($failedRow['status'] ?? '') . PHP_EOL;
 echo "failed-attempts=" . ($failedRow['attempts'] ?? '') . PHP_EOL;
 echo "failed-error=" . ($failedRow['last_error'] ?? '') . PHP_EOL;
 echo "dead-error=" . ($deadRow['error_message'] ?? '') . PHP_EOL;
+
+$ctorId = $dispatcher->dispatch(VSlimJobRuntimePhptFailingConstructor::class, [], $queue, 0, 2);
+foreach ([1 => 'pending', 2 => 'failed'] as $attempts => $status) {
+    $ran = $worker->runOnce($queue);
+    $rows = $db->queryParams(
+        'SELECT status, attempts, reserved_by IS NULL AS reserved_is_null, last_error FROM vslim_jobs WHERE id = ?',
+        [(string) $ctorId],
+    );
+    $row = $rows[0] ?? [];
+    if ($ran !== 1 || ($row['status'] ?? null) !== $status || (int) ($row['attempts'] ?? 0) !== $attempts
+        || (int) ($row['reserved_is_null'] ?? 0) !== 1 || ($row['last_error'] ?? null) !== 'planned constructor failure') {
+        throw new RuntimeException('Failed construction left the job in the wrong state');
+    }
+}
+$ctorErrors = $db->queryParams('SELECT error_message FROM vslim_failed_jobs WHERE job_id = ?', [(string) $ctorId]);
+if (array_column($ctorErrors, 'error_message') !== ['planned constructor failure']
+    || VSlimJobRuntimePhptFailingConstructor::$constructed !== 2
+    || VSlimJobRuntimePhptFailingConstructor::$handled !== 0
+    || VSlimJobRuntimePhptFailingConstructor::$destroyed !== 0) {
+    throw new RuntimeException('The worker used a failed instance or lost the constructor exception');
+}
+$dispatcher->dispatch(VSlimJobRuntimePhptJob::class, ['message' => 'after-ctor', 'path' => $path], $queue, 0, 1);
+if ($worker->runOnce($queue) !== 1 || trim((string) file_get_contents($path)) !== 'stale-recovered' . PHP_EOL . 'after-ctor') {
+    throw new RuntimeException('The worker could not run a later job after constructor failure');
+}
 
 $db->executeParams('DELETE FROM vslim_failed_jobs WHERE queue = ?', [$queue]);
 $db->executeParams('DELETE FROM vslim_jobs WHERE queue = ?', [$queue]);

@@ -34,7 +34,10 @@ pub fn (mut app VSlimApp) api_singleton(resource_path string, controller string)
 @[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
 @[vphp.PhpExportMethod(name: 'resourceOpts')]
 pub fn (mut app VSlimApp) resource_opts(resource_path string, controller string, options vphp.PhpArray) &VSlimApp {
-	opts := routex.ResourceRouteOptions.from_options(options)
+	mut opts := routex.ResourceRouteOptions.from_options(options)
+	defer {
+		opts.missing_handler.release()
+	}
 	app.register_resource_routes_with_options(resource_path, controller, true, opts)
 	return app
 }
@@ -42,7 +45,10 @@ pub fn (mut app VSlimApp) resource_opts(resource_path string, controller string,
 @[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
 @[vphp.PhpExportMethod(name: 'apiResourceOpts')]
 pub fn (mut app VSlimApp) api_resource_opts(resource_path string, controller string, options vphp.PhpArray) &VSlimApp {
-	opts := routex.ResourceRouteOptions.from_options(options)
+	mut opts := routex.ResourceRouteOptions.from_options(options)
+	defer {
+		opts.missing_handler.release()
+	}
 	app.register_resource_routes_with_options(resource_path, controller, false, opts)
 	return app
 }
@@ -50,7 +56,10 @@ pub fn (mut app VSlimApp) api_resource_opts(resource_path string, controller str
 @[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
 @[vphp.PhpExportMethod(name: 'singletonOpts')]
 pub fn (mut app VSlimApp) singleton_opts(resource_path string, controller string, options vphp.PhpArray) &VSlimApp {
-	opts := routex.ResourceRouteOptions.from_options(options)
+	mut opts := routex.ResourceRouteOptions.from_options(options)
+	defer {
+		opts.missing_handler.release()
+	}
 	app.register_singleton_routes_with_options(resource_path, controller, true, opts)
 	return app
 }
@@ -58,7 +67,10 @@ pub fn (mut app VSlimApp) singleton_opts(resource_path string, controller string
 @[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
 @[vphp.PhpExportMethod(name: 'apiSingletonOpts')]
 pub fn (mut app VSlimApp) api_singleton_opts(resource_path string, controller string, options vphp.PhpArray) &VSlimApp {
-	opts := routex.ResourceRouteOptions.from_options(options)
+	mut opts := routex.ResourceRouteOptions.from_options(options)
+	defer {
+		opts.missing_handler.release()
+	}
 	app.register_singleton_routes_with_options(resource_path, controller, false, opts)
 	return app
 }

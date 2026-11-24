@@ -23,6 +23,8 @@ UNAME_S := $(shell uname -s)
 PLATFORM_LDFLAGS :=
 ifeq ($(UNAME_S),Darwin)
 PLATFORM_LDFLAGS += -undefined dynamic_lookup
+else ifeq ($(UNAME_S),Linux)
+PLATFORM_LDFLAGS += -Wl,-z,nodelete
 endif
 ROOT := $(CURDIR)
 REPO_ROOT := $(abspath $(ROOT)/..)
@@ -158,7 +160,7 @@ mvp-check: build
 	@echo "[mvp-check] demo self-test"
 	@php -d extension=$(ROOT)/vslim.so $(ROOT)/examples/demo_app.php --self-test
 	@echo "[mvp-check] phpt core set"
-	@TEST_PHP_EXECUTABLE="$$(which php)" php ../vphptest/run-tests.php -q --show-all -d extension=./vslim.so $(MVP_TESTS)
+	@VSLIM_TEST_SHOW=all ./run_tests.sh $(MVP_TESTS)
 
 runtime-check: build
 	@echo "[runtime-check] phpt runtime regression set"
@@ -166,6 +168,8 @@ runtime-check: build
 
 clean:
 	rm -f vslim.so
+	rm -f vslim.so.stub-attributes.json php_vslim.dll.stub-attributes.json $(VSLIM_SERVER_EXTENSION).stub-attributes.json
+	rm -f vslim.so.stub-expressions.json php_vslim.dll.stub-expressions.json $(VSLIM_SERVER_EXTENSION).stub-expressions.json
 	rm -f $(VSLIM_SERVER_BIN) $(VSLIM_SERVER_EXTENSION)
 	rm -f *_generated.c
 	rm -rf dist

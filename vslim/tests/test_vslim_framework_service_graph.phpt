@@ -148,6 +148,68 @@ namespace {
     var_dump($external->get('cache') === $cache);
     var_dump($external->get('cache.pool') === $pool);
     var_dump($external->get('http_client') === $client);
+
+    $customClient = new class implements Psr\Http\Client\ClientInterface {
+        public ?Psr\Http\Message\RequestInterface $request = null;
+
+        public function sendRequest(Psr\Http\Message\RequestInterface $request): Psr\Http\Message\ResponseInterface {
+            $this->request = $request;
+            return new VSlim\Psr7\Response();
+        }
+    };
+    $parameter = (new ReflectionMethod($app, 'setHttpClient'))->getParameters()[0];
+    if ($parameter->getName() !== 'client' || (string) $parameter->getType() !== Psr\Http\Client\ClientInterface::class
+        || $app->setHttpClient(client: $customClient) !== $app || $app->httpClient() !== $customClient) {
+        throw new RuntimeException('App lost the userland HTTP client');
+    }
+    foreach (['http', 'http_client', Psr\Http\Client\ClientInterface::class] as $service) {
+        if ($external->get($service) !== $customClient) {
+            throw new RuntimeException("Unexpected HTTP client registered as $service");
+        }
+    }
+    $request = new VSlim\Psr7\Request();
+    if (!($external->get('http')->sendRequest($request) instanceof Psr\Http\Message\ResponseInterface)
+        || $customClient->request !== $request) {
+        throw new RuntimeException('The registered HTTP client did not receive the original request');
+    }
+    try {
+        $app->setHttpClient(client: new stdClass());
+        throw new RuntimeException('An invalid HTTP client was accepted');
+    } catch (TypeError) {
+        if ($app->httpClient() !== $customClient) {
+            throw new RuntimeException('The invalid HTTP client replaced the current one');
+        }
+    }
+
+    $bootstrap = tempnam(sys_get_temp_dir(), 'vslim-http-');
+    $GLOBALS['testBootstrapHttpClient'] = $client;
+    try {
+        file_put_contents($bootstrap, <<<'PHP'
+<?php
+return static function (VSlim\App $app): array {
+    $app->setHttpClient($GLOBALS['testBootstrapHttpClient']);
+    throw new LogicException('rollback client');
+};
+PHP);
+        try {
+            $app->bootstrapFile($bootstrap);
+            throw new RuntimeException('Expected the HTTP client bootstrap failure');
+        } catch (LogicException $error) {
+            if ($error->getMessage() !== 'rollback client' || $app->httpClient() !== $customClient
+                || $external->get('http') !== $customClient) {
+                throw new RuntimeException('Bootstrap rollback lost the configured HTTP client', 0, $error);
+            }
+        }
+        $GLOBALS['testBootstrapHttpClient'] = $customClient;
+        file_put_contents($bootstrap, '<?php return ["httpClient" => $GLOBALS["testBootstrapHttpClient"]];');
+        $configured = (new VSlim\App())->bootstrapFile($bootstrap);
+        if ($configured->httpClient() !== $customClient || $configured->container()->get('http_client') !== $customClient) {
+            throw new RuntimeException('Bootstrap did not register the configured HTTP client');
+        }
+    } finally {
+        unset($GLOBALS['testBootstrapHttpClient']);
+        unlink($bootstrap);
+    }
 }
 ?>
 --EXPECT--

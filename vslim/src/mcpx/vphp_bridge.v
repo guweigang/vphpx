@@ -48,7 +48,7 @@ pub fn vslim_mcp_app_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_mcp_app_construct']
-pub fn vphp_wrap_vslim_mcp_app_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_mcp_app_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -56,12 +56,12 @@ pub fn vphp_wrap_vslim_mcp_app_construct(ptr voidptr, ctx vphp.Context) voidptr 
         vphp.PhpArgMeta{ index: 0, name: 'serverInfo', use_php_default: true },
         vphp.PhpArgMeta{ index: 1, name: 'serverCapabilities', use_php_default: true },
     ]) or {
-        return unsafe { nil }
+        return
     }
     arg_0 := php_args.at(0).array()
     arg_1 := php_args.at(1).array()
     res := recv.construct(arg_0, arg_1)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimMcpApp](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_mcp_app_server_info']
 pub fn vphp_wrap_vslim_mcp_app_server_info(ptr voidptr, ctx vphp.Context) voidptr {
@@ -73,8 +73,7 @@ pub fn vphp_wrap_vslim_mcp_app_server_info(ptr voidptr, ctx vphp.Context) voidpt
     ])
     arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.server_info(arg_0)
     return voidptr(res)
@@ -91,8 +90,7 @@ pub fn vphp_wrap_vslim_mcp_app_capability(ptr voidptr, ctx vphp.Context) voidptr
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.capability(arg_0, arg_1)
     return voidptr(res)
@@ -107,8 +105,7 @@ pub fn vphp_wrap_vslim_mcp_app_capabilities(ptr voidptr, ctx vphp.Context) voidp
     ])
     arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.capabilities(arg_0)
     return voidptr(res)
@@ -125,8 +122,7 @@ pub fn vphp_wrap_vslim_mcp_app_register(ptr voidptr, ctx vphp.Context) voidptr {
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.register(arg_0, arg_1)
     return voidptr(res)
@@ -146,13 +142,11 @@ pub fn vphp_wrap_vslim_mcp_app_tool(ptr voidptr, ctx vphp.Context) voidptr {
     arg_1 := php_args.at(1).as_v[string]()
     arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     arg_3 := php_args.at(3).callable() or {
         vphp.throw_exception('argument 3 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.tool(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
@@ -175,8 +169,7 @@ pub fn vphp_wrap_vslim_mcp_app_resource(ptr voidptr, ctx vphp.Context) voidptr {
     arg_3 := php_args.at(3).as_v[string]()
     arg_4 := php_args.at(4).callable() or {
         vphp.throw_exception('argument 4 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.resource(arg_0, arg_1, arg_2, arg_3, arg_4)
     return voidptr(res)
@@ -196,13 +189,11 @@ pub fn vphp_wrap_vslim_mcp_app_prompt(ptr voidptr, ctx vphp.Context) voidptr {
     arg_1 := php_args.at(1).as_v[string]()
     arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     arg_3 := php_args.at(3).callable() or {
         vphp.throw_exception('argument 3 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.prompt(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
@@ -592,13 +583,13 @@ pub fn vphp_wrap_vslim_mcp_app_handle_mcp(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_mcp_app_handlers']
 pub fn vslim_mcp_app_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_mcp_app_get_prop),
-        write_handler: voidptr(vslim_mcp_app_set_prop),
-        sync_handler: voidptr(vslim_mcp_app_sync_props),
-        new_raw: voidptr(vslim_mcp_app_new_raw),
-        cleanup_raw: voidptr(vslim_mcp_app_cleanup_raw),
-        free_raw: voidptr(vslim_mcp_app_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_mcp_app_get_prop,
+        write_handler: vslim_mcp_app_set_prop,
+        sync_handler: vslim_mcp_app_sync_props,
+        new_raw: vslim_mcp_app_new_raw,
+        cleanup_raw: vslim_mcp_app_cleanup_raw,
+        free_raw: vslim_mcp_app_free_raw
     )
 }
 pub fn VSlimMcpApp.php_class_entry() vphp.ZendClassEntry {

@@ -24,6 +24,12 @@ function registerPrefixService(VSlim\Container $container): void
     $container->set('prefix', new stdClass());
 }
 
+final class RollbackCleanup
+{
+    public function __construct(private Closure $release) {}
+    public function __destruct() { ($this->release)(); }
+}
+
 function updateServices(VSlim\Container $container): void
 {
     $failedAttempt = empty($GLOBALS['updated']);
@@ -42,17 +48,36 @@ function updateServices(VSlim\Container $container): void
     $container->set('nullable', $label);
     $container->get('warm-on-failure');
     if ($failedAttempt) {
-        throw new LogicException('service setup failed');
+        $container->set('cleanup-last', new RollbackCleanup(static function (): void {
+            $GLOBALS['cleanupEvents'][] = 'last';
+        }));
+        $container->set('cleanup-second', new RollbackCleanup(static function (): never {
+            $GLOBALS['cleanupEvents'][] = 'second';
+            throw $GLOBALS['cleanupSecond'];
+        }));
+        $container->set('cleanup-first', new RollbackCleanup(static function (): never {
+            $GLOBALS['cleanupEvents'][] = 'first';
+            throw $GLOBALS['cleanupFirst'];
+        }));
+        throw $GLOBALS['setupFailure'];
     }
 }
 
-function serviceAttempt(string $label, callable $invoke): void
+function serviceAttempt(string $label, callable $invoke, ?Throwable $expected = null): void
 {
     $GLOBALS['events'] = [];
     try {
         $result = $invoke();
         $status = is_int($result) ? $result : 'ok';
     } catch (LogicException $error) {
+        if ($expected !== null) {
+            if ($error !== $expected || $error->getPrevious() !== $GLOBALS['setupPrevious']
+                || $GLOBALS['setupPrevious']->getPrevious() !== $GLOBALS['cleanupFirst']
+                || $GLOBALS['cleanupFirst']->getPrevious() !== $GLOBALS['cleanupSecond']
+                || $GLOBALS['cleanupEvents'] !== ['first', 'second', 'last']) {
+                throw new RuntimeException('Service rollback changed the exception chain or skipped cleanup');
+            }
+        }
         $status = $error->getMessage();
     }
     echo $label, '|', $status, '|', implode(',', $GLOBALS['events']), PHP_EOL;
@@ -85,6 +110,11 @@ return static function (VSlim\Cli\App $cli): array {
 PHP);
     foreach (['web', 'cli'] as $mode) {
         $GLOBALS['updated'] = false;
+        $GLOBALS['cleanupEvents'] = [];
+        $GLOBALS['setupPrevious'] = new LogicException('initial cause');
+        $GLOBALS['setupFailure'] = new LogicException('service setup failed', 0, $GLOBALS['setupPrevious']);
+        $GLOBALS['cleanupFirst'] = new RuntimeException('first cleanup failed');
+        $GLOBALS['cleanupSecond'] = new RuntimeException('second cleanup failed');
         $GLOBALS['cachedCalls'] = $GLOBALS['coldCalls'] = $GLOBALS['warmCalls'] = 0;
         $cli = new VSlim\Cli\App();
         $app = $mode === 'cli' ? $cli->app() : new VSlim\App();
@@ -110,7 +140,12 @@ PHP);
 
         serviceAttempt("$mode|1", $boot);
         echo 'boot-residue|', (int) $container->has('boot-residue'), PHP_EOL;
-        serviceAttempt("$mode|2", $boot);
+        serviceAttempt("$mode|2", $boot, $GLOBALS['setupFailure']);
+        foreach (['cleanup-first', 'cleanup-second', 'cleanup-last'] as $service) {
+            if ($container->has($service)) {
+                throw new RuntimeException('Failed registration survived rollback');
+            }
+        }
         $prefix = $container->get('prefix');
         echo 'restored|', (int) ($container->get('direct') === $direct),
             (int) ($container->get('cached') === $cached),
@@ -138,6 +173,62 @@ PHP);
     serviceAttempt('factory', static fn () => $container->get('throwing-factory'));
     echo 'factory-residue|', (int) $container->has('nested-service'), '|',
         $container->get('throwing-factory'), '|', $container->get('nested-service'), PHP_EOL;
+
+    $failure = new LogicException('rollback the first fiber');
+    $container->factory('first-fiber', static function () use ($container, $failure): never {
+        $container->set('transient-fiber-service', true);
+        Fiber::suspend('first waiting');
+        throw $failure;
+    });
+    $calls = 0;
+    $container->factory('second-fiber', static function () use ($container, &$calls): object {
+        $value = (object) ['call' => ++$calls];
+        $container->set('committed-fiber-service', $value);
+        return $value;
+    });
+    $first = new Fiber(static fn () => $container->get('first-fiber'));
+    $second = new Fiber(static fn () => $container->get('second-fiber'));
+    if ($first->start() !== 'first waiting') {
+        throw new RuntimeException('The first service did not suspend');
+    }
+    $second->start();
+    $committed = $second->getReturn();
+    try {
+        $first->resume();
+        throw new RuntimeException('The first service did not throw');
+    } catch (LogicException $caught) {
+        if ($caught !== $failure) {
+            throw new RuntimeException('The container lost the original fiber exception');
+        }
+    }
+    if ($container->has('transient-fiber-service')
+        || $container->get('committed-fiber-service') !== $committed
+        || $container->get('second-fiber') !== $committed || $calls !== 1) {
+        throw new RuntimeException('Rolling back one fiber changed the committed services of another fiber');
+    }
+
+    $cancelCalls = 0;
+    $container->factory('cancelled-fiber', static function () use ($container, &$cancelCalls): int {
+        $container->set('cancelled-fiber-service', ++$cancelCalls);
+        if ($cancelCalls === 1) {
+            Fiber::suspend('cancel waiting');
+        }
+        return $cancelCalls;
+    });
+    $cancel = new Fiber(static fn () => $container->get('cancelled-fiber'));
+    if ($cancel->start() !== 'cancel waiting') {
+        throw new RuntimeException('The service factory did not suspend before cancellation');
+    }
+    unset($cancel);
+    if ($container->has('cancelled-fiber-service') || $container->get('committed-fiber-service') !== $committed) {
+        throw new RuntimeException('Cancelling a fiber did not roll back its registrations cleanly');
+    }
+    $retry = new Fiber(static fn () => $container->get('cancelled-fiber'));
+    $retry->start();
+    if ($retry->getReturn() !== 2 || $container->get('cancelled-fiber-service') !== 2
+        || $container->get('cancelled-fiber') !== 2 || $cancelCalls !== 2) {
+        throw new RuntimeException('A fresh Fiber inherited a cancelled factory registration');
+    }
 } finally {
     $files = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),

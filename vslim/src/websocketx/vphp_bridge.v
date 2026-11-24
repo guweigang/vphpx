@@ -48,7 +48,7 @@ pub fn vslim_web_socket_app_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_web_socket_app_construct']
-pub fn vphp_wrap_vslim_web_socket_app_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_web_socket_app_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimWebSocketApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -57,13 +57,13 @@ pub fn vphp_wrap_vslim_web_socket_app_construct(ptr voidptr, ctx vphp.Context) v
         vphp.PhpArgMeta{ index: 1, name: 'onMessage', use_php_default: true },
         vphp.PhpArgMeta{ index: 2, name: 'onClose', use_php_default: true },
     ]) or {
-        return unsafe { nil }
+        return
     }
     arg_0 := php_args.at(0).callable()
     arg_1 := php_args.at(1).callable()
     arg_2 := php_args.at(2).callable()
     res := recv.construct(arg_0, arg_1, arg_2)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimWebSocketApp](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_web_socket_app_on_open']
 pub fn vphp_wrap_vslim_web_socket_app_on_open(ptr voidptr, ctx vphp.Context) voidptr {
@@ -75,8 +75,7 @@ pub fn vphp_wrap_vslim_web_socket_app_on_open(ptr voidptr, ctx vphp.Context) voi
     ])
     arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.on_open(arg_0)
     return voidptr(res)
@@ -91,8 +90,7 @@ pub fn vphp_wrap_vslim_web_socket_app_on_message(ptr voidptr, ctx vphp.Context) 
     ])
     arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.on_message(arg_0)
     return voidptr(res)
@@ -107,8 +105,7 @@ pub fn vphp_wrap_vslim_web_socket_app_on_close(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0 := php_args.at(0).callable() or {
         vphp.throw_exception('argument 0 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.on_close(arg_0)
     return voidptr(res)
@@ -147,8 +144,7 @@ pub fn vphp_wrap_vslim_web_socket_app_remember(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.remember(arg_0)
     return voidptr(res)
@@ -309,14 +305,21 @@ pub fn vphp_wrap_vslim_web_socket_app_handle_websocket(ptr voidptr, ctx vphp.Con
 }
 @[export: 'vslim_web_socket_app_handlers']
 pub fn vslim_web_socket_app_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_web_socket_app_get_prop),
-        write_handler: voidptr(vslim_web_socket_app_set_prop),
-        sync_handler: voidptr(vslim_web_socket_app_sync_props),
-        new_raw: voidptr(vslim_web_socket_app_new_raw),
-        cleanup_raw: voidptr(vslim_web_socket_app_cleanup_raw),
-        free_raw: voidptr(vslim_web_socket_app_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_web_socket_app_get_prop,
+        write_handler: vslim_web_socket_app_set_prop,
+        sync_handler: vslim_web_socket_app_sync_props,
+        new_raw: vslim_web_socket_app_new_raw,
+        cleanup_raw: vslim_web_socket_app_cleanup_raw,
+        free_raw: vslim_web_socket_app_free_raw,
+        init_php_state: vslim_web_socket_app_init_php_state
     )
+}
+fn vslim_web_socket_app_init_php_state(ptr voidptr) {
+    unsafe {
+        mut obj := &VSlimWebSocketApp(ptr)
+        obj.init_php_state()
+    }
 }
 pub fn VSlimWebSocketApp.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__websocket__app_ce)

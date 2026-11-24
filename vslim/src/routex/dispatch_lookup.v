@@ -12,6 +12,7 @@ pub enum RouteDispatchMatchKind {
 pub struct RouteDispatchMatch {
 pub:
 	kind            RouteDispatchMatchKind = .unresolved
+	index           int                    = -1
 	route           VSlimRoute
 	route_params    map[string]string
 	allowed_methods []string
@@ -215,6 +216,7 @@ pub fn (index &RouteIndex) resolve(routes []VSlimRoute, method string, raw_path 
 		}
 		return RouteDispatchMatch{
 			kind:         .matched
+			index:        route_index
 			route:        route
 			route_params: index.patterns[route_index].parameters(candidates.path, candidates.parts)
 		}
@@ -235,7 +237,7 @@ pub fn (index &RouteIndex) allowed_methods_for(routes []VSlimRoute, raw_path str
 
 pub fn resolve_dispatch_match(routes []VSlimRoute, method string, path string) RouteDispatchMatch {
 	mut allowed_methods := []string{}
-	for route in routes {
+	for route_index, route in routes {
 		if route.handler_type != .php_callable {
 			continue
 		}
@@ -244,7 +246,7 @@ pub fn resolve_dispatch_match(routes []VSlimRoute, method string, path string) R
 			continue
 		}
 		if accepts_dispatch_method(route.method, method) {
-			return RouteDispatchMatch{ kind: .matched, route: route, route_params: params }
+			return RouteDispatchMatch{ kind: .matched, index: route_index, route: route, route_params: params }
 		}
 		append_allowed_methods(mut allowed_methods, route.method)
 	}

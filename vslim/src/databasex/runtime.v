@@ -503,9 +503,11 @@ fn (job VSlimDatabaseAsyncJob) run_async() VSlimAsyncResult {
 		password: job.config.password
 		dbname:   job.config.database
 	}
-	mut conn := mysql.connect(config) or { return VSlimAsyncResult{
-		error: err.msg()
-	} }
+	mut conn := mysql.connect(config) or {
+		return VSlimAsyncResult{
+			error: err.msg()
+		}
+	}
 	defer {
 		conn.close() or {}
 	}
@@ -577,73 +579,48 @@ fn (mut db VSlimDatabaseManager) async_guard(label string) !VSlimDatabaseAsyncJo
 
 fn (job VSlimDatabaseAsyncJob) pending_result() &VSlimDatabasePendingResult {
 	mut pending := &VSlimDatabasePendingResult{}
-	pending.async_ref = (VSlimAsyncJob{
-		kind:     if job.kind == .execute { .database_execute } else { .database_query }
-		database: job
-	}).spawn()
-	pending.active = true
+	pending.async_ref = vphp.spawn_php_native_task[VSlimDatabaseAsyncJob, VSlimAsyncResult](job,
+		fn (work VSlimDatabaseAsyncJob) VSlimAsyncResult {
+			return work.run_async()
+		})
 	pending.kind = job.kind
 	return pending
 }
 
-fn (mut pending VSlimDatabasePendingResult) cache_result(result VSlimAsyncResult, kind VSlimDatabaseAsyncKind) vphp.PhpValue {
-	if pending.result_box.is_valid() {
-		mut old := pending.result_box
-		old.release()
-	}
+fn (mut pending VSlimDatabasePendingResult) cache_result(result VSlimAsyncResult) {
 	pending.affected_rows = result.affected_rows
 	pending.last_insert_id = result.last_insert_id
 	pending.last_error = result.error
 	if result.ok {
-		mut result_value := result.to_database_value(kind)
+		mut result_value := result.to_database_value(pending.kind)
 		pending.result_box = result_value.retain()
 		result_value.release()
 	} else {
 		pending.result_box = vphp.PhpValue.null().retain()
 	}
 	pending.resolved = true
-	pending.active = false
-	mut owned := pending.result_box.owned()
-	defer {
-		owned.release()
-	}
-	return owned.owned()
 }
 
-fn (mut pending VSlimDatabasePendingResult) wait_result() VSlimAsyncResult {
-	if pending.async_ref == unsafe { nil } {
-		return VSlimAsyncResult{
-			error: 'database async handle is missing'
+fn (mut pending VSlimDatabasePendingResult) wait_value() !vphp.PhpValue {
+	if !pending.resolved {
+		if pending.async_ref == unsafe { nil } {
+			pending.cache_result(VSlimAsyncResult{ error: 'database async handle is missing' })
+		} else {
+			result := pending.async_ref.wait()!
+			// A peer waiting on the same query may already have boxed it.
+			if !pending.resolved {
+				pending.cache_result(result)
+			}
 		}
 	}
-	result := pending.async_ref.wait()
-	pending.async_ref.release()
-	pending.async_ref = unsafe { nil }
-	return result
-}
 
-fn (mut pending VSlimDatabasePendingResult) wait_value(kind VSlimDatabaseAsyncKind, label string) vphp.PhpValue {
-	if pending.resolved {
-		if pending.last_error != '' {
-			vphp.PhpException.raise_class('RuntimeException',
-				'database async ${label} failed: ${pending.last_error}', 0)
-			return vphp.PhpValue.null()
-		}
-		mut owned := pending.result_box.owned()
-		defer {
-			owned.release()
-		}
-		return owned.owned()
-	}
-	result := pending.wait_result()
-	mut response := pending.cache_result(result, kind)
 	if pending.last_error != '' {
-		response.release()
-		vphp.PhpException.raise_class('RuntimeException',
-			'database async ${label} failed: ${pending.last_error}', 0)
-		return vphp.PhpValue.null()
+		label := if pending.kind == .execute { 'execute' } else { 'query' }
+		message := 'database async ${label} failed: ${pending.last_error}'
+		vphp.PhpException.raise_class('RuntimeException', message, 0)
+		return error(message)
 	}
-	return response
+	return pending.result_box.owned()
 }
 
 fn (subject PhpValueSubject) database_params() []string {
@@ -1148,17 +1125,13 @@ pub fn (pending &VSlimDatabasePendingResult) last_insert_id_value() i64 {
 
 @[vphp.PhpExportMethod(name: '')]
 pub fn (mut pending VSlimDatabasePendingResult) wait() vphp.PhpValue {
-	label := if pending.kind == .execute { 'execute' } else { 'query' }
-	return pending.wait_value(pending.kind, label)
+	return pending.wait_value() or { vphp.PhpValue.null() }
 }
 
 pub fn (mut pending VSlimDatabasePendingResult) cleanup() {
-	if pending.active {
-		result := pending.wait_result()
-		_ = pending.cache_result(result, pending.kind)
-	}
 	if pending.async_ref != unsafe { nil } {
 		pending.async_ref.release()
 		pending.async_ref = unsafe { nil }
 	}
+	pending.result_box.release()
 }

@@ -53,9 +53,12 @@ fn (app &VSlimApp) dispatch_response_value(req &httpx.VSlimRequest) vphp.PhpValu
 	return httpx.vslim_response_ref_to_value(response)
 }
 
-@[vphp.PhpArgType(v_name: 'request', php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
 @[vphp.PhpExportMethod(name: 'handle')]
+pub fn (app &VSlimApp) export_handle(request httpx.PsrServerRequest) &httpx.VSlimPsr7Response {
+	return app.handle(request.to_object())
+}
+
 pub fn (app &VSlimApp) handle(request vphp.PhpObject) &httpx.VSlimPsr7Response {
 	mut scope := vphp.PhpScope.request()
 	defer {

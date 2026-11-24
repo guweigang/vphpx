@@ -94,6 +94,19 @@ namespace {
     file_put_contents($tmp, 'file-body');
     $fileStream = $streamFactory->createStreamFromFile($tmp);
     echo $fileStream->getContents() . PHP_EOL;
+    var_dump($fileStream->isReadable(), $fileStream->isWritable(), $fileStream->isSeekable());
+    $fileStream->close();
+
+    $append = $streamFactory->createStreamFromFile(mode: 'ab', filename: $tmp);
+    var_dump($append->isReadable(), $append->isWritable(), $append->write('|append'));
+    $append->close();
+    echo file_get_contents($tmp) . PHP_EOL;
+
+    $writable = $streamFactory->createStreamFromFile($tmp, 'w+b');
+    var_dump($writable->getSize(), $writable->write("a\x00b"), $writable->getSize());
+    $writable->seek(defaultWhence: SEEK_END, offset: -2);
+    echo $writable->tell() . '|' . bin2hex($writable->getContents()) . PHP_EOL;
+    $writable->close();
 
     $resource = fopen('php://temp', 'r+');
     fwrite($resource, 'resource-body');
@@ -101,7 +114,116 @@ namespace {
     $resourceStream = $streamFactory->createStreamFromResource($resource);
     echo $resourceStream->getContents() . PHP_EOL;
     fclose($resource);
+    var_dump($resourceStream->getSize(), $resourceStream->getMetadata(), $resourceStream->detach());
+    $resourceStream->close();
+
+    $resource = fopen('php://temp', 'w+');
+    fwrite($resource, 'abcdef');
+    fseek($resource, 2);
+    $stream = $streamFactory->createStreamFromResource(resource: $resource);
+    echo $stream->tell() . '|' . ftell($resource) . PHP_EOL;
+    echo $stream->read(1) . '|' . ftell($resource) . PHP_EOL;
+    fwrite($resource, 'Z');
+    echo (string) $stream . '|' . $stream->tell() . PHP_EOL;
+    echo (string) $response->withBody($stream)->getBody() . '|' . ftell($resource) . PHP_EOL;
+    var_dump($stream->getMetadata('seekable'), $stream->getMetadata('missing'), $stream->detach() === $resource);
+    echo stream_get_contents($resource) . PHP_EOL;
+    var_dump($stream->detach(), $stream->eof());
+    fclose($resource);
+
+    $resource = fopen('php://temp', 'r+');
+    $stream = $streamFactory->createStreamFromResource($resource);
+    $stream->close();
+    var_dump(is_resource($resource), $stream->isReadable());
+
+    try {
+        $streamFactory->createStreamFromResource(stream_context_create());
+    } catch (InvalidArgumentException $error) {
+        echo "non-stream-resource\n";
+    }
+
+    $process = proc_open([PHP_BINARY, '-n', '-r', 'echo "pipe-data";'], [1 => ['pipe', 'w']], $pipes);
+    $pipe = $streamFactory->createStreamFromResource($pipes[1]);
+    var_dump($pipe->isSeekable(), $pipe->read(0));
+    $messages = [new VSlim\Psr7\Request(), new VSlim\Psr7\ServerRequest(), $response];
+    foreach ($messages as $message) {
+        $original = $message->getBody();
+        $withBody = $message->withBody(body: $pipe);
+        $withHeader = $withBody->withHeader('X-Flow', 'yes')->withProtocolVersion('2');
+        if ($withHeader->getBody() !== $pipe || $message->getBody() !== $original
+            || $message->hasHeader('X-Flow') || $withHeader->getHeaderLine('X-Flow') !== 'yes') {
+            throw new RuntimeException('Message mutations lost the body or changed the original message');
+        }
+    }
+    echo $withHeader->getBody()->read(5) . '|' . $pipe->getContents() . PHP_EOL;
+    var_dump($pipe->eof(), $pipe->detach() === $pipes[1]);
+    fclose($pipes[1]);
+    proc_close($process);
     unlink($tmp);
+
+    foreach ($messages as $message) {
+        $body = $streamFactory->createStream('x');
+        $weak = WeakReference::create($body);
+        $first = $message->withBody($body);
+        $second = $first->withAddedHeader('X-Next', '1')->withoutHeader('X-Next');
+        unset($first, $body);
+        $second->getBody()->seek(1);
+        $second->getBody()->write('y');
+        if ($weak->get() !== $second->getBody() || (string) $weak->get() !== 'xy') {
+            throw new RuntimeException('The resulting message did not keep the original stream alive');
+        }
+        unset($second);
+        if ($weak->get() !== null) {
+            throw new RuntimeException('The body outlived its message');
+        }
+    }
+
+    $foreign = new class implements Psr\Http\Message\StreamInterface {
+        public $owner;
+        private bool $read = false;
+        public function __toString(): string { throw new RuntimeException('Unexpected eager read'); }
+        public function close(): void {}
+        public function detach() { return null; }
+        public function getSize(): ?int { return null; }
+        public function tell(): int { return 0; }
+        public function eof(): bool { return $this->read; }
+        public function isSeekable(): bool { return false; }
+        public function seek(int $offset, int $whence = SEEK_SET): void {}
+        public function rewind(): void {}
+        public function isWritable(): bool { return false; }
+        public function write(string $string): int { throw new RuntimeException('Not writable'); }
+        public function isReadable(): bool { return true; }
+        public function read(int $length): string {
+            if ($this->read) {
+                return '';
+            }
+            $this->read = true;
+            return "userland\0";
+        }
+        public function getContents(): string { return ''; }
+        public function getMetadata($key = null) { return $key === null ? [] : null; }
+    };
+
+    $workerBody = clone $foreign;
+    $app = new VSlim\App();
+    $app->get('/userland-stream', static fn () => $response->withBody($workerBody));
+    $workerResponse = $app->dispatchEnvelopeWorker(['method' => 'GET', 'path' => '/userland-stream']);
+    if (!$workerResponse instanceof VSlim\Stream\Response || $workerBody->eof()
+        || iterator_to_array($workerResponse->chunks(), false) !== ["userland\0"]) {
+        throw new RuntimeException('Worker did not iterate the PHP userland stream lazily');
+    }
+    $foreign->owner = $response->withBody($foreign)->withStatus(202);
+    if ($foreign->owner->getBody() !== $foreign) {
+        throw new RuntimeException('The message replaced a PHP userland stream');
+    }
+    $weakStream = WeakReference::create($foreign);
+    $weakMessage = WeakReference::create($foreign->owner);
+    unset($foreign);
+    gc_collect_cycles();
+    if ($weakStream->get() !== null || $weakMessage->get() !== null) {
+        throw new RuntimeException('Zend could not collect a stream and its message');
+    }
+    echo "shared bodies and collection verified\n";
 }
 ?>
 --EXPECT--
@@ -119,4 +241,38 @@ a, b
 hello world
 201|Made
 file-body
+bool(true)
+bool(false)
+bool(true)
+bool(false)
+bool(true)
+int(7)
+file-body|append
+int(0)
+int(3)
+int(3)
+1|0062
 resource-body
+NULL
+array(0) {
+}
+NULL
+2|2
+c|3
+abcZef|4
+abcZef|4
+bool(true)
+NULL
+bool(true)
+ef
+NULL
+bool(true)
+bool(false)
+bool(false)
+non-stream-resource
+bool(false)
+string(0) ""
+pipe-|data
+bool(true)
+bool(true)
+shared bodies and collection verified

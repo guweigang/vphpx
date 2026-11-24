@@ -47,12 +47,12 @@ pub fn vslim_job_dispatcher_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_job_dispatcher_construct']
-pub fn vphp_wrap_vslim_job_dispatcher_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_job_dispatcher_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimJobDispatcher(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimJobDispatcher](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_job_dispatcher_set_manager']
 pub fn vphp_wrap_vslim_job_dispatcher_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -62,12 +62,10 @@ pub fn vphp_wrap_vslim_job_dispatcher_set_manager(ptr voidptr, ctx vphp.Context)
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[databasex.VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -101,13 +99,13 @@ pub fn vphp_wrap_vslim_job_dispatcher_dispatch(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_job_dispatcher_handlers']
 pub fn vslim_job_dispatcher_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_job_dispatcher_get_prop),
-        write_handler: voidptr(vslim_job_dispatcher_set_prop),
-        sync_handler: voidptr(vslim_job_dispatcher_sync_props),
-        new_raw: voidptr(vslim_job_dispatcher_new_raw),
-        cleanup_raw: voidptr(vslim_job_dispatcher_cleanup_raw),
-        free_raw: voidptr(vslim_job_dispatcher_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_job_dispatcher_get_prop,
+        write_handler: vslim_job_dispatcher_set_prop,
+        sync_handler: vslim_job_dispatcher_sync_props,
+        new_raw: vslim_job_dispatcher_new_raw,
+        cleanup_raw: vslim_job_dispatcher_cleanup_raw,
+        free_raw: vslim_job_dispatcher_free_raw
     )
 }
 pub fn VSlimJobDispatcher.php_class_entry() vphp.ZendClassEntry {
@@ -179,12 +177,12 @@ pub fn vslim_job_worker_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_job_worker_construct']
-pub fn vphp_wrap_vslim_job_worker_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_job_worker_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimJobWorker(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimJobWorker](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_job_worker_set_manager']
 pub fn vphp_wrap_vslim_job_worker_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -194,12 +192,10 @@ pub fn vphp_wrap_vslim_job_worker_set_manager(ptr voidptr, ctx vphp.Context) voi
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[databasex.VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -279,13 +275,13 @@ pub fn vphp_wrap_vslim_job_worker_run(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_job_worker_handlers']
 pub fn vslim_job_worker_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_job_worker_get_prop),
-        write_handler: voidptr(vslim_job_worker_set_prop),
-        sync_handler: voidptr(vslim_job_worker_sync_props),
-        new_raw: voidptr(vslim_job_worker_new_raw),
-        cleanup_raw: voidptr(vslim_job_worker_cleanup_raw),
-        free_raw: voidptr(vslim_job_worker_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_job_worker_get_prop,
+        write_handler: vslim_job_worker_set_prop,
+        sync_handler: vslim_job_worker_sync_props,
+        new_raw: vslim_job_worker_new_raw,
+        cleanup_raw: vslim_job_worker_cleanup_raw,
+        free_raw: vslim_job_worker_free_raw
     )
 }
 pub fn VSlimJobWorker.php_class_entry() vphp.ZendClassEntry {

@@ -14,7 +14,7 @@ function main(array $argv): void
     }
 
     $root = dirname(__DIR__);
-    $defaultExtension = $root . '/vslim.so';
+    $defaultExtension = $root . (PHP_OS_FAMILY === 'Windows' ? '/php_vslim.dll' : '/vslim.so');
     $extensionPath = $options['extension'] ?? $defaultExtension;
     $outputPath = $options['output'] ?? ($root . '/stubs/vslim.php');
     $stdout = $options['stdout'];
@@ -31,7 +31,21 @@ function main(array $argv): void
         fail("vslim extension is not loaded; tried {$extensionPath}");
     }
 
-    $stub = generate_stub(new ReflectionExtension('vslim'), 'php vslim/scripts/generate_stubs.php');
+    $sidecar = $extensionPath . '.stub-expressions.json';
+    $expressions = is_file($sidecar)
+        ? json_decode(file_get_contents($sidecar), true, flags: JSON_THROW_ON_ERROR)
+        : ['attributes' => read_legacy_attribute_expressions($extensionPath)];
+    $stub = generate_stub(new ReflectionExtension('vslim'), 'php vslim/scripts/generate_stubs.php',
+        attributeExpressions: $expressions['attributes'] ?? [],
+        parameterDefaults: $expressions['parameter_defaults'] ?? []);
+    $classesPath = $extensionPath . '.classes.php';
+    if (is_file($classesPath)) {
+        $classes = file_get_contents($classesPath);
+        if ($classes === false || !str_starts_with($classes, '<?php')) {
+            fail("invalid generated PHP classes file: {$classesPath}");
+        }
+        $stub = rtrim($stub) . "\n\n" . trim(substr($classes, 5)) . "\n";
+    }
     if ($stdout) {
         fwrite(STDOUT, $stub);
         return;
@@ -47,6 +61,14 @@ function main(array $argv): void
     }
 
     fwrite(STDOUT, "Generated {$outputPath}\n");
+}
+
+function read_legacy_attribute_expressions(string $extensionPath): array
+{
+    $sidecar = $extensionPath . '.stub-attributes.json';
+    return is_file($sidecar)
+        ? json_decode(file_get_contents($sidecar), true, flags: JSON_THROW_ON_ERROR)
+        : [];
 }
 
 /**
@@ -106,7 +128,7 @@ Usage:
   php scripts/generate_stubs.php --stdout
 
 Options:
-  --extension   Path to the compiled vslim extension. Defaults to vslim/vslim.so.
+  --extension   Path to the compiled vslim extension. Defaults to the local build for this platform.
   --output      Output path for the generated stub file. Defaults to vslim/stubs/vslim.php.
   --stdout      Print the generated stubs to stdout instead of writing a file.
   --help, -h    Show this help message.
@@ -116,14 +138,20 @@ TXT;
 
 function reexec_with_extension(array $argv, string $extensionPath): int
 {
-    $command = [
-        PHP_BINARY,
-        '-n',
+    $command = [PHP_BINARY, '-n'];
+    $probe = [...$command, dirname(__DIR__, 2) . '/vphp/stub/tokenizer_path.php'];
+    ob_start();
+    passthru(implode(' ', array_map('escapeshellarg', $probe)), $probeCode);
+    $tokenizer = ob_get_clean();
+    if ($probeCode === 0 && is_string($tokenizer) && is_file($tokenizer)) {
+        array_push($command, '-d', 'extension=' . $tokenizer);
+    }
+    array_push($command,
         '-d',
         'extension=' . $extensionPath,
         __FILE__,
         '--no-reexec',
-    ];
+    );
 
     for ($i = 1; $i < count($argv); $i++) {
         if ($argv[$i] === '--no-reexec') {

@@ -8,13 +8,13 @@ import vphp
 pub struct VSlimRequest {
 pub mut:
 	method           string
-	raw_path         string @[vphp.PhpProperty; vphp.PhpProperty_name: 'rawPath']
+	raw_path         string @[vphp.PhpProperty(name: 'rawPath')]
 	body             string
 	scheme           string
 	host             string
 	port             string
-	protocol_version string @[vphp.PhpProperty; vphp.PhpProperty_name: 'protocolVersion']
-	remote_addr      string @[vphp.PhpProperty; vphp.PhpProperty_name: 'remoteAddr']
+	protocol_version string @[vphp.PhpProperty(name: 'protocolVersion')]
+	remote_addr      string @[vphp.PhpProperty(name: 'remoteAddr')]
 	path             string @[vphp.PhpIgnoreField]
 	query_string     string @[vphp.PhpIgnoreField]
 	query            map[string]string
@@ -22,7 +22,7 @@ pub mut:
 	cookies          map[string]string
 	attributes       map[string]string
 	server           map[string]string
-	uploaded_files   []string @[vphp.PhpProperty; vphp.PhpProperty_name: 'uploadedFiles']
+	uploaded_files   []string @[vphp.PhpProperty(name: 'uploadedFiles')]
 	params           map[string]string
 }
 

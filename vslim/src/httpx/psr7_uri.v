@@ -6,15 +6,71 @@ import vphp
 @[vphp.PhpExportMethod(name: '')]
 pub fn (mut u VSlimPsr7Uri) construct(default_uri string) &VSlimPsr7Uri {
 	parsed := VSlimPsr7Uri.parse(default_uri)
-	u.scheme = parsed.scheme
-	u.user = parsed.user
-	u.password = parsed.password
-	u.host = parsed.host
-	u.port = parsed.port
-	u.path = parsed.path
-	u.query = parsed.query
-	u.fragment = parsed.fragment
+	parsed.clone_into(mut u)
 	return &u
+}
+
+pub fn (u &VSlimPsr7Uri) clone_into(mut target VSlimPsr7Uri) {
+	target.scheme = u.scheme
+	target.user = u.user
+	target.password = u.password
+	target.host = u.host
+	target.port = u.port
+	target.path = u.path
+	target.query = u.query
+	target.fragment = u.fragment
+}
+
+@[vphp.PhpExportMethod(name: '__serialize')]
+pub fn (u &VSlimPsr7Uri) serialize_state() vphp.PhpArray {
+	data := vphp.PhpArray.new()
+	data.string('scheme', u.scheme)
+	data.string('user', u.user)
+	data.string('password', u.password)
+	data.string('host', u.host)
+	data.int('port', u.port)
+	data.string('path', u.path)
+	data.string('query', u.query)
+	data.string('fragment', u.fragment)
+	return data
+}
+
+@[vphp.PhpExportMethod(name: '__unserialize')]
+pub fn (mut u VSlimPsr7Uri) unserialize_state(data vphp.PhpArray) {
+	parsed := decode_serialized_uri(data) or {
+		vphp.PhpException.raise_class('UnexpectedValueException', 'Invalid serialized URI: ${err.msg()}',
+			0)
+		return
+	}
+	parsed.clone_into(mut u)
+}
+
+fn decode_serialized_uri(data vphp.PhpArray) !VSlimPsr7Uri {
+	if data.count() != 8 {
+		return error('expected eight URI components')
+	}
+	port := serialized_uri_component(data, 'port')!.require_int()!.value()
+	if i64(int(port)) != port {
+		return error('port does not fit in a V int')
+	}
+	return VSlimPsr7Uri{
+		scheme:   serialized_uri_component(data, 'scheme')!.require_string()!.value()
+		user:     serialized_uri_component(data, 'user')!.require_string()!.value()
+		password: serialized_uri_component(data, 'password')!.require_string()!.value()
+		host:     serialized_uri_component(data, 'host')!.require_string()!.value()
+		port:     int(port)
+		path:     serialized_uri_component(data, 'path')!.require_string()!.value()
+		query:    serialized_uri_component(data, 'query')!.require_string()!.value()
+		fragment: serialized_uri_component(data, 'fragment')!.require_string()!.value()
+	}
+}
+
+fn serialized_uri_component(data vphp.PhpArray, key string) !vphp.PhpValue {
+	value := data.value(key)!
+	if reference := value.as_reference() {
+		return reference.deref()
+	}
+	return value
 }
 
 @[vphp.PhpExportMethod(name: '')]
@@ -85,10 +141,18 @@ pub fn (u &VSlimPsr7Uri) with_scheme(scheme vphp.PhpValue) &VSlimPsr7Uri {
 		u.query, u.fragment)
 }
 
-@[vphp.PhpArgName(v_name: 'default_password', php_name: 'defaultPassword')]
+@[params]
+struct UriUserInfoOptions {
+	default_password vphp.PhpValue @[vphp.PhpSensitiveField]
+}
+
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\UriInterface')]
 @[vphp.PhpArgDefault(v_name: 'default_password', default_value: '""')]
 @[vphp.PhpExportMethod(name: 'withUserInfo')]
+pub fn (u &VSlimPsr7Uri) with_user_info_options(user vphp.PhpValue, options UriUserInfoOptions) &VSlimPsr7Uri {
+	return u.with_user_info(user, options.default_password)
+}
+
 pub fn (u &VSlimPsr7Uri) with_user_info(user vphp.PhpValue, default_password vphp.PhpValue) &VSlimPsr7Uri {
 	return u.clone_with(u.scheme, user.to_string(), default_password.to_string(), u.host,
 		u.port, u.path, u.query, u.fragment)

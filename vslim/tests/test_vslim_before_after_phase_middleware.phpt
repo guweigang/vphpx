@@ -171,6 +171,30 @@ namespace {
     echo $ok->status . '|' . $ok->body . PHP_EOL;
     echo $blocked->status . '|' . $blocked->body . PHP_EOL;
     echo implode('>', $trace) . PHP_EOL;
+
+    $app = new VSlim\App();
+    $tagged = static fn (string $tag) => new class($tag) implements MiddlewareInterface {
+        public function __construct(private string $tag) {}
+
+        public function &process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+        {
+            $response = $handler->handle($request->withAttribute($this->tag, true));
+            if ($this->tag === 'after') {
+                $response = $response->withHeader('X-Reference', 'after');
+            }
+            return $response;
+        }
+    };
+    $app->before($tagged('before'));
+    $app->middleware($tagged('standard'));
+    $app->after($tagged('after'));
+    $app->get('/reference', static fn (ServerRequestInterface $request): string
+        => ($request->getAttribute('before') && $request->getAttribute('standard')) ? 'forwarded' : 'missing');
+    $response = $app->handle(request: (new VSlim\Psr17\ServerRequestFactory())->createServerRequest('GET', '/reference'));
+    if ($response->getStatusCode() !== 200 || (string) $response->getBody() !== 'forwarded'
+        || $response->getHeaderLine('X-Reference') !== 'after') {
+        throw new RuntimeException('A middleware reference lost pipeline state or its response');
+    }
 }
 ?>
 --EXPECT--

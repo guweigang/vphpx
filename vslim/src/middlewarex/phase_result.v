@@ -17,18 +17,25 @@ pub:
 }
 
 fn is_internal_phase_continue_response(result vphp.PhpValue) bool {
-	res, ok := httpx.VSlimResponse.from_route_result(result)
+	res, ok := httpx.VSlimPsr7Response.from_route_result(result, defer_body: true)
 	if !ok {
 		return false
 	}
-	return res.status == 299 && (res.headers['x-vslim-continue'] or { '' }) == '1'
+	return res.get_status_code() == 299 && res.get_header_line_name('x-vslim-continue') == '1'
 }
 
 pub fn PhaseMiddlewareDispatchResult.from_before(payload vphp.PhpValue, route_params map[string]string, cont &VSlimPsr15ContinueHandler, response vphp.PhpValue) PhaseMiddlewareDispatchResult {
-	continued := cont.state.has_forwarded_request && is_internal_phase_continue_response(response)
+	continued := cont.state.forwarded_request.is_valid() && is_internal_phase_continue_response(response)
+	if continued {
+		mut request := httpx.normalize_psr15_server_request_object(cont.state.forwarded_request, route_params)
+		return PhaseMiddlewareDispatchResult{
+			response_ref: response
+			payload_ref:  request.to_value()
+			continued:    true
+		}
+	}
 	return PhaseMiddlewareDispatchResult{
-		response_ref: response.owned()
-		payload_ref:  continued_phase_request_value(payload, route_params, cont)
-		continued:    continued
+		response_ref: response
+		payload_ref:  payload.owned()
 	}
 }

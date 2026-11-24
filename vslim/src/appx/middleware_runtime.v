@@ -14,15 +14,21 @@ fn app_terminal_callback(app_ptr voidptr, ctx middlewarex.PipelineRequestContext
 
 fn app_error_callback(app_ptr voidptr, ctx middlewarex.PipelineRequestContext, msg string) &httpx.VSlimPsr7Response {
 	mut app := unsafe { &VSlimApp(app_ptr) }
+	if ctx.response_import.defer_body {
+		return app.error_response_from_context_psr(ctx, 500, msg, 'handler_not_callable')
+	}
 	res := app.error_response_from_context(ctx, 500, msg, 'handler_not_callable')
 	return res.to_psr7_response()
 }
 
 fn app_execute_middleware_callback(app_ptr voidptr, chain &middlewarex.MiddlewareChain, handler vphp.PhpValue, payload vphp.PhpValue) !vphp.PhpValue {
 	mut app := unsafe { &VSlimApp(app_ptr) }
-	target, explicit_method := app.resolve_middleware_target(handler) or {
+	mut target, explicit_method := app.resolve_middleware_target(handler) or {
 		loggerx.cli_debug_log('middleware.target.resolve.error msg=${err.msg()} handler_valid=${handler.is_valid()} handler_kind=${handler.kind_name()}')
 		return err
+	}
+	defer {
+		target.release()
 	}
 	app.bind_route_target_if_supported(target)
 	method := httpx.psr15_middleware_target_method(target, explicit_method)
@@ -42,6 +48,9 @@ fn app_execute_middleware_callback(app_ptr voidptr, chain &middlewarex.Middlewar
 		mut result := middlewarex.dispatch_phase_process(target, psr_payload, next_handler)!
 		defer {
 			result.release()
+		}
+		if result.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
+			return result.owned()
 		}
 		normalized := httpx.VSlimPsr7Response.from_value(result)
 		return httpx.vslim_response_to_value(normalized.to_vslim_response())
@@ -73,28 +82,23 @@ fn (app &VSlimApp) dispatch_middleware_chain_with_context(ctx middlewarex.Pipeli
 		on_execute:  app_execute_middleware_callback
 	}
 	defer {
+		chain.forwarded_request.release()
 		release_collected_middlewares(mut chain.middlewares)
 	}
 	response := chain.dispatch(ctx.payload_ref) or {
 		msg := if err.msg() == '' { 'Route handler is not callable' } else { err.msg() }
-		mut error_payload := ctx.payload_ref.owned()
-		if forwarded_request := middlewarex.take_forwarded_request_snapshot(middlewarex.forwarded_request_key(chain)) {
-			mut forwarded := middlewarex.request_with_forwarded_snapshot(ctx.payload_ref,
-				ctx.route_params, forwarded_request)
-			error_payload = forwarded.owned().to_value()
-			forwarded.release()
+		error_payload := if chain.forwarded_request.is_valid() {
+			chain.forwarded_request.to_value()
+		} else {
+			ctx.payload_ref
 		}
 		error_ctx := ctx.with_payload_value(error_payload)
-		res := app.error_response_from_context(error_ctx, 500, msg, 'handler_not_callable')
-		return middlewarex.PipelineDispatchResult.from(httpx.vslim_response_to_value(res), error_payload)
+		return middlewarex.PipelineDispatchResult.from(app.handler_not_callable_response_value(error_ctx, msg),
+			error_payload)
 	}
 	loggerx.cli_debug_log('middleware.chain.raw type=${response.type_name()} class=${response.class_name()} valid=${response.is_valid()} null=${response.is_null()} undef=${response.is_undef()}')
-	if forwarded_request := middlewarex.take_forwarded_request_snapshot(middlewarex.forwarded_request_key(chain)) {
-		mut forwarded := middlewarex.request_with_forwarded_snapshot(ctx.payload_ref,
-			ctx.route_params, forwarded_request)
-		out := forwarded.owned().to_value()
-		forwarded.release()
-		return middlewarex.PipelineDispatchResult.from(response, out)
+	if chain.forwarded_request.is_valid() {
+		return middlewarex.PipelineDispatchResult.from(response, chain.forwarded_request.to_value())
 	}
 	return middlewarex.PipelineDispatchResult.from(response, ctx.payload_ref)
 }
@@ -110,9 +114,7 @@ fn (app &VSlimApp) dispatch_after_phase_middleware_psr(ctx middlewarex.PipelineR
 fn (app &VSlimApp) apply_after_middlewares(ctx middlewarex.PipelineRequestContext, initial httpx.VSlimResponse) httpx.VSlimResponse {
 	loggerx.cli_debug_log('after.input vslim status=${initial.status} body_len=${initial.body.len}')
 	initial_psr := initial.to_psr7_response()
-	loggerx.cli_debug_log('after.input psr status=${initial_psr.get_status_code()} body_len=${httpx.psr7_stream_string(initial_psr.body_or_empty()).len}')
 	psr := app.apply_after_middlewares_psr(ctx, initial_psr)
-	loggerx.cli_debug_log('after.psr final status=${psr.get_status_code()} body_len=${httpx.psr7_stream_string(psr.body_or_empty()).len}')
 	res := psr.to_vslim_response()
 	loggerx.cli_debug_log('after.vslim final status=${res.status} body_len=${res.body.len}')
 	return res
@@ -136,25 +138,12 @@ fn (app &VSlimApp) apply_after_middlewares_psr(ctx middlewarex.PipelineRequestCo
 			return app.error_response_from_context_psr(ctx, 500, 'Middleware is not valid',
 				'handler_not_callable')
 		}
-		app.resolve_phase_middleware_target(hook) or {
-			msg := if err.msg() == '' {
-				'Phase middleware must implement Psr\\Http\\Server\\MiddlewareInterface'
-			} else {
-				err.msg()
-			}
-			return app.error_response_from_context_psr(ctx, 500, msg, 'handler_not_callable')
-		}
 		response := app.dispatch_after_phase_middleware_psr(ctx, hook, current) or {
 			msg := if err.msg() == '' { 'Middleware is not callable' } else { err.msg() }
 			return app.error_response_from_context_psr(ctx, 500, msg, 'handler_not_callable')
 		}
-		if response.is_object() && response.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
-			psr := httpx.VSlimPsr7Response.from_value(response)
-			loggerx.cli_debug_log('after.raw psr status=${psr.get_status_code()} body_len=${httpx.psr7_stream_string(psr.body_or_empty()).len}')
-		}
-		mut res, ok := httpx.VSlimPsr7Response.from_route_result(response)
+		mut res, ok := httpx.VSlimPsr7Response.from_route_result(response, ctx.response_import)
 		if ok {
-			loggerx.cli_debug_log('after.normalized psr status=${res.get_status_code()} body_len=${httpx.psr7_stream_string(res.body_or_empty()).len}')
 			current = res
 			continue
 		}

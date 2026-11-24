@@ -46,26 +46,18 @@ pub fn normalize_psr15_server_request_object(request vphp.PhpObject, route_param
 	if (request.is_instance_of('VSlim\\Psr7\\ServerRequest') || request.is_instance_of('VSlimPsr7'))
 		&& request.is_valid() {
 		if internal := request.to_v_object[VSlimPsr7ServerRequest]() {
-			mut cloned := (&VSlimPsr7ServerRequest{
-				method:             internal.method
-				request_target:     internal.get_request_target()
-				protocol_version:   internal.get_protocol_version()
-				headers:            clone_header_values(internal.headers)
-				header_names:       clone_header_names(internal.header_names)
-				body_ref:           internal.body_or_empty().clone_or_empty()
-				uri_ref:            internal.uri_or_default().clone_or_default()
-				server_params_ref:  clone_assoc_payload_ref(internal.server_params_ref)
-				cookie_params_ref:  clone_assoc_payload_ref(internal.cookie_params_ref)
-				query_params_ref:   clone_assoc_payload_ref(internal.query_params_ref)
-				uploaded_files_ref: clone_assoc_payload_ref(internal.uploaded_files_ref)
-				parsed_body_ref:    clone_parsed_body_ref(internal.parsed_body_ref)
-				attributes_ref:     if route_params.len == 0 {
-					clone_assoc_payload_value(internal.attributes_ref)
-				} else {
-					persistent_value_assoc_with_strings(internal.attributes_ref, route_params)
-				}
-			}).build_psr7_server_request_value()
-			return object_from_owned_value(mut cloned)
+			attrs := if route_params.len == 0 {
+				clone_assoc_payload_value(internal.attributes_ref)
+			} else {
+				persistent_value_assoc_with_strings(internal.attributes_ref, route_params)
+			}
+			cloned := internal.clone_with_owned_attrs(internal.method, internal.get_request_target(),
+				internal.get_protocol_version(), internal.headers, internal.header_names,
+				internal.body_ref, internal.uri_or_default(), internal.server_params_ref,
+				internal.cookie_params_ref, internal.query_params_ref, internal.uploaded_files_ref,
+				internal.parsed_body_ref, attrs)
+			mut value := vphp.bind_owned_object_value[VSlimPsr7ServerRequest](cloned)
+			return object_from_owned_value(mut value)
 		}
 	}
 	if request.is_instance_of('VSlim\\VHttpd\\Request') || request.is_instance_of('VSlimRequest') {
@@ -96,7 +88,7 @@ pub fn normalize_psr15_server_request_object(request vphp.PhpObject, route_param
 		'1.1'
 	}
 	header_map, header_names := if request.method_exists('getHeaders') {
-		mut headers := request.call_method('getHeaders')
+		mut headers := request.call_method_by_value('getHeaders')
 		defer {
 			headers.release()
 		}
@@ -104,85 +96,78 @@ pub fn normalize_psr15_server_request_object(request vphp.PhpObject, route_param
 	} else {
 		map[string][]string{}, map[string]string{}
 	}
-	body_ref := if request.method_exists('getBody') {
-		request.with_method_result[vphp.PhpValue, &VSlimPsr7Stream]('getBody', fn (z vphp.PhpValue) &VSlimPsr7Stream {
-			return VSlimPsr7Stream.from_value(z)
-		}) or { VSlimPsr7Stream.from_content('') }
-	} else {
-		VSlimPsr7Stream.from_content('')
-	}
+	body_ref, body_pending := import_psr7_body(request)
 	uri_ref := if request.method_exists('getUri') {
-		request.with_method_result[vphp.PhpValue, &VSlimPsr7Uri]('getUri', fn (z vphp.PhpValue) &VSlimPsr7Uri {
-			return VSlimPsr7Uri.from_value(z)
-		}) or { VSlimPsr7Uri.from_string('/') }
+		mut uri := request.call_method_by_value('getUri')
+		defer {
+			uri.release()
+		}
+		VSlimPsr7Uri.from_value(uri)
 	} else {
 		VSlimPsr7Uri.from_string('/')
 	}
 	server_params_ref := if request.method_exists('getServerParams') {
-		request.with_method_result[vphp.PhpValue, vphp.PhpArray]('getServerParams', fn (z vphp.PhpValue) vphp.PhpArray {
-			if arr := z.as_array() {
-				return arr.retain()
-			}
-			return empty_persistent_array()
+		request.with_method_result[vphp.PhpArray, vphp.PhpArray]('getServerParams', fn (z vphp.PhpArray) vphp.PhpArray {
+			return z.retain()
 		}) or { empty_persistent_array() }
 	} else {
 		empty_persistent_array()
 	}
 	cookie_params_ref := if request.method_exists('getCookieParams') {
-		request.with_method_result[vphp.PhpValue, vphp.PhpArray]('getCookieParams', fn (z vphp.PhpValue) vphp.PhpArray {
-			if arr := z.as_array() {
-				return arr.retain()
-			}
-			return empty_persistent_array()
+		request.with_method_result[vphp.PhpArray, vphp.PhpArray]('getCookieParams', fn (z vphp.PhpArray) vphp.PhpArray {
+			return z.retain()
 		}) or { empty_persistent_array() }
 	} else {
 		empty_persistent_array()
 	}
 	query_params_ref := if request.method_exists('getQueryParams') {
-		request.with_method_result[vphp.PhpValue, vphp.PhpArray]('getQueryParams', fn (z vphp.PhpValue) vphp.PhpArray {
-			if arr := z.as_array() {
-				return arr.retain()
-			}
-			return empty_persistent_array()
+		request.with_method_result[vphp.PhpArray, vphp.PhpArray]('getQueryParams', fn (z vphp.PhpArray) vphp.PhpArray {
+			return z.retain()
 		}) or { empty_persistent_array() }
 	} else {
 		empty_persistent_array()
 	}
 	uploaded_files_ref := if request.method_exists('getUploadedFiles') {
-		request.with_method_result[vphp.PhpValue, vphp.PhpArray]('getUploadedFiles', fn (z vphp.PhpValue) vphp.PhpArray {
-			return normalize_uploaded_files_tree_value(z)
-		}) or { empty_persistent_array() }
+		mut uploaded := request.call_method_by_value('getUploadedFiles')
+		defer {
+			uploaded.release()
+		}
+		normalize_uploaded_files_tree_value(uploaded)
 	} else {
 		empty_persistent_array()
 	}
 	parsed_body_ref := if request.method_exists('getParsedBody') {
-		request.with_method_result[vphp.PhpValue, vphp.PhpValue]('getParsedBody', fn (z vphp.PhpValue) vphp.PhpValue {
-			if z.is_valid() && !z.is_null() && !z.is_undef() {
-				return z.retain()
-			}
-			return persistent_null_value()
-		}) or { persistent_null_value() }
+		mut parsed := request.call_method_by_value('getParsedBody')
+		defer {
+			parsed.release()
+		}
+		if parsed.is_valid() && !parsed.is_null() && !parsed.is_undef() {
+			parsed.retain()
+		} else {
+			persistent_null_value()
+		}
 	} else {
 		persistent_null_value()
 	}
 	attributes_ref := if request.method_exists('getAttributes') {
-		request.with_method_result[vphp.PhpValue, vphp.PhpValue]('getAttributes', fn [route_params] (z vphp.PhpValue) vphp.PhpValue {
-			base := persistent_array_value(z)
+		request.with_method_result[vphp.PhpArray, vphp.PhpValue]('getAttributes', fn [route_params] (z vphp.PhpArray) vphp.PhpValue {
+			base := persistent_array_value(z.to_value())
 			if route_params.len == 0 {
 				return clone_assoc_payload_value(base)
 			}
 			return persistent_value_assoc_with_strings(base, route_params)
-		}) or { empty_persistent_array_value() }
+		}) or { persistent_value_assoc_with_strings(empty_persistent_array_value(), route_params) }
 	} else {
 		persistent_value_assoc_with_strings(empty_persistent_array_value(), route_params)
 	}
-	mut normalized := (&VSlimPsr7ServerRequest{
+	normalized := &VSlimPsr7ServerRequest{
 		method:             normalize_method(method)
 		request_target:     request_target
 		protocol_version:   normalize_protocol_version(protocol_version)
 		headers:            header_map
 		header_names:       header_names
 		body_ref:           body_ref
+		body_pending:       body_pending
 		uri_ref:            uri_ref
 		server_params_ref:  server_params_ref
 		cookie_params_ref:  cookie_params_ref
@@ -190,8 +175,9 @@ pub fn normalize_psr15_server_request_object(request vphp.PhpObject, route_param
 		uploaded_files_ref: uploaded_files_ref
 		parsed_body_ref:    parsed_body_ref
 		attributes_ref:     attributes_ref
-	}).build_psr7_server_request_value()
-	return object_from_owned_value(mut normalized)
+	}
+	mut value := vphp.bind_owned_object_value[VSlimPsr7ServerRequest](normalized)
+	return object_from_owned_value(mut value)
 }
 
 pub fn normalize_psr15_server_request_value(payload_value vphp.PhpValue, route_params map[string]string) vphp.PhpObject {
@@ -214,7 +200,7 @@ pub fn persistent_array_value(value vphp.PhpValue) vphp.PhpValue {
 	return empty_persistent_array_value()
 }
 
-pub fn vslim_request_from_psr_server_request(payload vphp.PhpValue, route_params map[string]string) &VSlimRequest {
+pub fn vslim_request_from_psr_server_request(payload vphp.PhpValue, route_params map[string]string, options PsrRequestProjectionOptions) &VSlimRequest {
 	if payload_object := payload.as_object() {
 		if (payload_object.is_instance_of('VSlim\\VHttpd\\Request')
 			|| payload_object.is_instance_of('VSlimRequest')) && payload_object.is_valid() {
@@ -229,7 +215,7 @@ pub fn vslim_request_from_psr_server_request(payload vphp.PhpValue, route_params
 	defer {
 		request.release()
 	}
-	return VSlimRequest.from_psr_server_request_object(request, route_params)
+	return VSlimRequest.from_psr_server_request_object(request, route_params, options)
 }
 
 pub fn vslim_request_from_psr_server_request_object(payload vphp.PhpObject, route_params map[string]string) &VSlimRequest {

@@ -1000,36 +1000,20 @@ fn test_middleware_types_are_owned_by_middlewarex() {
 	assert phase_source.contains('pub struct PhaseMiddlewareDispatchResult'), 'phase middleware result should be owned by middlewarex'
 }
 
-fn test_forwarded_request_snapshots_are_owned_by_middlewarex() {
-	assert !os.exists(os.join_path(vslim_root(), 'src', 'appx', 'psr_bridge.v')), 'forwarded request bridge helpers should live in middlewarex, not appx'
-	for file in vslim_module_files('appx') {
-		source := os.read_file(file) or { panic('failed to read ${file}: ${err}') }
-		for pattern in [
-			'struct PhaseForwardedServerRequestSnapshot',
-			'forwarded_requests map[',
-			'fn snapshot_phase_forwarded_request(',
-			'fn store_forwarded_request_snapshot(',
-			'fn take_forwarded_request_snapshot(',
-			'fn request_with_forwarded_snapshot(',
-			'fn continued_phase_request_value(',
-			'fn forwarded_request_key(',
-		] {
-			assert !source.contains(pattern), '${file} should delegate forwarded request snapshot ownership to middlewarex, not ${pattern}'
+fn test_forwarded_requests_are_owned_by_middlewarex() {
+	assert !os.exists(os.join_path(vslim_root(), 'src', 'appx', 'psr_bridge.v')), 'forwarded request state belongs to middlewarex'
+	for mod in ['appx', 'middlewarex'] {
+		for file in vslim_module_files(mod) {
+			source := os.read_file(file) or { panic('failed to read ${file}: ${err}') }
+			assert !source.contains('struct PhaseForwardedServerRequestSnapshot'), 'forwarded requests should preserve the original stream object'
+			assert !source.contains('forwarded_requests map['), 'forwarded requests should be scoped to their invocation'
 		}
 	}
-	source := os.read_file(os.join_path(vslim_root(), 'src', 'middlewarex', 'forwarded_request.v')) or {
-		panic('failed to read middlewarex/forwarded_request.v: ${err}')
-	}
-	for pattern in [
-		'pub struct PhaseForwardedServerRequestSnapshot',
-		'pub fn snapshot_phase_forwarded_request(',
-		'pub fn store_forwarded_request_snapshot(',
-		'pub fn take_forwarded_request_snapshot(',
-		'pub fn request_with_forwarded_snapshot(',
-		'pub fn continued_phase_request_value(',
-		'pub fn forwarded_request_key(',
-	] {
-		assert source.contains(pattern), 'middlewarex should own forwarded request snapshot API: ${pattern}'
+	for filename in ['middleware_chain.v', 'types.v'] {
+		source := os.read_file(os.join_path(vslim_root(), 'src', 'middlewarex', filename)) or {
+			panic('failed to read middlewarex/${filename}: ${err}')
+		}
+		assert source.contains('forwarded_request') && source.contains('vphp.PhpObject.invalid()'), 'middlewarex/${filename} should own its forwarded request'
 	}
 }
 

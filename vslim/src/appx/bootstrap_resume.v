@@ -124,7 +124,7 @@ fn (mut run BootstrapInputRun) normalize(spec vphp.PhpIterable) !vphp.PhpArray {
 	}
 	mut progress := run.progress
 	normalized, unchanged := progress.normalize_for_retry('inline:spec', spec)!
-	if unchanged && run.input.is_instance_of('Generator') {
+	if unchanged && run.input.is_generator() {
 		if _ := registrationx.current_registration_scope() {
 			// The yielded spec can survive rollback independently of the applied steps.
 			mut value := normalized.to_value()

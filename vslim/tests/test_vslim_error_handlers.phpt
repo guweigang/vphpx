@@ -39,6 +39,23 @@ echo $app->dispatch('GET', '/missing')->status . '|' . $app->dispatch('GET', '/m
 echo $app->dispatch('GET', '/bad')->status . '|' . $app->dispatch('GET', '/bad')->body . PHP_EOL;
 echo $app->dispatch('GET', '/write')->status . '|' . $app->dispatch('GET', '/write')->body . PHP_EOL;
 
+$app->setNotFoundHandler(static function &() {
+    $response = ['status' => 418, 'body' => 'referenced missing'];
+    return $response;
+});
+$app->setErrorHandler(static function &() {
+    $response = (new VSlim\Psr7\Response(503))->withBody(new VSlim\Psr7\Stream('referenced error'));
+    return $response;
+});
+foreach (['/missing' => [418, 'referenced missing'], '/bad' => [503, 'referenced error']] as $path => $expected) {
+    $raw = $app->dispatch('GET', $path);
+    $psr = $app->handle(request: (new VSlim\Psr17\ServerRequestFactory())->createServerRequest('GET', $path));
+    if ([$raw->status, $raw->body] !== $expected
+        || [$psr->getStatusCode(), (string) $psr->getBody()] !== $expected) {
+        throw new RuntimeException("Unexpected referenced handler response for $path");
+    }
+}
+
 try {
     $app->setNotFoundHandler(123);
     echo "not_found_invalid_not_thrown\n";

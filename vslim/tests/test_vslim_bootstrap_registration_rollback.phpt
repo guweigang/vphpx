@@ -71,10 +71,18 @@ return [
     },
     static function (VSlim\App $app): void {
         $label = empty($GLOBALS['routeTried']) ? 'route-bad' : 'route-good';
-        $app->getNamed($label, '/probe', static fn (): string => $label);
-        $app->group('/probe')->middleware(new RollbackMiddleware($label));
+        $http = static fn (): string => $label;
+        $middleware = new RollbackMiddleware($label);
+        $app->getNamed($label, '/probe', $http);
+        $app->group('/probe')->middleware($middleware);
         $app->groupAfter('/probe', new RollbackMiddleware($label . '-after'));
+        $ws = static fn (): string => $label;
+        $app->websocket('/rollback-ws', $ws);
         if (empty($GLOBALS['routeTried'])) {
+            $GLOBALS['rollbackWebsocket'] = WeakReference::create($ws);
+            $GLOBALS['rollbackHttp'] = WeakReference::create($http);
+            $GLOBALS['rollbackMiddleware'] = WeakReference::create($middleware);
+            $app->handleWebSocket(['event' => 'open', 'id' => 'rollback', 'path' => '/rollback-ws'], new stdClass());
             $GLOBALS['routeTried'] = true;
             throw new LogicException('route failed');
         }
@@ -92,7 +100,15 @@ PHP);
     echo 'after-boot|', implode(',', $app->routeNames()), PHP_EOL;
     expectRollbackFailure(static fn () => $app->bootstrapDir($root));
     echo 'after-route|', implode(',', $app->routeNames()), PHP_EOL;
+    if ($GLOBALS['rollbackWebsocket']->get() !== null || $GLOBALS['rollbackHttp']->get() !== null
+        || $GLOBALS['rollbackMiddleware']->get() !== null
+        || $app->handleWebSocket(['event' => 'message', 'id' => 'rollback'], new stdClass()) !== null) {
+        throw new RuntimeException('Rollback retained the failed WebSocket handler or connection route');
+    }
     $app->bootstrapDir($root);
+    if ($app->handleWebSocket(['event' => 'open', 'id' => 'rollback', 'path' => '/rollback-ws'], new stdClass()) !== 'route-good') {
+        throw new RuntimeException('The replacement WebSocket route did not populate the reused index');
+    }
     $GLOBALS['middleware'] = [];
     echo 'web|', implode(',', $app->routeNames()), '|', $app->dispatch('GET', '/probe')->body, '|',
         implode(',', $GLOBALS['middleware']), PHP_EOL;
@@ -152,6 +168,44 @@ PHP);
     rmdir("$root/routes");
     rmdir("$root/bootstrap");
     rmdir($root);
+}
+
+class CyclicRegistrationMiddleware implements MiddlewareInterface
+{
+    public function __construct(private VSlim\App $app) {}
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        if ($this->app->routeCount() !== 1) {
+            throw new RuntimeException('Middleware lost its application');
+        }
+        return $handler->handle($request);
+    }
+}
+
+foreach (['route', 'before', 'middleware', 'after', 'groupBefore', 'groupMiddleware', 'groupAfter'] as $kind) {
+    [$appRef, $handlerRef] = (static function () use ($kind): array {
+        $app = new VSlim\App();
+        if ($kind === 'route') {
+            $handler = static fn (): string => 'gc:' . $app->routeCount();
+            $app->get('/gc/check', $handler);
+        } else {
+            $app->get('/gc/check', static fn (): string => 'gc:1');
+            $handler = new CyclicRegistrationMiddleware($app);
+            if (str_starts_with($kind, 'group')) {
+                $app->{$kind}('/gc', $handler);
+            } else {
+                $app->{$kind}($handler);
+            }
+        }
+        if ($app->dispatch('GET', '/gc/check')->body !== 'gc:1') {
+            throw new RuntimeException("The $kind registration did not dispatch");
+        }
+        return [WeakReference::create($app), WeakReference::create($handler)];
+    })();
+    gc_collect_cycles();
+    if ($appRef->get() !== null || $handlerRef->get() !== null) {
+        throw new RuntimeException("The $kind registration kept a PHP reference cycle alive");
+    }
 }
 ?>
 --EXPECT--

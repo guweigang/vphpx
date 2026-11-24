@@ -33,6 +33,26 @@ namespace {
     var_dump($app->setClock($customClock) === $app);
     var_dump($app->container()->get('clock') === $customClock);
     var_dump($app->container()->get(Psr\Clock\ClockInterface::class) === $customClock);
+    $parameter = (new ReflectionMethod($app, 'setClock'))->getParameters()[0];
+    if ($parameter->getName() !== 'clock' || (string) $parameter->getType() !== Psr\Clock\ClockInterface::class
+        || $app->setClock(clock: $customClock) !== $app || $container->get('clock') !== $customClock) {
+        throw new RuntimeException('App did not retain the configured clock through a named call');
+    }
+    $lookalike = new class {
+        public function now(): DateTimeImmutable {
+            return new DateTimeImmutable();
+        }
+    };
+    foreach ([$app, $app->cache(), $app->cachePool()] as $service) {
+        try {
+            $service->setClock(clock: $lookalike);
+            throw new RuntimeException('A clock without the PHP interface was accepted');
+        } catch (TypeError) {
+            if ($service->clock() !== $customClock) {
+                throw new RuntimeException('A rejected clock replaced the configured clock');
+            }
+        }
+    }
 
     $external = new VSlim\Container();
     $app->setContainer($external);

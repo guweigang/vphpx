@@ -15,7 +15,7 @@ mut:
 pub struct VSlimJobWorker {
 mut:
 	manager_ref          &databasex.VSlimDatabaseManager = unsafe { nil } @[vphp.PhpIgnoreField]
-	worker_id            string = 'default' @[vphp.PhpProperty; vphp.PhpProperty_name: 'workerId']
-	retry_delay_seconds  int    = 60        @[vphp.PhpProperty; vphp.PhpProperty_name: 'retryDelaySeconds']
-	reserve_timeout_secs int    = 300       @[vphp.PhpProperty; vphp.PhpProperty_name: 'reserveTimeoutSeconds']
+	worker_id            string = 'default' @[vphp.PhpProperty(name: 'workerId')]
+	retry_delay_seconds  int    = 60        @[vphp.PhpProperty(name: 'retryDelaySeconds')]
+	reserve_timeout_secs int    = 300       @[vphp.PhpProperty(name: 'reserveTimeoutSeconds')]
 }

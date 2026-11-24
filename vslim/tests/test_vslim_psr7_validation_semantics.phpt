@@ -123,6 +123,13 @@ namespace {
     $uriFactory = new VSlim\Psr17\UriFactory();
     $streamFactory = new VSlim\Psr17\StreamFactory();
 
+    $uri = $uriFactory->createUri();
+    $password = (new ReflectionMethod($uri, 'withUserInfo'))->getParameters()[1];
+    if ($password->getDefaultValue() !== '' || $uri->withUserInfo(user: 'demo')->getUserInfo() !== 'demo'
+        || $uri->withUserInfo(defaultPassword: 'sample', user: 'demo')->getUserInfo() !== 'demo:sample') {
+        throw new RuntimeException('The sensitive URI password field changed its PHP call contract');
+    }
+
     try {
         $responseFactory->createResponse(700);
         echo "factory-status-ok\n";

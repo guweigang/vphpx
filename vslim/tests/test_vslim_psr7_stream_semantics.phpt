@@ -40,6 +40,7 @@ namespace {
     $stream->seek(2);
     $stream->rewind();
     echo $stream->tell() . PHP_EOL;
+    echo $stream->read(PHP_INT_MAX) . PHP_EOL;
 
     $closed = $factory->createStream('bye');
     $closed->close();
@@ -97,12 +98,14 @@ namespace {
         echo "resource-invalid\n";
     }
 
+    $fileStream->close();
     @unlink($tmp);
 }
 ?>
 --EXPECT--
 5|r|w|s
 0
+hello
 close-size-null
 read-neg-runtime
 detached-empty

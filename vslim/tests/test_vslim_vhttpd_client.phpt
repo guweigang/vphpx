@@ -65,6 +65,7 @@ if (!is_resource($server)) {
     fwrite(STDERR, "bind_failed:$errstr:$errno\n");
     exit(2);
 }
+touch($socketPath . '.ready');
 
 $readExactly = static function ($conn, int $len): ?string {
     $buf = '';
@@ -129,6 +130,8 @@ file_put_contents($serverScript, $serverPhp);
 
 $startServer = static function () use ($serverScript, $sock, $stdoutLog, $stderrLog) {
     @unlink($sock);
+    $ready = $sock . '.ready';
+    @unlink($ready);
     $cmd = sprintf(
         'php %s %s',
         escapeshellarg($serverScript),
@@ -150,12 +153,15 @@ $startServer = static function () use ($serverScript, $sock, $stdoutLog, $stderr
     }
     $deadline = microtime(true) + 3.0;
     while (microtime(true) < $deadline) {
-        clearstatcache(true, $sock);
-        if (file_exists($sock)) {
+        clearstatcache(true, $ready);
+        if (is_file($ready)) {
+            unlink($ready);
             return $proc;
         }
         usleep(20000);
     }
+    proc_terminate($proc);
+    proc_close($proc);
     throw new RuntimeException('socket_not_ready');
 };
 

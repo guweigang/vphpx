@@ -71,7 +71,17 @@ dispatch -> pending -> reserved -> failed
 
 ## 和 Task 的边界
 
-`VSlim\Task` 适合当前请求内的 callable facade 或 V-native task。
+`Task::spawn($callable, $params)` 按 PHP 参数展开规则传递 `$params`。整数键对应位置参数，字符串键对应命名参数，可用来跳过有默认值的参数。已注册的 V 任务仍接收位置参数。
+
+`VSlim\Task` 在当前请求内运行 PHP callable，也接受已注册的 V 任务名称。PHP callable 在 Fiber 中执行。`Task::waitAll($handles)` 推进一组任务，并按句柄传入顺序返回结果。单个任务可用 `$handle->wait()` 等待。重复等待沿用原结果或抛出同一个异常对象。同组的 PHP 任务可以通过 `wait()` 等待其他任务。调度器会挂起等待方，并在目标任务完成后恢复它。任务内调用 `wait()` 或 `waitAll()` 等待刚创建的任务时，调度器会把它们加入当前组，再挂起等待方。循环等待会在其中一个等待方抛出 `LogicException`。
+
+`$handle->cancel()` 请求取消 PHP 任务，默认抛出 `VSlim\TaskCancelledException`。`$handle->cancel($reason)` 使用传入的 `Throwable`。已排队的任务会直接结束，挂起的任务在 Fiber 内收到异常，可以执行 `finally`，也可以捕获异常后继续。已结束的任务和原生 V 线程任务返回 `false`。
+
+`Task::sleep(milliseconds: 100)` 在任务内挂起当前 Fiber，同组任务可继续执行。`Task::sleep(0)` 让出当前执行机会。计时器使用单调时钟，也可通过任务句柄取消。
+
+`awaitReadable($stream, timeoutMs: 1000)` 和 `awaitWritable($stream, timeoutMs: 1000)` 可在任务内等待非阻塞 stream。超时或等待期间该 stream 被关闭时返回 `false`。对端关闭仍会唤醒读取方，使其可以读到 EOF。PHP 8.6 起使用官方 polling API，PHP 8.2–8.5 由 VPHP 通过系统轮询等待。
+
+多个任务等待同一个 stream 时，如果先恢复的任务读走了当前数据，其他读取任务会继续等待下一次可读或超时。
 
 `VSlim\Job` 面向 queued job：
 

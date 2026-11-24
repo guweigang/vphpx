@@ -8,10 +8,10 @@ pub struct VSlimLiveSocket {
 pub mut:
 	id          string
 	connected   bool
-	redirect_to string @[vphp.PhpProperty; vphp.PhpProperty_name: 'redirectTo']
-	navigate_to string @[vphp.PhpProperty; vphp.PhpProperty_name: 'navigateTo']
-	raw_path    string @[vphp.PhpProperty; vphp.PhpProperty_name: 'rawPath']
-	root_id     string @[vphp.PhpProperty; vphp.PhpProperty_name: 'rootId']
+	redirect_to string @[vphp.PhpProperty(name: 'redirectTo')]
+	navigate_to string @[vphp.PhpProperty(name: 'navigateTo')]
+	raw_path    string @[vphp.PhpProperty(name: 'rawPath')]
+	root_id     string @[vphp.PhpProperty(name: 'rootId')]
 	assigns     map[string]string
 	patches     []map[string]string
 	events      []map[string]string
@@ -269,11 +269,13 @@ pub fn (socket &VSlimLiveSocket) input_or(field string, fallback string) string 
 // Compatibility aliases for older form-oriented examples.
 // Prefer input()/input_or() in new code.
 @[vphp.PhpExportMethod(name: '')]
+@[vphp.PhpCallableAttribute(name: 'Deprecated', args: 'message: "Use input()"')]
 pub fn (socket &VSlimLiveSocket) old(field string) string {
 	return socket.input(field)
 }
 
 @[vphp.PhpExportMethod(name: 'oldOr')]
+@[vphp.PhpCallableAttribute(name: 'Deprecated', args: 'message: "Use inputOr()"')]
 pub fn (socket &VSlimLiveSocket) old_or(field string, fallback string) string {
 	return socket.input_or(field, fallback)
 }

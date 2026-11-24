@@ -90,6 +90,10 @@ pub fn default_status(status int) int {
 	return if status <= 0 { 200 } else { status }
 }
 
+pub fn response_forbids_body(status int) bool {
+	return status in [204, 205, 304] || (status >= 100 && status < 200)
+}
+
 pub fn normalize_status(status int) int {
 	return default_status(status)
 }

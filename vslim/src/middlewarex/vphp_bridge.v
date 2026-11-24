@@ -54,23 +54,22 @@ pub fn vphp_wrap_vslim_psr15_next_handler_handle(ptr voidptr, ctx vphp.Context) 
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at(0).object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).zval().to_v[httpx.PsrServerRequest]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
     res := recv.handle(arg_0)
     return voidptr(res)
 }
 @[export: 'vslim_psr15_next_handler_handlers']
 pub fn vslim_psr15_next_handler_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr15_next_handler_get_prop),
-        write_handler: voidptr(vslim_psr15_next_handler_set_prop),
-        sync_handler: voidptr(vslim_psr15_next_handler_sync_props),
-        new_raw: voidptr(vslim_psr15_next_handler_new_raw),
-        cleanup_raw: voidptr(vslim_psr15_next_handler_cleanup_raw),
-        free_raw: voidptr(vslim_psr15_next_handler_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr15_next_handler_get_prop,
+        write_handler: vslim_psr15_next_handler_set_prop,
+        sync_handler: vslim_psr15_next_handler_sync_props,
+        new_raw: vslim_psr15_next_handler_new_raw,
+        cleanup_raw: vslim_psr15_next_handler_cleanup_raw,
+        free_raw: vslim_psr15_next_handler_free_raw
     )
 }
 pub fn VSlimPsr15NextHandler.php_class_entry() vphp.ZendClassEntry {
@@ -121,6 +120,10 @@ pub fn vslim_psr15_continue_handler_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
     }
+    unsafe {
+        mut obj := &VSlimPsr15ContinueHandler(ptr)
+        obj.cleanup()
+    }
 }
 @[export: 'vslim_psr15_continue_handler_get_prop']
 pub fn vslim_psr15_continue_handler_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
@@ -149,23 +152,22 @@ pub fn vphp_wrap_vslim_psr15_continue_handler_handle(ptr voidptr, ctx vphp.Conte
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at(0).object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).zval().to_v[httpx.PsrServerRequest]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
     res := recv.handle(arg_0)
     return voidptr(res)
 }
 @[export: 'vslim_psr15_continue_handler_handlers']
 pub fn vslim_psr15_continue_handler_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr15_continue_handler_get_prop),
-        write_handler: voidptr(vslim_psr15_continue_handler_set_prop),
-        sync_handler: voidptr(vslim_psr15_continue_handler_sync_props),
-        new_raw: voidptr(vslim_psr15_continue_handler_new_raw),
-        cleanup_raw: voidptr(vslim_psr15_continue_handler_cleanup_raw),
-        free_raw: voidptr(vslim_psr15_continue_handler_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr15_continue_handler_get_prop,
+        write_handler: vslim_psr15_continue_handler_set_prop,
+        sync_handler: vslim_psr15_continue_handler_sync_props,
+        new_raw: vslim_psr15_continue_handler_new_raw,
+        cleanup_raw: vslim_psr15_continue_handler_cleanup_raw,
+        free_raw: vslim_psr15_continue_handler_free_raw
     )
 }
 pub fn VSlimPsr15ContinueHandler.php_class_entry() vphp.ZendClassEntry {
@@ -198,5 +200,9 @@ pub fn (obj &VSlimPsr15ContinueHandler) bind_owned_php_object_value() vphp.PhpVa
 
 pub fn (val VSlimPsr15ContinueHandler) php_class_name() string {
     return 'VSlim\\Psr15\\ContinueHandler'
+}
+
+pub fn (val MiddlewareRegistrationKind) php_class_name() string {
+    return 'VSlim\\MiddlewarePhase'
 }
 

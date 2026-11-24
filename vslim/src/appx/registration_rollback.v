@@ -14,24 +14,29 @@ fn (mut app VSlimApp) track_container_replacement() {
 	}
 	receiver := &app
 	saved := app.container_ref
+	created_here := app.container_created_here
 	mut pin := vphp.PhpValue.invalid()
 	if saved != unsafe { nil } {
 		mut value := vphp.bind_borrowed_object_value[containerx.VSlimContainer](saved)
 		pin = value.retain()
 		value.release()
 	}
-	scope.add_change(fn [receiver, saved, mut pin] (commit bool) {
+	scope.add_change(fn [receiver, saved, created_here, mut pin] (commit bool) {
 		if !commit {
 			mut target := receiver
-			target.restore_container(saved)
+			target.restore_container(saved, created_here)
 		}
 		pin.release()
 	})
 }
 
-fn (mut app VSlimApp) restore_container(container &containerx.VSlimContainer) {
+fn (mut app VSlimApp) restore_container(container &containerx.VSlimContainer, created_here bool) {
 	// Service registrations are restored by their own changes in the scope.
 	app.container_ref = container
+	app.container_created_here = created_here
+	if state := vphp.owned_object_php_state(app) {
+		app.bind_container_state(state)
+	}
 }
 
 fn (mut app VSlimApp) track_config_binding() {
@@ -62,11 +67,31 @@ fn (mut app VSlimApp) restore_config_binding(config &cfgx.VSlimConfig, redirect 
 	app.auth_redirect_path = redirect
 }
 
+fn (mut app VSlimApp) track_http_client() {
+	mut scope := registrationx.current_registration_scope() or { return }
+	if !scope.needs_snapshot(usize(&app.http_client_ref)) {
+		return
+	}
+	receiver := &app
+	mut saved := if app.http_client_ref.is_valid() {
+		app.http_client_ref.retain()
+	} else {
+		vphp.PhpObject.invalid()
+	}
+	scope.add_change(fn [receiver, mut saved] (commit bool) {
+		if !commit {
+			mut target := receiver
+			target.replace_http_client(saved)
+		}
+		saved.release()
+	})
+}
+
 struct AppViewSettings {
-	base_path string
-	view_base_path string
-	assets_prefix string
-	cache_enabled bool
+	base_path        string
+	view_base_path   string
+	assets_prefix    string
+	cache_enabled    bool
 	cache_configured bool
 }
 
@@ -77,10 +102,10 @@ fn (mut app VSlimApp) track_view_settings() {
 	}
 	receiver := &app
 	saved := AppViewSettings{
-		base_path: app.base_path.clone()
-		view_base_path: app.view_base_path.clone()
-		assets_prefix: app.assets_prefix.clone()
-		cache_enabled: app.view_cache_enabled
+		base_path:        app.base_path.clone()
+		view_base_path:   app.view_base_path.clone()
+		assets_prefix:    app.assets_prefix.clone()
+		cache_enabled:    app.view_cache_enabled
 		cache_configured: app.view_cache_configured
 	}
 	scope.add_change(fn [receiver, saved] (commit bool) {
@@ -103,7 +128,11 @@ fn (mut app VSlimApp) track_view_helper(key string) {
 	mut scope := registrationx.current_registration_scope() or { return }
 	receiver := &app
 	name := key.clone()
-	mut saved := if existing := app.view_helpers[key] { existing.retain() } else { vphp.PhpCallable.invalid() }
+	mut saved := if existing := app.view_helpers[key] {
+		existing.retain()
+	} else {
+		vphp.PhpCallable.invalid()
+	}
 	scope.add_change(fn [receiver, name, mut saved] (commit bool) {
 		if !commit {
 			mut target := receiver
@@ -158,6 +187,26 @@ fn (mut app VSlimApp) track_registration() {
 }
 
 fn (mut app VSlimApp) rollback_registration(lengths AppRegistrationLengths) {
+	mut removed := vphp.PhpArray.new()
+	defer {
+		removed.release()
+	}
+	// Destructors may call into the app again. Keep removed entries alive until
+	// their PHP slots, route indexes and middleware metadata have been trimmed.
+	if state := vphp.owned_object_php_state(app) {
+		remove_registration_values(state, removed, .routes, lengths.routes, app.routes.len)
+		remove_registration_values(state, removed, .resource_missing, lengths.routes, app.routes.len)
+		remove_registration_values(state, removed, .websockets, lengths.websockets, app.websocket_routes.len)
+		remove_registration_values(state, removed, .before, lengths.before, app.before_middlewares.len)
+		remove_registration_values(state, removed, .middleware, lengths.middleware, app.middlewares.len)
+		remove_registration_values(state, removed, .after, lengths.after, app.after_middlewares.len)
+		remove_registration_values(state, removed, .group_before, lengths.group_before,
+			app.group_before_middle.handlers.len)
+		remove_registration_values(state, removed, .group_middle, lengths.group_middle,
+			app.group_middle.handlers.len)
+		remove_registration_values(state, removed, .group_after, lengths.group_after,
+			app.group_after_middle.handlers.len)
+	}
 	app.route_index.trim(lengths.routes)
 	trim_registered_routes(mut app.routes, lengths.routes)
 	if app.websocket_routes.len > lengths.websockets {

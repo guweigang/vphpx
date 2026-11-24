@@ -70,6 +70,9 @@ function main(array $argv): void
         $stagedExtensionPath = $stagedExtensionDir . DIRECTORY_SEPARATOR . $extensionFile;
         ensure_dir($stagedExtensionDir);
         copy_file($extensionPath, $stagedExtensionPath);
+        if (is_file($extensionPath . '.classes.php')) {
+            copy_file($extensionPath . '.classes.php', $stagedExtensionPath . '.classes.php');
+        }
         stage_runtime_dependencies($stagedExtensionPath, $extensionPath, $stageDir);
 
         $serverPath = trim((string) ($options['server-path'] ?? ''));
@@ -92,7 +95,11 @@ function main(array $argv): void
                     fail('Experimental server extension not found: ' . $serverExtensionPath);
                 }
                 $serverExtensionFile = basename($serverExtensionPath);
-                copy_file($serverExtensionPath, $stagedServerDir . DIRECTORY_SEPARATOR . $serverExtensionFile);
+                $stagedServerExtension = $stagedServerDir . DIRECTORY_SEPARATOR . $serverExtensionFile;
+                copy_file($serverExtensionPath, $stagedServerExtension);
+                if (is_file($serverExtensionPath . '.classes.php')) {
+                    copy_file($serverExtensionPath . '.classes.php', $stagedServerExtension . '.classes.php');
+                }
             }
         }
     } else {

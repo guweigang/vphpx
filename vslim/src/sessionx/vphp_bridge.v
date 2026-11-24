@@ -5,6 +5,7 @@ import vphp.object
 
 import containerx
 import httpx
+import middlewarex
 
 #include "php_bridge.h"
 
@@ -52,12 +53,12 @@ pub fn vslim_session_store_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_session_store_construct']
-pub fn vphp_wrap_vslim_session_store_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_session_store_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimSessionStore(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimSessionStore](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_session_store_set_cookie_name']
 pub fn vphp_wrap_vslim_session_store_set_cookie_name(ptr voidptr, ctx vphp.Context) voidptr {
@@ -85,7 +86,7 @@ pub fn vphp_wrap_vslim_session_store_set_secret(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'secret' },
+        vphp.PhpArgMeta{ index: 0, name: 'secret', attributes: [vphp.PhpAttribute.named('SensitiveParameter').for_parameter()] },
     ])
     arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_secret(arg_0)
@@ -229,8 +230,7 @@ pub fn vphp_wrap_vslim_session_store_load(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.load(arg_0)
     return voidptr(res)
@@ -427,13 +427,13 @@ pub fn vphp_wrap_vslim_session_store_is_loaded(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_session_store_handlers']
 pub fn vslim_session_store_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_session_store_get_prop),
-        write_handler: voidptr(vslim_session_store_set_prop),
-        sync_handler: voidptr(vslim_session_store_sync_props),
-        new_raw: voidptr(vslim_session_store_new_raw),
-        cleanup_raw: voidptr(vslim_session_store_cleanup_raw),
-        free_raw: voidptr(vslim_session_store_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_session_store_get_prop,
+        write_handler: vslim_session_store_set_prop,
+        sync_handler: vslim_session_store_sync_props,
+        new_raw: vslim_session_store_new_raw,
+        cleanup_raw: vslim_session_store_cleanup_raw,
+        free_raw: vslim_session_store_free_raw
     )
 }
 pub fn VSlimSessionStore.php_class_entry() vphp.ZendClassEntry {
@@ -505,12 +505,12 @@ pub fn vslim_auth_session_guard_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_auth_session_guard_construct']
-pub fn vphp_wrap_vslim_auth_session_guard_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_auth_session_guard_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimAuthSessionGuard(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimAuthSessionGuard](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_auth_session_guard_set_store']
 pub fn vphp_wrap_vslim_auth_session_guard_set_store(ptr voidptr, ctx vphp.Context) voidptr {
@@ -520,12 +520,10 @@ pub fn vphp_wrap_vslim_auth_session_guard_set_store(ptr voidptr, ctx vphp.Contex
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'store' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[sessionx.VSlimSessionStore]() or {
-        vphp.throw_exception('argument 0 must be object bound to sessionx.VSlimSessionStore, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimSessionStore]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &sessionx.VSlimSessionStore(arg_0_ptr) }
     res := recv.set_store(arg_0)
     return voidptr(res)
 }
@@ -611,13 +609,13 @@ pub fn vphp_wrap_vslim_auth_session_guard_logout(ptr voidptr, ctx vphp.Context) 
 }
 @[export: 'vslim_auth_session_guard_handlers']
 pub fn vslim_auth_session_guard_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_auth_session_guard_get_prop),
-        write_handler: voidptr(vslim_auth_session_guard_set_prop),
-        sync_handler: voidptr(vslim_auth_session_guard_sync_props),
-        new_raw: voidptr(vslim_auth_session_guard_new_raw),
-        cleanup_raw: voidptr(vslim_auth_session_guard_cleanup_raw),
-        free_raw: voidptr(vslim_auth_session_guard_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_auth_session_guard_get_prop,
+        write_handler: vslim_auth_session_guard_set_prop,
+        sync_handler: vslim_auth_session_guard_sync_props,
+        new_raw: vslim_auth_session_guard_new_raw,
+        cleanup_raw: vslim_auth_session_guard_cleanup_raw,
+        free_raw: vslim_auth_session_guard_free_raw
     )
 }
 pub fn VSlimAuthSessionGuard.php_class_entry() vphp.ZendClassEntry {
@@ -689,12 +687,12 @@ pub fn vslim_session_start_middleware_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_session_start_middleware_construct']
-pub fn vphp_wrap_vslim_session_start_middleware_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_session_start_middleware_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimSessionStartMiddleware(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimSessionStartMiddleware](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_session_start_middleware_set_container']
 pub fn vphp_wrap_vslim_session_start_middleware_set_container(ptr voidptr, ctx vphp.Context) voidptr {
@@ -704,12 +702,10 @@ pub fn vphp_wrap_vslim_session_start_middleware_set_container(ptr voidptr, ctx v
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[containerx.VSlimContainer]() or {
-        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[containerx.VSlimContainer]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -734,28 +730,26 @@ pub fn vphp_wrap_vslim_session_start_middleware_process(ptr voidptr, ctx vphp.Co
         vphp.PhpArgMeta{ index: 0, name: 'request' },
         vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at(0).object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).zval().to_v[httpx.PsrServerRequest]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_1 := php_args.at(1).object() or {
-        vphp.throw_exception('argument 1 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_1 := php_args.at(1).zval().to_v[middlewarex.PsrRequestHandler]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
     res := recv.process(arg_0, arg_1)
     return voidptr(res)
 }
 @[export: 'vslim_session_start_middleware_handlers']
 pub fn vslim_session_start_middleware_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_session_start_middleware_get_prop),
-        write_handler: voidptr(vslim_session_start_middleware_set_prop),
-        sync_handler: voidptr(vslim_session_start_middleware_sync_props),
-        new_raw: voidptr(vslim_session_start_middleware_new_raw),
-        cleanup_raw: voidptr(vslim_session_start_middleware_cleanup_raw),
-        free_raw: voidptr(vslim_session_start_middleware_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_session_start_middleware_get_prop,
+        write_handler: vslim_session_start_middleware_set_prop,
+        sync_handler: vslim_session_start_middleware_sync_props,
+        new_raw: vslim_session_start_middleware_new_raw,
+        cleanup_raw: vslim_session_start_middleware_cleanup_raw,
+        free_raw: vslim_session_start_middleware_free_raw
     )
 }
 pub fn VSlimSessionStartMiddleware.php_class_entry() vphp.ZendClassEntry {
@@ -827,12 +821,12 @@ pub fn vslim_auth_require_middleware_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_auth_require_middleware_construct']
-pub fn vphp_wrap_vslim_auth_require_middleware_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_auth_require_middleware_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimAuthRequireMiddleware(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimAuthRequireMiddleware](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_auth_require_middleware_set_container']
 pub fn vphp_wrap_vslim_auth_require_middleware_set_container(ptr voidptr, ctx vphp.Context) voidptr {
@@ -842,12 +836,10 @@ pub fn vphp_wrap_vslim_auth_require_middleware_set_container(ptr voidptr, ctx vp
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[containerx.VSlimContainer]() or {
-        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[containerx.VSlimContainer]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -892,28 +884,26 @@ pub fn vphp_wrap_vslim_auth_require_middleware_process(ptr voidptr, ctx vphp.Con
         vphp.PhpArgMeta{ index: 0, name: 'request' },
         vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at(0).object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).zval().to_v[httpx.PsrServerRequest]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_1 := php_args.at(1).object() or {
-        vphp.throw_exception('argument 1 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_1 := php_args.at(1).zval().to_v[middlewarex.PsrRequestHandler]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
     res := recv.process(arg_0, arg_1)
     return voidptr(res)
 }
 @[export: 'vslim_auth_require_middleware_handlers']
 pub fn vslim_auth_require_middleware_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_auth_require_middleware_get_prop),
-        write_handler: voidptr(vslim_auth_require_middleware_set_prop),
-        sync_handler: voidptr(vslim_auth_require_middleware_sync_props),
-        new_raw: voidptr(vslim_auth_require_middleware_new_raw),
-        cleanup_raw: voidptr(vslim_auth_require_middleware_cleanup_raw),
-        free_raw: voidptr(vslim_auth_require_middleware_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_auth_require_middleware_get_prop,
+        write_handler: vslim_auth_require_middleware_set_prop,
+        sync_handler: vslim_auth_require_middleware_sync_props,
+        new_raw: vslim_auth_require_middleware_new_raw,
+        cleanup_raw: vslim_auth_require_middleware_cleanup_raw,
+        free_raw: vslim_auth_require_middleware_free_raw
     )
 }
 pub fn VSlimAuthRequireMiddleware.php_class_entry() vphp.ZendClassEntry {
@@ -985,12 +975,12 @@ pub fn vslim_auth_guest_middleware_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_auth_guest_middleware_construct']
-pub fn vphp_wrap_vslim_auth_guest_middleware_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_auth_guest_middleware_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimAuthGuestMiddleware(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimAuthGuestMiddleware](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_auth_guest_middleware_set_container']
 pub fn vphp_wrap_vslim_auth_guest_middleware_set_container(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1000,12 +990,10 @@ pub fn vphp_wrap_vslim_auth_guest_middleware_set_container(ptr voidptr, ctx vphp
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[containerx.VSlimContainer]() or {
-        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[containerx.VSlimContainer]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -1050,28 +1038,26 @@ pub fn vphp_wrap_vslim_auth_guest_middleware_process(ptr voidptr, ctx vphp.Conte
         vphp.PhpArgMeta{ index: 0, name: 'request' },
         vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at(0).object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).zval().to_v[httpx.PsrServerRequest]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_1 := php_args.at(1).object() or {
-        vphp.throw_exception('argument 1 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_1 := php_args.at(1).zval().to_v[middlewarex.PsrRequestHandler]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
     res := recv.process(arg_0, arg_1)
     return voidptr(res)
 }
 @[export: 'vslim_auth_guest_middleware_handlers']
 pub fn vslim_auth_guest_middleware_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_auth_guest_middleware_get_prop),
-        write_handler: voidptr(vslim_auth_guest_middleware_set_prop),
-        sync_handler: voidptr(vslim_auth_guest_middleware_sync_props),
-        new_raw: voidptr(vslim_auth_guest_middleware_new_raw),
-        cleanup_raw: voidptr(vslim_auth_guest_middleware_cleanup_raw),
-        free_raw: voidptr(vslim_auth_guest_middleware_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_auth_guest_middleware_get_prop,
+        write_handler: vslim_auth_guest_middleware_set_prop,
+        sync_handler: vslim_auth_guest_middleware_sync_props,
+        new_raw: vslim_auth_guest_middleware_new_raw,
+        cleanup_raw: vslim_auth_guest_middleware_cleanup_raw,
+        free_raw: vslim_auth_guest_middleware_free_raw
     )
 }
 pub fn VSlimAuthGuestMiddleware.php_class_entry() vphp.ZendClassEntry {
@@ -1143,12 +1129,12 @@ pub fn vslim_auth_require_ability_middleware_sync_props(ptr voidptr, zv &C.zval)
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_auth_require_ability_middleware_construct']
-pub fn vphp_wrap_vslim_auth_require_ability_middleware_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_auth_require_ability_middleware_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimAuthRequireAbilityMiddleware(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimAuthRequireAbilityMiddleware](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_auth_require_ability_middleware_set_container']
 pub fn vphp_wrap_vslim_auth_require_ability_middleware_set_container(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1158,12 +1144,10 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_set_container(ptr voidptr
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'container' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[containerx.VSlimContainer]() or {
-        vphp.throw_exception('argument 0 must be object bound to containerx.VSlimContainer, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[containerx.VSlimContainer]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &containerx.VSlimContainer(arg_0_ptr) }
     res := recv.set_container(arg_0)
     return voidptr(res)
 }
@@ -1248,28 +1232,26 @@ pub fn vphp_wrap_vslim_auth_require_ability_middleware_process(ptr voidptr, ctx 
         vphp.PhpArgMeta{ index: 0, name: 'request' },
         vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at(0).object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).zval().to_v[httpx.PsrServerRequest]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_1 := php_args.at(1).object() or {
-        vphp.throw_exception('argument 1 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_1 := php_args.at(1).zval().to_v[middlewarex.PsrRequestHandler]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
     res := recv.process(arg_0, arg_1)
     return voidptr(res)
 }
 @[export: 'vslim_auth_require_ability_middleware_handlers']
 pub fn vslim_auth_require_ability_middleware_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_auth_require_ability_middleware_get_prop),
-        write_handler: voidptr(vslim_auth_require_ability_middleware_set_prop),
-        sync_handler: voidptr(vslim_auth_require_ability_middleware_sync_props),
-        new_raw: voidptr(vslim_auth_require_ability_middleware_new_raw),
-        cleanup_raw: voidptr(vslim_auth_require_ability_middleware_cleanup_raw),
-        free_raw: voidptr(vslim_auth_require_ability_middleware_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_auth_require_ability_middleware_get_prop,
+        write_handler: vslim_auth_require_ability_middleware_set_prop,
+        sync_handler: vslim_auth_require_ability_middleware_sync_props,
+        new_raw: vslim_auth_require_ability_middleware_new_raw,
+        cleanup_raw: vslim_auth_require_ability_middleware_cleanup_raw,
+        free_raw: vslim_auth_require_ability_middleware_free_raw
     )
 }
 pub fn VSlimAuthRequireAbilityMiddleware.php_class_entry() vphp.ZendClassEntry {

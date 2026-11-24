@@ -9,7 +9,7 @@ pub mut:
 	name             string
 	socket_ref       &VSlimLiveSocket = unsafe { nil } @[vphp.PhpIgnoreField]
 	fields           []string
-	last_error_count int @[vphp.PhpProperty; vphp.PhpProperty_name: 'lastErrorCount']
+	last_error_count int @[vphp.PhpProperty(name: 'lastErrorCount')]
 	validated        bool
 }
 

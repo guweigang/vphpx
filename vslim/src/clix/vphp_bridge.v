@@ -3,6 +3,8 @@ module clix
 import vphp
 import vphp.object
 
+import appx
+
 #include "php_bridge.h"
 
 __global C.vslim__cli__app_ce &C.zend_class_entry
@@ -83,20 +85,20 @@ pub fn vphp_wrap_vslim_cli_app_run_argv(ptr voidptr, ctx vphp.Context)  {
     ctx.return().v[int](res)
 }
 @[export: 'vphp_wrap_vslim_cli_app_construct']
-pub fn vphp_wrap_vslim_cli_app_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_cli_app_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimCliApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimCliApp](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_cli_app_app']
-pub fn vphp_wrap_vslim_cli_app_app(ptr voidptr, ctx vphp.Context)  {
+pub fn vphp_wrap_vslim_cli_app_app(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimCliApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.app()
-    ctx.return().v[vphp.PhpValue](res)
+    return voidptr(res)
 }
 @[export: 'vphp_wrap_vslim_cli_app_project_root_value']
 pub fn vphp_wrap_vslim_cli_app_project_root_value(ptr voidptr, ctx vphp.Context)  {
@@ -142,8 +144,7 @@ pub fn vphp_wrap_vslim_cli_app_command_many(ptr voidptr, ctx vphp.Context) voidp
     ])
     arg_0 := php_args.at(0).iterable() or {
         vphp.throw_exception('argument 0 must be iterable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.command_many(arg_0)
     return voidptr(res)
@@ -299,14 +300,21 @@ pub fn vphp_wrap_vslim_cli_app_bootstrap_dir(ptr voidptr, ctx vphp.Context) void
 }
 @[export: 'vslim_cli_app_handlers']
 pub fn vslim_cli_app_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_cli_app_get_prop),
-        write_handler: voidptr(vslim_cli_app_set_prop),
-        sync_handler: voidptr(vslim_cli_app_sync_props),
-        new_raw: voidptr(vslim_cli_app_new_raw),
-        cleanup_raw: voidptr(vslim_cli_app_cleanup_raw),
-        free_raw: voidptr(vslim_cli_app_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_cli_app_get_prop,
+        write_handler: vslim_cli_app_set_prop,
+        sync_handler: vslim_cli_app_sync_props,
+        new_raw: vslim_cli_app_new_raw,
+        cleanup_raw: vslim_cli_app_cleanup_raw,
+        free_raw: vslim_cli_app_free_raw,
+        init_php_state: vslim_cli_app_init_php_state
     )
+}
+fn vslim_cli_app_init_php_state(ptr voidptr) {
+    unsafe {
+        mut obj := &VSlimCliApp(ptr)
+        obj.init_php_state()
+    }
 }
 pub fn VSlimCliApp.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__cli__app_ce)
@@ -338,5 +346,16 @@ pub fn (obj &VSlimCliApp) bind_owned_php_object_value() vphp.PhpValue {
 
 pub fn (val VSlimCliApp) php_class_name() string {
     return 'VSlim\\Cli\\App'
+}
+
+pub fn (val CliInputValueType) php_class_name() string {
+    return 'VSlim\\Cli\\InputValueType'
+}
+pub fn (val CliInputValueType) php_enum_case_name() string {
+    if val == .string_ { return 'String' }
+    if val == .bool_ { return 'Bool' }
+    if val == .int_ { return 'Int' }
+    if val == .float_ { return 'Float' }
+    return val.str()
 }
 

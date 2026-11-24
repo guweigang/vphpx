@@ -1,27 +1,20 @@
 module streamx
 
+import httpx
 import vphp
 
 @[vphp.PhpExportMethod(name: 'openStream')]
 pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.PhpArray) vphp.PhpArray {
 	fixture := c.fixture_path_value()
 	if fixture != '' {
-		mut fixture_arg := vphp.PhpString.of(fixture)
-		mut mode_arg := vphp.PhpString.of('r')
+		mut stream := vphp.PhpResource.open_stream(fixture, 'r') or {
+			return new_open_stream_result(false, vphp.PhpNull.value(), 'failed to open stream fixture: ' +
+				fixture, 500, 'fixture://' + fixture)
+		}
 		defer {
-			fixture_arg.release()
-			mode_arg.release()
+			stream.release()
 		}
-		mut fp := vphp.PhpFunction.named('fopen').invoke(fixture_arg, mode_arg)
-		defer {
-			fp.release()
-		}
-		if fp.is_resource() {
-			return new_open_stream_result(true, fp.to_borrowed(), '', 200, 'fixture://' + fixture)
-		}
-		mut null_stream := vphp.PhpNull.value()
-		return new_open_stream_result(false, null_stream, 'failed to open stream fixture: ' +
-			fixture, 500, 'fixture://' + fixture)
+		return new_open_stream_result(true, stream, '', 200, 'fixture://' + fixture)
 	}
 
 	mut request_body := vphp.PhpArray.new()
@@ -51,48 +44,35 @@ pub fn (c &VSlimStreamOllamaClient) open_stream(payload vphp.PhpArray) vphp.PhpA
 	mut ctx_opts := vphp.PhpArray.new()
 	ctx_opts.set('http', http_options)
 	http_options.release()
-	mut ctx := vphp.PhpFunction.named('stream_context_create').invoke(ctx_opts)
 	defer {
-		ctx.release()
+		ctx_opts.release()
 	}
-	mut url_arg := vphp.PhpString.of(c.chat_url_value())
-	mut mode_arg := vphp.PhpString.of('r')
-	mut use_include_path_arg := vphp.PhpBool.of(false)
+	url := c.chat_url_value()
+	mut context := vphp.PhpResource.new_stream_context(ctx_opts) or {
+		return new_open_stream_result(false, vphp.PhpNull.value(), err.msg(), 502, url)
+	}
 	defer {
-		url_arg.release()
-		mode_arg.release()
-		use_include_path_arg.release()
+		context.release()
 	}
-	mut fp := vphp.PhpFunction.named('fopen').invoke(url_arg, mode_arg, use_include_path_arg, ctx)
+	mut stream := vphp.PhpResource.open_stream(url, 'r', context: context) or {
+		return new_open_stream_result(false, vphp.PhpNull.value(), 'failed to open upstream stream: ' +
+			url, 502, url)
+	}
 	defer {
-		fp.release()
+		stream.release()
 	}
-	if !fp.is_resource() {
-		mut null_stream := vphp.PhpNull.value()
-		return new_open_stream_result(false, null_stream, 'failed to open upstream stream: ' +
-			c.chat_url_value(), 502, c.chat_url_value())
-	}
-
-	status := read_last_http_status()
+	status := httpx.http_stream_response_status(stream)
 	if status < 200 || status >= 300 {
-		stream := fp.as_resource() or {
-			mut null_stream := vphp.PhpNull.value()
-			return new_open_stream_result(false, null_stream, 'upstream status ${status}', status,
-				c.chat_url_value())
-		}
-		err := (stream.contents() or { '' }).trim_space()
-		if stream.is_stream() {
-			_ = stream.close()
-		}
-		mut null_stream := vphp.PhpNull.value()
-		return new_open_stream_result(false, null_stream, if err != '' {
-			err
+		body := (stream.read_to_end() or { '' }).trim_space()
+		_ = stream.close()
+		return new_open_stream_result(false, vphp.PhpNull.value(), if body != '' {
+			body
 		} else {
 			'upstream status ${status}'
-		}, status, c.chat_url_value())
+		}, status, url)
 	}
 
-	return new_open_stream_result(true, fp.to_borrowed(), '', status, c.chat_url_value())
+	return new_open_stream_result(true, stream, '', status, url)
 }
 
 @[vphp.PhpStringParam('output_mode', php_name: 'outputMode', default_value: 'sse', optional: true)]
@@ -128,7 +108,9 @@ pub fn (c &VSlimStreamOllamaClient) upstream_plan(payload vphp.PhpArray, output_
 	mut content_type_arg := vphp.PhpString.of(content_type)
 	mut fixture_arg := vphp.PhpString.of(c.fixture_path_value())
 	mut name_arg := vphp.PhpString.of('ollama')
+	mut arguments := vphp.PhpArray.new()
 	defer {
+		arguments.release()
 		request_headers.release()
 		response_headers.release()
 		meta.release()
@@ -142,9 +124,19 @@ pub fn (c &VSlimStreamOllamaClient) upstream_plan(payload vphp.PhpArray, output_
 		fixture_arg.release()
 		name_arg.release()
 	}
-	return vphp.PhpClass.named('VHttpd\\Upstream\\Plan').call_static('http', url_arg, method_arg,
-		request_headers, body_arg, codec_arg, mapper_arg, mode_arg, content_type_arg,
-		response_headers, fixture_arg, name_arg, meta)
+	arguments.set('url', url_arg)
+	arguments.set('method', method_arg)
+	arguments.set('requestHeaders', request_headers)
+	arguments.set('body', body_arg)
+	arguments.set('codec', codec_arg)
+	arguments.set('mapper', mapper_arg)
+	arguments.set('outputStreamType', mode_arg)
+	arguments.set('outputContentType', content_type_arg)
+	arguments.set('responseHeaders', response_headers)
+	arguments.set('fixturePath', fixture_arg)
+	arguments.set('name', name_arg)
+	arguments.set('meta', meta)
+	return vphp.PhpClass.named('VHttpd\\Upstream\\Plan').call_static_args('http', arguments)
 }
 
 @[vphp.PhpArgName(v_name: 'request_payload', php_name: 'requestPayload')]
@@ -186,26 +178,6 @@ fn new_open_stream_result(ok bool, stream vphp.PhpArgInput, error string, status
 	out.int('status', status)
 	out.string('url', url)
 	return out
-}
-
-fn read_last_http_status() int {
-	if !vphp.PhpFunction.named('http_get_last_response_headers').exists() {
-		return 200
-	}
-	return vphp.PhpFunction.named('http_get_last_response_headers').with_result[vphp.PhpArray, int](fn (headers vphp.PhpArray) int {
-		if headers.count() == 0 {
-			return 200
-		}
-		line := headers.get_index(0).to_string()
-		parts := line.split(' ')
-		for part in parts {
-			clean := part.trim_space()
-			if clean.len == 3 && clean[0].is_digit() && clean[1].is_digit() && clean[2].is_digit() {
-				return clean.int()
-			}
-		}
-		return 200
-	}) or { 200 }
 }
 
 fn implode_lines(lines vphp.PhpArray) string {

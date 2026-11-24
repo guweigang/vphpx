@@ -32,7 +32,7 @@ pub fn (r &VSlimPsr7Response) get_protocol_version() string {
 pub fn (r &VSlimPsr7Response) with_protocol_version(version vphp.PhpValue) &VSlimPsr7Response {
 	return r.clone_with(normalize_protocol_version(value_subject(version).log_message()),
 		r.headers, r.header_names,
-		r.body_or_empty(), r.status, r.reason_phrase)
+		r.body_ref, r.status, r.reason_phrase)
 }
 
 @[vphp.PhpExportMethod(name: 'getHeaders')]
@@ -66,11 +66,11 @@ pub fn (r &VSlimPsr7Response) get_header_line_name(name string) string {
 pub fn (r &VSlimPsr7Response) with_header(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7Response {
 	original_name := value_subject(name).log_message().trim_space()
 	key := validate_header_name_or_throw(value_subject(name).log_message()) or {
-		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), r.status,
+		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_ref, r.status,
 			r.reason_phrase)
 	}
 	values := value_subject(value).header_values() or {
-		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), r.status,
+		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_ref, r.status,
 			r.reason_phrase)
 	}
 	mut headers := clone_header_values(r.headers)
@@ -78,7 +78,7 @@ pub fn (r &VSlimPsr7Response) with_header(name vphp.PhpValue, value vphp.PhpValu
 	headers[key] = values
 	header_names[key] = original_name
 	return r.clone_with(r.protocol_version, headers, header_names,
-		r.body_or_empty(), r.status, r.reason_phrase)
+		r.body_ref, r.status, r.reason_phrase)
 }
 
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
@@ -86,11 +86,11 @@ pub fn (r &VSlimPsr7Response) with_header(name vphp.PhpValue, value vphp.PhpValu
 pub fn (r &VSlimPsr7Response) with_added_header(name vphp.PhpValue, value vphp.PhpValue) &VSlimPsr7Response {
 	original_name := value_subject(name).log_message().trim_space()
 	key := validate_header_name_or_throw(value_subject(name).log_message()) or {
-		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), r.status,
+		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_ref, r.status,
 			r.reason_phrase)
 	}
 	values := value_subject(value).header_values() or {
-		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), r.status,
+		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_ref, r.status,
 			r.reason_phrase)
 	}
 	mut headers := clone_header_values(r.headers)
@@ -102,7 +102,7 @@ pub fn (r &VSlimPsr7Response) with_added_header(name vphp.PhpValue, value vphp.P
 		header_names[key] = original_name
 	}
 	return r.clone_with(r.protocol_version, headers, header_names,
-		r.body_or_empty(), r.status, r.reason_phrase)
+		r.body_ref, r.status, r.reason_phrase)
 }
 
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
@@ -114,28 +114,34 @@ pub fn (r &VSlimPsr7Response) without_header(name vphp.PhpValue) &VSlimPsr7Respo
 	headers.delete(key)
 	header_names.delete(key)
 	return r.clone_with(r.protocol_version, headers, header_names,
-		r.body_or_empty(), r.status, r.reason_phrase)
+		r.body_ref, r.status, r.reason_phrase)
 }
 
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\StreamInterface')]
 @[vphp.PhpExportMethod(name: 'getBody')]
-@[vphp.PhpBorrowedReturn]
-pub fn (r &VSlimPsr7Response) get_body() &VSlimPsr7Stream {
-	if r.body_ref == unsafe { nil } {
-		unsafe {
-			mut writable := &VSlimPsr7Response(r)
-			writable.body_ref = VSlimPsr7Stream.from_content('')
-		}
+pub fn (mut r VSlimPsr7Response) get_body() vphp.PhpValue {
+	if body := r.response_body_object() {
+		return body.to_request_scoped()
 	}
-	return r.body_ref
+	if vphp.PhpException.has_current() {
+		return vphp.PhpValue.invalid()
+	}
+	return psr7_body_value(r, r.body_ref, r.body_pending)
 }
 
-@[vphp.PhpArgType(v_name: 'body', php_type: 'Psr\\Http\\Message\\StreamInterface')]
+pub fn (mut r VSlimPsr7Response) init_php_state() {
+	install_psr7_body(r, mut r.body_pending)
+}
+
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
 @[vphp.PhpExportMethod(name: 'withBody')]
-pub fn (r &VSlimPsr7Response) with_body(body vphp.PhpValue) &VSlimPsr7Response {
-	return r.clone_with(r.protocol_version, r.headers, r.header_names, VSlimPsr7Stream.from_value(body), r.status,
+pub fn (r &VSlimPsr7Response) with_body(body PsrStream) &VSlimPsr7Response {
+	mut out := r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_ref, r.status,
 		r.reason_phrase)
+	out.body_pending.release()
+	out.body_pending = body.to_value().owned()
+	out.body_ref = unsafe { nil }
+	return out
 }
 
 @[vphp.PhpExportMethod(name: 'getStatusCode')]
@@ -149,10 +155,10 @@ pub fn (r &VSlimPsr7Response) get_status_code() int {
 @[vphp.PhpExportMethod(name: 'withStatus')]
 pub fn (r &VSlimPsr7Response) with_status(code vphp.PhpValue, default_reason_phrase vphp.PhpValue) &VSlimPsr7Response {
 	status := validate_status_or_throw(int(code.to_i64())) or {
-		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), r.status,
+		return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_ref, r.status,
 			r.reason_phrase)
 	}
-	return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_or_empty(), status, normalize_reason_phrase(status,
+	return r.clone_with(r.protocol_version, r.headers, r.header_names, r.body_ref, status, normalize_reason_phrase(status,
 		value_or_empty_string(default_reason_phrase)))
 }
 
@@ -184,9 +190,5 @@ pub fn (r &VSlimPsr7Response) str() string {
 }
 
 pub fn (mut r VSlimPsr7Response) cleanup() {
-	if r.body_ref != unsafe { nil } {
-		// `getBody()` is exported as a borrowed return, so nested stream refs are
-		// not owned vptr roots of the parent response object.
-		r.body_ref = unsafe { nil }
-	}
+	r.body_ref = unsafe { nil }
 }

@@ -11,22 +11,29 @@ pub struct RegistrationStateContext {
 }
 
 @[thread_local]
-__global registration_state_context &RegistrationStateContext
+__global registration_state_contexts map[usize]&RegistrationStateContext
 
 pub fn watch_registration_state(capture fn (mut RegistrationScope)) &RegistrationStateContext {
+	fiber := vphp.PhpFiber.current_id()
 	unsafe {
+		init_registration_fibers()
 		context := &RegistrationStateContext{
-			parent:  registration_state_context
+			parent:  registration_state_contexts[fiber] or { nil }
 			capture: capture
 		}
-		registration_state_context = context
+		registration_state_contexts[fiber] = context
 		return context
 	}
 }
 
 pub fn (context &RegistrationStateContext) close() {
+	fiber := vphp.PhpFiber.current_id()
 	unsafe {
-		registration_state_context = context.parent
+		if isnil(context.parent) {
+			registration_state_contexts.delete(fiber)
+		} else {
+			registration_state_contexts[fiber] = context.parent
+		}
 	}
 }
 
@@ -45,13 +52,30 @@ mut:
 }
 
 @[thread_local]
-__global registration_scope &RegistrationScope
+__global registration_scopes map[usize]&RegistrationScope
+
+@[thread_local]
+__global registration_fibers_initialized bool
+
+fn init_registration_fibers() {
+	unsafe {
+		if !registration_fibers_initialized {
+			registration_scopes = map[usize]&RegistrationScope{}
+			registration_state_contexts = map[usize]&RegistrationStateContext{}
+			registration_fibers_initialized = true
+		}
+	}
+}
 
 pub fn begin_registration_scope() &RegistrationScope {
+	fiber := vphp.PhpFiber.current_id()
 	unsafe {
-		mut scope := &RegistrationScope{ parent: registration_scope }
-		registration_scope = scope
-		mut context := registration_state_context
+		init_registration_fibers()
+		mut scope := &RegistrationScope{
+			parent: registration_scopes[fiber] or { nil }
+		}
+		registration_scopes[fiber] = scope
+		mut context := registration_state_contexts[fiber] or { nil }
 		for !isnil(context) {
 			context.capture(mut scope)
 			context = context.parent
@@ -61,11 +85,10 @@ pub fn begin_registration_scope() &RegistrationScope {
 }
 
 pub fn current_registration_scope() ?&RegistrationScope {
+	fiber := vphp.PhpFiber.current_id()
 	unsafe {
-		if isnil(registration_scope) {
-			return none
-		}
-		return registration_scope
+		scope := registration_scopes[fiber] or { return none }
+		return scope
 	}
 }
 
@@ -111,24 +134,51 @@ pub fn (mut scope RegistrationScope) snapshot_service(value vphp.PhpValue) {
 }
 
 pub fn (mut scope RegistrationScope) finish() {
+	fiber := vphp.PhpFiber.current_id()
 	unsafe {
-		registration_scope = scope.parent
+		if isnil(scope.parent) {
+			registration_scopes.delete(fiber)
+		} else {
+			registration_scopes[fiber] = scope.parent
+		}
+	}
+	mut failure := vphp.PhpException.take_current()
+	defer {
+		if mut original := failure {
+			if !vphp.has_exception() {
+				original.throw()
+			}
+			original.release()
+		}
 	}
 	scope.object_tracker.release()
-	commit := !vphp.has_exception()
+	failure = registration_cleanup_failure(failure)
+	commit := failure == none && !vphp.has_exception()
 	if commit && scope.parent != unsafe { nil } {
 		// A successful inner callback is still part of the enclosing callback.
 		scope.parent.changes << scope.changes
 	} else {
 		for i := scope.changes.len - 1; i >= 0; i-- {
 			scope.changes[i].apply(commit)
+			failure = registration_cleanup_failure(failure)
 		}
 		for mut change in scope.changes {
 			change.owner.release()
+			failure = registration_cleanup_failure(failure)
 		}
 	}
 	unsafe {
 		scope.changes.free()
 		scope.snapshots.free()
 	}
+}
+
+fn registration_cleanup_failure(primary ?vphp.PhpThrowable) ?vphp.PhpThrowable {
+	mut cleanup := vphp.PhpException.take_current() or { return primary }
+	if original := primary {
+		original.append_previous(cleanup)
+		cleanup.release()
+		return original
+	}
+	return cleanup
 }

@@ -33,7 +33,13 @@ pub fn VSlimPsr7ServerRequest.from_vslim_request_value(req &VSlimRequest, route_
 	}).build_psr7_server_request_value()
 }
 
-pub fn VSlimRequest.from_psr_server_request_object(payload vphp.PhpObject, route_params map[string]string) &VSlimRequest {
+@[params]
+pub struct PsrRequestProjectionOptions {
+pub:
+	include_body bool = true
+}
+
+pub fn VSlimRequest.from_psr_server_request_object(payload vphp.PhpObject, route_params map[string]string, options PsrRequestProjectionOptions) &VSlimRequest {
 	if payload.is_instance_of('VSlim\\VHttpd\\Request') || payload.is_instance_of('VSlimRequest') {
 		if req := payload.to_v_object[VSlimRequest]() {
 			mut cloned := req.to_vslim_request()
@@ -60,7 +66,11 @@ pub fn VSlimRequest.from_psr_server_request_object(payload vphp.PhpObject, route
 			method:           internal.get_method()
 			raw_path:         raw_path
 			path:             Path.normalize(uri.get_path())
-			body:             psr7_stream_string(internal.body_or_empty())
+			body:             if options.include_body {
+				psr7_stream_string(internal.body_or_empty())
+			} else {
+				''
+			}
 			query_string:     uri.get_query()
 			scheme:           uri.get_scheme()
 			host:             uri.get_host()
@@ -70,7 +80,7 @@ pub fn VSlimRequest.from_psr_server_request_object(payload vphp.PhpObject, route
 				''
 			}
 			query:            snapshot_string_map(query_params)
-			headers:          snapshot_string_map(flatten_psr7_header_map(internal.get_headers()))
+			headers:          snapshot_string_map(flatten_psr7_header_map(internal.headers))
 			cookies:          snapshot_string_map(persistent_array_to_string_map(internal.cookie_params_ref))
 			attributes:       snapshot_string_map(persistent_value_to_scalar_string_map(internal.attributes_ref))
 			server:           snapshot_string_map(persistent_array_to_string_map(internal.server_params_ref))

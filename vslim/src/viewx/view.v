@@ -6,9 +6,9 @@ import vphp
 @[heap]
 pub struct VSlimView {
 pub mut:
-	base_path     string                      @[vphp.PhpProperty; vphp.PhpProperty_name: 'basePath']
-	assets_prefix string                      @[vphp.PhpProperty; vphp.PhpProperty_name: 'assetsPrefix']
-	cache_enabled bool                        @[vphp.PhpProperty; vphp.PhpProperty_name: 'cacheEnabled']
+	base_path     string                      @[vphp.PhpProperty(name: 'basePath')]
+	assets_prefix string                      @[vphp.PhpProperty(name: 'assetsPrefix')]
+	cache_enabled bool                        @[vphp.PhpProperty(name: 'cacheEnabled')]
 	helpers       map[string]vphp.PhpCallable @[vphp.PhpIgnoreField]
 }
 

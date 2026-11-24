@@ -548,6 +548,8 @@ function process(ServerRequestInterface $request, RequestHandlerInterface $handl
 - 可以直接返回响应来短路
 - 也可以 `return $handler->handle($request);`
 - 继续链路里对内建 PSR request 做的修改会继续传给后续 route / middleware；当前已验证 `withAttribute()` 的 `string/int/bool/array`，以及 `withMethod()` / `withUri()` / `withHeader()` / `withQueryParams()` / `withParsedBody()` / `withBody()`
+- `App::handle()` 在 PSR-15 中间件和处理器之间传递同一个正文流，修改请求属性或响应 header 时可以继续使用原流及其游标。
+- URL 编码表单的 `_method`、按 `Content-Type` 启用的 JSON 校验和正文大小限制需要读取正文。检查可定位流后会恢复游标。检查不可定位流时会把读出的正文放入请求的内存流，供后续处理器读取。
 
 ### `middleware(MiddlewareInterface|string|array $mw)`
 

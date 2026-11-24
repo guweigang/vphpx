@@ -10,8 +10,9 @@ file_put_contents($bootstrapFile, <<<'PHP'
 declare(strict_types=1);
 
 return function (VSlim\Cli\App $cli): void {
-    $cli->command('inline:probe', function (array $args, VSlim\Cli\App $runtime): int {
-        $sameApp = $runtime->app() instanceof VSlim\App ? 'app_yes' : 'app_no';
+    $app = $cli->app();
+    $cli->command('inline:probe', function (array $args, VSlim\Cli\App $runtime) use ($app): int {
+        $sameApp = $runtime->app() instanceof VSlim\App && $runtime->app() === $app ? 'app_yes' : 'app_no';
         echo implode('|', [
             $runtime->commandName(),
             implode(',', $args),
@@ -25,6 +26,10 @@ return function (VSlim\Cli\App $cli): void {
 PHP);
 
 $cli = new VSlim\Cli\App();
+$appType = (new ReflectionMethod($cli, 'app'))->getReturnType();
+if ((string) $appType !== VSlim\App::class || $cli->app() !== $cli->app()) {
+    throw new RuntimeException('The CLI bridge lost the core App type or identity');
+}
 ob_start();
 $code = $cli->runArgv(['php', '--bootstrap-file', $bootstrapFile, 'inline:probe', 'x', 'y']);
 $output = trim((string) ob_get_clean());

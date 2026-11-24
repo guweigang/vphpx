@@ -19,14 +19,19 @@ fn (mut app VSlimApp) register_middleware_kind(handler vphp.PhpValue, kind middl
 		return
 	}
 	app.track_registration()
-	entry := handler.retain()
 	if kind == .standard && app.middlewares.len == 0 {
-		loggerx.cli_debug_log('middleware.register kind=${entry.kind_name()} valid=${entry.is_valid()} null=${entry.is_null()} undef=${entry.is_undef()} handler_type=${handler.type_name()} handler_class=${handler.class_name()}')
+		loggerx.cli_debug_log('middleware.register kind=${handler.kind_name()} valid=${handler.is_valid()} null=${handler.is_null()} undef=${handler.is_undef()} handler_type=${handler.type_name()} handler_class=${handler.class_name()}')
 	}
 	match kind {
-		.standard { app.middlewares << entry }
-		.before { app.before_middlewares << entry }
-		.after { app.after_middlewares << entry }
+		.standard {
+			app.middlewares << app.store_registration_value(.middleware, app.middlewares.len, handler)
+		}
+		.before {
+			app.before_middlewares << app.store_registration_value(.before, app.before_middlewares.len, handler)
+		}
+		.after {
+			app.after_middlewares << app.store_registration_value(.after, app.after_middlewares.len, handler)
+		}
 	}
 }
 
@@ -47,35 +52,50 @@ fn (mut app VSlimApp) register_group_middleware_kind(prefix string, handler vphp
 	match kind {
 		.standard {
 			app.group_middle.prefixes << clean_prefix
-			app.group_middle.handlers << handler.retain()
+			app.group_middle.handlers << app.store_registration_value(.group_middle,
+				app.group_middle.handlers.len, handler)
 		}
 		.before {
 			app.group_before_middle.prefixes << clean_prefix
-			app.group_before_middle.handlers << handler.retain()
+			app.group_before_middle.handlers << app.store_registration_value(.group_before,
+				app.group_before_middle.handlers.len, handler)
 		}
 		.after {
 			app.group_after_middle.prefixes << clean_prefix
-			app.group_after_middle.handlers << handler.retain()
+			app.group_after_middle.handlers << app.store_registration_value(.group_after,
+				app.group_after_middle.handlers.len, handler)
 		}
 	}
 }
 
-@[vphp.PhpExportMethod(name: 'groupMiddleware')]
 pub fn (mut app VSlimApp) group_middleware(prefix string, handler vphp.PhpValue) &VSlimApp {
-	app.register_group_middleware_kind(prefix, handler, .standard)
+	return app.group_middleware_at_phase(prefix, handler, .standard)
+}
+
+@[params]
+pub struct GroupMiddlewareOptions {
+pub:
+	phase middlewarex.MiddlewareRegistrationKind = .standard
+}
+
+@[vphp.PhpExportMethod(name: 'groupMiddleware')]
+pub fn (mut app VSlimApp) export_group_middleware(prefix string, handler vphp.PhpValue, options GroupMiddlewareOptions) &VSlimApp {
+	return app.group_middleware_at_phase(prefix, handler, options.phase)
+}
+
+pub fn (mut app VSlimApp) group_middleware_at_phase(prefix string, handler vphp.PhpValue, phase middlewarex.MiddlewareRegistrationKind) &VSlimApp {
+	app.register_group_middleware_kind(prefix, handler, phase)
 	return app
 }
 
 @[vphp.PhpExportMethod(name: 'groupBefore')]
 pub fn (mut app VSlimApp) group_before(prefix string, handler vphp.PhpValue) &VSlimApp {
-	app.register_group_middleware_kind(prefix, handler, .before)
-	return app
+	return app.group_middleware_at_phase(prefix, handler, .before)
 }
 
 @[vphp.PhpExportMethod(name: 'groupAfter')]
 pub fn (mut app VSlimApp) group_after(prefix string, handler vphp.PhpValue) &VSlimApp {
-	app.register_group_middleware_kind(prefix, handler, .after)
-	return app
+	return app.group_middleware_at_phase(prefix, handler, .after)
 }
 
 fn (app &VSlimApp) bind_cached_target_if_supported(target vphp.PhpValue) {
@@ -94,13 +114,28 @@ fn release_collected_middlewares(mut hooks []vphp.PhpValue) {
 }
 
 fn (app &VSlimApp) collect_standard_middlewares(group_hooks []vphp.PhpValue) []vphp.PhpValue {
-	return middlewarex.clone_standard_hooks(app.middlewares, group_hooks)
+	return app.collect_registered_middlewares(.middleware, app.middlewares, group_hooks)
 }
 
 fn (app &VSlimApp) collect_before_middlewares(group_hooks []vphp.PhpValue) []vphp.PhpValue {
-	return middlewarex.clone_combined_hooks(app.before_middlewares, group_hooks)
+	return app.collect_registered_middlewares(.before, app.before_middlewares, group_hooks)
 }
 
 fn (app &VSlimApp) collect_after_middlewares(group_hooks []vphp.PhpValue) []vphp.PhpValue {
-	return middlewarex.clone_combined_hooks(app.after_middlewares, group_hooks)
+	return app.collect_registered_middlewares(.after, app.after_middlewares, group_hooks)
+}
+
+fn (app &VSlimApp) collect_registered_middlewares(bucket RegistrationValues, registered []vphp.PhpValue, group_hooks []vphp.PhpValue) []vphp.PhpValue {
+	// Resolve the PHP-backed slots before the request snapshots the hooks.
+	mut handlers := []vphp.PhpValue{cap: registered.len}
+	for index, fallback in registered {
+		handlers << app.registration_value(bucket, index, fallback)
+	}
+	defer {
+		unsafe { handlers.free() }
+	}
+	if bucket == .middleware {
+		return middlewarex.clone_standard_hooks(handlers, group_hooks)
+	}
+	return middlewarex.clone_combined_hooks(handlers, group_hooks)
 }

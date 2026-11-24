@@ -1,23 +1,35 @@
 module appx
 
+import middlewarex
 import vphp
 
-@[vphp.PhpExportMethod(name: '')]
+@[vphp.PhpExportInterface(name: 'VSlim\\MiddlewareRegistrar')]
+pub interface VMiddlewareRegistrar {
+	middleware(handler vphp.PhpValue, options middlewarex.MiddlewareOptions) &VSlimApp
+}
+
 pub fn (mut app VSlimApp) middleware(handler vphp.PhpValue) &VSlimApp {
-	app.register_middleware_kind(handler, .standard)
+	return app.middleware_at_phase(handler, .standard)
+}
+
+@[vphp.PhpExportMethod(name: 'middleware')]
+pub fn (mut app VSlimApp) export_middleware(handler vphp.PhpValue, options middlewarex.MiddlewareOptions) &VSlimApp {
+	return app.middleware_at_phase(handler, options.phase)
+}
+
+pub fn (mut app VSlimApp) middleware_at_phase(handler vphp.PhpValue, phase middlewarex.MiddlewareRegistrationKind) &VSlimApp {
+	app.register_middleware_kind(handler, phase)
 	return app
 }
 
 @[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) before(handler vphp.PhpValue) &VSlimApp {
-	app.register_middleware_kind(handler, .before)
-	return app
+	return app.middleware_at_phase(handler, .before)
 }
 
 @[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) after(handler vphp.PhpValue) &VSlimApp {
-	app.register_middleware_kind(handler, .after)
-	return app
+	return app.middleware_at_phase(handler, .after)
 }
 
 @[vphp.PhpExportMethod(name: 'setNotFoundHandler')]

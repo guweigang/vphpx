@@ -44,7 +44,7 @@ fn evaluate_bootstrap_file_value(value vphp.PhpValue, receiver_class string, inv
 		defer {
 			app.release()
 		}
-		result = callable.invoke(app)
+		result = callable.invoke_by_value(app)
 	}
 	if !has_bootstrap_value(result) || (result.is_object() && result.is_instance_of(receiver_class)) {
 		result.release()
@@ -59,16 +59,26 @@ pub fn normalize_app_bootstrap_spec(raw vphp.PhpValue) !vphp.PhpArray {
 }
 
 pub fn normalize_app_bootstrap_iterable(raw vphp.PhpIterable) !vphp.PhpArray {
-	normalized, _ := evaluate_bootstrap_iterable(raw)!
+	normalized, _ := evaluate_bootstrap_iterable(raw, .keyed)!
 	return normalized
 }
 
-fn evaluate_bootstrap_iterable(raw vphp.PhpIterable) !(vphp.PhpArray, bool) {
+enum BootstrapIterableShape {
+	keyed
+	values
+	entries
+}
+
+fn evaluate_bootstrap_iterable(raw vphp.PhpIterable, shape BootstrapIterableShape) !(vphp.PhpArray, bool) {
 	mut scope := registrationx.begin_registration_scope()
 	defer {
 		scope.finish()
 	}
-	normalized := raw.to_array() or { return error('bootstrap spec must be iterable') }
+	normalized := match shape {
+		.keyed { raw.to_array()! }
+		.values { raw.to_list()! }
+		.entries { raw.to_entries()! }
+	}
 	// A service snapshot may also cover a mutation made directly by PHP.
 	return normalized, !scope.has_changes()
 }
@@ -188,7 +198,7 @@ fn call_bootstrap_callable_items(raw vphp.PhpValue, app_value vphp.PhpValue, lab
 	iter := raw.as_iterable() or {
 		return error('bootstrap ${label} must be callable or callable list')
 	}
-	mut normalized := progress.normalize(step + ':list', iter)!
+	mut normalized := progress.normalize_values(step + ':list', iter)!
 	defer {
 		normalized.release()
 	}

@@ -53,12 +53,12 @@ pub fn vslim_database_config_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_config_construct']
-pub fn vphp_wrap_vslim_database_config_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_config_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseConfig](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_config_set_driver']
 pub fn vphp_wrap_vslim_database_config_set_driver(ptr voidptr, ctx vphp.Context) voidptr {
@@ -166,7 +166,7 @@ pub fn vphp_wrap_vslim_database_config_set_password(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'password' },
+        vphp.PhpArgMeta{ index: 0, name: 'password', attributes: [vphp.PhpAttribute.named('SensitiveParameter').for_parameter()] },
     ])
     arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_password(arg_0)
@@ -290,13 +290,13 @@ pub fn vphp_wrap_vslim_database_config_to_json(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_database_config_handlers']
 pub fn vslim_database_config_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_config_get_prop),
-        write_handler: voidptr(vslim_database_config_set_prop),
-        sync_handler: voidptr(vslim_database_config_sync_props),
-        new_raw: voidptr(vslim_database_config_new_raw),
-        cleanup_raw: voidptr(vslim_database_config_cleanup_raw),
-        free_raw: voidptr(vslim_database_config_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_config_get_prop,
+        write_handler: vslim_database_config_set_prop,
+        sync_handler: vslim_database_config_sync_props,
+        new_raw: vslim_database_config_new_raw,
+        cleanup_raw: vslim_database_config_cleanup_raw,
+        free_raw: vslim_database_config_free_raw
     )
 }
 pub fn VSlimDatabaseConfig.php_class_entry() vphp.ZendClassEntry {
@@ -550,12 +550,12 @@ pub fn vphp_wrap_vslim_database_manager_rollback(ptr voidptr, ctx vphp.Context) 
     ctx.return().v[bool](res)
 }
 @[export: 'vphp_wrap_vslim_database_manager_construct']
-pub fn vphp_wrap_vslim_database_manager_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_manager_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseManager(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseManager](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_manager_set_config']
 pub fn vphp_wrap_vslim_database_manager_set_config(ptr voidptr, ctx vphp.Context) voidptr {
@@ -565,12 +565,10 @@ pub fn vphp_wrap_vslim_database_manager_set_config(ptr voidptr, ctx vphp.Context
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'config' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[databasex.VSlimDatabaseConfig]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseConfig, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseConfig]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseConfig(arg_0_ptr) }
     res := recv.set_config(arg_0)
     return voidptr(res)
 }
@@ -660,13 +658,13 @@ pub fn vphp_wrap_vslim_database_manager_table_query(ptr voidptr, ctx vphp.Contex
 }
 @[export: 'vslim_database_manager_handlers']
 pub fn vslim_database_manager_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_manager_get_prop),
-        write_handler: voidptr(vslim_database_manager_set_prop),
-        sync_handler: voidptr(vslim_database_manager_sync_props),
-        new_raw: voidptr(vslim_database_manager_new_raw),
-        cleanup_raw: voidptr(vslim_database_manager_cleanup_raw),
-        free_raw: voidptr(vslim_database_manager_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_manager_get_prop,
+        write_handler: vslim_database_manager_set_prop,
+        sync_handler: vslim_database_manager_sync_props,
+        new_raw: vslim_database_manager_new_raw,
+        cleanup_raw: vslim_database_manager_cleanup_raw,
+        free_raw: vslim_database_manager_free_raw
     )
 }
 pub fn VSlimDatabaseManager.php_class_entry() vphp.ZendClassEntry {
@@ -783,13 +781,13 @@ pub fn vphp_wrap_vslim_database_pending_result_wait(ptr voidptr, ctx vphp.Contex
 }
 @[export: 'vslim_database_pending_result_handlers']
 pub fn vslim_database_pending_result_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_pending_result_get_prop),
-        write_handler: voidptr(vslim_database_pending_result_set_prop),
-        sync_handler: voidptr(vslim_database_pending_result_sync_props),
-        new_raw: voidptr(vslim_database_pending_result_new_raw),
-        cleanup_raw: voidptr(vslim_database_pending_result_cleanup_raw),
-        free_raw: voidptr(vslim_database_pending_result_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_pending_result_get_prop,
+        write_handler: vslim_database_pending_result_set_prop,
+        sync_handler: vslim_database_pending_result_sync_props,
+        new_raw: vslim_database_pending_result_new_raw,
+        cleanup_raw: vslim_database_pending_result_cleanup_raw,
+        free_raw: vslim_database_pending_result_free_raw
     )
 }
 pub fn VSlimDatabasePendingResult.php_class_entry() vphp.ZendClassEntry {
@@ -861,12 +859,12 @@ pub fn vslim_database_query_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_query_construct']
-pub fn vphp_wrap_vslim_database_query_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_query_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseQuery(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseQuery](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_query_set_manager']
 pub fn vphp_wrap_vslim_database_query_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -876,12 +874,10 @@ pub fn vphp_wrap_vslim_database_query_set_manager(ptr voidptr, ctx vphp.Context)
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1075,13 +1071,13 @@ pub fn vphp_wrap_vslim_database_query_insert_get_id(ptr voidptr, ctx vphp.Contex
 }
 @[export: 'vslim_database_query_handlers']
 pub fn vslim_database_query_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_query_get_prop),
-        write_handler: voidptr(vslim_database_query_set_prop),
-        sync_handler: voidptr(vslim_database_query_sync_props),
-        new_raw: voidptr(vslim_database_query_new_raw),
-        cleanup_raw: voidptr(vslim_database_query_cleanup_raw),
-        free_raw: voidptr(vslim_database_query_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_query_get_prop,
+        write_handler: vslim_database_query_set_prop,
+        sync_handler: vslim_database_query_sync_props,
+        new_raw: vslim_database_query_new_raw,
+        cleanup_raw: vslim_database_query_cleanup_raw,
+        free_raw: vslim_database_query_free_raw
     )
 }
 pub fn VSlimDatabaseQuery.php_class_entry() vphp.ZendClassEntry {
@@ -1153,12 +1149,12 @@ pub fn vslim_database_model_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_model_construct']
-pub fn vphp_wrap_vslim_database_model_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_model_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseModel(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseModel](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_model_set_manager']
 pub fn vphp_wrap_vslim_database_model_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1168,12 +1164,10 @@ pub fn vphp_wrap_vslim_database_model_set_manager(ptr voidptr, ctx vphp.Context)
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1363,13 +1357,13 @@ pub fn vphp_wrap_vslim_database_model_delete_model(ptr voidptr, ctx vphp.Context
 }
 @[export: 'vslim_database_model_handlers']
 pub fn vslim_database_model_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_model_get_prop),
-        write_handler: voidptr(vslim_database_model_set_prop),
-        sync_handler: voidptr(vslim_database_model_sync_props),
-        new_raw: voidptr(vslim_database_model_new_raw),
-        cleanup_raw: voidptr(vslim_database_model_cleanup_raw),
-        free_raw: voidptr(vslim_database_model_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_model_get_prop,
+        write_handler: vslim_database_model_set_prop,
+        sync_handler: vslim_database_model_sync_props,
+        new_raw: vslim_database_model_new_raw,
+        cleanup_raw: vslim_database_model_cleanup_raw,
+        free_raw: vslim_database_model_free_raw
     )
 }
 pub fn VSlimDatabaseModel.php_class_entry() vphp.ZendClassEntry {
@@ -1441,12 +1435,12 @@ pub fn vslim_database_migration_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_migration_construct']
-pub fn vphp_wrap_vslim_database_migration_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_migration_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseMigration(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseMigration](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_migration_set_manager']
 pub fn vphp_wrap_vslim_database_migration_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1456,12 +1450,10 @@ pub fn vphp_wrap_vslim_database_migration_set_manager(ptr voidptr, ctx vphp.Cont
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1679,13 +1671,13 @@ pub fn vphp_wrap_vslim_database_migration_query_params(ptr voidptr, ctx vphp.Con
 }
 @[export: 'vslim_database_migration_handlers']
 pub fn vslim_database_migration_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_migration_get_prop),
-        write_handler: voidptr(vslim_database_migration_set_prop),
-        sync_handler: voidptr(vslim_database_migration_sync_props),
-        new_raw: voidptr(vslim_database_migration_new_raw),
-        cleanup_raw: voidptr(vslim_database_migration_cleanup_raw),
-        free_raw: voidptr(vslim_database_migration_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_migration_get_prop,
+        write_handler: vslim_database_migration_set_prop,
+        sync_handler: vslim_database_migration_sync_props,
+        new_raw: vslim_database_migration_new_raw,
+        cleanup_raw: vslim_database_migration_cleanup_raw,
+        free_raw: vslim_database_migration_free_raw
     )
 }
 pub fn VSlimDatabaseMigration.php_class_entry() vphp.ZendClassEntry {
@@ -1757,12 +1749,12 @@ pub fn vslim_database_seeder_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_seeder_construct']
-pub fn vphp_wrap_vslim_database_seeder_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_seeder_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseSeeder(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseSeeder](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_seeder_set_manager']
 pub fn vphp_wrap_vslim_database_seeder_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1772,12 +1764,10 @@ pub fn vphp_wrap_vslim_database_seeder_set_manager(ptr voidptr, ctx vphp.Context
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1827,13 +1817,13 @@ pub fn vphp_wrap_vslim_database_seeder_run(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_database_seeder_handlers']
 pub fn vslim_database_seeder_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_seeder_get_prop),
-        write_handler: voidptr(vslim_database_seeder_set_prop),
-        sync_handler: voidptr(vslim_database_seeder_sync_props),
-        new_raw: voidptr(vslim_database_seeder_new_raw),
-        cleanup_raw: voidptr(vslim_database_seeder_cleanup_raw),
-        free_raw: voidptr(vslim_database_seeder_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_seeder_get_prop,
+        write_handler: vslim_database_seeder_set_prop,
+        sync_handler: vslim_database_seeder_sync_props,
+        new_raw: vslim_database_seeder_new_raw,
+        cleanup_raw: vslim_database_seeder_cleanup_raw,
+        free_raw: vslim_database_seeder_free_raw
     )
 }
 pub fn VSlimDatabaseSeeder.php_class_entry() vphp.ZendClassEntry {
@@ -1905,12 +1895,12 @@ pub fn vslim_database_migrator_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_migrator_construct']
-pub fn vphp_wrap_vslim_database_migrator_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_migrator_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseMigrator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseMigrator](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_migrator_set_manager']
 pub fn vphp_wrap_vslim_database_migrator_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1920,12 +1910,10 @@ pub fn vphp_wrap_vslim_database_migrator_set_manager(ptr voidptr, ctx vphp.Conte
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -2077,13 +2065,13 @@ pub fn vphp_wrap_vslim_database_migrator_seed(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_database_migrator_handlers']
 pub fn vslim_database_migrator_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_migrator_get_prop),
-        write_handler: voidptr(vslim_database_migrator_set_prop),
-        sync_handler: voidptr(vslim_database_migrator_sync_props),
-        new_raw: voidptr(vslim_database_migrator_new_raw),
-        cleanup_raw: voidptr(vslim_database_migrator_cleanup_raw),
-        free_raw: voidptr(vslim_database_migrator_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_migrator_get_prop,
+        write_handler: vslim_database_migrator_set_prop,
+        sync_handler: vslim_database_migrator_sync_props,
+        new_raw: vslim_database_migrator_new_raw,
+        cleanup_raw: vslim_database_migrator_cleanup_raw,
+        free_raw: vslim_database_migrator_free_raw
     )
 }
 pub fn VSlimDatabaseMigrator.php_class_entry() vphp.ZendClassEntry {

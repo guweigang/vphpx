@@ -162,10 +162,66 @@ $continueHandler = new VSlim\Psr15\ContinueHandler();
 $dispatcher = new VSlim\Psr14\EventDispatcher();
 $provider = new VSlim\Psr14\ListenerProvider();
 
+foreach ([
+    [VSlim\Psr7\Request::class, 'withBody', 'body', Psr\Http\Message\StreamInterface::class],
+    [VSlim\Psr7\ServerRequest::class, 'withBody', 'body', Psr\Http\Message\StreamInterface::class],
+    [VSlim\Psr7\Response::class, 'withBody', 'body', Psr\Http\Message\StreamInterface::class],
+    [VSlim\Psr17\UploadedFileFactory::class, 'createUploadedFile', 'stream', Psr\Http\Message\StreamInterface::class],
+    [VSlim\Psr7Adapter::class, 'toVSlimResponse', 'response', Psr\Http\Message\ResponseInterface::class],
+    [VSlim\Psr18\RequestException::class, 'attachRequest', 'request', Psr\Http\Message\RequestInterface::class],
+    [VSlim\Psr18\NetworkException::class, 'attachRequest', 'request', Psr\Http\Message\RequestInterface::class],
+    [VSlim\App::class, 'handle', 'request', Psr\Http\Message\ServerRequestInterface::class],
+    [VSlim\Testing\Harness::class, 'handle', 'request', Psr\Http\Message\ServerRequestInterface::class],
+    [VSlim\Psr15\NextHandler::class, 'handle', 'request', Psr\Http\Message\ServerRequestInterface::class],
+    [VSlim\Psr15\ContinueHandler::class, 'handle', 'request', Psr\Http\Message\ServerRequestInterface::class],
+] as [$class, $method, $name, $type]) {
+    $parameter = (new ReflectionMethod($class, $method))->getParameters()[0];
+    if ($parameter->getName() !== $name || (string) $parameter->getType() !== $type || $parameter->isOptional()) {
+        throw new RuntimeException("Unexpected signature for $class::$method");
+    }
+}
+
+foreach ([
+    VSlim\Session\StartMiddleware::class,
+    VSlim\Auth\RequireAuthMiddleware::class,
+    VSlim\Auth\GuestMiddleware::class,
+    VSlim\Auth\RequireAbilityMiddleware::class,
+] as $class) {
+    $method = new ReflectionMethod($class, 'process');
+    [$requestParameter, $handlerParameter] = $method->getParameters();
+    if ($method->getNumberOfRequiredParameters() !== 2
+        || $requestParameter->getName() !== 'request'
+        || (string) $requestParameter->getType() !== Psr\Http\Message\ServerRequestInterface::class
+        || $handlerParameter->getName() !== 'handler'
+        || (string) $handlerParameter->getType() !== Psr\Http\Server\RequestHandlerInterface::class) {
+        throw new RuntimeException("Unexpected process signature for $class");
+    }
+    $middleware = new $class();
+    foreach ([
+        static fn () => $middleware->process(handler: $nextHandler, request: new stdClass()),
+        static fn () => $middleware->process(handler: new stdClass(), request: $serverRequest),
+    ] as $invoke) {
+        try {
+            $invoke();
+            throw new RuntimeException("Invalid process parameter accepted by $class");
+        } catch (TypeError) {
+        }
+    }
+}
+
+foreach ([$request, $serverRequest, $response] as $message) {
+    if ((string) $message->withBody(body: $stream)->getBody() !== 'demo') {
+        throw new RuntimeException('Named withBody lost the supplied stream');
+    }
+}
+
 var_dump($response->withBody($stream) instanceof VSlim\Psr7\Response);
 var_dump($request->withUri($uri) instanceof VSlim\Psr7\Request);
 var_dump($uploadedFileFactory->createUploadedFile($stream) instanceof VSlim\Psr7\UploadedFile);
 var_dump($app->handle($serverRequest) instanceof VSlim\Psr7\Response);
+if (!$app->handle(request: $serverRequest) instanceof VSlim\Psr7\Response) {
+    throw new RuntimeException('Named PSR-15 request did not produce a response');
+}
 var_dump($nextHandler->handle($serverRequest) instanceof VSlim\Psr7\Response);
 var_dump($continueHandler->handle($serverRequest) instanceof VSlim\Psr7\Response);
 var_dump($dispatcher->setProvider($provider) instanceof VSlim\Psr14\EventDispatcher);
@@ -176,6 +232,7 @@ $cases = [
     'with-body' => static fn () => $response->withBody(new stdClass()),
     'with-uri' => static fn () => $request->withUri(new stdClass()),
     'uploaded-file' => static fn () => $uploadedFileFactory->createUploadedFile(new stdClass()),
+    'response-adapter' => static fn () => VSlim\Psr7Adapter::toVSlimResponse(response: new stdClass()),
     'app-handle' => static fn () => $app->handle(new stdClass()),
     'next-handler-handle' => static fn () => $nextHandler->handle(new stdClass()),
     'continue-handler-handle' => static fn () => $continueHandler->handle(new stdClass()),
@@ -204,6 +261,7 @@ bool(true)
 with-body-caught
 with-uri-caught
 uploaded-file-caught
+response-adapter-caught
 app-handle-caught
 next-handler-handle-caught
 continue-handler-handle-caught

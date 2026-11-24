@@ -47,7 +47,7 @@ pub fn vslim_controller_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_controller_construct']
-pub fn vphp_wrap_vslim_controller_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_controller_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimController(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -56,11 +56,10 @@ pub fn vphp_wrap_vslim_controller_construct(ptr voidptr, ctx vphp.Context) voidp
     ])
     arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return
     }
     res := recv.construct(arg_0)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimController](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_controller_set_app']
 pub fn vphp_wrap_vslim_controller_set_app(ptr voidptr, ctx vphp.Context) voidptr {
@@ -72,8 +71,7 @@ pub fn vphp_wrap_vslim_controller_set_app(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_app(arg_0)
     return voidptr(res)
@@ -86,12 +84,15 @@ pub fn vphp_wrap_vslim_controller_set_view(ptr voidptr, ctx vphp.Context) voidpt
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'view' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[viewx.VSlimView]() or {
-        vphp.throw_exception('argument 0 must be object bound to viewx.VSlimView, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := if !php_args.at(0).is_present() || php_args.at(0).zval().is_null() {
+        ?&viewx.VSlimView(none)
+    } else {
+        bound_value := php_args.at(0).bound_v_object[viewx.VSlimView]() or {
+            vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+            return unsafe { nil }
+        }
+        ?&viewx.VSlimView(bound_value)
     }
-    arg_0 := unsafe { &viewx.VSlimView(arg_0_ptr) }
     res := recv.set_view(arg_0)
     return voidptr(res)
 }
@@ -204,10 +205,12 @@ pub fn vphp_wrap_vslim_controller_redirect(ptr voidptr, ctx vphp.Context) voidpt
     mut recv := unsafe { &VSlimController(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
+    php_args := ctx.args_with_php_defaults([
         vphp.PhpArgMeta{ index: 0, name: 'location' },
-        vphp.PhpArgMeta{ index: 1, name: 'status' },
-    ])
+        vphp.PhpArgMeta{ index: 1, name: 'status', use_php_default: true },
+    ]) or {
+        return unsafe { nil }
+    }
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).as_v[int]()
     res := recv.redirect(arg_0, arg_1)
@@ -218,11 +221,13 @@ pub fn vphp_wrap_vslim_controller_redirect_to(ptr voidptr, ctx vphp.Context) voi
     mut recv := unsafe { &VSlimController(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
+    php_args := ctx.args_with_php_defaults([
         vphp.PhpArgMeta{ index: 0, name: 'name' },
         vphp.PhpArgMeta{ index: 1, name: 'params' },
-        vphp.PhpArgMeta{ index: 2, name: 'status' },
-    ])
+        vphp.PhpArgMeta{ index: 2, name: 'status', use_php_default: true },
+    ]) or {
+        return unsafe { nil }
+    }
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).value
     arg_2 := php_args.at(2).as_v[int]()
@@ -234,12 +239,14 @@ pub fn vphp_wrap_vslim_controller_redirect_to_query(ptr voidptr, ctx vphp.Contex
     mut recv := unsafe { &VSlimController(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
+    php_args := ctx.args_with_php_defaults([
         vphp.PhpArgMeta{ index: 0, name: 'name' },
         vphp.PhpArgMeta{ index: 1, name: 'params' },
         vphp.PhpArgMeta{ index: 2, name: 'query' },
-        vphp.PhpArgMeta{ index: 3, name: 'status' },
-    ])
+        vphp.PhpArgMeta{ index: 3, name: 'status', use_php_default: true },
+    ]) or {
+        return unsafe { nil }
+    }
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).value
     arg_2 := php_args.at(2).value
@@ -249,13 +256,13 @@ pub fn vphp_wrap_vslim_controller_redirect_to_query(ptr voidptr, ctx vphp.Contex
 }
 @[export: 'vslim_controller_handlers']
 pub fn vslim_controller_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_controller_get_prop),
-        write_handler: voidptr(vslim_controller_set_prop),
-        sync_handler: voidptr(vslim_controller_sync_props),
-        new_raw: voidptr(vslim_controller_new_raw),
-        cleanup_raw: voidptr(vslim_controller_cleanup_raw),
-        free_raw: voidptr(vslim_controller_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_controller_get_prop,
+        write_handler: vslim_controller_set_prop,
+        sync_handler: vslim_controller_sync_props,
+        new_raw: vslim_controller_new_raw,
+        cleanup_raw: vslim_controller_cleanup_raw,
+        free_raw: vslim_controller_free_raw
     )
 }
 pub fn VSlimController.php_class_entry() vphp.ZendClassEntry {

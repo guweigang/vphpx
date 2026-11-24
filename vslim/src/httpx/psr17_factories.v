@@ -91,13 +91,13 @@ pub fn (f &VSlimPsr17StreamFactory) create_stream(params VSlimPsr17CreateStreamP
 
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\StreamInterface')]
 @[vphp.PhpExportMethod(name: 'createStreamFromFile')]
-pub fn (f &VSlimPsr17StreamFactory) create_stream_from_file(filename string, params VSlimPsr17CreateStreamFromFileParams) &VSlimPsr7Stream {
+pub fn (f &VSlimPsr17StreamFactory) create_stream_from_file(filename string, params VSlimPsr17CreateStreamFromFileParams) vphp.PhpValue {
 	return VSlimPsr7Stream.from_file(filename, params.mode)
 }
 
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\StreamInterface')]
 @[vphp.PhpExportMethod(name: 'createStreamFromResource')]
-pub fn (f &VSlimPsr17StreamFactory) create_stream_from_resource(resource vphp.PhpResource) &VSlimPsr7Stream {
+pub fn (f &VSlimPsr17StreamFactory) create_stream_from_resource(resource vphp.PhpResource) vphp.PhpValue {
 	return VSlimPsr7Stream.from_resource(resource)
 }
 
@@ -115,12 +115,15 @@ struct VSlimPsr17CreateUploadedFileParams {
 }
 
 @[vphp.PhpArgDefault(v_name: 'error', default_value: 'UPLOAD_ERR_OK')]
-@[vphp.PhpArgType(v_name: 'stream', php_type: 'Psr\\Http\\Message\\StreamInterface')]
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\UploadedFileInterface')]
 @[vphp.PhpExportMethod(name: 'createUploadedFile')]
-pub fn (f &VSlimPsr17UploadedFileFactory) create_uploaded_file(stream vphp.PhpObject, params VSlimPsr17CreateUploadedFileParams) &VSlimPsr7UploadedFile {
-	return VSlimPsr7UploadedFile.from_stream(VSlimPsr7Stream.from_object(stream), params.size, params.error,
-		params.client_filename, params.client_media_type)
+pub fn (f &VSlimPsr17UploadedFileFactory) create_uploaded_file(stream PsrStream, params VSlimPsr17CreateUploadedFileParams) vphp.PhpValue {
+	object := stream.to_object()
+	mut uploaded := &VSlimPsr7UploadedFile{}
+	mut value := vphp.bind_owned_object_value[VSlimPsr7UploadedFile](uploaded)
+	uploaded.init_stream(VSlimPsr7Stream.from_object(object), object.to_value(), params.size,
+		params.error, params.client_filename, params.client_media_type)
+	return value.move_to_request_scope()
 }
 
 @[params]

@@ -11,7 +11,7 @@ struct CliCommandRegistration {
 }
 
 fn (mut cli VSlimCliApp) take_command_registration(name string) CliCommandRegistration {
-	handler := cli.command_handlers[name] or { vphp.PhpValue.invalid() }
+	handler := cli.take_command_handler(name) or { vphp.PhpValue.invalid() }
 	hidden := cli.command_hidden[name] or { false }
 	aliases := cli.command_aliases[name] or { []string{} }
 	mut alias_handlers := map[string]vphp.PhpValue{}
@@ -19,13 +19,11 @@ fn (mut cli VSlimCliApp) take_command_registration(name string) CliCommandRegist
 		if cli.command_canonical[alias] != name {
 			continue
 		}
-		if value := cli.command_handlers[alias] {
+		if value := cli.take_command_handler(alias) {
 			alias_handlers[alias] = value
-			cli.command_handlers.delete(alias)
 			cli.command_canonical.delete(alias)
 		}
 	}
-	cli.command_handlers.delete(name)
 	cli.command_canonical.delete(name)
 	cli.command_hidden.delete(name)
 	cli.command_aliases.delete(name)
@@ -45,14 +43,14 @@ fn (mut cli VSlimCliApp) restore_command_registration(name string, saved CliComm
 		}
 		return
 	}
-	cli.command_handlers[name] = saved.handler
+	cli.store_command_handler(name, saved.handler)
 	cli.command_canonical[name] = name
 	cli.command_hidden[name] = saved.hidden
 	if saved.aliases.len > 0 {
 		cli.command_aliases[name] = saved.aliases
 	}
 	for alias, handler in saved.alias_handlers {
-		cli.command_handlers[alias] = handler
+		cli.store_command_handler(alias, handler)
 		cli.command_canonical[alias] = name
 	}
 }

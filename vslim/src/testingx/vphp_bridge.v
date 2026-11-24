@@ -47,12 +47,12 @@ pub fn vslim_testing_harness_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_testing_harness_construct']
-pub fn vphp_wrap_vslim_testing_harness_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_testing_harness_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimTestingHarness](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_testing_harness_set_app']
 pub fn vphp_wrap_vslim_testing_harness_set_app(ptr voidptr, ctx vphp.Context) voidptr {
@@ -64,8 +64,7 @@ pub fn vphp_wrap_vslim_testing_harness_set_app(ptr voidptr, ctx vphp.Context) vo
     ])
     arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_app(arg_0)
     return voidptr(res)
@@ -112,8 +111,7 @@ pub fn vphp_wrap_vslim_testing_harness_with_factory(ptr voidptr, ctx vphp.Contex
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.with_factory(arg_0, arg_1)
     return voidptr(res)
@@ -242,20 +240,19 @@ pub fn vphp_wrap_vslim_testing_harness_json_request(ptr voidptr, ctx vphp.Contex
     res := recv.json_request(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_vslim_testing_harness_handle']
-pub fn vphp_wrap_vslim_testing_harness_handle(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_testing_harness_export_handle']
+pub fn vphp_wrap_vslim_testing_harness_export_handle(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimTestingHarness(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at(0).object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).zval().to_v[httpx.PsrServerRequest]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    res := recv.handle(arg_0)
+    res := recv.export_handle(arg_0)
     return voidptr(res)
 }
 @[export: 'vphp_wrap_vslim_testing_harness_handle_request']
@@ -566,13 +563,13 @@ pub fn vphp_wrap_vslim_testing_harness_delete_json(ptr voidptr, ctx vphp.Context
 }
 @[export: 'vslim_testing_harness_handlers']
 pub fn vslim_testing_harness_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_testing_harness_get_prop),
-        write_handler: voidptr(vslim_testing_harness_set_prop),
-        sync_handler: voidptr(vslim_testing_harness_sync_props),
-        new_raw: voidptr(vslim_testing_harness_new_raw),
-        cleanup_raw: voidptr(vslim_testing_harness_cleanup_raw),
-        free_raw: voidptr(vslim_testing_harness_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_testing_harness_get_prop,
+        write_handler: vslim_testing_harness_set_prop,
+        sync_handler: vslim_testing_harness_sync_props,
+        new_raw: vslim_testing_harness_new_raw,
+        cleanup_raw: vslim_testing_harness_cleanup_raw,
+        free_raw: vslim_testing_harness_free_raw
     )
 }
 pub fn VSlimTestingHarness.php_class_entry() vphp.ZendClassEntry {

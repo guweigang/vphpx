@@ -32,4 +32,32 @@ $ws = (new VSlim\WebSocket\App())
 
 $app->websocket('/ws', $ws);
 
+$app->websocket('/callback', static function &($conn, ...$arguments): ?string {
+    $frame = $arguments[array_key_last($arguments)];
+    $reply = match ($frame['event']) {
+        'open' => 'callback:connected',
+        'message' => 'callback:' . $arguments[0],
+        default => null,
+    };
+    return $reply;
+});
+$app->websocket('/reject', static function &(): bool {
+    $accepted = false;
+    return $accepted;
+});
+
+foreach (['/reject-direct' => 'reject', '/close-during-open' => 'close'] as $path => $command) {
+    $terminal = (new VSlim\WebSocket\App())->onMessage(static fn (): string => 'unexpected message');
+    $terminal->onOpen(static function ($conn) use ($terminal, $command): string {
+        $terminal->join('pending', $conn);
+        if ($command === 'reject') {
+            $conn->reject(401, 'denied');
+        } else {
+            $conn->close(1000, 'closed before accept');
+        }
+        return 'unexpected text frame';
+    });
+    $app->websocket($path, $terminal);
+}
+
 return $app;

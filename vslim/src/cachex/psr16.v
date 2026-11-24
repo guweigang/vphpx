@@ -42,8 +42,11 @@ pub fn (cache &VSlimPsr16Cache) default_ttl_seconds_value() int {
 	return if cache.default_ttl_seconds <= 0 { 0 } else { cache.default_ttl_seconds }
 }
 
-@[vphp.PhpArgType(v_name: 'clock', php_type: 'Psr\\Clock\\ClockInterface')]
 @[vphp.PhpExportMethod(name: 'setClock')]
+pub fn (mut cache VSlimPsr16Cache) export_set_clock(clock supportx.PsrClock) &VSlimPsr16Cache {
+	return cache.set_clock(clock.to_object())
+}
+
 pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.PhpObject) &VSlimPsr16Cache {
 	cache.ensure()
 	if !supportx.psr20_clock_is_valid(clock) {
@@ -52,8 +55,8 @@ pub fn (mut cache VSlimPsr16Cache) set_clock(clock vphp.PhpObject) &VSlimPsr16Ca
 		return &cache
 	}
 	mut old := cache.clock_ref
-	old.release()
 	cache.clock_ref = clock.retain()
+	old.release()
 	return &cache
 }
 
@@ -89,7 +92,7 @@ pub fn (mut cache VSlimPsr16Cache) get(key string, default_value ?vphp.PhpValue)
 	storage_key := cache.storage_key(normalized)
 	cache.prune_expired_entry(storage_key)
 	entry := cache.entries[storage_key] or { return psr16_default_value_or_null(default_value) }
-	return entry.value.to_request_owned()
+	return psr_cache_snapshot_value(entry.value)
 }
 
 @[vphp.PhpExportMethod(name: '')]
@@ -107,7 +110,7 @@ pub fn (mut cache VSlimPsr16Cache) set(key string, value vphp.PhpValue, ttl ?vph
 	if expires_at < 0 {
 		return cache.delete(normalized)
 	}
-	cache.replace_entry(cache.storage_key(normalized), value.retain(), psr_cache_apply_default_ttl(cache.clock_ref,
+	cache.replace_entry(cache.storage_key(normalized), psr_cache_retain_value(value), psr_cache_apply_default_ttl(cache.clock_ref,
 		expires_at, cache.default_ttl_seconds))
 	return true
 }
@@ -141,8 +144,9 @@ pub fn (mut cache VSlimPsr16Cache) get_multiple(keys vphp.PhpIterable, default_v
 		throw_psr16_invalid_argument(msg)
 		return out
 	} {
-		value := cache.get(key_name, default_value)
-		out.set(key_name, value)
+		mut value := cache.get(key_name, default_value)
+		out.set_value(key_name, value)
+		value.release()
 	}
 	return out
 }
@@ -155,20 +159,37 @@ pub fn (mut cache VSlimPsr16Cache) set_multiple(values vphp.PhpIterable, ttl ?vp
 		throw_psr16_invalid_argument(err.msg())
 		return false
 	}
-	if expires_at < 0 {
-		for key_name in psr16_iterable_assoc_key_list(values) or {
+	mut normalized := values.to_array() or {
+		throw_psr16_invalid_argument(err.msg())
+		return false
+	}
+	defer {
+		normalized.release()
+	}
+	mut keys := normalized.key_array()
+	defer {
+		keys.release()
+	}
+	mut entries := map[string]vphp.PhpValue{}
+	for key in keys.items() {
+		name := psr_cache_validate_key_or_throw(key.to_string()) or {
 			throw_psr16_invalid_argument(err.msg())
 			return false
-		} {
-			cache.remove_entry(cache.storage_key(key_name))
+		}
+		value := normalized.get_key(key) or {
+			throw_psr16_invalid_argument(err.msg())
+			return false
+		}
+		entries[name] = vphp.PhpValue.from_zval(value)
+	}
+	if expires_at < 0 {
+		for key, _ in entries {
+			cache.remove_entry(cache.storage_key(key))
 		}
 		return true
 	}
-	for key_name, value in psr16_iterable_assoc_pairs(values) or {
-		throw_psr16_invalid_argument(err.msg())
-		return false
-	} {
-		cache.replace_entry(cache.storage_key(key_name), value, psr_cache_apply_default_ttl(cache.clock_ref,
+	for key, value in entries {
+		cache.replace_entry(cache.storage_key(key), psr_cache_retain_value(value), psr_cache_apply_default_ttl(cache.clock_ref,
 			expires_at, cache.default_ttl_seconds))
 	}
 	return true
@@ -289,36 +310,25 @@ fn psr_cache_resolve_relative_ttl_or_throw(clock vphp.PhpObject, ttl vphp.PhpVal
 	if !ttl.is_valid() || ttl.is_null() || ttl.is_undef() {
 		return 0
 	}
-	now_unix := supportx.psr20_clock_now_unix_or_throw(clock)!
 	if ttl.is_long() {
 		seconds := ttl.to_i64()
 		if seconds <= 0 {
 			return i64(-1)
 		}
-		return now_unix + seconds
+		return supportx.psr20_clock_now_unix_or_throw(clock)! + seconds
 	}
 	if ttl.is_double() {
 		seconds := i64(ttl.to_f64())
 		if seconds <= 0 {
 			return i64(-1)
 		}
-		return now_unix + seconds
+		return supportx.psr20_clock_now_unix_or_throw(clock)! + seconds
 	}
-	if ttl.is_object() && ttl.is_instance_of('DateInterval') {
-		mut now_dt := supportx.psr20_clock_now_datetime_or_throw(clock) or {
-			return error('failed to resolve clock time for TTL resolution')
-		}
+	if mut interval := ttl.as_date_interval() {
 		defer {
-			now_dt.release()
+			interval.release()
 		}
-		expires_at := now_dt.with_method_result[vphp.PhpObject, i64]('add', fn (added vphp.PhpObject) i64 {
-			if !added.is_valid() {
-				return i64(-1)
-			}
-			return added.with_method_result[vphp.PhpInt, i64]('getTimestamp', fn (ts vphp.PhpInt) i64 {
-				return ts.value()
-			}) or { i64(-1) }
-		}, ttl) or { i64(-1) }
+		now_unix, expires_at := psr_cache_interval_expiration(clock, interval)!
 		if expires_at <= now_unix {
 			return i64(-1)
 		}
@@ -327,56 +337,30 @@ fn psr_cache_resolve_relative_ttl_or_throw(clock vphp.PhpObject, ttl vphp.PhpVal
 	return error('ttl must be null, an integer, or DateInterval')
 }
 
+fn psr_cache_interval_expiration(clock vphp.PhpObject, interval vphp.PhpDateInterval) !(i64, i64) {
+	mut date := supportx.psr20_clock_now_datetime_or_throw(clock)!
+	defer {
+		date.release()
+	}
+	now_unix := date.unix_seconds()!
+	mut expiration := date.add(interval.borrowed_view())!
+	defer {
+		expiration.release()
+	}
+	return now_unix, expiration.unix_seconds()!
+}
+
 fn psr16_iterable_key_list(value vphp.PhpIterable) ![]string {
-	mut normalized := value.to_array()!
+	mut normalized := value.to_list()!
 	defer {
 		normalized.release()
 	}
-	mut values := normalized.value_array()
-	defer {
-		values.release()
-	}
 	mut out := []string{}
-	for item in values.value_items() {
+	for item in normalized.value_items() {
 		key_name := psr16_value_to_key(item)!
 		out << psr_cache_validate_key_or_throw(key_name)!
 	}
 	return out
-}
-
-fn psr16_iterable_assoc_pairs(value vphp.PhpIterable) !map[string]vphp.PhpValue {
-	mut normalized := value.to_array()!
-	defer {
-		normalized.release()
-	}
-	mut out := map[string]vphp.PhpValue{}
-	for key in normalized.assoc_keys() {
-		safe_key := psr_cache_validate_key_or_throw(key) or {
-			psr16_release_pairs(mut out)
-			return error(err.msg())
-		}
-		out[safe_key] = normalized.value_at(key).retain()
-	}
-	return out
-}
-
-fn psr16_iterable_assoc_key_list(value vphp.PhpIterable) ![]string {
-	mut normalized := value.to_array()!
-	defer {
-		normalized.release()
-	}
-	mut out := []string{}
-	for key in normalized.assoc_keys() {
-		out << psr_cache_validate_key_or_throw(key)!
-	}
-	return out
-}
-
-fn psr16_release_pairs(mut pairs map[string]vphp.PhpValue) {
-	for _, persistent in pairs {
-		mut owned := persistent
-		owned.release()
-	}
 }
 
 fn psr16_value_to_key(value vphp.PhpValue) !string {
@@ -387,7 +371,9 @@ fn psr16_value_to_key(value vphp.PhpValue) !string {
 }
 
 fn throw_psr16_invalid_argument(message string) {
-	vphp.PhpException.raise_class('VSlim\\Psr16\\InvalidArgumentException', message, 0)
+	if !vphp.has_exception() {
+		vphp.PhpException.raise_class('VSlim\\Psr16\\InvalidArgumentException', message, 0)
+	}
 }
 
 pub fn (cache &VSlimPsr16Cache) free() {

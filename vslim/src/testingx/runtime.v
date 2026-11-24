@@ -395,9 +395,12 @@ pub fn (h &VSlimTestingHarness) json_request(method string, uri string, payload 
 		payload), h.cookies)
 }
 
-@[vphp.PhpArgType(v_name: 'request', php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
-@[vphp.PhpExportMethod(name: '')]
+@[vphp.PhpExportMethod(name: 'handle')]
+pub fn (h &VSlimTestingHarness) export_handle(request httpx.PsrServerRequest) &httpx.VSlimPsr7Response {
+	return h.handle(request.to_object())
+}
+
 pub fn (h &VSlimTestingHarness) handle(request vphp.PhpObject) &httpx.VSlimPsr7Response {
 	mut app := h.app_object() or {
 		return httpx.VSlimPsr7Response.text(500, 'testing harness app is not configured')

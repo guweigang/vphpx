@@ -4,11 +4,11 @@ import vphp
 
 pub fn call_route_target_method(target vphp.PhpValue, method string, args []vphp.PhpArgInput) vphp.PhpValue {
 	if method.trim_space() != '' {
-		if target_obj := target.as_object() {
+		if target_obj := vphp.PhpObject.from_zval(target.to_zval()) {
 			return target_obj.call_method(method, ...args)
 		}
 	}
-	if callable := target.as_callable() {
+	if callable := vphp.PhpCallable.from_zval(target.to_zval()) {
 		return callable.invoke(...args)
 	}
 	return vphp.PhpValue.null()
@@ -28,11 +28,11 @@ pub fn validate_route_service_method(target vphp.PhpValue, service_id string, me
 }
 
 pub fn call_psr_request_handler(target vphp.PhpValue, request vphp.PhpObject) !vphp.PhpValue {
-	target_obj := target.as_object() or { return error('Route handler must be an object') }
+	target_obj := target.require_object()!
 	mut result := target_obj.call_method('handle', request)
-	return route_handler_response(result)
+	return route_handler_response(mut result)
 }
 
-pub fn route_handler_response(value vphp.PhpValue) vphp.PhpValue {
-	return value.owned()
+pub fn route_handler_response(mut value vphp.PhpValue) vphp.PhpValue {
+	return value.move_to_request_scope_by_value()
 }

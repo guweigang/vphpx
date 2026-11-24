@@ -42,6 +42,9 @@ $group->websocket('/room', $ws);
 - `VSlim\RouteGroup::websocket('/room', ...)` 会自动拼上 group 前缀
 - `on_open()` 返回字符串时，worker 会自动先 `accept`，再发送这段文本
 - `on_message()` 返回字符串时，worker 会发送 text frame
+- 路由也可以直接注册闭包或可调用对象。回调的实参与对应的生命周期方法相同。对象声明了 WebSocket 生命周期方法时，按生命周期方法分发
+- 握手尚未接受时，`open` 回调返回 `false` 会拒绝握手。调用 worker 连接对象的 `$conn->reject()` 或 `$conn->close()` 也会结束握手。VSlim 会清理该连接的路由绑定和本地房间成员记录
+- 调用 `$conn->accept()` 后，VSlim 会继续分发该连接的关闭事件，即使 `open` 回调随后关闭连接
 - 如果你要主动关闭连接，可以直接调用 `$conn->close(...)`
 - 传给 `on_open()` / `on_message()` / `on_close()` 的 `$frame` 现在会附带 `rooms`、`metadata`、`room_members`、`member_metadata`、`room_counts`、`presence_users` 快照
 - `vhttpd` 侧的握手、ping/pong、frame 编解码由 V 的 `net.websocket` 处理

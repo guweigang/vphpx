@@ -66,6 +66,24 @@ if (!str_starts_with($cookie, 'test=value;') || !str_contains($cookie, 'Max-Age=
     throw new RuntimeException('Unexpected response cookie');
 }
 
+class AliasedRouteStatus
+{
+    public static int $status = 200;
+}
+$app->get('/aliased-response', static function (): VSlim\VHttpd\Response {
+    $response = new VSlim\VHttpd\Response(200, 'aliased', 'text/plain');
+    $response->status =& AliasedRouteStatus::$status;
+    return $response;
+});
+foreach ([207, 208] as $status) {
+    AliasedRouteStatus::$status = $status;
+    $aliasedResponse = $app->dispatchRequest(new VSlim\VHttpd\Request(rawPath: '/aliased-response', body: '', method: 'GET'));
+    if ($aliasedResponse->status !== $status || $aliasedResponse->body !== 'aliased'
+        || AliasedRouteStatus::$status !== $status) {
+        throw new RuntimeException('Route response normalization lost the PHP status reference write');
+    }
+}
+
 var_dump(method_exists($view, 'renderWithLayout'));
 var_dump(method_exists($view, 'render_with_layout'));
 

@@ -2,29 +2,41 @@ module streamx
 
 import vphp
 
-@[vphp.PhpExportMethod(name: '')]
-pub fn VSlimStreamFactory.text(chunks vphp.PhpValue) vphp.PhpValue {
-	return vphp.PhpClass.named('VSlim\\Stream\\Response').call_static('text', chunks)
+pub fn VSlimStreamFactory.text(chunks vphp.PhpValue) &VSlimStreamResponse {
+	return VSlimStreamResponse.text(chunks)
+}
+
+@[vphp.PhpReturnType(php_type: 'VSlim\\Stream\\Response')]
+@[vphp.PhpExportMethod(name: 'text')]
+pub fn VSlimStreamFactory.export_text(chunks vphp.PhpValue) vphp.PhpValue {
+	return VSlimStreamResponse.export_text(chunks)
 }
 
 @[vphp.PhpArgName(v_name: 'content_type', php_name: 'contentType')]
 @[vphp.PhpExportMethod(name: 'textWith')]
 pub fn VSlimStreamFactory.text_with(chunks vphp.PhpValue, status int, content_type string, headers vphp.PhpArray) vphp.PhpValue {
-	mut status_arg := vphp.PhpInt.of(status)
-	defer {
-		status_arg.release()
-	}
+	mut args := vphp.PhpArray.new()
 	mut content_type_arg := vphp.PhpString.of(content_type)
 	defer {
+		args.release()
 		content_type_arg.release()
 	}
-	return vphp.PhpClass.named('VSlim\\Stream\\Response').call_static('textWith', chunks,
-		status_arg, content_type_arg, headers)
+	args.set('chunks', chunks)
+	args.int('status', i64(status))
+	args.set('contentType', content_type_arg)
+	args.set('headers', headers)
+	mut response := vphp.PhpClass.named('VSlim\\Stream\\Response').call_static_args('textWith', args)
+	return response.move_to_request_scope()
 }
 
-@[vphp.PhpExportMethod(name: '')]
-pub fn VSlimStreamFactory.sse(events vphp.PhpValue) vphp.PhpValue {
-	return vphp.PhpClass.named('VSlim\\Stream\\Response').call_static('sse', events)
+pub fn VSlimStreamFactory.sse(events vphp.PhpValue) &VSlimStreamResponse {
+	return VSlimStreamResponse.sse(events)
+}
+
+@[vphp.PhpReturnType(php_type: 'VSlim\\Stream\\Response')]
+@[vphp.PhpExportMethod(name: 'sse')]
+pub fn VSlimStreamFactory.export_sse(events vphp.PhpValue) vphp.PhpValue {
+	return VSlimStreamResponse.export_sse(events)
 }
 
 @[vphp.PhpExportMethod(name: 'sseWith')]
@@ -33,8 +45,9 @@ pub fn VSlimStreamFactory.sse_with(events vphp.PhpValue, status int, headers vph
 	defer {
 		status_arg.release()
 	}
-	return vphp.PhpClass.named('VSlim\\Stream\\Response').call_static('sseWith', events,
+	mut response := vphp.PhpClass.named('VSlim\\Stream\\Response').call_static('sseWith', events,
 		status_arg, headers)
+	return response.move_to_request_scope()
 }
 
 @[vphp.PhpArgNames(names: 'batch_size=batchSize,delay_ms=delayMs')]

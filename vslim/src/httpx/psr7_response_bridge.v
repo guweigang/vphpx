@@ -21,14 +21,33 @@ pub fn (res VSlimResponse) to_psr7_response() &VSlimPsr7Response {
 }
 
 pub fn (res &VSlimPsr7Response) to_vslim_response() VSlimResponse {
+	mut response := res.without_body_projection()
+	response.body = res.body_or_empty().stream_string().clone()
+	return response
+}
+
+pub fn (res &VSlimPsr7Response) without_body_projection() VSlimResponse {
 	headers := flatten_psr7_header_map(res.headers)
 	content_type := headers['content-type'] or { 'text/plain; charset=utf-8' }
 	return VSlimResponse{
 		status:       res.status
-		body:         res.body_or_empty().stream_string().clone()
 		content_type: content_type.clone()
 		headers:      snapshot_string_map(headers)
 	}
+}
+
+// A native memory stream already has all its bytes in a V string. Other
+// PSR-7 streams can be consumed incrementally by the worker.
+pub fn (res &VSlimPsr7Response) worker_body_stream() ?vphp.PhpValue {
+	body := res.response_body_object() or { return none }
+	object := body.as_object() or { return none }
+	if object.class_name() in ['VSlim\\Psr7\\Stream', 'VSlimPsr7Stream'] {
+		stream := object.to_v_object[VSlimPsr7Stream]() or { return none }
+		if !stream.native_backed || stream.is_detached() {
+			return none
+		}
+	}
+	return body
 }
 
 pub fn VSlimPsr7Response.text(status int, body string) &VSlimPsr7Response {
@@ -49,11 +68,17 @@ pub fn (res &VSlimPsr7Response) with_allowed_methods(allowed_methods []string) &
 		headers['allow'] = [allowed_methods.join(', ')]
 		header_names['allow'] = 'Allow'
 	}
-	return res.clone_with(res.protocol_version, headers, header_names, res.body_or_empty(),
+	return res.clone_with(res.protocol_version, headers, header_names, res.body_ref,
 		res.status, res.reason_phrase)
 }
 
-pub fn VSlimPsr7Response.from_value(result vphp.PhpValue) &VSlimPsr7Response {
+@[params]
+pub struct Psr7ResponseImportOptions {
+pub:
+	defer_body bool
+}
+
+pub fn VSlimPsr7Response.from_value(result vphp.PhpValue, options Psr7ResponseImportOptions) &VSlimPsr7Response {
 	if !result.is_valid() || result.is_null() || result.is_undef() {
 		return VSlimPsr7Response.text(200, '')
 	}
@@ -63,7 +88,7 @@ pub fn VSlimPsr7Response.from_value(result vphp.PhpValue) &VSlimPsr7Response {
 			if resp := object.to_v_object[VSlimPsr7Response]() {
 				return resp.clone_with(resp.get_protocol_version(),
 					clone_header_values(resp.headers), clone_header_names(resp.header_names),
-					resp.body_or_empty(), resp.get_status_code(), resp.get_reason_phrase())
+					resp.body_ref, resp.get_status_code(), resp.get_reason_phrase())
 			}
 		}
 		if object.is_instance_of('Psr\\Http\\Message\\ResponseInterface') {
@@ -89,7 +114,7 @@ pub fn VSlimPsr7Response.from_value(result vphp.PhpValue) &VSlimPsr7Response {
 				'1.1'
 			}
 			headers, header_names := if object.method_exists('getHeaders') {
-				mut headers_value := object.call_method('getHeaders')
+				mut headers_value := object.call_method_by_value('getHeaders')
 				defer {
 					headers_value.release()
 				}
@@ -97,21 +122,21 @@ pub fn VSlimPsr7Response.from_value(result vphp.PhpValue) &VSlimPsr7Response {
 			} else {
 				map[string][]string{}, map[string]string{}
 			}
-			body_ref := if object.method_exists('getBody') {
-				object.with_method_result[vphp.PhpValue, &VSlimPsr7Stream]('getBody', fn (z vphp.PhpValue) &VSlimPsr7Stream {
-					return VSlimPsr7Stream.from_value(z).clone_or_empty()
-				}) or { VSlimPsr7Stream.from_content('') }
-			} else {
-				VSlimPsr7Stream.from_content('')
-			}
-			return &VSlimPsr7Response{
+			mut response := &VSlimPsr7Response{
 				status:           normalize_status(status)
 				reason_phrase:    normalize_reason_phrase(status, reason)
 				protocol_version: normalize_protocol_version(protocol)
 				headers:          headers
 				header_names:     header_names
-				body_ref:         body_ref
 			}
+			if options.defer_body {
+				response.body_pending = deferred_psr7_body(object)
+			} else {
+				body_ref, body_pending := import_psr7_body(object)
+				response.body_ref = body_ref
+				response.body_pending = body_pending
+			}
+			return response
 		}
 	}
 	return VSlimPsr7Response.text(500, 'Invalid route response')
@@ -120,7 +145,7 @@ pub fn VSlimPsr7Response.from_value(result vphp.PhpValue) &VSlimPsr7Response {
 pub fn (res &VSlimPsr7Response) build_psr7_response_value() vphp.PhpValue {
 	unsafe {
 		bound := res.clone_with(res.get_protocol_version(), clone_header_values(res.headers),
-			clone_header_names(res.header_names), res.body_or_empty(), res.get_status_code(),
+			clone_header_names(res.header_names), res.body_ref, res.get_status_code(),
 			res.get_reason_phrase())
 		return vphp.bind_owned_object_value[VSlimPsr7Response](bound)
 	}
@@ -130,7 +155,7 @@ pub fn (req &VSlimPsr7ServerRequest) build_psr7_server_request_value() vphp.PhpV
 	unsafe {
 		bound := req.clone_with(req.method, req.request_target, req.protocol_version,
 			clone_header_values(req.headers), clone_header_names(req.header_names),
-			req.body_or_empty(), req.uri_or_default(), req.server_params_ref,
+			req.body_ref, req.uri_or_default(), req.server_params_ref,
 			req.cookie_params_ref, req.query_params_ref, req.uploaded_files_ref,
 			req.parsed_body_ref, req.attributes_ref)
 		return vphp.bind_owned_object_value[VSlimPsr7ServerRequest](bound)

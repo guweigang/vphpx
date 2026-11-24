@@ -2,11 +2,18 @@ module module_probex
 
 import eventx
 import httpx
+import streamx
 import vphp
 
 @[vphp.PhpExportMethod(name: '')]
 pub fn (mut probe VSlimPhpSignatureProbe) construct() &VSlimPhpSignatureProbe {
 	return &probe
+}
+
+@[vphp.PhpExportMethod(name: 'cloneWithProperties')]
+@[vphp.PhpMethodSince(version: .php85)]
+pub fn (probe &VSlimPhpSignatureProbe) clone_with_properties(object vphp.PhpObject, properties vphp.PhpArray) !vphp.PhpObject {
+	return object.clone_with(properties)
 }
 
 @[vphp.PhpExportMethod(name: 'alwaysTrue')]
@@ -93,10 +100,140 @@ pub fn VSlimPhpSignatureProbe.make_static_psr_response() &httpx.VSlimPsr7Respons
 	}
 }
 
-@[vphp.PhpArgType(v_name: 'request', php_type: 'Psr\\Http\\Message\\RequestInterface')]
+@[params]
+pub struct ProbeResponseOptions {
+pub:
+	enabled  bool                      = true
+	response ?&httpx.VSlimPsr7Response = none
+}
+
+@[vphp.PhpExportMethod(name: 'makeFixedStatusCallback')]
+pub fn (probe &VSlimPhpSignatureProbe) make_fixed_status_callback() fn (response &httpx.VSlimPsr7Response, adjustment ?int) int {
+	return fn (response &httpx.VSlimPsr7Response, adjustment ?int) int {
+		return response.get_status_code() + (adjustment or { 0 })
+	}
+}
+
+@[vphp.PhpExportMethod(name: 'makeAdjustedStatusCallback')]
+pub fn (probe &VSlimPhpSignatureProbe) make_adjusted_status_callback() fn (response &httpx.VSlimPsr7Response, offsets ...int) int {
+	return fn (response &httpx.VSlimPsr7Response, offsets ...int) int {
+		mut status := response.get_status_code()
+		for offset in offsets {
+			status += offset
+		}
+		return status
+	}
+}
+
+@[vphp.PhpExportMethod(name: 'makeResponseStatusCallback')]
+pub fn (probe &VSlimPhpSignatureProbe) make_response_status_callback() fn (ProbeResponseOptions) ?int {
+	return fn (options ProbeResponseOptions) ?int {
+		if !options.enabled {
+			return none
+		}
+		if response := options.response {
+			return response.get_status_code()
+		}
+		return 202
+	}
+}
+
+@[vphp.PhpExportMethod(name: 'makePsrResponseCallback')]
+pub fn (probe &VSlimPhpSignatureProbe) make_psr_response_callback() fn (ProbeResponseOptions) ?&httpx.VSlimPsr7Response {
+	return fn (options ProbeResponseOptions) ?&httpx.VSlimPsr7Response {
+		if !options.enabled {
+			return none
+		}
+		return options.response or { VSlimPhpSignatureProbe.make_static_psr_response() }
+	}
+}
+
+@[vphp.PhpExportMethod(name: 'makePsrResponseSelector')]
+@[vphp.PhpBorrowedReturn]
+pub fn (probe &VSlimPhpSignatureProbe) make_psr_response_selector() fn (...?&httpx.VSlimPsr7Response) ?&httpx.VSlimPsr7Response {
+	return fn (responses ...?&httpx.VSlimPsr7Response) ?&httpx.VSlimPsr7Response {
+		for response in responses {
+			if item := response {
+				return item
+			}
+		}
+		return none
+	}
+}
+
 @[vphp.PhpExportMethod(name: 'acceptPsrRequest')]
-pub fn (probe &VSlimPhpSignatureProbe) accept_psr_request(request vphp.PhpObject) bool {
-	return request.is_instance_of('Psr\\Http\\Message\\RequestInterface')
+pub fn (probe &VSlimPhpSignatureProbe) accept_psr_request(request httpx.PsrRequest) bool {
+	return request.to_object().is_valid()
+}
+
+@[vphp.PhpExportMethod(name: 'selectLastPsrRequest')]
+pub fn (probe &VSlimPhpSignatureProbe) select_last_psr_request(fallback httpx.PsrRequest, alternatives ...httpx.PsrRequest) httpx.PsrRequest {
+	return if alternatives.len == 0 { fallback } else { alternatives.last() }
+}
+
+@[vphp.PhpExportMethod(name: 'namedPsrRequests')]
+@[vphp.PhpArgType(v_name: 'requests', php_type: 'Psr\\Http\\Message\\RequestInterface')]
+pub fn (probe &VSlimPhpSignatureProbe) named_psr_requests(requests ...vphp.PhpArg) vphp.PhpArray {
+	return collect_named_request_arguments(requests)
+}
+
+@[vphp.PhpExportMethod(name: 'makeNamedRequestCollector')]
+pub fn (probe &VSlimPhpSignatureProbe) make_named_request_collector() fn (requests ...vphp.PhpArg) vphp.PhpArray {
+	return fn (requests ...vphp.PhpArg) vphp.PhpArray {
+		return collect_named_request_arguments(requests)
+	}
+}
+
+@[vphp.PhpExportMethod(name: 'forwardCallbackArguments')]
+pub fn (probe &VSlimPhpSignatureProbe) forward_callback_arguments(callback vphp.PhpCallable, arguments ...vphp.PhpArg) vphp.PhpValue {
+	return callback.invoke_forwarded(arguments)
+}
+
+@[vphp.PhpExportMethod(name: 'recoverCallback')]
+pub fn (probe &VSlimPhpSignatureProbe) recover_callback(callback vphp.PhpCallable, recover vphp.PhpCallable) vphp.PhpValue {
+	mut result := callback.invoke()
+	if mut exception := vphp.PhpException.take_current() {
+		result.release()
+		defer {
+			exception.release()
+		}
+		return recover.invoke(exception)
+	}
+	return result
+}
+
+@[vphp.PhpExportMethod(name: 'echoThrowable')]
+pub fn (probe &VSlimPhpSignatureProbe) echo_throwable(value ?vphp.PhpThrowable) ?vphp.PhpThrowable {
+	return value
+}
+
+@[vphp.PhpExportMethod(name: 'echoEnumCase')]
+pub fn (probe &VSlimPhpSignatureProbe) echo_enum_case(value ?vphp.PhpEnumCase) ?vphp.PhpEnumCase {
+	return value
+}
+
+@[vphp.PhpExportMethod(name: 'echoStreamFactory')]
+pub fn (probe &VSlimPhpSignatureProbe) echo_stream_factory(value ?vphp.PhpInterface[streamx.VStreamResponseFactory]) ?vphp.PhpInterface[streamx.VStreamResponseFactory] {
+	return value
+}
+
+@[vphp.PhpExportMethod(name: 'makeStreamFactoryCallback')]
+pub fn (probe &VSlimPhpSignatureProbe) make_stream_factory_callback() fn (value ?vphp.PhpInterface[streamx.VStreamResponseFactory]) ?vphp.PhpInterface[streamx.VStreamResponseFactory] {
+	return fn (value ?vphp.PhpInterface[streamx.VStreamResponseFactory]) ?vphp.PhpInterface[streamx.VStreamResponseFactory] {
+		return value
+	}
+}
+
+fn collect_named_request_arguments(requests []vphp.PhpArg) vphp.PhpArray {
+	mut result := vphp.PhpArray.new()
+	for request in requests {
+		if name := request.variadic_name() {
+			result.set_value(name, request.value)
+		} else {
+			result.next(request.value)
+		}
+	}
+	return result
 }
 
 @[vphp.PhpArgType(v_name: 'expiration', php_type: '?DateTimeInterface')]

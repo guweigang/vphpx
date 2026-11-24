@@ -17,7 +17,7 @@ mut:
 pub struct VSlimAuthRequireMiddleware {
 mut:
 	container_ref &containerx.VSlimContainer = unsafe { nil } @[vphp.PhpIgnoreField]
-	redirect_path string @[vphp.PhpProperty; vphp.PhpProperty_name: 'redirectPath']
+	redirect_path string @[vphp.PhpProperty(name: 'redirectPath')]
 }
 
 @[vphp.PhpImplements(names: 'Psr\\Http\\Server\\MiddlewareInterface')]
@@ -26,7 +26,7 @@ mut:
 pub struct VSlimAuthGuestMiddleware {
 mut:
 	container_ref &containerx.VSlimContainer = unsafe { nil } @[vphp.PhpIgnoreField]
-	redirect_path string @[vphp.PhpProperty; vphp.PhpProperty_name: 'redirectPath']
+	redirect_path string @[vphp.PhpProperty(name: 'redirectPath')]
 }
 
 @[vphp.PhpImplements(names: 'Psr\\Http\\Server\\MiddlewareInterface')]

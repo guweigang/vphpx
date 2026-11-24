@@ -4,13 +4,15 @@ import net.unix
 import time
 import vphp
 
+// vfmt off
 @[vphp.PhpExportClass(name: 'VSlim\\VHttpd\\Client')]
 @[heap]
 pub struct VSlimVhttpdClient {
 mut:
-	socket_path             string    @[vphp.PhpProperty; vphp.PhpProperty_name: 'socketPath']
-	connect_timeout_seconds f64 = 2.0 @[vphp.PhpProperty: 'connectTimeoutSeconds']
+	socket_path             string    @[vphp.PhpProperty(name: 'socketPath')]
+	connect_timeout_seconds f64 = 2.0 @[vphp.PhpProperty(name: 'connectTimeoutSeconds')]
 }
+// vfmt on
 
 @[vphp.PhpExportMethod(name: '')]
 @[vphp.PhpArgNames(names: 'socket_path=socketPath,connect_timeout_seconds=connectTimeoutSeconds')]

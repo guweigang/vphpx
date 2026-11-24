@@ -90,14 +90,14 @@ fn (mut app VSlimApp) sync_event_services_to_container() {
 	if app.container_ref == unsafe { nil } {
 		return
 	}
-	provider := app.listener_provider()
-	app.container_ref.set_borrowed_object[eventx.VSlimPsr14ListenerProvider](eventx.service_listener_provider,
-		provider)
-	app.container_ref.set_borrowed_object[eventx.VSlimPsr14ListenerProvider](eventx.service_events_provider,
-		provider)
-	app.container_ref.set_borrowed_object[eventx.VSlimPsr14ListenerProvider](eventx.service_psr_listener_provider,
-		provider)
-	dispatcher := app.dispatcher()
+	mut dispatcher := app.dispatcher()
+	mut provider := dispatcher.provider_object()
+	defer {
+		provider.release()
+	}
+	app.container_ref.set_object(eventx.service_listener_provider, provider)
+	app.container_ref.set_object(eventx.service_events_provider, provider)
+	app.container_ref.set_object(eventx.service_psr_listener_provider, provider)
 	app.container_ref.set_borrowed_object[eventx.VSlimPsr14EventDispatcher](eventx.service_events,
 		dispatcher)
 	app.container_ref.set_borrowed_object[eventx.VSlimPsr14EventDispatcher](eventx.service_dispatcher,
@@ -125,11 +125,13 @@ fn (mut app VSlimApp) sync_http_client_service_to_container() {
 	if app.container_ref == unsafe { nil } {
 		return
 	}
-	client := app.http_client()
-	app.container_ref.set_borrowed_object[httpx.VSlimPsr18Client](httpx.service_http, client)
-	app.container_ref.set_borrowed_object[httpx.VSlimPsr18Client](httpx.service_http_client, client)
-	app.container_ref.set_borrowed_object[httpx.VSlimPsr18Client](httpx.service_psr_http_client,
-		client)
+	mut client := app.http_client()
+	defer {
+		client.release()
+	}
+	app.container_ref.set_object(httpx.service_http, client)
+	app.container_ref.set_object(httpx.service_http_client, client)
+	app.container_ref.set_object(httpx.service_psr_http_client, client)
 }
 
 fn (mut app VSlimApp) sync_database_service_to_container() {
@@ -224,8 +226,11 @@ pub fn (app &VSlimApp) has_logger() bool {
 	return app.logger_ref != unsafe { nil }
 }
 
-@[vphp.PhpArgType(v_name: 'clock', php_type: 'Psr\\Clock\\ClockInterface')]
 @[vphp.PhpExportMethod(name: 'setClock')]
+pub fn (mut app VSlimApp) export_set_clock(clock supportx.PsrClock) &VSlimApp {
+	return app.set_clock(clock.to_object())
+}
+
 pub fn (mut app VSlimApp) set_clock(clock vphp.PhpObject) &VSlimApp {
 	if !supportx.psr20_clock_is_valid(clock) {
 		vphp.PhpException.raise_class('InvalidArgumentException',
@@ -233,8 +238,8 @@ pub fn (mut app VSlimApp) set_clock(clock vphp.PhpObject) &VSlimApp {
 		return app
 	}
 	mut old := app.clock_ref
-	old.release()
 	app.clock_ref = clock.retain()
+	old.release()
 	app.sync_clock_dependent_services()
 	app.sync_clock_service_to_container()
 	return app
@@ -281,37 +286,38 @@ pub fn (mut app VSlimApp) psr_logger() &loggerx.VSlimPsrLogger {
 	return app.psr_logger_ref
 }
 
-@[vphp.PhpArgType(v_name: 'provider', php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
 @[vphp.PhpExportMethod(name: 'setListenerProvider')]
+pub fn (mut app VSlimApp) export_set_listener_provider(provider eventx.PsrListenerProvider) &VSlimApp {
+	mut dispatcher := app.dispatcher()
+	dispatcher.export_set_provider(provider)
+	app.sync_event_services_to_container()
+	return app
+}
+
 pub fn (mut app VSlimApp) set_listener_provider(provider &eventx.VSlimPsr14ListenerProvider) &VSlimApp {
-	app.listener_provider_ref = provider
-	if app.dispatcher_ref != unsafe { nil } {
-		app.dispatcher_ref.set_provider(provider)
-	}
+	mut dispatcher := app.dispatcher()
+	dispatcher.set_provider(provider)
 	app.sync_event_services_to_container()
 	return app
 }
 
 @[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
 @[vphp.PhpExportMethod(name: 'listenerProvider')]
+pub fn (mut app VSlimApp) export_listener_provider() vphp.PhpObject {
+	mut dispatcher := app.dispatcher()
+	return dispatcher.provider_object()
+}
+
 pub fn (mut app VSlimApp) listener_provider() &eventx.VSlimPsr14ListenerProvider {
-	if app.listener_provider_ref == unsafe { nil } {
-		app.listener_provider_ref = eventx.VSlimPsr14ListenerProvider.new_default()
-	}
-	if app.dispatcher_ref != unsafe { nil } {
-		app.dispatcher_ref.set_provider(app.listener_provider_ref)
-	}
-	return app.listener_provider_ref
+	mut dispatcher := app.dispatcher()
+	return dispatcher.provider()
 }
 
 @[vphp.PhpArgType(v_name: 'dispatcher', php_type: 'Psr\\EventDispatcher\\EventDispatcherInterface')]
 @[vphp.PhpExportMethod(name: 'setDispatcher')]
 pub fn (mut app VSlimApp) set_dispatcher(dispatcher &eventx.VSlimPsr14EventDispatcher) &VSlimApp {
 	app.dispatcher_ref = dispatcher
-	unsafe {
-		mut writable := &eventx.VSlimPsr14EventDispatcher(dispatcher)
-		app.listener_provider_ref = writable.provider()
-	}
+	dispatcher.retain_for_owner(app)
 	app.sync_event_services_to_container()
 	return app
 }
@@ -320,9 +326,7 @@ pub fn (mut app VSlimApp) set_dispatcher(dispatcher &eventx.VSlimPsr14EventDispa
 @[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) dispatcher() &eventx.VSlimPsr14EventDispatcher {
 	if app.dispatcher_ref == unsafe { nil } {
-		app.dispatcher_ref = eventx.VSlimPsr14EventDispatcher.from_provider(app.listener_provider())
-	} else {
-		app.dispatcher_ref.set_provider(app.listener_provider())
+		app.dispatcher_ref = eventx.VSlimPsr14EventDispatcher.new_for_owner(app)
 	}
 	return app.dispatcher_ref
 }
@@ -393,21 +397,32 @@ pub fn (mut app VSlimApp) cache_pool() &cachex.VSlimPsr6CacheItemPool {
 	return app.cache_pool_ref
 }
 
-@[vphp.PhpArgType(v_name: 'client', php_type: 'Psr\\Http\\Client\\ClientInterface')]
 @[vphp.PhpExportMethod(name: 'setHttpClient')]
-pub fn (mut app VSlimApp) set_http_client(client &httpx.VSlimPsr18Client) &VSlimApp {
-	app.http_client_ref = client
+pub fn (mut app VSlimApp) set_psr_http_client(client httpx.PsrHttpClient) &VSlimApp {
+	app.track_http_client()
+	app.replace_http_client(client.to_object())
 	app.sync_http_client_service_to_container()
 	return app
 }
 
+fn (mut app VSlimApp) replace_http_client(client vphp.PhpObject) {
+	mut old := app.http_client_ref
+	app.http_client_ref = if client.is_valid() { client.retain() } else { vphp.PhpObject.invalid() }
+	old.release()
+}
+
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Client\\ClientInterface')]
 @[vphp.PhpExportMethod(name: 'httpClient')]
-pub fn (mut app VSlimApp) http_client() &httpx.VSlimPsr18Client {
-	if app.http_client_ref == unsafe { nil } {
-		app.http_client_ref = httpx.VSlimPsr18Client.from_config(app.config_ref)
+pub fn (mut app VSlimApp) http_client() vphp.PhpObject {
+	if !app.http_client_ref.is_valid() {
+		app.track_http_client()
+		mut object := httpx.VSlimPsr18Client.object_from_config(app.config_ref)
+		defer {
+			object.release()
+		}
+		app.replace_http_client(object)
 	}
-	return app.http_client_ref
+	return app.http_client_ref.to_request_owned()
 }
 
 @[vphp.PhpExportMethod(name: 'hasDatabase')]

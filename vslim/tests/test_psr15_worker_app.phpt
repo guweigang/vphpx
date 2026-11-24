@@ -87,7 +87,7 @@ namespace {
         }
     }
 
-    final class TestPsr7Request implements \Psr\Http\Message\ServerRequestInterface {
+    class TestPsr7Request implements \Psr\Http\Message\ServerRequestInterface {
         public string $protocolVersion = '1.1';
         public array $headers = [];
         public array $cookies = [];
@@ -186,7 +186,7 @@ namespace {
         }
     }
 
-    final class TestPsr7Response implements \Psr\Http\Message\ResponseInterface {
+    class TestPsr7Response implements \Psr\Http\Message\ResponseInterface {
         public function __construct(
             private int $status,
             private array $headers,
@@ -212,6 +212,60 @@ namespace {
         $handler = require __DIR__ . '/fixtures/psr15_app_fixture.php';
         $factory = new \Nyholm\Psr7\Factory\Psr17Factory();
         return \VSlim\Worker\Adapter::psr($handler, $factory, $factory);
+    }
+    $stream = new TestPsr7Stream("first\0second");
+    $foreign = new class($stream) extends TestPsr7Response {
+        public array $responseHeaders = ['Content-Type' => ['application/octet-stream'], 'X-Source' => ['foreign']];
+
+        public function __construct(public TestPsr7Stream $stream)
+        {
+            parent::__construct(207, $this->responseHeaders, $stream);
+        }
+        public function &getHeaders(): array { return $this->responseHeaders; }
+        public function &getBody(): \Psr\Http\Message\StreamInterface { return $this->stream; }
+    };
+    $adapted = \VSlim\Psr7Adapter::toVSlimResponse($foreign);
+    if ($adapted->status !== 207 || $adapted->contentType !== 'application/octet-stream'
+        || $adapted->body !== "first\0second") {
+        throw new \RuntimeException('The adapter lost the headers or binary body of a foreign PSR-7 response');
+    }
+    $app = new \VSlim\App();
+    $request = new class('GET', 'https://example.com/reference-response?query=yes', ['REMOTE_ADDR' => '127.0.0.1']) extends TestPsr7Request {
+        public ?TestPsr7Uri $uriObject = null;
+        public mixed $parsedBody = null;
+
+        public function &getUri(): TestPsr7Uri { $this->uriObject ??= parent::getUri(); return $this->uriObject; }
+        public function &getHeaders(): array { return $this->headers; }
+        public function &getBody(): TestPsr7Stream { return $this->body; }
+        public function &getServerParams(): array { return $this->server; }
+        public function &getCookieParams(): array { return $this->cookies; }
+        public function &getQueryParams(): array { return $this->query; }
+        public function &getParsedBody(): mixed { return $this->parsedBody; }
+        public function &getAttributes(): array { return $this->attributes; }
+    };
+    $request->headers = ['X-Request' => ['from-ref']];
+    $request->cookies = ['cookie' => 'yes'];
+    $request->query = ['query' => 'yes'];
+    $request->parsedBody = ['parsed' => 'yes'];
+    $request->attributes = ['attribute' => 'yes'];
+    $requestStream = $request->body = new TestPsr7Stream('request body');
+    $app->get('/reference-response', static function ($incoming) use ($requestStream, $foreign) {
+        if ($incoming->getBody() !== $requestStream || $incoming->getUri()->getHost() !== 'example.com'
+            || $incoming->getHeaderLine('X-Request') !== 'from-ref'
+            || $incoming->getServerParams() !== ['REMOTE_ADDR' => '127.0.0.1']
+            || $incoming->getCookieParams() !== ['cookie' => 'yes']
+            || $incoming->getQueryParams() !== ['query' => 'yes']
+            || $incoming->getParsedBody() !== ['parsed' => 'yes']
+            || $incoming->getAttribute('attribute') !== 'yes') {
+            throw new \RuntimeException('Normalizing a PSR-15 request lost its by-reference getter results');
+        }
+        return $foreign;
+    });
+    $response = $app->handle($request);
+    $foreign->stream = new TestPsr7Stream('replacement');
+    $foreign->responseHeaders['X-Source'] = ['replacement'];
+    if ($response->getBody() !== $stream || $response->getHeaderLine('X-Source') !== 'foreign') {
+        throw new \RuntimeException('The PSR-7 response must keep the original stream object and header values');
     }
     require_once __DIR__ . '/worker_wire_fixture.php';
     $worker = new WorkerWireFixture(__FILE__, '\VSlim\Worker\Adapter::http');

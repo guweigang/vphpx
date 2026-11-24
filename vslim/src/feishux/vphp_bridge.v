@@ -44,7 +44,7 @@ pub fn vslim_feishu_bot_app_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_feishu_bot_app_construct']
-pub fn vphp_wrap_vslim_feishu_bot_app_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_feishu_bot_app_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimFeishuBotApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -53,10 +53,9 @@ pub fn vphp_wrap_vslim_feishu_bot_app_construct(ptr voidptr, ctx vphp.Context) v
     ])
     arg_0 := php_args.at(0).object() or {
         vphp.throw_exception('argument 0 must be object', 0)
-        return unsafe { nil }
+        return
     }
     recv.construct(arg_0)
-    return ptr
 }
 @[export: 'vphp_wrap_vslim_feishu_bot_app_handle']
 pub fn vphp_wrap_vslim_feishu_bot_app_handle(ptr voidptr, ctx vphp.Context)  {
@@ -145,3 +144,4 @@ pub fn (obj &VSlimFeishuBotApp) bind_owned_php_object_value() vphp.PhpValue {
 pub fn (val VSlimFeishuBotApp) php_class_name() string {
     return 'VSlim\\App\\Feishu\\BotApp'
 }
+

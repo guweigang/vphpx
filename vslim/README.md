@@ -220,7 +220,7 @@ make runtime-check
 make stubs
 ```
 
-默认会把结果写到 [stubs/vslim.php](stubs/vslim.php)。这份文件是从当前已构建的 `vslim.so` 反射生成的，所以推荐在每次改了导出 API 之后重新跑一次。
+默认会把结果写到 [stubs/vslim.php](stubs/vslim.php)。生成器读取扩展的 Reflection 信息和构建时生成的 `*.stub-expressions.json`，把 attribute 引用和参数默认值中的 PHP 表达式保留在 stub 源码里。用 `--extension` 指定其他位置时，把同次构建的 JSON 文件放在扩展旁边。导出 API 有改动后可以重新运行 `make stubs`。
 
 如果你想指定输出路径，也可以直接执行：
 
@@ -296,13 +296,22 @@ extension=vslim/vslim.so
 
 - `PSR-7`
   原生提供 `VSlim\Psr7\Stream` / `Request` / `ServerRequest` / `Response` / `Uri` / `UploadedFile`
+  `Uri` 支持 PHP 的 `clone` 和 `serialize()` / `unserialize()`。往返保留各 URI 组件和显式端口。
+  `Request`、`ServerRequest` 和 `Response` 支持 PHP 的 `clone`。克隆独立保存消息元数据，并共享原消息体流及其读取位置。
 - `PSR-15`
   `VSlim\App`、route / group / global middleware、`before()` / `after()` phase middleware 都走 PSR-15 request/handler 语义
+  中间件可用 `$app->requestState()[$request]` 保存请求对象附带的数据。每个应用有一张原生
+  `WeakMap`，以对象身份区分请求，请求对象被回收时对应条目自动释放。
+  PHP 8.6 起，`$app->bindRequestState($request, $state)` 可让条目和调用方的变量共享同一个引用。
 - `PSR-17`
   原生提供 `VSlim\Psr17\*Factory`
 - `PSR-14`
   原生提供 `VSlim\Psr14\EventDispatcher` / `ListenerProvider`，支持 exact / parent / interface / wildcard listener 解析与 stoppable event
+  `listenWeak(eventClass, listener)` 接受闭包和可调用对象。调用方持有对象时监听器才会执行，`'*'` 可用于注册通配监听器。
+  `count($provider)` 与 `listenerCount()` 都统计仍有效的注册，同一个监听器的重复注册分别计数。
 - `PSR-11`
+  PHP 8.4 起可用 `Container::lazyProxy(id, className, initializer)` 注册原生惰性服务。
+  容器返回同一个代理。首次读取代理的属性时，PHP 调用初始化器取得实际服务对象。
   `VSlim\Container`、`ContainerException`、`NotFoundException` 已支持接口绑定与 first-touch metadata 查询
 - `PSR-3`
   `VSlim\Log\PsrLogger` 已对齐 `LoggerInterface`，非法 level 会抛 `InvalidArgumentException`；`VSlim\App::psrLogger()` 会稳定复用同一个 PSR-3 wrapper，并始终绑定当前 native logger；`VSlim\App` 还会把 `logger` 与 `Psr\Log\LoggerInterface` 同步进 container
@@ -313,6 +322,8 @@ extension=vslim/vslim.so
 - `PSR-18`
   原生提供 `VSlim\Psr18\Client` / `ClientException` / `RequestException` / `NetworkException`；已覆盖 first-touch 接口绑定、异常 `getRequest()` 契约和 invalid-request 失败路径
 - `PSR-20`
+  时钟返回原生 `DateTimeImmutable`。PSR-6 和 PSR-16 用同一个时钟快照处理
+  `DateInterval`，保留 PHP 的时区和日历计算行为。
   原生提供 `VSlim\Psr20\Clock`；`now()` 直接返回 `DateTimeImmutable`，并已覆盖 first-touch 接口绑定与返回类型契约；`VSlim\App`、`PSR-16`、`PSR-6` 已能接入注入的 `ClockInterface`，其中 `VSlim\App` 还会把 `clock` 同步进内置 container
 
 这轮收进来的关键点：
@@ -429,6 +440,12 @@ $exitCode = $cli->runArgv([
 - 通过 `argument()` / `option()` / `warnings()` 暴露解析结果
 - 为 `--help` / `commandHelp()` 自动生成 usage、options、examples、notes
 - 在解析失败时输出错误信息并附带对应 command usage
+
+参数和选项的 `type` 可以使用字符串，也可以使用
+`VSlim\Cli\InputValueType`。例如，`['name' => 'count', 'type' => VSlim\Cli\InputValueType::Int]`
+会把命令行输入解析为整数。枚举的 case 是 `String`、`Bool`、`Int` 和 `Float`，backing 值分别是 `string`、`bool`、`int` 和 `float`。原有带下划线的名称仍返回原 case 对象，在 PHP 8.4 及以上访问这些别名会发出弃用通知。
+
+`multiple` 参数和选项的 `default` 可以提供数组或生成器。默认值按迭代顺序读取，重复的键也会保留对应的值。命令的 `definition()` 可能在注册和执行时分别读取，因此应在方法内创建新的生成器。
 
 模板里自带的 [`AboutCommand.php`](templates/app/app/Commands/AboutCommand.php) 就是最小参考；更具体的模板说明见 [`templates/app/README.md`](templates/app/README.md)。
 
@@ -600,7 +617,9 @@ echo $res->body . PHP_EOL;
 - `getAttribute()` 读取路由参数
 - `getQueryParams()` 读取 query string
 - `getBody()` 读取原始 body
-- handler 也可以返回数组，VSlim 会归一化成 `Response`
+- handler 也可以返回数组或实现 `ArrayAccess` 的对象，VSlim 会读取 `status`、`body`、`content_type` 和 `headers` 并归一化成 `Response`。
+- handler 返回 `Stringable` 对象时，VSlim 可将其转换为文本响应。响应对象和 `ArrayAccess` 字段优先处理。
+- handler 也可直接返回 `JsonSerializable` 对象生成 JSON 响应。响应对象、`ArrayAccess` 字段和 `Stringable` 转换优先处理。
 
 ### Tutorial 3：middleware、before、after
 
@@ -657,7 +676,7 @@ echo $res->header('x-demo') . PHP_EOL;
 - `before()` / `after()` 是独立的 phase middleware 通道，使用 PSR-15 `process()` 签名
 - `before()` 可以短路返回响应，也可以 `return $handler->handle($request);`
 - `before()` 在继续链路里对内建 PSR request 做的修改会继续传给后续 route / middleware；当前已验证 `withAttribute()` 的 `string/int/bool/array`，以及 `withMethod()` / `withUri()` / `withHeader()` / `withQueryParams()` / `withParsedBody()` / `withBody()`
-- `middleware()` 是标准 PSR-15 middleware 通道，必须实现 `process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface`
+- `middleware()` 默认注册到标准 PSR-15 通道，必须实现 `process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface`。`middleware()` 和 `groupMiddleware()` 都接受可选的 `phase`，可传 `VSlim\MiddlewarePhase::before` 或 `VSlim\MiddlewarePhase::after` 注册到对应阶段。 需要抽象注册入口时，可用 `VSlim\MiddlewareRegistrar` 作为类型，接口的 `middleware()` 也以 `MiddlewarePhase::standard` 为默认值。
 - `after()` 包裹最终响应，可以返回一个新的 `Response`
 
 ### Tutorial 4：group 和命名路由
@@ -804,6 +823,84 @@ $map = $app->dispatch_envelope_map($envelope);
 ```
 
 ### Tutorial 8：最简单的流式响应
+
+`VSlim\Stream\OllamaClient::fromConfig()` 的 `config` 参数类型是 `VSlim\Config`。
+
+`VSlim\Stream\Response` 和 `VSlim\Stream\Factory` 都实现原生 PHP 接口
+`VSlim\Stream\ResponseFactory`。两者的静态 `text(chunks: ...)` 和
+`sse(events: ...)` 都返回 `VSlim\Stream\Response`。
+`text(chunks: ...)` 和 `textWith(chunks: ...)` 接受 PHP stream resource，从当前读位置开始分块发送。
+`Response::textFrom(factory: ...)` 和 `Response::sseFrom(factory: ...)`
+在第一次迭代响应时调用工厂，工厂可以返回数组或 `Traversable`。
+`textFrom()` 的工厂也可以返回 PHP stream resource，响应从该资源的当前读位置分块发送。
+可用 `args: [...]` 传入工厂参数。整数键按位置传递，字符串键按参数名传递。
+响应会在开始迭代返回值前释放自己持有的工厂和参数。
+
+在 `VSlim\Task` 内迭代 `chunks()` 时，非阻塞 stream 暂时没有数据会让出当前任务，
+同组任务可以继续生产数据。读取会在流可读时恢复，写端关闭后读完即结束。
+`TaskHandle::cancel()` 也可以中断正在等待读取的任务。
+
+`Task::waitAny([$first, $second])` 返回率先结束的原始任务句柄，支持 PHP 回调和 V 原生任务。
+调用句柄的 `wait()` 可取得结果，或抛出原异常及取消原因。多个任务已经结束时，按传入顺序选第一个。
+其余 PHP 任务可在之后继续等待或取消。已经挂起的任务继续使用原来的 Fiber、依赖和超时。
+`Task::waitAny($tasks, timeoutMs: 1000)` 超时返回 `null`，任务仍可继续等待。
+默认的 `-1` 表示无限期等待。传 `0` 只检查已经结束的任务，排队的任务保持原状。
+等待上限适用于 Fiber 让出执行权后的调度。
+`Task::waitAll($tasks, timeoutMs: 1000)` 给整批任务一个共同的等待上限。
+批次完成后按传入顺序返回结果，或抛出原任务异常。超时返回 `null`，已有结果和异常可在后续等待时读取。
+传 `0` 只检查整批任务是否已经结束。
+`Task::waitAllSettled($tasks, timeoutMs: 1000)` 按传入顺序汇总每项结果。成功项是
+`['status' => 'fulfilled', 'value' => $value]`，异常或取消项是
+`['status' => 'rejected', 'reason' => $throwable]`。`reason` 保留原来的异常对象，成功的 `null` 也会保留。
+超时返回 `null`，之后可以用原句柄继续等待。
+`$handle->status()` 返回 `TaskStatus::Pending`、`TaskStatus::Fulfilled` 或 `TaskStatus::Rejected`。
+`$handle->outcome()` 返回与汇总接口相同的单项结果。任务尚未结束时返回 `null`。
+两项查询都只读取现有状态。已启动的任务收到取消请求后仍为 `Pending`，直到任务结束。
+`$handle->wait(timeoutMs: 1000)` 等待单个任务，超时时抛出 `VSlim\TaskTimeoutException`。
+任务可以正常返回 `null`，超时后也可以用原句柄继续等待。默认 `-1` 表示无限等待，`0` 只检查任务是否已经结束。
+
+worker 直接发送非阻塞资源时，可用 `Response::textStream($stream, waitTimeoutMs: 1000)`
+或 `Response::textFrom(factory: $open, waitTimeoutMs: 1000)` 为每次读取指定等待上限。
+`Task::awaitReadable($stream, timeoutMs: 1000)` 和 `Task::awaitWritable($stream, timeoutMs: 1000)`
+也支持在请求主线程使用有限超时，传 `0` 只检查当前就绪状态。
+如果 PHP 流包装器在检查描述符时抛出异常，发起等待的任务可以在调用处捕获原异常。
+`Task::waitStreams(read: $read, write: $write, timeoutMs: 1000)` 同时等待多个流可读或可写。
+返回的 `readable` 和 `writable` 数组保留各自的输入键，超时返回两个空数组。
+传 `0` 只检查当前就绪状态，PHP 主线程支持有限超时，受调度的 Fiber 支持无限等待。
+
+`Task::channel(capacity: 8)` 创建请求内的有界 FIFO，供 PHP Fiber 传值。
+`send($value, timeoutMs: 1000)` 返回 `TaskChannelStatus` 的 `Ready`、`Closed` 或 `TimedOut`。
+`receive(timeoutMs: 1000)` 返回含 `status` 的数组，收到消息时另有 `value` 键，消息可以是 `null`。
+`close()` 阻止后续发送，已入队的消息仍可读完。超时为 `0` 时立即返回，需要阻塞的发送和接收在调度中的 Fiber 里等待。
+`foreach ($channel as $value)` 从同一队列逐条接收消息，包含显式发送的 `null`。
+队列暂时为空时，迭代会在调度中的 Fiber 里等待。关闭且读完后，迭代结束。提前退出循环会留下尚未读取的消息。
+
+`Task::writeAll($stream, $data, timeoutMs: 1000)` 向非阻塞流写入完整字节串，并返回写入字节数。
+发送缓冲区满时，受调度的 Fiber 会让同组任务继续执行。
+超时针对整次写入，超时异常会报告已写入的字节数。流由调用方管理。
+
+`Task::readExactly($stream, $length, timeoutMs: 1000)` 从非阻塞流读取指定字节数，多余的数据留在流中。
+超时和提前 EOF 会报告已读取的字节数。传 `0` 时只读取当前可用的数据。
+
+`Task::readLine($stream, maxBytes: 8192, timeoutMs: 1000)` 从非阻塞流读取一行，返回值和字节上限都包含结尾的 LF。
+一行分段到达时，受调度的 Fiber 会在等待期间让出执行权，下一行留在流中。
+
+`Task::copyStream($source, $destination, length: -1, timeoutMs: 1000)` 在两个非阻塞流之间分块复制。
+`length: -1` 表示复制到源流 EOF。读取和写入共用一个超时，返回值是写入目标流的字节数。
+读、写或复制在等待结束后会重新检查流模式。流切回阻塞模式时，任务会报错，并保留已经完成的读写。
+
+`Task::connect('tcp://127.0.0.1:9000', timeoutMs: 1000, context: $context)`
+返回已连接的非阻塞资源，也接受 `unix://` 地址。在受调度的 Fiber 中等待连接时，同组任务可以继续运行。
+连接失败或取消等待时会释放该连接，成功后由调用方关闭资源。
+
+`Task::listen('tcp://127.0.0.1:9000', context: $context)` 创建非阻塞监听资源，也支持 `unix://`。
+`Task::accept($listener, timeoutMs: 1000)` 接收连接。PHP 原生创建的监听资源需要设为非阻塞，并保留原始 TCP 或 Unix URI。
+返回的流是非阻塞的，并继承监听资源的 stream context。超时或取消时，监听资源仍可继续使用。
+关闭监听资源会唤醒所有等待接收连接的任务并报告错误。等待期间应保持监听资源处于非阻塞模式。
+
+在受调度的 PHP 任务里等待已注册的 V 原生任务时，同组 PHP 任务仍可运行。
+多个调用方可以等待同一个句柄。取消某个 PHP 等待方后，其他调用方仍可取得原生任务的结果。
+生成器在下一段数据到达后继续迭代，先到达的数据可以立即发送给客户端。
 
 ```php
 <?php

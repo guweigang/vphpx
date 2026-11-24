@@ -32,6 +32,7 @@ foreach (['get', 'pull', 'getFlash', 'pullFlash'] as $method) {
 $session->setHttpOnly(httpOnly: true)->setSameSite(sameSite: 'strict')->setTtlSeconds(ttlSeconds: 3600);
 $session->set(value: 'neo', key: 'user');
 $session->set('scope', 'matrix');
+$session->set("scope\0nested", "left\0雪");
 
 $response = new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 $session->commit(response: $response);
@@ -49,6 +50,9 @@ $session2 = $app->session($request2);
 echo $session2->get('user') . PHP_EOL;
 echo $session2->get('scope') . PHP_EOL;
 echo ($session2->has('user') ? 'user_yes' : 'user_no') . PHP_EOL;
+if (!$session2->has("scope\0nested") || $session2->get("scope\0nested") !== "left\0雪") {
+    throw new RuntimeException('Session cookie round-trip truncated a string key or value');
+}
 ?>
 --EXPECT--
 cookie_yes

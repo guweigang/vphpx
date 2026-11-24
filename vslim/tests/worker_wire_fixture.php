@@ -10,6 +10,8 @@ final class WorkerWireFixture
     private string $dir;
     private string $socket;
     private mixed $process = null;
+    /** @var resource|null */
+    private mixed $firstConnection = null;
 
     public function __construct(?string $entry = null, ?string $adapter = null)
     {
@@ -45,7 +47,13 @@ final class WorkerWireFixture
         while (is_resource($this->process) && proc_get_status($this->process)['running'] && microtime(true) < $deadline) {
             clearstatcache(true, $this->socket);
             if (file_exists($this->socket)) {
-                return;
+                $ready = @stream_socket_client('unix://' . $this->socket, $errno, $error, 0.1);
+                if (is_resource($ready)) {
+                    // Reuse the readiness connection for the first request. On Linux
+                    // it may still be queued when the caller tries to connect again.
+                    $this->firstConnection = $ready;
+                    return;
+                }
             }
             usleep(25_000);
         }
@@ -56,7 +64,11 @@ final class WorkerWireFixture
 
     public function frames(array $request): Generator
     {
-        $conn = stream_socket_client('unix://' . $this->socket, $errno, $error, 1);
+        $conn = $this->firstConnection;
+        $this->firstConnection = null;
+        if ($conn === null) {
+            $conn = stream_socket_client('unix://' . $this->socket, $errno, $error, 1);
+        }
         if ($conn === false) {
             throw new RuntimeException('Worker connection failed: ' . $error);
         }
@@ -83,6 +95,10 @@ final class WorkerWireFixture
 
     public function close(): void
     {
+        if (is_resource($this->firstConnection)) {
+            fclose($this->firstConnection);
+            $this->firstConnection = null;
+        }
         if (is_resource($this->process)) {
             proc_terminate($this->process);
             proc_close($this->process);

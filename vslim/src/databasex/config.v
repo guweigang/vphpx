@@ -80,6 +80,7 @@ pub fn (cfg &VSlimDatabaseConfig) username() string {
 }
 
 @[vphp.PhpExportMethod(name: 'setPassword')]
+@[vphp.PhpSensitiveParameter(v_name: 'password')]
 pub fn (mut cfg VSlimDatabaseConfig) set_password(password string) &VSlimDatabaseConfig {
 	cfg.password = password
 	return &cfg

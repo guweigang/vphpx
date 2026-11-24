@@ -135,9 +135,14 @@ fn (mut app VSlimApp) apply_bootstrap_services(spec vphp.PhpArray) ! {
 		app.set_cache_pool(pool)
 	}
 	if value := supportx.app_bootstrap_spec(spec).lookup(['http_client', 'httpClient']) {
-		client := supportx.require_native_bootstrap_object[httpx.VSlimPsr18Client](value,
-			'VSlim\\Psr18\\Client', 'http_client')!
-		app.set_http_client(client)
+		mut object := value.as_object() or { return error('bootstrap http_client must implement ClientInterface') }
+		defer {
+			object.release()
+		}
+		client := vphp.PhpInterface.from_object[httpx.PsrHttpClientContract](object) or {
+			return error('bootstrap http_client must implement ClientInterface')
+		}
+		app.set_psr_http_client(client)
 	}
 	if value := supportx.app_bootstrap_spec(spec).lookup(['mcp']) {
 		if value.is_callable() {
@@ -220,7 +225,7 @@ fn (mut app VSlimApp) apply_bootstrap_middleware_stack(spec vphp.PhpArray, keys 
 	iter := value.as_iterable() or {
 		return error('bootstrap ${label} must be a middleware registration or list')
 	}
-	mut normalized := progress.normalize(step + ':list', iter)!
+	mut normalized := progress.normalize_values(step + ':list', iter)!
 	defer {
 		normalized.release()
 	}
@@ -241,11 +246,7 @@ fn (mut app VSlimApp) apply_bootstrap_middleware_item(kind middlewarex.Middlewar
 	if !middlewarex.supports_registration(kind, handler) {
 		return error('bootstrap ${label} must contain valid middleware registrations')
 	}
-	match kind {
-		.standard { app.middleware(handler) }
-		.before { app.before(handler) }
-		.after { app.after(handler) }
-	}
+	app.middleware_at_phase(handler, kind)
 	if vphp.has_exception() {
 		return error('bootstrap ${label} registration failed')
 	}

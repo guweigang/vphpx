@@ -82,20 +82,22 @@ pub fn (mut plan RawDispatchPlan) release() {
 
 pub struct PipelineRequestContext {
 pub mut:
-	path         string
-	payload_ref  vphp.PhpValue = vphp.PhpValue.null()
-	route_params map[string]string
+	path            string
+	payload_ref     vphp.PhpValue = vphp.PhpValue.null()
+	route_params    map[string]string
+	response_import httpx.Psr7ResponseImportOptions
 }
 
 pub fn (ctx PipelineRequestContext) with_current_request(request vphp.PhpValue) PipelineRequestContext {
 	return ctx.with_payload_value(request)
 }
 
-pub fn PipelineRequestContext.from_value(path string, payload vphp.PhpValue, route_params map[string]string) PipelineRequestContext {
+pub fn PipelineRequestContext.from_value(path string, payload vphp.PhpValue, route_params map[string]string, options httpx.Psr7ResponseImportOptions) PipelineRequestContext {
 	return PipelineRequestContext{
-		path:         path
-		payload_ref:  payload.owned()
-		route_params: httpx.snapshot_string_map(route_params)
+		path:            path
+		payload_ref:     payload.owned()
+		route_params:    httpx.snapshot_string_map(route_params)
+		response_import: options
 	}
 }
 
@@ -109,9 +111,10 @@ pub fn PipelineRequestContext.from_object(path string, payload vphp.PhpObject, r
 
 pub fn (ctx PipelineRequestContext) with_payload_value(payload vphp.PhpValue) PipelineRequestContext {
 	return PipelineRequestContext{
-		path:         ctx.path
-		payload_ref:  payload.owned()
-		route_params: httpx.snapshot_string_map(ctx.route_params)
+		path:            ctx.path
+		payload_ref:     payload.owned()
+		route_params:    httpx.snapshot_string_map(ctx.route_params)
+		response_import: ctx.response_import
 	}
 }
 
@@ -121,9 +124,15 @@ pub mut:
 	payload_ref  vphp.PhpValue = vphp.PhpValue.null()
 }
 
+// from takes ownership of the response for the rest of the PHP dispatch scope.
 pub fn PipelineDispatchResult.from(response vphp.PhpValue, payload vphp.PhpValue) PipelineDispatchResult {
+	mut scoped_response := response
 	return PipelineDispatchResult{
-		response_ref: response.owned()
+		response_ref: if scoped_response.is_borrowed() {
+			scoped_response
+		} else {
+			scoped_response.move_to_request_scope()
+		}
 		payload_ref:  payload.owned()
 	}
 }

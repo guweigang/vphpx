@@ -44,7 +44,7 @@ pub fn vslim_vhttpd_client_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_vhttpd_client_construct']
-pub fn vphp_wrap_vslim_vhttpd_client_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_vhttpd_client_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimVhttpdClient(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -55,7 +55,7 @@ pub fn vphp_wrap_vslim_vhttpd_client_construct(ptr voidptr, ctx vphp.Context) vo
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).as_v[f64]()
     res := recv.construct(arg_0, arg_1)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimVhttpdClient](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_vhttpd_client_socket_path']
 pub fn vphp_wrap_vslim_vhttpd_client_socket_path(ptr voidptr, ctx vphp.Context)  {
@@ -109,13 +109,13 @@ pub fn vphp_wrap_vslim_vhttpd_client_request_frames(ptr voidptr, ctx vphp.Contex
 }
 @[export: 'vslim_vhttpd_client_handlers']
 pub fn vslim_vhttpd_client_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_vhttpd_client_get_prop),
-        write_handler: voidptr(vslim_vhttpd_client_set_prop),
-        sync_handler: voidptr(vslim_vhttpd_client_sync_props),
-        new_raw: voidptr(vslim_vhttpd_client_new_raw),
-        cleanup_raw: voidptr(vslim_vhttpd_client_cleanup_raw),
-        free_raw: voidptr(vslim_vhttpd_client_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_vhttpd_client_get_prop,
+        write_handler: vslim_vhttpd_client_set_prop,
+        sync_handler: vslim_vhttpd_client_sync_props,
+        new_raw: vslim_vhttpd_client_new_raw,
+        cleanup_raw: vslim_vhttpd_client_cleanup_raw,
+        free_raw: vslim_vhttpd_client_free_raw
     )
 }
 pub fn VSlimVhttpdClient.php_class_entry() vphp.ZendClassEntry {

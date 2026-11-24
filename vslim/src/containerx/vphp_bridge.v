@@ -26,14 +26,14 @@ pub fn vslim_container_exception_cleanup_raw(ptr voidptr) {
         return
     }
 }
-fn vslim_container_exception_load_from_php(php_obj vphp.ZendObject) VSlimContainerException {
-    mut recv := VSlimContainerException{}
-    if !php_obj.is_valid() {
-        return recv
+pub fn vslim_container_exception_load_from_php(php_obj vphp.ZendObject) VSlimContainerException {
+    return VSlimContainerException{
     }
+}
+pub fn vslim_container_exception_snapshot(recv VSlimContainerException) VSlimContainerException {
     return recv
 }
-fn vslim_container_exception_sync_to_php(php_obj vphp.ZendObject, recv VSlimContainerException) {
+pub fn vslim_container_exception_sync_to_php(php_obj vphp.ZendObject, original VSlimContainerException, recv VSlimContainerException) {
     if !php_obj.is_valid() {
         return
     }
@@ -59,13 +59,13 @@ pub fn vslim_container_exception_sync_props(ptr voidptr, zv &C.zval) {
 }
 @[export: 'vslim_container_exception_handlers']
 pub fn vslim_container_exception_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_container_exception_get_prop),
-        write_handler: voidptr(vslim_container_exception_set_prop),
-        sync_handler: voidptr(vslim_container_exception_sync_props),
-        new_raw: voidptr(vslim_container_exception_new_raw),
-        cleanup_raw: voidptr(vslim_container_exception_cleanup_raw),
-        free_raw: voidptr(vslim_container_exception_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_container_exception_get_prop,
+        write_handler: vslim_container_exception_set_prop,
+        sync_handler: vslim_container_exception_sync_props,
+        new_raw: vslim_container_exception_new_raw,
+        cleanup_raw: vslim_container_exception_cleanup_raw,
+        free_raw: vslim_container_exception_free_raw
     )
 }
 pub fn VSlimContainerException.php_class_entry() vphp.ZendClassEntry {
@@ -117,14 +117,14 @@ pub fn vslim_container_not_found_exception_cleanup_raw(ptr voidptr) {
         return
     }
 }
-fn vslim_container_not_found_exception_load_from_php(php_obj vphp.ZendObject) VSlimContainerNotFoundException {
-    mut recv := VSlimContainerNotFoundException{}
-    if !php_obj.is_valid() {
-        return recv
+pub fn vslim_container_not_found_exception_load_from_php(php_obj vphp.ZendObject) VSlimContainerNotFoundException {
+    return VSlimContainerNotFoundException{
     }
+}
+pub fn vslim_container_not_found_exception_snapshot(recv VSlimContainerNotFoundException) VSlimContainerNotFoundException {
     return recv
 }
-fn vslim_container_not_found_exception_sync_to_php(php_obj vphp.ZendObject, recv VSlimContainerNotFoundException) {
+pub fn vslim_container_not_found_exception_sync_to_php(php_obj vphp.ZendObject, original VSlimContainerNotFoundException, recv VSlimContainerNotFoundException) {
     if !php_obj.is_valid() {
         return
     }
@@ -150,13 +150,13 @@ pub fn vslim_container_not_found_exception_sync_props(ptr voidptr, zv &C.zval) {
 }
 @[export: 'vslim_container_not_found_exception_handlers']
 pub fn vslim_container_not_found_exception_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_container_not_found_exception_get_prop),
-        write_handler: voidptr(vslim_container_not_found_exception_set_prop),
-        sync_handler: voidptr(vslim_container_not_found_exception_sync_props),
-        new_raw: voidptr(vslim_container_not_found_exception_new_raw),
-        cleanup_raw: voidptr(vslim_container_not_found_exception_cleanup_raw),
-        free_raw: voidptr(vslim_container_not_found_exception_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_container_not_found_exception_get_prop,
+        write_handler: vslim_container_not_found_exception_set_prop,
+        sync_handler: vslim_container_not_found_exception_sync_props,
+        new_raw: vslim_container_not_found_exception_new_raw,
+        cleanup_raw: vslim_container_not_found_exception_cleanup_raw,
+        free_raw: vslim_container_not_found_exception_free_raw
     )
 }
 pub fn VSlimContainerNotFoundException.php_class_entry() vphp.ZendClassEntry {
@@ -228,12 +228,12 @@ pub fn vslim_container_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_container_construct']
-pub fn vphp_wrap_vslim_container_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_container_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimContainer(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimContainer](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_container_set']
 pub fn vphp_wrap_vslim_container_set(ptr voidptr, ctx vphp.Context) voidptr {
@@ -261,11 +261,30 @@ pub fn vphp_wrap_vslim_container_factory(ptr voidptr, ctx vphp.Context) voidptr 
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.factory(arg_0, arg_1)
     return voidptr(res)
+}
+@[export: 'vphp_wrap_vslim_container_lazy_proxy']
+pub fn vphp_wrap_vslim_container_lazy_proxy(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimContainer(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'className' },
+        vphp.PhpArgMeta{ index: 2, name: 'initializer' },
+    ])
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).callable() or {
+        vphp.throw_exception('argument 2 must be callable', 0)
+        return
+    }
+    ctx.return().from_result_object[VSlimContainer](fn [arg_0, arg_1, arg_2, recv] () !&VSlimContainer {
+        return recv.lazy_proxy(arg_0, arg_1, arg_2)!
+    }, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_container_has']
 pub fn vphp_wrap_vslim_container_has(ptr voidptr, ctx vphp.Context)  {
@@ -293,14 +312,21 @@ pub fn vphp_wrap_vslim_container_get(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_container_handlers']
 pub fn vslim_container_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_container_get_prop),
-        write_handler: voidptr(vslim_container_set_prop),
-        sync_handler: voidptr(vslim_container_sync_props),
-        new_raw: voidptr(vslim_container_new_raw),
-        cleanup_raw: voidptr(vslim_container_cleanup_raw),
-        free_raw: voidptr(vslim_container_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_container_get_prop,
+        write_handler: vslim_container_set_prop,
+        sync_handler: vslim_container_sync_props,
+        new_raw: vslim_container_new_raw,
+        cleanup_raw: vslim_container_cleanup_raw,
+        free_raw: vslim_container_free_raw,
+        init_php_state: vslim_container_init_php_state
     )
+}
+fn vslim_container_init_php_state(ptr voidptr) {
+    unsafe {
+        mut obj := &VSlimContainer(ptr)
+        obj.init_php_state()
+    }
 }
 pub fn VSlimContainer.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__container_ce)

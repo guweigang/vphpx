@@ -8,6 +8,21 @@ $logFile = sys_get_temp_dir() . '/vslim_logger_' . getmypid() . '.log';
 @unlink($logFile);
 
 $logger = new VSlim\Log\Logger();
+$level = new ReflectionClass(VSlim\Log\Level::class);
+$expectedLevels = [
+    'DISABLED' => 'disabled', 'FATAL' => 'fatal', 'ERROR' => 'error',
+    'WARN' => 'warn', 'INFO' => 'info', 'DEBUG' => 'debug',
+];
+if (count($level->getConstants()) !== count($expectedLevels)) {
+    throw new RuntimeException('Unexpected log level constant count');
+}
+foreach ($expectedLevels as $name => $value) {
+    $constant = $level->getReflectionConstant($name);
+    if ($constant === false || !$constant->isPublic() || $constant->getValue() !== $value
+        || (PHP_VERSION_ID >= 80300 && (string) $constant->getType() !== 'string')) {
+        throw new RuntimeException("Unexpected log level constant $name");
+    }
+}
 echo get_class($logger) . PHP_EOL;
 echo $logger->level() . PHP_EOL;
 echo VSlim\Log\Logger::debugLevel() . PHP_EOL;

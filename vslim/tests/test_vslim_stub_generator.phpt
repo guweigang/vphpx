@@ -12,11 +12,12 @@ if (!extension_loaded('vslim')) {
 $stubPath = sys_get_temp_dir() . '/vslim-stub-' . getmypid() . '.php';
 @unlink($stubPath);
 
+$extensionPath = dirname(__DIR__) . (PHP_OS_FAMILY === 'Windows' ? '/php_vslim.dll' : '/vslim.so');
 $command = sprintf(
     '%s %s --extension=%s --output=%s',
     escapeshellarg(PHP_BINARY),
     escapeshellarg(dirname(__DIR__) . '/scripts/generate_stubs.php'),
-    escapeshellarg(dirname(__DIR__) . '/vslim.so'),
+    escapeshellarg($extensionPath),
     escapeshellarg($stubPath),
 );
 
@@ -26,6 +27,11 @@ passthru(escapeshellarg(PHP_BINARY) . ' -n -l ' . escapeshellarg($stubPath), $co
 var_dump($code);
 
 $stub = file_get_contents($stubPath);
+$expressions = json_decode(file_get_contents($extensionPath . '.stub-expressions.json'), true, flags: JSON_THROW_ON_ERROR);
+if (($expressions['parameter_defaults']['VSlim\\Psr7\\Stream::seek()']['defaultWhence'] ?? null) !== 'SEEK_SET'
+    || !str_contains($stub, '$defaultWhence = \\SEEK_SET')) {
+    throw new RuntimeException('The stub lost the PSR-7 seek default expression');
+}
 $vhttpdRequestStart = strpos($stub, "namespace VSlim\\VHttpd");
 $vhttpdRequestStart = strpos($stub, "class Request", $vhttpdRequestStart);
 $vhttpdRequestEnd = strpos($stub, "class Response", $vhttpdRequestStart);
@@ -47,7 +53,7 @@ var_dump(str_contains($stub, 'class ObjectProbe'));
 var_dump(str_contains($stub, 'public static function probe(object $obj, string $className, string $methodName): mixed {}'));
 var_dump(str_contains($stub, 'class App'));
 var_dump(str_contains($stub, 'public function get(string $pattern, mixed $handler): \VSlim\App {}'));
-var_dump(str_contains($stub, 'public function dispatchRequest($req): \VSlim\VHttpd\Response {}'));
+var_dump(str_contains($stub, 'public function dispatchRequest(\VSlim\VHttpd\Request $req): \VSlim\VHttpd\Response {}'));
 var_dump(!str_contains($stub, 'public function dispatch_request('));
 var_dump(str_contains($stub, 'public function setBasePath(string $basePath): \VSlim\App {}'));
 var_dump(!str_contains($stub, 'public function set_base_path('));
@@ -59,7 +65,7 @@ var_dump(str_contains($stub, 'public function setDriver(string $driver): \VSlim\
 var_dump(!str_contains($stub, 'public function set_driver('));
 var_dump(str_contains($stub, 'public function setHeader(string $name, string $value): \VSlim\VHttpd\Response {}'));
 var_dump(str_contains($stub, 'public function cookieHeader(): string {}'));
-var_dump(str_contains($stub, 'public string $rawPath;'));
+var_dump(str_contains($stub, 'public string $rawPath = \'\';'));
 var_dump(!str_contains($stub, 'public $raw_path;'));
 var_dump(!str_contains($vhttpdRequestStub, 'public $path;'));
 var_dump(!str_contains($vhttpdRequestStub, 'public $queryString;'));
@@ -69,11 +75,20 @@ var_dump(str_contains($stub, 'public function setHeaders(array $headers): \VSlim
 var_dump(str_contains($stub, 'public function setAttributes(array $attributes): \VSlim\VHttpd\Request {}'));
 var_dump(str_contains($stub, 'public function setQuery(array $query): \VSlim\VHttpd\Request {}'));
 var_dump(str_contains($stub, 'public function setUploadedFiles(array $uploadedFiles): \VSlim\VHttpd\Request {}'));
-var_dump(str_contains($stub, 'public string $protocolVersion;'));
+var_dump(str_contains($stub, 'public string $protocolVersion = \'\';'));
 var_dump(!str_contains($stub, 'public $protocol_version;'));
-var_dump(str_contains($stub, 'public string $contentType;'));
+var_dump(str_contains($stub, 'public string $contentType = \'\';'));
 var_dump(!str_contains($stub, 'public $content_type;'));
-var_dump(str_contains($stub, 'public string $streamType;'));
+var_dump(str_contains($stub, 'public string $streamType = \'\';'));
+foreach ([
+    'textFrom(callable $factory, array $args = [], int $waitTimeoutMs = -1)',
+    'textStream(mixed $stream, int $waitTimeoutMs)',
+    'sseFrom(callable $factory, array $args = [])',
+] as $signature) {
+    if (!str_contains($stub, 'public static function ' . $signature . ': \VSlim\Stream\Response {}')) {
+        throw new RuntimeException("Missing stream factory $signature in the stub");
+    }
+}
 var_dump(!str_contains($stub, 'public $stream_type;'));
 var_dump(str_contains($stub, 'public function withUri(\Psr\Http\Message\UriInterface $uri, bool $preserveHost = false): \Psr\Http\Message\RequestInterface {}'));
 var_dump(str_contains($stub, 'public function withUri(\Psr\Http\Message\UriInterface $uri, bool $preserveHost = false): \Psr\Http\Message\ServerRequestInterface {}'));
@@ -84,12 +99,148 @@ var_dump(str_contains($stub, 'public function createServerRequest(string $method
 var_dump(str_contains($stub, 'public function createResponse(int $status = 200, string $reasonPhrase = \'\'): \Psr\Http\Message\ResponseInterface {}'));
 var_dump(str_contains($stub, 'public function createStream(string $content = \'\'): \Psr\Http\Message\StreamInterface {}'));
 var_dump(str_contains($stub, 'public function createStreamFromFile(string $filename, string $mode = \'r\'): \Psr\Http\Message\StreamInterface {}'));
-var_dump(str_contains($stub, 'public function createUploadedFile(\Psr\Http\Message\StreamInterface $stream, ?int $size = null, int $error = UPLOAD_ERR_OK, ?string $clientFilename = null, ?string $clientMediaType = null): \Psr\Http\Message\UploadedFileInterface {}'));
+var_dump(str_contains($stub, 'public function createUploadedFile(\Psr\Http\Message\StreamInterface $stream, ?int $size = null, int $error = \UPLOAD_ERR_OK, ?string $clientFilename = null, ?string $clientMediaType = null): \Psr\Http\Message\UploadedFileInterface {}'));
 var_dump(str_contains($stub, 'public function createUri(string $uri = \'\'): \Psr\Http\Message\UriInterface {}'));
 var_dump(str_contains($stub, "public const string DEBUG = 'debug';"));
-if (!str_contains($stub, "/** @var callable */\n        protected \$callable;")
-    || !str_contains($stub, 'private readonly \VSlim\App\Feishu\BotHandler $handler;')) {
-    throw new RuntimeException('Missing callable PHPDoc or Feishu handler property type');
+if (!str_contains($stub, 'private readonly \VSlim\App\Feishu\BotHandler $handler;')) {
+    throw new RuntimeException('Missing Feishu handler property type');
+}
+$taskStart = strpos($stub, "    class Task\n");
+$taskEnd = strpos($stub, "namespace VSlim\\Testing", $taskStart);
+$taskStub = substr($stub, $taskStart, $taskEnd - $taskStart);
+foreach ([
+    'public static function accept(mixed $listener, int $timeoutMs = -1): mixed {}',
+    'public static function awaitReadable(mixed $stream, int $timeoutMs = -1): bool {}',
+    'public static function awaitWritable(mixed $stream, int $timeoutMs = -1): bool {}',
+    'public static function channel(int $capacity): \VSlim\TaskChannel {}',
+    'public static function connect(string $address, int $timeoutMs = -1, mixed $context = null): mixed {}',
+    'public static function copyStream(mixed $source, mixed $destination, int $length = -1, int $timeoutMs = -1): int {}',
+    'public static function listen(string $address, mixed $context = null): mixed {}',
+    'public static function readExactly(mixed $stream, int $length, int $timeoutMs = -1): string {}',
+    'public static function readLine(mixed $stream, int $maxBytes, int $timeoutMs = -1): string {}',
+    'public static function writeAll(mixed $stream, string $data, int $timeoutMs = -1): int {}',
+    'public static function sleep(int $milliseconds): void {}',
+    'public static function waitAll(array $tasks, int $timeoutMs = -1): ?array {}',
+    'public static function waitAllSettled(array $tasks, int $timeoutMs = -1): ?array {}',
+    'public static function waitAny(array $tasks, int $timeoutMs = -1): ?\VSlim\TaskHandle {}',
+    'public static function waitStreams(array $read = [], array $write = [], int $timeoutMs = -1): array {}',
+    'class TaskCancelledException extends \RuntimeException',
+    'final class TaskChannel implements \IteratorAggregate, \Traversable',
+    'private function __construct() {}',
+    'public function close(): bool {}',
+    'public function getIterator(): \Traversable {}',
+    'public function receive(int $timeoutMs = -1): array {}',
+    'public function send(mixed $value, int $timeoutMs = -1): \VSlim\TaskChannelStatus {}',
+    'enum TaskChannelStatus',
+    'case Ready;',
+    'case Closed;',
+    'case TimedOut;',
+    'class TaskTimeoutException extends \RuntimeException',
+    'enum TaskStatus',
+    'case Pending;',
+    'case Fulfilled;',
+    'case Rejected;',
+    'public function cancel(?\Throwable $reason = null): bool {}',
+    'public function outcome(): ?array {}',
+    'public function status(): \VSlim\TaskStatus {}',
+    'public function wait(int $timeoutMs = -1): mixed {}',
+] as $signature) {
+    if (!str_contains($taskStub, $signature)) {
+        throw new RuntimeException("Missing task signature $signature");
+    }
+}
+if (str_contains($taskStub, 'protected $callable;') || str_contains($taskStub, 'protected $params;')
+    || str_contains($taskStub, 'protected bool $resolved')) {
+    throw new RuntimeException('Scheduler internals appeared in the stub');
+}
+if (!str_contains($stub, "    enum MiddlewarePhase\n")
+    || !str_contains($stub, "    interface MiddlewareRegistrar\n")
+    || substr_count($stub, '\VSlim\MiddlewarePhase $phase = \VSlim\MiddlewarePhase::standard') !== 3) {
+    throw new RuntimeException('Missing unit enum or middleware phase defaults in the stub');
+}
+if (!str_contains($stub, "case Int = 'int';")
+    || !str_contains($stub, ' int_ = \VSlim\Cli\InputValueType::Int;')) {
+    throw new RuntimeException('Missing CLI enum case or its legacy alias in the stub');
+}
+foreach (['String', 'Bool', 'Int', 'Float'] as $case) {
+    if (str_contains($stub, "#[\\Deprecated(message: 'Use InputValueType::{$case}')]") !== (PHP_VERSION_ID >= 80400)) {
+        throw new RuntimeException('Unexpected CLI compatibility alias metadata in the stub');
+    }
+}
+
+if (!str_contains($stub, "    interface ResponseFactory\n")
+    || !str_contains($stub, 'static function text(mixed $chunks): \VSlim\Stream\Response;')
+    || !str_contains($stub, 'static function sse(mixed $events): \VSlim\Stream\Response;')) {
+    throw new RuntimeException('Missing static stream factory methods in the stub');
+}
+if (str_contains($stub, '#[\NoDiscard(message: \'Use the stream response\')]') !== (PHP_VERSION_ID >= 80500)) {
+    throw new RuntimeException('Unexpected stream factory NoDiscard metadata in the stub');
+}
+$readonlyDefaults = PHP_VERSION_ID >= 80600;
+$probe = new ReflectionClass(VSlim\Dev\PhpSignatureProbe::class);
+if (str_contains($stub, 'function cloneWithProperties(object $object, array $properties): object') !== (PHP_VERSION_ID >= 80500)) {
+    throw new RuntimeException('Unexpected availability of clone-with in the VSlim stub');
+}
+if ($probe->hasProperty('readonlyDefault') !== $readonlyDefaults
+    || str_contains($stub, 'public readonly int $readonlyDefault = 86;') !== $readonlyDefaults) {
+    throw new RuntimeException('Unexpected VSlim readonly default visibility or stub');
+}
+if ($readonlyDefaults) {
+    $property = $probe->getProperty('readonlyDefault');
+    if (!$property->isReadOnly() || $property->getDefaultValue() !== 86
+        || $probe->newInstance()->readonlyDefault !== 86) {
+        throw new RuntimeException('The VSlim readonly property did not initialize from its default');
+    }
+}
+foreach (['input', 'inputOr'] as $replacement) {
+    if (str_contains($stub, "#[\\Deprecated(message: 'Use {$replacement}()')]") !== (PHP_VERSION_ID >= 80400)) {
+        throw new RuntimeException('Unexpected LiveView compatibility alias metadata in the stub');
+    }
+}
+if (!str_contains($stub, 'public function requestState(): \WeakMap {}')) {
+    throw new RuntimeException('Missing native WeakMap return type for App::requestState()');
+}
+$providerStart = strpos($stub, 'class ListenerProvider implements ');
+$providerEnd = $providerStart === false ? false : strpos($stub, "\n    }", $providerStart);
+$providerStub = $providerEnd === false ? '' : substr($stub, $providerStart, $providerEnd - $providerStart);
+if (!str_contains($providerStub, '\Countable')
+    || !str_contains($providerStub, 'public function count(): int {}')
+    || !str_contains($providerStub, 'public function listenerCount(): int {}')) {
+    throw new RuntimeException('Missing native Countable signature in the listener provider stub');
+}
+if (str_contains($stub, 'public function bindRequestState(') !== (PHP_VERSION_ID >= 80600)
+    || (PHP_VERSION_ID >= 80600
+        && !str_contains($stub, 'public function bindRequestState(object $request, mixed &$state): void {}'))) {
+    throw new RuntimeException('Unexpected version-gated App::bindRequestState signature in the stub');
+}
+if (str_contains($stub, 'public function lazyProxy(string $id, string $className, callable $initializer): \VSlim\Container {}')
+    !== (PHP_VERSION_ID >= 80400)) {
+    throw new RuntimeException('Unexpected version-gated Container::lazyProxy signature in the stub');
+}
+if (!str_contains($stub, 'public function setView(?\VSlim\View $view = null): \VSlim\Controller')
+    || !str_contains($stub, 'public static function fromConfig(\VSlim\Config $config): \VSlim\Stream\OllamaClient')) {
+    throw new RuntimeException('Missing inferred cross-module class types in the stub');
+}
+if (!str_contains($stub, 'public function handle(\Psr\Http\Message\ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface')
+    || !str_contains($stub, 'public function process(\Psr\Http\Message\ServerRequestInterface $request, \Psr\Http\Server\RequestHandlerInterface $handler): \Psr\Http\Message\ResponseInterface')) {
+    throw new RuntimeException('Missing PSR-15 request or handler type in the stub');
+}
+foreach ([
+    'public function now(): \DateTimeImmutable',
+    'public function setClock(\Psr\Clock\ClockInterface $clock): \VSlim\App',
+    'public function setClock(\Psr\Clock\ClockInterface $clock): \VSlim\Psr6\CacheItemPool',
+    'public function setClock(\Psr\Clock\ClockInterface $clock): \VSlim\Psr16\Cache',
+    'public function save(\Psr\Cache\CacheItemInterface $item): bool',
+    'public function saveDeferred(\Psr\Cache\CacheItemInterface $item): bool',
+    'public function expiresAt(?\DateTimeInterface $expiration): static',
+] as $signature) {
+    if (!str_contains($stub, $signature)) {
+        throw new RuntimeException("Missing cache or clock signature in the stub: $signature");
+    }
+}
+if (!str_contains($stub, 'public function setHttpClient(\Psr\Http\Client\ClientInterface $client): \VSlim\App')
+    || !str_contains($stub, 'public function httpClient(): \Psr\Http\Client\ClientInterface')) {
+    throw new RuntimeException('Missing PSR-18 client service signatures in the stub');
 }
 
 foreach ([
@@ -99,10 +250,81 @@ foreach ([
     VSlim\App\Feishu\BotApp::class => 'websocket_upstream',
 ] as $class => $kind) {
     $attributes = (new ReflectionClass($class))->getAttributes(VHttpd\Attribute\Dispatchable::class);
+    $argument = $class === VSlim\App::class ? 'self::DISPATCH_KIND' : "'$kind'";
     if (count($attributes) !== 1 || $attributes[0]->getArguments() !== [$kind]
-        || !str_contains($stub, "#[\\VHttpd\\Attribute\\Dispatchable('$kind')]")) {
+        || !str_contains($stub, "#[\\VHttpd\\Attribute\\Dispatchable($argument)]")) {
         throw new RuntimeException("Unexpected Dispatchable attribute for $class");
     }
+}
+$dispatchKind = new ReflectionClassConstant(VSlim\App::class, 'DISPATCH_KIND');
+if (!$dispatchKind->isPrivate() || $dispatchKind->getValue() !== 'http') {
+    throw new RuntimeException('The App dispatch attribute lost its private protocol constant');
+}
+
+$legacyTrait = new ReflectionClass(VSlim\Dev\LegacySignatureTrait::class);
+$legacyTraitAttributes = $legacyTrait->getAttributes(Deprecated::class);
+$supportsTraitDeprecation = PHP_VERSION_ID >= 80500;
+if (!$legacyTrait->isTrait() || count($legacyTraitAttributes) !== (int) $supportsTraitDeprecation
+    || ($supportsTraitDeprecation && $legacyTraitAttributes[0]->getArguments() !== ['message' => 'Use PhpSignatureProbe'])
+    || !str_contains($stub, 'trait LegacySignatureTrait')
+    || str_contains($stub, "#[\\Deprecated(message: 'Use PhpSignatureProbe')]") !== $supportsTraitDeprecation) {
+    throw new RuntimeException('The native trait lost its versioned deprecation metadata');
+}
+$notices = [];
+set_error_handler(static function (int $level, string $message) use (&$notices): bool {
+    $notices[] = $message;
+    return true;
+}, E_DEPRECATED);
+try {
+    class LegacySignatureConsumer { use VSlim\Dev\LegacySignatureTrait; }
+    $signature = (new LegacySignatureConsumer())->legacySignature();
+} finally {
+    restore_error_handler();
+}
+if ($signature !== 'legacy' || $notices !== ($supportsTraitDeprecation ? [
+    'Trait VSlim\\Dev\\LegacySignatureTrait used by LegacySignatureConsumer is deprecated, Use PhpSignatureProbe',
+] : [])) {
+    throw new RuntimeException('Unexpected behavior when using the deprecated native trait');
+}
+
+foreach ([
+    [VSlim\Database\Config::class, 'setPassword', 'password'],
+    [VSlim\Session\Store::class, 'setSecret', 'secret'],
+    [VSlim\Stream\OllamaClient::class, '__construct', 'apiKey'],
+    [VSlim\Psr7\Uri::class, 'withUserInfo', 'defaultPassword'],
+] as [$class, $method, $name]) {
+    $parameters = (new ReflectionMethod($class, $method))->getParameters();
+    $sensitive = array_filter($parameters, static fn ($parameter) => $parameter->getAttributes(SensitiveParameter::class) !== []);
+    if (array_values(array_map(static fn ($parameter) => $parameter->getName(), $sensitive)) !== [$name]
+        || !preg_match('/#\[\\\\SensitiveParameter\] (?:string|mixed) \$' . $name . '\b/', $stub)) {
+        throw new RuntimeException("Unexpected sensitive parameter metadata on {$class}::{$method}");
+    }
+}
+
+$fixturePath = $stubPath . (PHP_OS_FAMILY === 'Windows' ? '.dll' : '.so');
+$fixtureSidecar = $fixturePath . '.stub-expressions.json';
+try {
+    // A constant expression with the same value cannot be reconstructed from Reflection alone.
+    $expressions['parameter_defaults']['VSlim\\Psr7\\Stream::seek()']['defaultWhence'] = 'SEEK_SET + 0';
+    if (!copy($extensionPath, $fixturePath)
+        || file_put_contents($fixtureSidecar, json_encode($expressions, JSON_THROW_ON_ERROR)) === false) {
+        throw new RuntimeException('Failed to prepare the symbolic stub fixture');
+    }
+    $fixtureCommand = sprintf(
+        '%s -n %s --extension=%s --stdout',
+        escapeshellarg(PHP_BINARY),
+        escapeshellarg(dirname(__DIR__) . '/scripts/generate_stubs.php'),
+        escapeshellarg($fixturePath),
+    );
+    ob_start();
+    passthru($fixtureCommand, $fixtureCode);
+    $fixtureOutput = ob_get_clean();
+    if ($fixtureCode !== 0 || !str_contains($fixtureOutput, '$defaultWhence = \\SEEK_SET + 0')) {
+        throw new RuntimeException('The clean stub process lost the symbolic seek default');
+    }
+} finally {
+    @unlink($fixtureSidecar);
+    @unlink($fixturePath);
 }
 
 @unlink($stubPath);

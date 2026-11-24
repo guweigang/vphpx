@@ -58,10 +58,6 @@ pub fn derive_command_name_from_handler_name(raw_name string) !string {
 	return name
 }
 
-fn optional_command_definition(runtime vphp.PhpValue) ?CliCommandDefinition {
-	return command_definition(runtime) or { return none }
-}
-
 fn command_metadata_hidden(runtime vphp.PhpValue, definition ?CliCommandDefinition) bool {
 	if def := definition {
 		if def.hidden {

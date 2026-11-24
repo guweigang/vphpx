@@ -7,6 +7,7 @@ import vphp
 
 @[vphp.PhpArgNames(names: 'chat_url=chatUrl,default_model=defaultModel,api_key=apiKey,fixture_path=fixturePath')]
 @[vphp.PhpExportMethod(name: '')]
+@[vphp.PhpSensitiveParameter(v_name: 'api_key')]
 pub fn (mut c VSlimStreamOllamaClient) construct(chat_url string, default_model string, api_key string, fixture_path string) &VSlimStreamOllamaClient {
 	c.chat_url = normalize_ollama_chat_url(chat_url)
 	c.default_model = normalize_ollama_model(default_model)

@@ -115,7 +115,7 @@ fn (cli &VSlimCliApp) visible_command_names() []string {
 	source := if cli.command_order.len > 0 {
 		cli.command_order
 	} else {
-		mut keys := cli.command_handlers.keys()
+		mut keys := cli.command_canonical.keys()
 		keys.sort()
 		keys
 	}
@@ -404,8 +404,8 @@ pub fn (mut cli VSlimCliApp) run_argv(argv vphp.PhpIterable) int {
 		cli.end_invocation(outer)
 	}
 	loggerx.cli_debug_log('run_argv enter cli=${usize(cli)} core=${usize(cli.core_app_ref)}')
-	argv_list := cli_args_to_array(argv) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', 'argv must be iterable', 0)
+	argv_list := cli_iterable_strings(argv) or {
+		raise_cli_argument_error(error('argv must be iterable'))
 		return 1
 	}
 	inv := cli_runtime_parse_invocation(argv_list, cli) or {

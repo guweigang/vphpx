@@ -127,6 +127,50 @@ namespace {
         $res = $app->dispatch('GET', $path);
         echo $path . '|' . $res->status . '|' . $res->body . '|' . $res->header('x-mw-4') . PHP_EOL;
     }
+
+    $scoped = new VSlim\App();
+    $weak = null;
+    $closed = 0;
+    $scoped->get('/abandon', static function () use (&$weak, &$closed): ResponseInterface {
+        $generator = (static function () use (&$closed): Generator {
+            try {
+                yield 'ready';
+                throw new LogicException('Scope cleanup advanced the generator');
+            } finally {
+                ++$closed;
+            }
+        })();
+        $generator->rewind();
+        $weak = WeakReference::create($generator);
+        $response = new class(200, 'ok') extends VSlim\Psr7\Response {
+            public Generator $pending;
+        };
+        $response->pending = $generator;
+        return $response;
+    });
+    $scoped->get('/next', static fn () => (new VSlim\Psr7\Response(200, ''))
+        ->withBody(new VSlim\Psr7\Stream('next')));
+    $scoped->after(new class implements MiddlewareInterface {
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+        {
+            if ($request->getUri()->getPath() === '/abandon') {
+                Fiber::suspend('after');
+            }
+            return $handler->handle($request);
+        }
+    });
+    $fiber = new Fiber(static fn () => $scoped->dispatch('GET', '/abandon'));
+    if ($fiber->start() !== 'after' || $closed !== 0 || $weak?->get() === null) {
+        throw new RuntimeException('Dispatch lost the scoped response before suspension');
+    }
+    unset($fiber);
+    if ($closed !== 1 || $weak->get() !== null) {
+        throw new RuntimeException('Cancelling dispatch retained the scoped response or its generator');
+    }
+    $next = $scoped->dispatch('GET', '/next');
+    if ($next->status !== 200 || $next->body !== 'next' || $closed !== 1) {
+        throw new RuntimeException('Cancelling dispatch affected the next request');
+    }
 }
 ?>
 --EXPECT--

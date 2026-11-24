@@ -238,6 +238,10 @@ $users = $db->table('users')
 - `lastInsertId()`
 - `lastError()`
 
+在 `VSlim\Task` 调度的 Fiber 中，`PendingResult::wait()` 会让同组 PHP 任务继续执行。
+多个 Fiber 可以等待同一结果。某个等待方取消后，其他等待方仍可取得数据库结果。
+丢弃 `PendingResult` 时，正在执行的数据库操作会在后台完成。
+
 最小例子：
 
 ```php

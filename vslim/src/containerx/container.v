@@ -62,6 +62,11 @@ pub fn (mut c VSlimContainer) construct() &VSlimContainer {
 	container_release_map(mut c.entries)
 	container_release_factory_map(mut c.factories)
 	container_release_map(mut c.resolved)
+	if state := vphp.owned_object_php_state(c) {
+		state.remove('entries')
+		state.remove('factories')
+		state.remove('resolved')
+	}
 	c.entries = map[string]vphp.PhpValue{}
 	c.factories = map[string]vphp.PhpCallable{}
 	c.resolved = map[string]vphp.PhpValue{}
@@ -102,30 +107,48 @@ pub fn (mut c VSlimContainer) factory(id string, callable vphp.PhpCallable) &VSl
 	return &c
 }
 
+@[vphp.PhpExportMethod(name: 'lazyProxy')]
+@[vphp.PhpMethodSince(version: .php84)]
+@[vphp.PhpArgName(v_name: 'class_name', php_name: 'className')]
+pub fn (mut c VSlimContainer) lazy_proxy(id string, class_name string, initializer vphp.PhpCallable) !&VSlimContainer {
+	mut proxy := vphp.PhpClass.named(class_name).new_lazy_proxy(initializer)!
+	defer {
+		proxy.release()
+	}
+	return c.set_object(id, proxy)
+}
+
 @[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimContainer) has(id string) bool {
+	if stored := c.php_registrations() {
+		return stored.entries.find(id) != none || stored.factories.find(id) != none
+			|| stored.resolved.find(id) != none
+	}
 	return id in c.entries || id in c.factories || id in c.resolved
 }
 
 @[vphp.PhpExportMethod(name: '')]
 pub fn (mut c VSlimContainer) get(id string) vphp.PhpValue {
-	return c.get_value_or_throw(id)
+	mut value := c.get_value_or_throw(id)
+	return value.move_to_request_scope()
 }
 
 pub fn (mut c VSlimContainer) get_value(id string) !vphp.PhpValue {
-	if id in c.resolved {
-		resolved := c.resolved[id] or { return error('entry "${id}" not found') }
-		track_service_state(resolved)
-		return resolved.owned()
+	registration := c.find_registration(id)
+	if value := registration.resolved {
+		track_service_state(value)
+		return value.owned()
 	}
-	if id in c.entries {
-		entry := c.entries[id] or { return error('entry "${id}" not found') }
-		track_service_state(entry)
-		return entry.owned()
+	if value := registration.entry {
+		track_service_state(value)
+		return value.owned()
 	}
-	if id in c.factories {
-		factory_owned := c.factories[id] or { return error('entry "${id}" not found') }
-		mut res := c.invoke_container_factory(factory_owned)
+	if saved := registration.factory {
+		mut factory := saved.to_request_owned()
+		defer {
+			factory.release()
+		}
+		mut res := c.invoke_container_factory(factory)
 		defer {
 			res.release()
 		}
@@ -148,7 +171,7 @@ fn (c &VSlimContainer) invoke_container_factory(factory vphp.PhpCallable) vphp.P
 		scope.finish()
 	}
 	c.snapshot_services(mut scope)
-	return factory.invoke()
+	return factory.invoke_by_value()
 }
 
 pub fn (mut c VSlimContainer) resolve_or_autowire_class(id string) !ContainerResolvedService {
@@ -184,14 +207,9 @@ fn instantiate_container_service(id string) !vphp.PhpObject {
 	if !class.exists() {
 		return error('container service not found')
 	}
-	mut instance := class.construct() or {
+	return class.construct() or {
 		return error('class "${id}" could not be instantiated')
 	}
-	if vphp.has_exception() {
-		instance.release()
-		return error('class "${id}" constructor threw an exception')
-	}
-	return instance
 }
 
 pub fn (mut c VSlimContainer) get_value_or_throw(id string) vphp.PhpValue {

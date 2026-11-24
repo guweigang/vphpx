@@ -50,6 +50,24 @@ echo $commandHelpCode, '|',
     (str_contains($commandHelp, 'same app container') ? 'epilog_yes' : 'epilog_no'), PHP_EOL;
 
 $bootstrapFile = sys_get_temp_dir() . '/vslim_cli_bootstrap_' . uniqid('', true) . '.php';
+$referencedCli = new VSlim\Cli\App();
+$closureCode = 7;
+$referencedCli->command('ref:closure', static function &() use (&$closureCode): int {
+    return $closureCode;
+});
+$handler = new class {
+    public bool $success = false;
+    public function &handle(): bool { return $this->success; }
+};
+$referencedCli->command('ref:method', $handler);
+if ($referencedCli->run('ref:closure', []) !== 7 || $referencedCli->run('ref:method', []) !== 1) {
+    throw new RuntimeException('A command exit status was lost when returned by reference');
+}
+$closureCode = 23;
+$handler->success = true;
+if ($referencedCli->run('ref:closure', []) !== 23 || $referencedCli->run('ref:method', []) !== 0) {
+    throw new RuntimeException('A command invocation did not read its current exit status');
+}
 file_put_contents($bootstrapFile, <<<'PHP'
 <?php
 declare(strict_types=1);

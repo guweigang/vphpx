@@ -48,6 +48,13 @@ namespace {
     $body = file_exists($logFile) ? file_get_contents($logFile) : '';
     echo str_contains($body, 'ts=1704067200123') ? "ts-ok\n" : "ts-miss\n";
 
+    $app->setClock(new FixedClock(new DateTimeImmutable('1969-12-31 23:59:59.500000 UTC')));
+    $res = $app->dispatch('GET', '/ping');
+    $body = file_get_contents($logFile);
+    if ($res->status !== 200 || !str_contains($body, 'ts=-500') || str_contains($body, 'ts=-1500')) {
+        throw new RuntimeException('The trace lost the signed milliseconds before the Unix epoch');
+    }
+
     @unlink($logFile);
 }
 ?>
@@ -65,3 +72,12 @@ bool(true)
 %smemory trace%s ts=1704067200123
 int(200)
 ts-ok
+%smemory trace%s ts=-500
+%smemory trace%s ts=-500
+%smemory trace%s ts=-500
+%smemory trace%s ts=-500
+%smemory trace%s ts=-500
+%smemory trace%s ts=-500
+%smemory trace%s ts=-500
+%smemory trace%s ts=-500
+%smemory trace%s ts=-500

@@ -15,6 +15,23 @@ mut:
 	expires_at_unix i64
 }
 
+fn psr_cache_snapshot_value(value vphp.PhpValue) vphp.PhpValue {
+	if mut snapshot := value.with_array(fn (array vphp.PhpArray) vphp.PhpArray {
+		return array.snapshot()
+	}) {
+		return snapshot.take_value()
+	}
+	return value.to_request_owned()
+}
+
+fn psr_cache_retain_value(value vphp.PhpValue) vphp.PhpValue {
+	mut snapshot := psr_cache_snapshot_value(value)
+	defer {
+		snapshot.release()
+	}
+	return snapshot.retain()
+}
+
 @[vphp.PhpImplements(names: 'Psr\\SimpleCache\\CacheException')]
 @[vphp.PhpExportClass(name: 'VSlim\\Psr16\\CacheException')]
 @[vphp.PhpExtends(name: 'Exception')]
@@ -34,8 +51,8 @@ pub struct VSlimPsr16Cache {
 mut:
 	entries             map[string]PsrCacheEntry
 	clock_ref           vphp.PhpObject = vphp.PhpObject.invalid() @[vphp.PhpIgnoreField]
-	namespace_prefix    string @[vphp.PhpProperty; vphp.PhpProperty_name: 'namespacePrefix']
-	default_ttl_seconds int    @[vphp.PhpProperty; vphp.PhpProperty_name: 'defaultTtlSeconds']
+	namespace_prefix    string @[vphp.PhpProperty(name: 'namespacePrefix')]
+	default_ttl_seconds int    @[vphp.PhpProperty(name: 'defaultTtlSeconds')]
 }
 
 @[vphp.PhpExportClass(name: 'VSlim\\Psr6\\CacheException')]
@@ -59,8 +76,8 @@ mut:
 	value_ref       vphp.PhpValue  = vphp.PhpValue.invalid()  @[vphp.PhpIgnoreField]
 	clock_ref       vphp.PhpObject = vphp.PhpObject.invalid() @[vphp.PhpIgnoreField]
 	hit             bool
-	has_value       bool @[vphp.PhpProperty; vphp.PhpProperty_name: 'hasValue']
-	expires_at_unix i64  @[vphp.PhpProperty; vphp.PhpProperty_name: 'expiresAtUnix']
+	has_value       bool @[vphp.PhpProperty(name: 'hasValue')]
+	expires_at_unix i64  @[vphp.PhpProperty(name: 'expiresAtUnix')]
 }
 
 @[vphp.PhpImplements(names: 'Psr\\Cache\\CacheItemPoolInterface')]
@@ -71,6 +88,6 @@ mut:
 	entries             map[string]PsrCacheEntry
 	deferred            map[string]Psr6DeferredEntry
 	clock_ref           vphp.PhpObject = vphp.PhpObject.invalid() @[vphp.PhpIgnoreField]
-	namespace_prefix    string @[vphp.PhpProperty; vphp.PhpProperty_name: 'namespacePrefix']
-	default_ttl_seconds int    @[vphp.PhpProperty; vphp.PhpProperty_name: 'defaultTtlSeconds']
+	namespace_prefix    string @[vphp.PhpProperty(name: 'namespacePrefix')]
+	default_ttl_seconds int    @[vphp.PhpProperty(name: 'defaultTtlSeconds')]
 }

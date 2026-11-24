@@ -79,13 +79,13 @@ pub fn vslim_stream_response_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimStreamResponse(ptr)
-        out.add_property_string('streamType', obj.stream_type)
-        out.add_property_long('status', i64(obj.status))
-        out.add_property_string('contentType', obj.content_type)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'streamType', obj.stream_type)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'status', obj.status)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'contentType', obj.content_type)
     }
 }
 @[export: 'vphp_wrap_vslim_stream_response_construct']
-pub fn vphp_wrap_vslim_stream_response_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_stream_response_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimStreamResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
@@ -102,21 +102,62 @@ pub fn vphp_wrap_vslim_stream_response_construct(ptr voidptr, ctx vphp.Context) 
     arg_3 := php_args.at(3).as_v[string]()
     arg_4 := php_args.at(4).value
     res := recv.construct(arg_0, arg_1, arg_2, arg_3, arg_4)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimStreamResponse](res, .borrowed)
 }
-@[export: 'vphp_wrap_vslim_stream_response_text']
-pub fn vphp_wrap_vslim_stream_response_text(ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_stream_response_export_text']
+pub fn vphp_wrap_vslim_stream_response_export_text(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'chunks' },
     ])
     arg_0 := php_args.at(0).value
-    res := VSlimStreamResponse.text(arg_0)
-    return voidptr(res)
+    res := VSlimStreamResponse.export_text(arg_0)
+    ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_vslim_stream_response_text_with']
-pub fn vphp_wrap_vslim_stream_response_text_with(ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_stream_response_export_text_from']
+pub fn vphp_wrap_vslim_stream_response_export_text_from(ctx vphp.Context)  {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'factory' },
+        vphp.PhpArgMeta{ index: 1, name: 'args', use_php_default: true },
+        vphp.PhpArgMeta{ index: 2, name: 'waitTimeoutMs', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).callable() or {
+        vphp.throw_exception('argument 0 must be callable', 0)
+        return
+    }
+    arg_1 := php_args.at(1).array() or {
+        vphp.throw_exception('argument 1 must be array', 0)
+        return
+    }
+    arg_2 := php_args.at(2).as_v[i64]()
+    ctx.return().from_result[vphp.PhpValue](fn [arg_0, arg_1, arg_2] () !vphp.PhpValue {
+        return VSlimStreamResponse.export_text_from(arg_0, arg_1, arg_2)!
+    })
+}
+@[export: 'vphp_wrap_vslim_stream_response_export_text_stream']
+pub fn vphp_wrap_vslim_stream_response_export_text_stream(ctx vphp.Context)  {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_meta([
+        vphp.PhpArgMeta{ index: 0, name: 'stream' },
+        vphp.PhpArgMeta{ index: 1, name: 'waitTimeoutMs' },
+    ])
+    arg_0 := php_args.at(0).resource() or {
+        vphp.throw_exception('argument 0 must be resource', 0)
+        return
+    }
+    arg_1 := php_args.at(1).as_v[i64]()
+    ctx.return().from_result[vphp.PhpValue](fn [arg_0, arg_1] () !vphp.PhpValue {
+        return VSlimStreamResponse.export_text_stream(arg_0, arg_1)!
+    })
+}
+@[export: 'vphp_wrap_vslim_stream_response_export_text_with']
+pub fn vphp_wrap_vslim_stream_response_export_text_with(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -129,22 +170,44 @@ pub fn vphp_wrap_vslim_stream_response_text_with(ctx vphp.Context) voidptr {
     arg_1 := php_args.at(1).as_v[int]()
     arg_2 := php_args.at(2).as_v[string]()
     arg_3 := php_args.at(3).value
-    res := VSlimStreamResponse.text_with(arg_0, arg_1, arg_2, arg_3)
-    return voidptr(res)
+    res := VSlimStreamResponse.export_text_with(arg_0, arg_1, arg_2, arg_3)
+    ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_vslim_stream_response_sse']
-pub fn vphp_wrap_vslim_stream_response_sse(ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_stream_response_export_sse']
+pub fn vphp_wrap_vslim_stream_response_export_sse(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'events' },
     ])
     arg_0 := php_args.at(0).value
-    res := VSlimStreamResponse.sse(arg_0)
-    return voidptr(res)
+    res := VSlimStreamResponse.export_sse(arg_0)
+    ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_vslim_stream_response_sse_with']
-pub fn vphp_wrap_vslim_stream_response_sse_with(ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_stream_response_export_sse_from']
+pub fn vphp_wrap_vslim_stream_response_export_sse_from(ctx vphp.Context)  {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'factory' },
+        vphp.PhpArgMeta{ index: 1, name: 'args', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).callable() or {
+        vphp.throw_exception('argument 0 must be callable', 0)
+        return
+    }
+    arg_1 := php_args.at(1).array() or {
+        vphp.throw_exception('argument 1 must be array', 0)
+        return
+    }
+    ctx.return().from_result[vphp.PhpValue](fn [arg_0, arg_1] () !vphp.PhpValue {
+        return VSlimStreamResponse.export_sse_from(arg_0, arg_1)!
+    })
+}
+@[export: 'vphp_wrap_vslim_stream_response_export_sse_with']
+pub fn vphp_wrap_vslim_stream_response_export_sse_with(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
@@ -155,8 +218,8 @@ pub fn vphp_wrap_vslim_stream_response_sse_with(ctx vphp.Context) voidptr {
     arg_0 := php_args.at(0).value
     arg_1 := php_args.at(1).as_v[int]()
     arg_2 := php_args.at(2).value
-    res := VSlimStreamResponse.sse_with(arg_0, arg_1, arg_2)
-    return voidptr(res)
+    res := VSlimStreamResponse.export_sse_with(arg_0, arg_1, arg_2)
+    ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vphp_wrap_vslim_stream_response_header']
 pub fn vphp_wrap_vslim_stream_response_header(ptr voidptr, ctx vphp.Context)  {
@@ -266,13 +329,13 @@ pub fn vphp_wrap_vslim_stream_response_chunks(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_stream_response_handlers']
 pub fn vslim_stream_response_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_stream_response_get_prop),
-        write_handler: voidptr(vslim_stream_response_set_prop),
-        sync_handler: voidptr(vslim_stream_response_sync_props),
-        new_raw: voidptr(vslim_stream_response_new_raw),
-        cleanup_raw: voidptr(vslim_stream_response_cleanup_raw),
-        free_raw: voidptr(vslim_stream_response_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_stream_response_get_prop,
+        write_handler: vslim_stream_response_set_prop,
+        sync_handler: vslim_stream_response_sync_props,
+        new_raw: vslim_stream_response_new_raw,
+        cleanup_raw: vslim_stream_response_cleanup_raw,
+        free_raw: vslim_stream_response_free_raw
     )
 }
 pub fn VSlimStreamResponse.php_class_entry() vphp.ZendClassEntry {
@@ -356,13 +419,13 @@ pub fn vphp_wrap_vslim_stream_ndjson_decoder_decode(ctx vphp.Context)  {
 }
 @[export: 'vslim_stream_ndjson_decoder_handlers']
 pub fn vslim_stream_ndjson_decoder_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_stream_ndjson_decoder_get_prop),
-        write_handler: voidptr(vslim_stream_ndjson_decoder_set_prop),
-        sync_handler: voidptr(vslim_stream_ndjson_decoder_sync_props),
-        new_raw: voidptr(vslim_stream_ndjson_decoder_new_raw),
-        cleanup_raw: voidptr(vslim_stream_ndjson_decoder_cleanup_raw),
-        free_raw: voidptr(vslim_stream_ndjson_decoder_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_stream_ndjson_decoder_get_prop,
+        write_handler: vslim_stream_ndjson_decoder_set_prop,
+        sync_handler: vslim_stream_ndjson_decoder_sync_props,
+        new_raw: vslim_stream_ndjson_decoder_new_raw,
+        cleanup_raw: vslim_stream_ndjson_decoder_cleanup_raw,
+        free_raw: vslim_stream_ndjson_decoder_free_raw
     )
 }
 pub fn VSlimStreamNdjsonDecoder.php_class_entry() vphp.ZendClassEntry {
@@ -451,13 +514,13 @@ pub fn vphp_wrap_vslim_stream_sse_encoder_from_ollama(ctx vphp.Context)  {
 }
 @[export: 'vslim_stream_sse_encoder_handlers']
 pub fn vslim_stream_sse_encoder_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_stream_sse_encoder_get_prop),
-        write_handler: voidptr(vslim_stream_sse_encoder_set_prop),
-        sync_handler: voidptr(vslim_stream_sse_encoder_sync_props),
-        new_raw: voidptr(vslim_stream_sse_encoder_new_raw),
-        cleanup_raw: voidptr(vslim_stream_sse_encoder_cleanup_raw),
-        free_raw: voidptr(vslim_stream_sse_encoder_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_stream_sse_encoder_get_prop,
+        write_handler: vslim_stream_sse_encoder_set_prop,
+        sync_handler: vslim_stream_sse_encoder_sync_props,
+        new_raw: vslim_stream_sse_encoder_new_raw,
+        cleanup_raw: vslim_stream_sse_encoder_cleanup_raw,
+        free_raw: vslim_stream_sse_encoder_free_raw
     )
 }
 pub fn VSlimStreamSseEncoder.php_class_entry() vphp.ZendClassEntry {
@@ -566,21 +629,21 @@ pub fn vslim_stream_ollama_client_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimStreamOllamaClient(ptr)
-        out.add_property_string('chatUrl', obj.chat_url)
-        out.add_property_string('defaultModel', obj.default_model)
-        out.add_property_string('apiKey', obj.api_key)
-        out.add_property_string('fixturePath', obj.fixture_path)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'chatUrl', obj.chat_url)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'defaultModel', obj.default_model)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'apiKey', obj.api_key)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'fixturePath', obj.fixture_path)
     }
 }
 @[export: 'vphp_wrap_vslim_stream_ollama_client_construct']
-pub fn vphp_wrap_vslim_stream_ollama_client_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_stream_ollama_client_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimStreamOllamaClient(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'chatUrl' },
         vphp.PhpArgMeta{ index: 1, name: 'defaultModel' },
-        vphp.PhpArgMeta{ index: 2, name: 'apiKey' },
+        vphp.PhpArgMeta{ index: 2, name: 'apiKey', attributes: [vphp.PhpAttribute.named('SensitiveParameter').for_parameter()] },
         vphp.PhpArgMeta{ index: 3, name: 'fixturePath' },
     ])
     arg_0 := php_args.at(0).as_v[string]()
@@ -588,7 +651,7 @@ pub fn vphp_wrap_vslim_stream_ollama_client_construct(ptr voidptr, ctx vphp.Cont
     arg_2 := php_args.at(2).as_v[string]()
     arg_3 := php_args.at(3).as_v[string]()
     res := recv.construct(arg_0, arg_1, arg_2, arg_3)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimStreamOllamaClient](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_stream_ollama_client_from_env']
 pub fn vphp_wrap_vslim_stream_ollama_client_from_env(ctx vphp.Context) voidptr {
@@ -604,12 +667,10 @@ pub fn vphp_wrap_vslim_stream_ollama_client_from_config(ctx vphp.Context) voidpt
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'config' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[configx.VSlimConfig]() or {
-        vphp.throw_exception('argument 0 must be object bound to configx.VSlimConfig, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[configx.VSlimConfig]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &configx.VSlimConfig(arg_0_ptr) }
     res := VSlimStreamOllamaClient.from_config(arg_0)
     return voidptr(res)
 }
@@ -633,8 +694,7 @@ pub fn vphp_wrap_vslim_stream_ollama_client_from_options(ctx vphp.Context) voidp
     ])
     arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := VSlimStreamOllamaClient.from_options(arg_0)
     return voidptr(res)
@@ -798,13 +858,13 @@ pub fn vphp_wrap_vslim_stream_ollama_client_upstream_plan_from_request(ptr voidp
 }
 @[export: 'vslim_stream_ollama_client_handlers']
 pub fn vslim_stream_ollama_client_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_stream_ollama_client_get_prop),
-        write_handler: voidptr(vslim_stream_ollama_client_set_prop),
-        sync_handler: voidptr(vslim_stream_ollama_client_sync_props),
-        new_raw: voidptr(vslim_stream_ollama_client_new_raw),
-        cleanup_raw: voidptr(vslim_stream_ollama_client_cleanup_raw),
-        free_raw: voidptr(vslim_stream_ollama_client_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_stream_ollama_client_get_prop,
+        write_handler: vslim_stream_ollama_client_set_prop,
+        sync_handler: vslim_stream_ollama_client_sync_props,
+        new_raw: vslim_stream_ollama_client_new_raw,
+        cleanup_raw: vslim_stream_ollama_client_cleanup_raw,
+        free_raw: vslim_stream_ollama_client_free_raw
     )
 }
 pub fn VSlimStreamOllamaClient.php_class_entry() vphp.ZendClassEntry {
@@ -875,15 +935,15 @@ pub fn vslim_stream_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = ptr
     _ = zv
 }
-@[export: 'vphp_wrap_vslim_stream_factory_text']
-pub fn vphp_wrap_vslim_stream_factory_text(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_stream_factory_export_text']
+pub fn vphp_wrap_vslim_stream_factory_export_text(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'chunks' },
     ])
     arg_0 := php_args.at(0).value
-    res := VSlimStreamFactory.text(arg_0)
+    res := VSlimStreamFactory.export_text(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vphp_wrap_vslim_stream_factory_text_with']
@@ -906,15 +966,15 @@ pub fn vphp_wrap_vslim_stream_factory_text_with(ctx vphp.Context)  {
     res := VSlimStreamFactory.text_with(arg_0, arg_1, arg_2, arg_3)
     ctx.return().v[vphp.PhpValue](res)
 }
-@[export: 'vphp_wrap_vslim_stream_factory_sse']
-pub fn vphp_wrap_vslim_stream_factory_sse(ctx vphp.Context)  {
+@[export: 'vphp_wrap_vslim_stream_factory_export_sse']
+pub fn vphp_wrap_vslim_stream_factory_export_sse(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'events' },
     ])
     arg_0 := php_args.at(0).value
-    res := VSlimStreamFactory.sse(arg_0)
+    res := VSlimStreamFactory.export_sse(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vphp_wrap_vslim_stream_factory_sse_with']
@@ -1035,13 +1095,13 @@ pub fn vphp_wrap_vslim_stream_factory_ollama_sse_with(ctx vphp.Context)  {
 }
 @[export: 'vslim_stream_factory_handlers']
 pub fn vslim_stream_factory_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_stream_factory_get_prop),
-        write_handler: voidptr(vslim_stream_factory_set_prop),
-        sync_handler: voidptr(vslim_stream_factory_sync_props),
-        new_raw: voidptr(vslim_stream_factory_new_raw),
-        cleanup_raw: voidptr(vslim_stream_factory_cleanup_raw),
-        free_raw: voidptr(vslim_stream_factory_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_stream_factory_get_prop,
+        write_handler: vslim_stream_factory_set_prop,
+        sync_handler: vslim_stream_factory_sync_props,
+        new_raw: vslim_stream_factory_new_raw,
+        cleanup_raw: vslim_stream_factory_cleanup_raw,
+        free_raw: vslim_stream_factory_free_raw
     )
 }
 pub fn VSlimStreamFactory.php_class_entry() vphp.ZendClassEntry {

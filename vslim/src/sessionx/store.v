@@ -260,6 +260,7 @@ pub fn (session &VSlimSessionStore) cookie_name_value() string {
 }
 
 @[vphp.PhpExportMethod(name: 'setSecret')]
+@[vphp.PhpSensitiveParameter(v_name: 'secret')]
 pub fn (mut session VSlimSessionStore) set_secret(secret string) &VSlimSessionStore {
 	session.secret = secret.trim_space()
 	return &session

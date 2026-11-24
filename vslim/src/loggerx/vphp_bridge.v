@@ -46,12 +46,12 @@ pub fn vslim_logger_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_logger_construct']
-pub fn vphp_wrap_vslim_logger_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_logger_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimLogger(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimLogger](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_logger_disabled_level']
 pub fn vphp_wrap_vslim_logger_disabled_level(ctx vphp.Context)  {
@@ -145,8 +145,7 @@ pub fn vphp_wrap_vslim_logger_set_context(ptr voidptr, ctx vphp.Context) voidptr
     ])
     arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_context(arg_0)
     return voidptr(res)
@@ -277,8 +276,7 @@ pub fn vphp_wrap_vslim_logger_log_context(ptr voidptr, ctx vphp.Context) voidptr
     arg_1 := php_args.at(1).as_v[string]()
     arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.log_context(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -307,8 +305,7 @@ pub fn vphp_wrap_vslim_logger_debug_context(ptr voidptr, ctx vphp.Context) voidp
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.debug_context(arg_0, arg_1)
     return voidptr(res)
@@ -337,8 +334,7 @@ pub fn vphp_wrap_vslim_logger_info_context(ptr voidptr, ctx vphp.Context) voidpt
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.info_context(arg_0, arg_1)
     return voidptr(res)
@@ -367,8 +363,7 @@ pub fn vphp_wrap_vslim_logger_warn_context(ptr voidptr, ctx vphp.Context) voidpt
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.warn_context(arg_0, arg_1)
     return voidptr(res)
@@ -397,8 +392,7 @@ pub fn vphp_wrap_vslim_logger_error_context(ptr voidptr, ctx vphp.Context) voidp
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.error_context(arg_0, arg_1)
     return voidptr(res)
@@ -427,8 +421,7 @@ pub fn vphp_wrap_vslim_logger_warning_context(ptr voidptr, ctx vphp.Context) voi
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.warning_context(arg_0, arg_1)
     return voidptr(res)
@@ -457,8 +450,7 @@ pub fn vphp_wrap_vslim_logger_notice_context(ptr voidptr, ctx vphp.Context) void
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.notice_context(arg_0, arg_1)
     return voidptr(res)
@@ -487,8 +479,7 @@ pub fn vphp_wrap_vslim_logger_critical_context(ptr voidptr, ctx vphp.Context) vo
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.critical_context(arg_0, arg_1)
     return voidptr(res)
@@ -517,8 +508,7 @@ pub fn vphp_wrap_vslim_logger_alert_context(ptr voidptr, ctx vphp.Context) voidp
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.alert_context(arg_0, arg_1)
     return voidptr(res)
@@ -547,8 +537,7 @@ pub fn vphp_wrap_vslim_logger_emergency_context(ptr voidptr, ctx vphp.Context) v
     arg_0 := php_args.at(0).as_v[string]()
     arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.emergency_context(arg_0, arg_1)
     return voidptr(res)
@@ -563,13 +552,13 @@ pub fn vphp_wrap_vslim_logger_str(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_logger_handlers']
 pub fn vslim_logger_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_logger_get_prop),
-        write_handler: voidptr(vslim_logger_set_prop),
-        sync_handler: voidptr(vslim_logger_sync_props),
-        new_raw: voidptr(vslim_logger_new_raw),
-        cleanup_raw: voidptr(vslim_logger_cleanup_raw),
-        free_raw: voidptr(vslim_logger_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_logger_get_prop,
+        write_handler: vslim_logger_set_prop,
+        sync_handler: vslim_logger_sync_props,
+        new_raw: vslim_logger_new_raw,
+        cleanup_raw: vslim_logger_cleanup_raw,
+        free_raw: vslim_logger_free_raw
     )
 }
 pub fn VSlimLogger.php_class_entry() vphp.ZendClassEntry {
@@ -641,12 +630,12 @@ pub fn vslim_psr_logger_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_psr_logger_construct']
-pub fn vphp_wrap_vslim_psr_logger_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr_logger_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsrLogger(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsrLogger](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr_logger_set_logger']
 pub fn vphp_wrap_vslim_psr_logger_set_logger(ptr voidptr, ctx vphp.Context) voidptr {
@@ -656,12 +645,10 @@ pub fn vphp_wrap_vslim_psr_logger_set_logger(ptr voidptr, ctx vphp.Context) void
     php_args := ctx.args_with_meta([
         vphp.PhpArgMeta{ index: 0, name: 'inner' },
     ])
-    arg_0_ptr := php_args.at(0).to_v_ptr[loggerx.VSlimLogger]() or {
-        vphp.throw_exception('argument 0 must be object bound to loggerx.VSlimLogger, got ' + php_args.at(0).zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimLogger]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &loggerx.VSlimLogger(arg_0_ptr) }
     res := recv.set_logger(arg_0)
     return voidptr(res)
 }
@@ -707,8 +694,7 @@ pub fn vphp_wrap_vslim_psr_logger_set_context(ptr voidptr, ctx vphp.Context) voi
     ])
     arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_context(arg_0)
     return voidptr(res)
@@ -982,13 +968,13 @@ pub fn vphp_wrap_vslim_psr_logger_str(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_psr_logger_handlers']
 pub fn vslim_psr_logger_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr_logger_get_prop),
-        write_handler: voidptr(vslim_psr_logger_set_prop),
-        sync_handler: voidptr(vslim_psr_logger_sync_props),
-        new_raw: voidptr(vslim_psr_logger_new_raw),
-        cleanup_raw: voidptr(vslim_psr_logger_cleanup_raw),
-        free_raw: voidptr(vslim_psr_logger_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr_logger_get_prop,
+        write_handler: vslim_psr_logger_set_prop,
+        sync_handler: vslim_psr_logger_sync_props,
+        new_raw: vslim_psr_logger_new_raw,
+        cleanup_raw: vslim_psr_logger_cleanup_raw,
+        free_raw: vslim_psr_logger_free_raw
     )
 }
 pub fn VSlimPsrLogger.php_class_entry() vphp.ZendClassEntry {
@@ -1060,7 +1046,7 @@ pub fn vslim_log_level_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 pub fn VSlimLogLevel.consts() VSlimLogLevelConsts {
-    return vslim_log_level_consts
+    return vslim_log_levels.values
 }
 @[export: 'vphp_wrap_vslim_log_level_disabled']
 pub fn vphp_wrap_vslim_log_level_disabled(ctx vphp.Context)  {
@@ -1113,13 +1099,13 @@ pub fn vphp_wrap_vslim_log_level_all(ctx vphp.Context)  {
 }
 @[export: 'vslim_log_level_handlers']
 pub fn vslim_log_level_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_log_level_get_prop),
-        write_handler: voidptr(vslim_log_level_set_prop),
-        sync_handler: voidptr(vslim_log_level_sync_props),
-        new_raw: voidptr(vslim_log_level_new_raw),
-        cleanup_raw: voidptr(vslim_log_level_cleanup_raw),
-        free_raw: voidptr(vslim_log_level_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_log_level_get_prop,
+        write_handler: vslim_log_level_set_prop,
+        sync_handler: vslim_log_level_sync_props,
+        new_raw: vslim_log_level_new_raw,
+        cleanup_raw: vslim_log_level_cleanup_raw,
+        free_raw: vslim_log_level_free_raw
     )
 }
 pub fn VSlimLogLevel.php_class_entry() vphp.ZendClassEntry {

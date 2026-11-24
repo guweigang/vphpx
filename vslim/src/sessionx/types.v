@@ -6,14 +6,14 @@ import vphp
 @[heap]
 pub struct VSlimSessionStore {
 mut:
-	cookie_name string = 'vslim_session' @[vphp.PhpProperty; vphp.PhpProperty_name: 'cookieName']
+	cookie_name string = 'vslim_session' @[vphp.PhpProperty(name: 'cookieName')]
 	secret      string
-	ttl_seconds int    = 7200 @[vphp.PhpProperty; vphp.PhpProperty_name: 'ttlSeconds']
+	ttl_seconds int    = 7200 @[vphp.PhpProperty(name: 'ttlSeconds')]
 	path        string = '/'
 	domain      string
 	secure      bool
-	http_only   bool   = true     @[vphp.PhpProperty; vphp.PhpProperty_name: 'httpOnly']
-	same_site   string = 'lax'    @[vphp.PhpProperty; vphp.PhpProperty_name: 'sameSite']
+	http_only   bool   = true     @[vphp.PhpProperty(name: 'httpOnly')]
+	same_site   string = 'lax'    @[vphp.PhpProperty(name: 'sameSite')]
 	values      map[string]string @[vphp.PhpIgnoreField]
 	loaded      bool
 	dirty       bool @[vphp.PhpIgnoreField]
@@ -25,5 +25,5 @@ mut:
 pub struct VSlimAuthSessionGuard {
 mut:
 	store_ref &VSlimSessionStore = unsafe { nil } @[vphp.PhpIgnoreField]
-	user_key  string             = 'auth.user_id' @[vphp.PhpProperty; vphp.PhpProperty_name: 'userKey']
+	user_key  string             = 'auth.user_id' @[vphp.PhpProperty(name: 'userKey')]
 }

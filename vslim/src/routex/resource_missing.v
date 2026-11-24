@@ -16,5 +16,5 @@ pub fn dispatch_resource_missing(action string, handler vphp.PhpCallable, reques
 		params_arg.release()
 	}
 	mut result := handler.invoke(psr_arg, action_arg, params_arg)
-	return result.owned()
+	return route_handler_response(mut result)
 }

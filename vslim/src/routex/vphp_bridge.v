@@ -483,8 +483,7 @@ pub fn vphp_wrap_route_group_resource_opts(ptr voidptr, ctx vphp.Context) voidpt
     arg_1 := php_args.at(1).as_v[string]()
     arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -503,8 +502,7 @@ pub fn vphp_wrap_route_group_api_resource_opts(ptr voidptr, ctx vphp.Context) vo
     arg_1 := php_args.at(1).as_v[string]()
     arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.api_resource_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -523,8 +521,7 @@ pub fn vphp_wrap_route_group_singleton_opts(ptr voidptr, ctx vphp.Context) voidp
     arg_1 := php_args.at(1).as_v[string]()
     arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
@@ -543,21 +540,20 @@ pub fn vphp_wrap_route_group_api_singleton_opts(ptr voidptr, ctx vphp.Context) v
     arg_1 := php_args.at(1).as_v[string]()
     arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.api_singleton_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
 @[export: 'route_group_handlers']
 pub fn route_group_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(route_group_get_prop),
-        write_handler: voidptr(route_group_set_prop),
-        sync_handler: voidptr(route_group_sync_props),
-        new_raw: voidptr(route_group_new_raw),
-        cleanup_raw: voidptr(route_group_cleanup_raw),
-        free_raw: voidptr(route_group_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: route_group_get_prop,
+        write_handler: route_group_set_prop,
+        sync_handler: route_group_sync_props,
+        new_raw: route_group_new_raw,
+        cleanup_raw: route_group_cleanup_raw,
+        free_raw: route_group_free_raw
     )
 }
 pub fn RouteGroup.php_class_entry() vphp.ZendClassEntry {

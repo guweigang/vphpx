@@ -4,12 +4,6 @@ set -euo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "$DIR"
 
-cleanup_generated_test_artifacts() {
-    find tests -maxdepth 1 -type f \
-        \( -name 'test_*.php' -o -name 'test_*.sh' -o -name 'test_*.out' -o -name 'test_*.exp' -o -name 'test_*.diff' -o -name 'test_*.log' \) \
-        -print0 2>/dev/null | xargs -0 rm -f 2>/dev/null || true
-}
-
 PHP_BIN=$(which php)
 if [ -z "$PHP_BIN" ]; then
     echo "Error: PHP is not found in PATH."
@@ -24,7 +18,9 @@ fi
 
 echo "Running tests with PHP: $PHP_BIN"
 
-RUN_ARGS=(-q)
+# Some PHPT cases share their basename with checked-in PHP and shell fixtures.
+artifact_prefix=".vslim-phpt-$$-"
+RUN_ARGS=(-q --artifact-prefix "$artifact_prefix")
 if [ "${VSLIM_TEST_SHOW:-}" = "all" ]; then
     RUN_ARGS+=(--show-all)
 fi
@@ -70,8 +66,6 @@ if [ "$#" -eq 0 ]; then
     fi
 fi
 
-cleanup_generated_test_artifacts
-trap cleanup_generated_test_artifacts EXIT
-
 RUN_ARGS+=(-d extension=./vslim.so)
+trap 'find tests -type f -name "${artifact_prefix}*" -delete' EXIT
 TEST_PHP_EXECUTABLE="$PHP_BIN" php "$RUN_TESTS" "${RUN_ARGS[@]}" "${TESTS[@]}"

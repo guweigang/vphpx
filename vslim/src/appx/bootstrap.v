@@ -21,11 +21,11 @@ pub fn (app &VSlimApp) wrap_runtime_value() vphp.PhpValue {
 }
 
 pub fn (app &VSlimApp) self_value() vphp.PhpValue {
-	if self := vphp.PhpObject.current() {
-		if self.is_valid() && self.is_instance_of('VSlim\\App') {
-			return self.owned().to_value()
-		}
+	mut self := vphp.PhpObject.current_request_owned_zval()
+	if self.is_instance_of('VSlim\\App') {
+		return vphp.PhpValue.adopt_zval(self)
 	}
+	self.release()
 	return app.wrap_runtime_value()
 }
 

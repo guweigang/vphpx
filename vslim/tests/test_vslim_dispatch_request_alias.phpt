@@ -10,7 +10,7 @@ $req = new VSlim\VHttpd\Request('GET', '/users/42?trace_id=alias', '');
 foreach ([
     'dispatch' => ['VSlim\VHttpd\Response', ['method' => 'string', 'rawPath' => 'string']],
     'dispatchBody' => ['VSlim\VHttpd\Response', ['method' => 'string', 'rawPath' => 'string', 'body' => 'string']],
-    'dispatchRequest' => ['VSlim\VHttpd\Response', ['req' => '']],
+    'dispatchRequest' => ['VSlim\VHttpd\Response', ['req' => 'VSlim\VHttpd\Request']],
     'dispatchEnvelope' => ['VSlim\VHttpd\Response', ['envelope' => 'mixed']],
     'dispatchEnvelopeWorker' => ['mixed', ['envelope' => 'mixed']],
     'dispatchEnvelopeMap' => ['array', ['envelope' => 'mixed']],

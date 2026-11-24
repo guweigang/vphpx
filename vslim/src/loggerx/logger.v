@@ -15,15 +15,6 @@ struct VSlimLogLevelConsts {
 	debug    string
 }
 
-const vslim_log_level_consts = VSlimLogLevelConsts{
-	disabled: 'disabled'
-	fatal:    'fatal'
-	error:    'error'
-	warn:     'warn'
-	info:     'info'
-	debug:    'debug'
-}
-
 @[vphp.PhpExportClass(name: 'VSlim\\Log\\Logger')]
 @[heap]
 pub struct VSlimLogger {
@@ -31,11 +22,11 @@ mut:
 	engine_ref         &log.Log = unsafe { nil } @[vphp.PhpIgnoreField]
 	channel            string
 	context            map[string]string
-	level_name         string      @[vphp.PhpProperty; vphp.PhpProperty_name: 'levelName']
-	output_file        string      @[vphp.PhpProperty; vphp.PhpProperty_name: 'outputFile']
-	console_target     string      @[vphp.PhpProperty; vphp.PhpProperty_name: 'consoleTarget']
-	local_time_enabled bool = true @[vphp.PhpProperty; vphp.PhpProperty_name: 'localTimeEnabled']
-	short_tag_enabled  bool        @[vphp.PhpProperty; vphp.PhpProperty_name: 'shortTagEnabled']
+	level_name         string      @[vphp.PhpProperty(name: 'levelName')]
+	output_file        string      @[vphp.PhpProperty(name: 'outputFile')]
+	console_target     string      @[vphp.PhpProperty(name: 'consoleTarget')]
+	local_time_enabled bool = true @[vphp.PhpProperty(name: 'localTimeEnabled')]
+	short_tag_enabled  bool        @[vphp.PhpProperty(name: 'shortTagEnabled')]
 }
 
 @[vphp.PhpImplements(names: 'Psr\\Log\\LoggerInterface')]
@@ -46,10 +37,20 @@ mut:
 	logger_ref &VSlimLogger = unsafe { nil } @[vphp.PhpIgnoreField]
 }
 
-@[vphp.PhpClassConstants(source: 'vslim_log_level_consts')]
 @[vphp.PhpExportClass(name: 'VSlim\\Log\\Level')]
 @[heap]
 pub struct VSlimLogLevel {}
+
+const vslim_log_levels = vphp.PhpConstantTable[VSlimLogLevel, VSlimLogLevelConsts]{
+	values: VSlimLogLevelConsts{
+		disabled: 'disabled'
+		fatal:    'fatal'
+		error:    'error'
+		warn:     'warn'
+		info:     'info'
+		debug:    'debug'
+	}
+}
 
 @[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) construct() &VSlimLogger {
