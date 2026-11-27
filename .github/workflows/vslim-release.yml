@@ -198,8 +198,9 @@ jobs:
 
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
         run: |
-          brew update
           brew install pkg-config cjson openssl@3 libsodium argon2 mysql
 
       - name: Build VSlim extension
