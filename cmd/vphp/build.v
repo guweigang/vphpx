@@ -3,6 +3,9 @@ module main
 import os
 
 fn build_extension(name string, staged string, runtime string, repo string) !string {
+	if os.user_os() == 'windows' {
+		return build_windows_extension(name, staged, runtime, repo)
+	}
 	requested_gc := os.getenv('VPHP_V_GC').trim_space()
 	gc_mode := if requested_gc in ['', 'auto'] { 'boehm' } else { requested_gc }
 	cc := selected_cc()

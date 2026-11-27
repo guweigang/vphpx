@@ -56,6 +56,9 @@ fn probe_c_compiler(cc string) DependencyCheck {
 }
 
 fn inspect_dependencies() ![]DependencyCheck {
+	if os.user_os() == 'windows' {
+		return inspect_windows_dependencies()
+	}
 	cc := selected_cc()
 	php := selected_php()
 	php_config := selected_php_config()
