@@ -9,7 +9,7 @@ import vphp
 // 3. 常量值的类型必须为 `vphp.ExtensionConfig`。
 const ext_config = vphp.ExtensionConfig{
 	name:        'vslim'
-	version:     '0.1.0'
+	version:     '0.4.0'
 	description: 'Slim-inspired PHP extension powered by vphp'
 }
 

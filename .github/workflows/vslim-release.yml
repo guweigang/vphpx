@@ -3,6 +3,11 @@ name: VSlim Release
 on:
   workflow_dispatch:
     inputs:
+      bundle_version:
+        description: Optional release version embedded in manually built bundles
+        required: false
+        default: ''
+        type: string
       bundle_target:
         description: Bundle target to build during manual dispatch
         required: false
@@ -294,7 +299,7 @@ jobs:
         working-directory: vslim
         shell: bash
         env:
-          VSLIM_RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+          VSLIM_RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || inputs.bundle_version || github.sha }}
         run: |
           if [ "${{ matrix.package_type }}" = "binary" ]; then
             php scripts/package_release.php \
@@ -316,7 +321,7 @@ jobs:
         working-directory: vslim
         shell: pwsh
         env:
-          VSLIM_RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
+          VSLIM_RELEASE_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || inputs.bundle_version || github.sha }}
         run: |
           php scripts/package_release.php `
             --version="${env:VSLIM_RELEASE_VERSION}" `
