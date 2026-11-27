@@ -124,6 +124,10 @@ fn verify_setup_build() ! {
 
 fn setup_dependencies(apply bool, yes bool) ! {
 	host := detect_setup_host()
+	if host.platform == 'windows' {
+		println('Windows setup is manual: install V, PHP x64 NTS, MSVC, and the matching PHP devel pack; set VPHP_PHP_SDK to the devel pack directory.')
+		return doctor()
+	}
 	if host.platform !in ['macos', 'linux'] {
 		return error('setup currently supports macOS and Linux')
 	}

@@ -198,6 +198,66 @@ jobs:
           fi
           VPHP_PACKAGE_OUTPUT="$RUNNER_TEMP/vphp" TMPDIR="$RUNNER_TEMP" sh cmd/vphp/tests/smoke.sh
 
+  windows-cli:
+    name: Windows x64 CLI preview
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+          toolset: '14.44'
+      - name: Build pinned V fork
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP 'vlang'
+          git clone --branch $env:V_REF https://github.com/guweigang/vlang.git $root
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git -C $root checkout $env:V_COMMIT
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & (Join-Path $root 'makev.bat') -msvc
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Add-Content $env:GITHUB_PATH $root
+      - name: Install PHP devel pack
+        shell: pwsh
+        run: |
+          $version = (& php -n -r 'echo PHP_VERSION;').Trim()
+          if ((& php -n -r 'echo PHP_INT_SIZE, chr(58), (int) PHP_ZTS, chr(58), (int) PHP_DEBUG;').Trim() -ne '8:0:0') { throw 'Expected x64 NTS non-debug PHP' }
+          $archive = "php-devel-pack-$version-nts-Win32-vs17-x64.zip"
+          $zip = Join-Path $env:RUNNER_TEMP $archive
+          try { Invoke-WebRequest "https://windows.php.net/downloads/releases/$archive" -OutFile $zip }
+          catch { Invoke-WebRequest "https://windows.php.net/downloads/releases/archives/$archive" -OutFile $zip }
+          $extract = Join-Path $env:RUNNER_TEMP 'php-devel'
+          Expand-Archive $zip -DestinationPath $extract
+          $sdk = Get-ChildItem $extract -Filter phpize.bat -File -Recurse | Select-Object -First 1
+          if (!$sdk) { throw 'phpize.bat missing from PHP devel pack' }
+          Add-Content $env:GITHUB_ENV "VPHP_PHP_SDK=$($sdk.DirectoryName)"
+      - name: Install PHP parser tools
+        shell: pwsh
+        run: |
+          python -m pip install --user --disable-pip-version-check winflexbison-bin re2c
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $scripts = (& python -c "import sysconfig; print(sysconfig.get_path('scripts', scheme='nt_user'))").Trim()
+          Copy-Item -Force (Join-Path $scripts 'win_bison.exe') (Join-Path $scripts 'bison.exe')
+          Copy-Item -Force (Join-Path $scripts 'win_flex.exe') (Join-Path $scripts 'flex.exe')
+          Add-Content $env:GITHUB_PATH $scripts
+      - name: Package and test Windows CLI
+        shell: pwsh
+        run: |
+          $cli = Join-Path $env:RUNNER_TEMP 'vphp.exe'
+          ./cmd/vphp/scripts/package-windows.ps1 -Output $cli
+          ./cmd/vphp/tests/windows-smoke.ps1 -Cli $cli
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vphp-Windows-x86_64-preview
+          path: ${{ runner.temp }}/vphp.exe
+          if-no-files-found: error
+
   linux-static:
     name: Static Linux CLI (${{ matrix.machine }})
     runs-on: ${{ matrix.runner }}

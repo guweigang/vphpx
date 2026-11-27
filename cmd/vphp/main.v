@@ -6,7 +6,7 @@ import json2
 import vphp.compiler
 import v.vmod
 
-const usage = 'Usage: vphp new <directory>\n       vphp <build|check|stub> [project-directory] [--output <file>]\n       vphp doctor\n       vphp setup [--dry-run|--yes]\n\nOptions:\n  -h, --help       Show help\n  -v, --version    Show CLI version\n\nsetup installs missing dependencies and verifies an extension build.\n--dry-run previews only; --yes skips installer confirmations where supported.\nEnvironment: VPHP_V, VPHP_PHP, VPHP_PHP_CONFIG, VPHP_CC, VPHP_V_GC'
+const usage = 'Usage: vphp new <directory>\n       vphp <build|check|stub> [project-directory] [--output <file>]\n       vphp doctor\n       vphp setup [--dry-run|--yes]\n\nOptions:\n  -h, --help       Show help\n  -v, --version    Show CLI version\n\nsetup installs missing dependencies and verifies an extension build.\n--dry-run previews only; --yes skips installer confirmations where supported.\nEnvironment: VPHP_V, VPHP_PHP, VPHP_PHP_CONFIG, VPHP_PHP_SDK, VPHP_CC, VPHP_V_GC'
 
 struct Command {
 	action  string
@@ -114,8 +114,8 @@ fn run(command Command) ! {
 		create_project(command.project)!
 		return
 	}
-	if os.user_os() !in ['macos', 'linux'] {
-		return error('the standalone builder currently targets macOS and Linux')
+	if os.user_os() !in ['macos', 'linux', 'windows'] {
+		return error('the standalone builder currently targets macOS, Linux and Windows')
 	}
 	entries := os.ls(command.project)!
 	if !entries.any(is_extension_source(it) && os.is_file(os.join_path(command.project, it))) {
@@ -140,7 +140,9 @@ fn run(command Command) ! {
 	repo := os.dir(runtime)
 	staged := os.join_path(scratch, 'project')
 	os.mkdir(staged)!
-	os.symlink(runtime, os.join_path(scratch, 'vphp'))!
+	if os.user_os() != 'windows' {
+		os.symlink(runtime, os.join_path(scratch, 'vphp'))!
+	}
 	mut sources := []string{}
 	stage_sources(command.project, staged, mut sources)!
 	sources.sort()

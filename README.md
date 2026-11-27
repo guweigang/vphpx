@@ -100,6 +100,15 @@ check. Setup supports macOS and the apt, dnf/yum, pacman, zypper and apk Linux
 families; system authentication or the Apple installer may require interaction.
 Build the bundled executable with `sh cmd/vphp/scripts/package.sh`.
 
+Windows x64 preview uses an x64 MSVC developer prompt, 64-bit non-debug NTS
+PHP, V, Bison, re2c, and the PHP devel pack matching the installed PHP version. Set
+`VPHP_PHP_SDK` to the extracted directory containing `phpize.bat`, then run
+`vphp doctor`, `vphp new hello_ext`, `vphp check hello_ext`,
+`vphp build hello_ext`, and `vphp stub hello_ext`. The resulting extension is
+`hello_ext/build/php_hello_ext.dll`. Windows setup currently checks prerequisites;
+it does not install them automatically. Package the CLI with
+`cmd/vphp/scripts/package-windows.ps1` in PowerShell.
+
 ### 3. Load it in PHP
 
 ```bash
