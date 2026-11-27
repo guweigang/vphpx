@@ -208,12 +208,16 @@ fn (field ClassPropertyFieldBinding) setter_expr() ?string {
 		else {
 			match clean_type(prop.v_type) {
 				'PhpValue' { 'obj.${prop.v_field_name} = vphp.PhpValue.from_zval(arg).retain()' }
-				'PhpObject' { 'obj.${prop.v_field_name} = (vphp.PhpObject.from_zval(arg) or { vphp.PhpObject.invalid() }).retain()' }
+				'PhpObject' {
+					'obj.${prop.v_field_name} = (vphp.PhpObject.from_zval(arg) or { vphp.PhpObject.invalid() }).retain()'
+				}
 				'PhpString' { 'obj.${prop.v_field_name} = vphp.PhpString.coerce(arg).retain()' }
 				'PhpInt' { 'obj.${prop.v_field_name} = vphp.PhpInt.coerce(arg).retain()' }
 				'PhpBool' { 'obj.${prop.v_field_name} = vphp.PhpBool.coerce(arg).retain()' }
 				'PhpDouble' { 'obj.${prop.v_field_name} = vphp.PhpDouble.coerce(arg).retain()' }
-				'PhpArray' { 'obj.${prop.v_field_name} = (vphp.PhpArray.from_zval(arg) or { vphp.PhpArray.empty() }).retain()' }
+				'PhpArray' {
+					'obj.${prop.v_field_name} = (vphp.PhpArray.from_zval(arg) or { vphp.PhpArray.empty() }).retain()'
+				}
 				else { none }
 			}
 		}

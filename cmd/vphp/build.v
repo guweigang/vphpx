@@ -13,6 +13,9 @@ fn build_extension(name string, staged string, runtime string, repo string) !str
 	v_executable := selected_v()
 	mut args := [v_executable, '-nocache', '-enable-globals', '-gc', gc_mode, '-cc', cc, '-path',
 		'${staged}:${repo}:@vmodules:@vlib', '-shared', '-dump-c-flags', flags_file, '-o', transpiled]
+	if os.user_os() == 'linux' && gc_mode == 'boehm' {
+		args << ['-d', 'use_bundled_libgc']
+	}
 	build_script := os.join_path(staged, 'build.v')
 	if os.is_file(build_script) {
 		args << ['-exclude', build_script]

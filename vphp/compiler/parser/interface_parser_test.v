@@ -17,9 +17,12 @@ fn test_static_interface_methods_validate_names() {
 			]
 		}
 		bind_interface_static_methods(mut iface, [
-			ast.Attr{ name: 'vphp.PhpInterfaceStaticMethods', args: {
-				'names': names
-			} },
+			ast.Attr{
+				name: 'vphp.PhpInterfaceStaticMethods'
+				args: {
+					'names': names
+				}
+			},
 		]) or {
 			assert err.msg() == expected
 			continue

@@ -29,6 +29,9 @@ for path in sorted(root.rglob('*')):
 pathlib.Path(sys.argv[2]).write_text(json.dumps(files, ensure_ascii=False))
 PY
 set -- "${VPHP_V:-v}" -prod -path "$repo:@vlib" -d vphp_bundled
+if [ "$(uname -s)" = Darwin ]; then
+    set -- "$@" -cflags -fbracket-depth=1024
+fi
 if [ "${VPHP_CLI_STATIC:-0}" = 1 ]; then
     if [ "$(uname -s)" != Linux ]; then
         printf '%s\n' 'VPHP_CLI_STATIC requires a Linux/musl build environment' >&2

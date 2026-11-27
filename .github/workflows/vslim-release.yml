@@ -40,7 +40,8 @@ on:
       - '.github/workflows/vslim-release.yml'
 
 env:
-  V_REF: master
+  V_REF: local-dev
+  V_COMMIT: 00a5393cc698e52e94dd1ff53f615ef65f854c7d
 
 jobs:
   package:
@@ -107,11 +108,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if command -v v >/dev/null; then
-            v version
-            exit 0
-          fi
-          git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v "$RUNNER_TEMP/vlang"
+          git clone --branch "$V_REF" https://github.com/guweigang/vlang.git "$RUNNER_TEMP/vlang"
+          git -C "$RUNNER_TEMP/vlang" checkout "$V_COMMIT"
           make -C "$RUNNER_TEMP/vlang"
           echo "$RUNNER_TEMP/vlang" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/vlang/v" version
@@ -127,12 +125,10 @@ jobs:
         if: matrix.needs_build && runner.os == 'Windows'
         shell: pwsh
         run: |
-          if (Get-Command v.exe -ErrorAction SilentlyContinue) {
-            & v.exe version
-            exit $LASTEXITCODE
-          }
           $installRoot = Join-Path $env:RUNNER_TEMP "vlang"
-          git clone --depth=1 --branch $env:V_REF https://github.com/vlang/v $installRoot
+          git clone --branch $env:V_REF https://github.com/guweigang/vlang.git $installRoot
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git -C $installRoot checkout $env:V_COMMIT
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & (Join-Path $installRoot "makev.bat") -msvc
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

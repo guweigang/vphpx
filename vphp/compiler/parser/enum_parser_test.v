@@ -8,9 +8,12 @@ fn test_rejects_php_backing_values_on_unit_enum_cases() {
 		attrs:  [ast.Attr{ name: 'php_enum' }, ast.Attr{ name: 'vphp.PhpUnitEnum' }]
 		fields: [ast.ValueField{
 			name:  'first'
-			attrs: [ast.Attr{ name: 'vphp.PhpEnumCaseValue', args: {
-				'value': 'first'
-			} }]
+			attrs: [ast.Attr{
+				name: 'vphp.PhpEnumCaseValue'
+				args: {
+					'value': 'first'
+				}
+			}]
 		}]
 	}, ast.new_table()) or { panic('expected an exported enum') }
 	assert parsed.parse_err == 'PHP unit enum Probe cannot declare PhpEnumCaseValue'

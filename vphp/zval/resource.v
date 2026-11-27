@@ -11,8 +11,8 @@ pub fn make_resource(handle Handle, ptr voidptr, label string) {
 
 pub fn resource_ptr(handle Handle) voidptr {
 	if !handle.is_valid() {
-		return // SAFETY: nil literal in unsafe context
-		 unsafe { nil }
+		// SAFETY: nil literal in unsafe context
+		return unsafe { nil }
 	}
 	return zend.fetch_resource_ptr(handle.raw_ptr())
 }

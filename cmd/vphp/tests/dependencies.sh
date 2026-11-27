@@ -77,6 +77,9 @@ case "$name" in
         ;;
     sudo|doas) exec "$@" ;;
     git|make)
+        if [ "$name" = git ] && [ "${1:-}" = -C ]; then
+            exit 1
+        fi
         printf '%s %s\n' "$name" "$*" >> "$VPHP_TEST_INSTALL_LOG"
         if [ "$name" = git ] && [ "${1:-}" = clone ]; then
             target=

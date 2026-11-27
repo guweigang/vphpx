@@ -81,8 +81,12 @@ pub fn (v PhpValueZBox) is_valid() bool {
 
 pub fn (v PhpValueZBox) to_zval() ZVal {
 	return match v.kind {
-		.borrowed { (v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) }).to_zval() }
-		.request_owned { (v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).to_zval() }
+		.borrowed {
+			(v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) }).to_zval()
+		}
+		.request_owned {
+			(v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).to_zval()
+		}
 		.persistent_owned { (v.persistent_owned or { PersistentOwnedZBox.new_null() }).to_zval() }
 	}
 }
@@ -90,7 +94,9 @@ pub fn (v PhpValueZBox) to_zval() ZVal {
 pub fn (v PhpValueZBox) borrowed() PhpValueZBox {
 	return PhpValueZBox.borrowed(match v.kind {
 		.borrowed { v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) } }
-		.request_owned { (v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).borrowed() }
+		.request_owned {
+			(v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).borrowed()
+		}
 		.persistent_owned { (v.persistent_owned or { PersistentOwnedZBox.new_null() }).borrowed() }
 	})
 }
@@ -98,16 +104,24 @@ pub fn (v PhpValueZBox) borrowed() PhpValueZBox {
 pub fn (v PhpValueZBox) to_borrowed_zbox() RequestBorrowedZBox {
 	return match v.kind {
 		.borrowed { v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) } }
-		.request_owned { (v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).borrowed() }
+		.request_owned {
+			(v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).borrowed()
+		}
 		.persistent_owned { (v.persistent_owned or { PersistentOwnedZBox.new_null() }).borrowed() }
 	}
 }
 
 pub fn (v PhpValueZBox) to_request_owned() RequestOwnedZBox {
 	return match v.kind {
-		.borrowed { (v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) }).clone_request_owned() }
-		.request_owned { (v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).clone_request_owned() }
-		.persistent_owned { (v.persistent_owned or { PersistentOwnedZBox.new_null() }).clone_request_owned() }
+		.borrowed {
+			(v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) }).clone_request_owned()
+		}
+		.request_owned {
+			(v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).clone_request_owned()
+		}
+		.persistent_owned {
+			(v.persistent_owned or { PersistentOwnedZBox.new_null() }).clone_request_owned()
+		}
 	}
 }
 
@@ -139,8 +153,12 @@ pub fn (mut v PhpValueZBox) take_zval() ZVal {
 
 pub fn (v PhpValueZBox) to_persistent_owned_zbox() PersistentOwnedZBox {
 	return match v.kind {
-		.borrowed { (v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) }).clone() }
-		.request_owned { (v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).to_persistent_owned_zbox() }
+		.borrowed {
+			(v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) }).clone()
+		}
+		.request_owned {
+			(v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).to_persistent_owned_zbox()
+		}
 		.persistent_owned { (v.persistent_owned or { PersistentOwnedZBox.new_null() }).clone() }
 	}
 }

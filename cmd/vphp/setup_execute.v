@@ -151,7 +151,7 @@ fn setup_dependencies(apply bool, yes bool) ! {
 				if step.args[0] == 'git' { os.mkdir_all(os.dir(v_directory))! }
 				run_setup_command(elevated_setup_command(step.args, host))!
 				if step.args[0] == 'git' && step.args[1] == 'clone' {
-					os.write_file(os.join_path(v_directory, '.vphp-managed'), 'https://github.com/vlang/v\n')!
+					os.write_file(os.join_path(v_directory, '.vphp-managed'), 'https://github.com/guweigang/vlang.git\n')!
 				}
 			}
 		}

@@ -12,7 +12,8 @@ else
     trap 'rm -rf "$v_root"' 0
 fi
 if [ ! -x "$v_root/v" ]; then
-    git clone --depth 1 https://github.com/vlang/v "$v_root"
+    git clone --branch local-dev https://github.com/guweigang/vlang.git "$v_root"
+    git -C "$v_root" checkout 00a5393cc698e52e94dd1ff53f615ef65f854c7d
     make -C "$v_root" VEXE=./v VROOT=.
 fi
 export PATH="$v_root:$PATH"

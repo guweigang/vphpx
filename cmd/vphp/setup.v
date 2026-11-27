@@ -93,6 +93,7 @@ fn detect_setup_host() SetupHost {
 		resume = remote.exit_code == 0 && remote.output.trim_space().trim_right('/') in [
 			'https://github.com/vlang/v',
 			'https://github.com/vlang/v.git',
+			'https://github.com/guweigang/vlang.git',
 		]
 	}
 	return SetupHost{
@@ -171,6 +172,9 @@ fn dependency_plan(checks []DependencyCheck, host SetupHost, v_directory string,
 		if host.manager == 'zypper' {
 			plan.steps << SetupStep{ args: ['zypper', '--non-interactive', 'refresh'] }
 		}
+		if host.manager == 'pacman' {
+			plan.steps << SetupStep{ args: ['pacman', '-Sy', '--noconfirm'] }
+		}
 		args := match host.manager {
 			'apt-get', 'dnf', 'yum' { [host.manager, 'install', '-y', ...packages] }
 			'pacman' { ['pacman', '-S', '--needed', '--noconfirm', ...packages] }
@@ -188,7 +192,8 @@ fn dependency_plan(checks []DependencyCheck, host SetupHost, v_directory string,
 		} else {
 			if !host.resume_v {
 				plan.steps << SetupStep{
-					args: ['git', 'clone', '--depth', '1', 'https://github.com/vlang/v', v_directory]
+					args: ['git', 'clone', '--depth', '1', '--branch', 'local-dev',
+						'https://github.com/guweigang/vlang.git', v_directory]
 				}
 			}
 			plan.steps << SetupStep{ args: ['make', '-C', v_directory, 'VEXE=./v', 'VROOT=.'] }

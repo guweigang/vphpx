@@ -25,7 +25,8 @@ on:
       - '.github/workflows/vphp-ci.yml'
 
 env:
-  V_REF: master
+  V_REF: local-dev
+  V_COMMIT: 00a5393cc698e52e94dd1ff53f615ef65f854c7d
   VPHP_V_GC: none
 
 jobs:
@@ -41,12 +42,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if command -v v >/dev/null; then
-            v version
-            exit 0
-          fi
           rm -rf /tmp/v /tmp/vlang
-          git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v /tmp/vlang
+          git clone --branch "$V_REF" https://github.com/guweigang/vlang.git /tmp/vlang
+          git -C /tmp/vlang checkout "$V_COMMIT"
           make -C /tmp/vlang
           echo "/tmp/vlang" >> "$GITHUB_PATH"
           /tmp/vlang/v version
@@ -87,12 +85,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if command -v v >/dev/null; then
-            v version
-            exit 0
-          fi
           rm -rf /tmp/v /tmp/vlang
-          git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v /tmp/vlang
+          git clone --branch "$V_REF" https://github.com/guweigang/vlang.git /tmp/vlang
+          git -C /tmp/vlang checkout "$V_COMMIT"
           make -C /tmp/vlang
           echo "/tmp/vlang" >> "$GITHUB_PATH"
           /tmp/vlang/v version
@@ -163,14 +158,12 @@ jobs:
           php-version: ${{ matrix.php-version }}
           coverage: none
 
-      - name: Use the runner's V or bootstrap it
+      - name: Build pinned V fork
         shell: bash
         run: |
-          if command -v v >/dev/null; then
-            exit 0
-          fi
           v_root=$(mktemp -d "$RUNNER_TEMP/vlang.XXXXXX")
-          git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v "$v_root"
+          git clone --branch "$V_REF" https://github.com/guweigang/vlang.git "$v_root"
+          git -C "$v_root" checkout "$V_COMMIT"
           make -C "$v_root"
           echo "$v_root" >> "$GITHUB_PATH"
 

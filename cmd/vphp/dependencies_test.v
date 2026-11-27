@@ -61,8 +61,8 @@ fn test_setup_linux_keeps_v_in_user_directory_and_never_overwrites_it() {
 	assert commands[0] == ['apt-get', 'update']
 	assert commands[1] == ['apt-get', 'install', '-y', 'build-essential', 'libgc-dev', 'php-cli',
 		'php-dev', 'git', 'ca-certificates']
-	assert commands[2] == ['git', 'clone', '--depth', '1', 'https://github.com/vlang/v',
-		'/home/user name/v']
+	assert commands[2] == ['git', 'clone', '--depth', '1', '--branch', 'local-dev',
+		'https://github.com/guweigang/vlang.git', '/home/user name/v']
 	assert commands[3] == ['make', '-C', '/home/user name/v', 'VEXE=./v', 'VROOT=.']
 	occupied := dependency_plan(checks, host, '/home/user name/v', true)
 	assert occupied.blockers.any(it.contains('already exists'))
@@ -150,8 +150,9 @@ fn test_linux_package_recipes_and_privilege_boundaries() {
 	]
 	no_privilege := dependency_plan(checks, SetupHost{ platform: 'linux', manager: 'apt-get' }, '/tools/v', false)
 	assert no_privilege.blockers.any(it.contains('administrator access'))
-	// Avoid pacman -Sy and an unsolicited whole-system upgrade.
-	arch := setup_test_commands(dependency_plan(checks, setup_test_host('linux', 'pacman'), '/tools/v', false))[0]
+	arch_commands := setup_test_commands(dependency_plan(checks, setup_test_host('linux', 'pacman'), '/tools/v', false))
+	assert arch_commands[0] == ['pacman', '-Sy', '--noconfirm']
+	arch := arch_commands[1]
 	assert arch == ['pacman', '-S', '--needed', '--noconfirm', 'base-devel', 'gc', 'php', 'git',
 		'ca-certificates']
 }
