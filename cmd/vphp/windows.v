@@ -34,12 +34,12 @@ fn inspect_windows_dependencies() ![]DependencyCheck {
 		probe_dependency('V', 'VPHP_V', [selected_v(), 'version']),
 		probe_dependency('PHP CLI', 'VPHP_PHP', [php, '-n', '-r', 'echo PHP_VERSION_ID;']),
 	]
-	for tool in ['cl', 'nmake'] {
+	for tool in ['cl', 'nmake', 'bison', 're2c'] {
 		path := find_program(tool) or { '' }
 		checks << DependencyCheck{ key: tool, ok: path != '', detail: if path != '' {
 			path
 		} else {
-			'not found; use an x64 MSVC developer prompt'
+			'not found; install Windows PHP build prerequisites and use an x64 MSVC developer prompt'
 		} }
 	}
 	sdk := windows_sdk_path() or { '' }

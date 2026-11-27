@@ -237,6 +237,15 @@ jobs:
           $sdk = Get-ChildItem $extract -Filter phpize.bat -File -Recurse | Select-Object -First 1
           if (!$sdk) { throw 'phpize.bat missing from PHP devel pack' }
           Add-Content $env:GITHUB_ENV "VPHP_PHP_SDK=$($sdk.DirectoryName)"
+      - name: Install PHP parser tools
+        shell: pwsh
+        run: |
+          python -m pip install --user --disable-pip-version-check winflexbison-bin re2c
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $scripts = (& python -c "import sysconfig; print(sysconfig.get_path('scripts', scheme='nt_user'))").Trim()
+          Copy-Item -Force (Join-Path $scripts 'win_bison.exe') (Join-Path $scripts 'bison.exe')
+          Copy-Item -Force (Join-Path $scripts 'win_flex.exe') (Join-Path $scripts 'flex.exe')
+          Add-Content $env:GITHUB_PATH $scripts
       - name: Package and test Windows CLI
         shell: pwsh
         run: |
