@@ -34,7 +34,10 @@ fn collect_userland_subclasses(elements []repr.PhpRepr, type_versions map[string
 		if entry !is repr.PhpClassRepr {
 			continue
 		}
-		element := entry as repr.PhpClassRepr
+		element := match entry {
+			repr.PhpClassRepr { entry }
+			else { continue }
+		}
 		spec := element.userland_subclass or { continue }
 		if !element.is_native_trait {
 			return error('PhpUserlandSubclass requires a PhpExportTrait declaration on ${element.name}')
@@ -60,7 +63,10 @@ fn collect_userland_subclasses(elements []repr.PhpRepr, type_versions map[string
 	mut ordered := []UserlandSubclass{cap: classes.len}
 	mut versions := type_versions.clone()
 	for element in linker.registration_order(dependencies)! {
-		entry := element as repr.PhpClassRepr
+		entry := match element {
+			repr.PhpClassRepr { element }
+			else { return error('unexpected registration type for userland subclass') }
+		}
 		key := entry.php_name.to_lower()
 		mut cls := classes[key]
 		parent_version := versions[cls.parent.to_lower()]

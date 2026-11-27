@@ -35,7 +35,10 @@ pub fn link_native_trait_uses(mut elements []repr.PhpRepr, signatures_match Nati
 		}
 	}
 	for entry in registration_order(traits)! {
-		mut owner := entry as repr.PhpClassRepr
+		mut owner := match entry {
+			repr.PhpClassRepr { entry }
+			else { return error('unexpected registration type for native trait') }
+		}
 		mut uses := []string{}
 		mut directly_used := map[string]repr.PhpClassRepr{}
 		mut direct_types := map[string]string{}
@@ -44,7 +47,11 @@ pub fn link_native_trait_uses(mut elements []repr.PhpRepr, signatures_match Nati
 			index := indices[key] or {
 				return error('PHP trait ${owner.php_name}: `${name}` must be a native trait exported by this extension')
 			}
-			source := elements[index] as repr.PhpClassRepr
+			source_entry := elements[index]
+			source := match source_entry {
+				repr.PhpClassRepr { source_entry }
+				else { return error('invalid native trait registration: ${name}') }
+			}
 			if key !in directly_used {
 				directly_used[key] = source
 				direct_types[native_trait_type_key(source)] = key

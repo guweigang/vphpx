@@ -167,6 +167,21 @@ jobs:
           make -C "$v_root"
           echo "$v_root" >> "$GITHUB_PATH"
 
+      - name: Build VPHP CLI binary
+        if: matrix.php-version == '8.3'
+        shell: bash
+        run: |
+          sh cmd/vphp/scripts/package.sh "$RUNNER_TEMP/vphp"
+          tar -czf "$RUNNER_TEMP/vphp.tar.gz" -C "$RUNNER_TEMP" vphp
+
+      - name: Upload bundled VPHP CLI
+        if: matrix.php-version == '8.3'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vphp-${{ runner.os }}-${{ matrix.machine }}
+          path: ${{ runner.temp }}/vphp.tar.gz
+          if-no-files-found: error
+
       - name: Check, build, load and lint an external extension
         shell: bash
         env:
@@ -182,14 +197,6 @@ jobs:
             export VFLAGS="${VFLAGS:+$VFLAGS }-d use_bundled_libgc"
           fi
           VPHP_PACKAGE_OUTPUT="$RUNNER_TEMP/vphp" TMPDIR="$RUNNER_TEMP" sh cmd/vphp/tests/smoke.sh
-          tar -czf "$RUNNER_TEMP/vphp.tar.gz" -C "$RUNNER_TEMP" vphp
-
-      - name: Upload bundled VPHP CLI
-        if: matrix.php-version == '8.3'
-        uses: actions/upload-artifact@v4
-        with:
-          name: vphp-${{ runner.os }}-${{ matrix.machine }}
-          path: ${{ runner.temp }}/vphp.tar.gz
 
   linux-static:
     name: Static Linux CLI (${{ matrix.machine }})

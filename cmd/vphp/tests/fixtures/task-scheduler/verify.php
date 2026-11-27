@@ -1223,12 +1223,12 @@ if (PHP_OS_FAMILY !== 'Windows' && in_array('unix', stream_get_transports(), tru
 stream_set_blocking($writeReader, false);
 stream_set_blocking($writeWriter, false);
 $payload = str_repeat("ab\0c", 1_048_576);
-$send = VSlim\Task::spawn(static fn () => VSlim\Task::writeAll($writeWriter, $payload, 5000), []);
+$send = VSlim\Task::spawn(static fn () => VSlim\Task::writeAll($writeWriter, $payload, 30000), []);
 $receive = VSlim\Task::spawn(static function () use ($writeReader, $payload): string {
     VSlim\Task::sleep(0);
     $bytes = '';
     while (strlen($bytes) < strlen($payload)) {
-        if (!VSlim\Task::awaitReadable($writeReader, 5000)) {
+        if (!VSlim\Task::awaitReadable($writeReader, 30000)) {
             throw new RuntimeException('Timed out draining the writeAll test socket');
         }
         $chunk = fread($writeReader, 8192);

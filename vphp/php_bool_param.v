@@ -1,7 +1,7 @@
 module vphp
 
 // PhpBoolParam describes the PHP signature of a V boolean parameter.
-@[attribute]
+@[attribute; repeatable]
 pub struct PhpBoolParam {
 pub:
 	v_name        string
