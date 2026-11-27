@@ -59,6 +59,14 @@ jobs:
             artifact_name: vslim-linux-amd64-binary
             needs_build: true
             emit_only: false
+          - name: linux arm64 bundle
+            runs_on: ubuntu-24.04-arm
+            platform: linux-arm64
+            package_type: binary
+            extension_file: vslim.so
+            artifact_name: vslim-linux-arm64-binary
+            needs_build: true
+            emit_only: false
           - name: linux amd64 PHP 8.6 compatibility
             runs_on: ubuntu-latest
             platform: linux-amd64
@@ -196,7 +204,14 @@ jobs:
         env:
           VPHP_V_GC: none
         run: |
+          if [ "${{ matrix.platform }}" = linux-arm64 ]; then
+            test "$(uname -m)" = aarch64
+            test "$(php -r 'echo php_uname(chr(109));')" = aarch64
+          fi
           make build
+          if [ "${{ matrix.platform }}" = linux-arm64 ]; then
+            readelf -h vslim.so | grep -Eq 'Machine:.*AArch64'
+          fi
 
       - name: Build VSlim extension on Windows
         if: runner.os == 'Windows' && matrix.package_type == 'binary'
@@ -342,7 +357,7 @@ jobs:
             gh release create "$TAG_NAME" \
               --draft \
               --title "VSlim $TAG_NAME" \
-              --notes "VSlim release bundles for PHP 8.5 across Linux, macOS, and Windows amd64."
+              --notes "VSlim release bundles for PHP 8.5 across Linux and macOS amd64/arm64, and Windows amd64."
           shopt -s globstar nullglob
           files=(dist/**/*.zip)
           if [ "${#files[@]}" -eq 0 ]; then
