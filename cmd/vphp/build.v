@@ -13,9 +13,7 @@ fn build_extension(name string, staged string, runtime string, repo string) !str
 	v_executable := selected_v()
 	mut args := [v_executable, '-nocache', '-enable-globals', '-gc', gc_mode, '-cc', cc, '-path',
 		'${staged}:${repo}:@vmodules:@vlib', '-shared', '-dump-c-flags', flags_file, '-o', transpiled]
-	if os.user_os() == 'linux' && gc_mode == 'boehm' {
-		args << ['-d', 'use_bundled_libgc']
-	}
+	args << gc_build_flags(os.user_os(), os.read_file('/etc/alpine-release') or { '' }, gc_mode)
 	build_script := os.join_path(staged, 'build.v')
 	if os.is_file(build_script) {
 		args << ['-exclude', build_script]
@@ -38,6 +36,18 @@ fn build_extension(name string, staged string, runtime string, repo string) !str
 	}
 	run_tool(link)!
 	return output
+}
+
+// Alpine provides a musl-compatible shared collector through gc-dev. The V
+// bundled collector can misidentify data roots when loaded into musl/arm64 PHP.
+fn gc_build_flags(platform string, alpine_release string, gc_mode string) []string {
+	if platform != 'linux' || gc_mode != 'boehm' {
+		return []
+	}
+	if alpine_release.trim_space() != '' {
+		return ['-d', 'dynamic_boehm']
+	}
+	return ['-d', 'use_bundled_libgc']
 }
 
 fn native_flags(path string) ![]string {
