@@ -92,60 +92,40 @@ pub fn persistent_array_value_owned(value vphp.PhpValue) vphp.PhpArray {
 }
 
 pub fn persistent_value_assoc_with_value(value vphp.PhpValue, key string, child vphp.PhpArgInput) vphp.PhpValue {
-	mut out := vphp.PhpArray.new()
-	if key == '' {
-		persistent := out.retain().to_value()
-		out.release()
-		return persistent
+	mut out := if key == '' {
+		vphp.PhpArray.new()
+	} else {
+		value.with_array(fn (arr vphp.PhpArray) vphp.PhpArray {
+			return arr.owned()
+		}) or { vphp.PhpArray.new() }
 	}
-	value.with_value(fn [mut out] (raw_value vphp.PhpValue) bool {
-		if arr := raw_value.as_array() {
-			arr.fold_values[[]int]([]int{}, fn [mut out] (entry_key vphp.PhpValue, entry_value vphp.PhpValue, mut _ []int) {
-				out.set_value(entry_key.to_string(), entry_value)
-			})
-		}
-		return true
-	})
-	out.set(key, child)
-	persistent := out.retain().to_value()
-	out.release()
-	return persistent
+	if key != '' {
+		out.set(key, child)
+	}
+	mut updated := out.take_value()
+	defer {
+		updated.release()
+	}
+	return updated.retain()
 }
 
 pub fn persistent_assoc_without_key(value vphp.PhpArray, key string) vphp.PhpArray {
-	mut out := vphp.PhpArray.new()
-	if value.is_valid() {
-		value.with_array(fn [mut out, key] (arr vphp.PhpArray) bool {
-			arr.fold_values[[]int]([]int{}, fn [mut out, key] (entry_key vphp.PhpValue, entry_value vphp.PhpValue, mut _ []int) {
-				name := entry_key.to_string()
-				if name != key {
-					out.set_value(name, entry_value)
-				}
-			})
-			return true
-		})
+	mut out := value.owned()
+	defer {
+		out.release()
 	}
-	persistent := out.retain()
-	out.release()
-	return persistent
+	out.remove(key)
+	return out.retain()
 }
 
 pub fn persistent_value_assoc_without_key(value vphp.PhpValue, key string) vphp.PhpValue {
-	mut out := vphp.PhpArray.new()
-	value.with_value(fn [mut out, key] (raw_value vphp.PhpValue) bool {
-		if arr := raw_value.as_array() {
-			arr.fold_values[[]int]([]int{}, fn [mut out, key] (entry_key vphp.PhpValue, entry_value vphp.PhpValue, mut _ []int) {
-				name := entry_key.to_string()
-				if name != key {
-					out.set_value(name, entry_value)
-				}
-			})
-		}
-		return true
-	})
-	persistent := out.retain().to_value()
-	out.release()
-	return persistent
+	mut out := value.with_array(fn [key] (arr vphp.PhpArray) vphp.PhpArray {
+		return persistent_assoc_without_key(arr, key)
+	}) or { empty_persistent_array() }
+	defer {
+		out.release()
+	}
+	return out.to_value()
 }
 
 fn is_valid_psr7_parsed_body_value(value vphp.PhpValue) bool {

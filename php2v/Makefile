@@ -26,7 +26,7 @@ run-transpile: php2v
 	./bin/php2v compile $(FILE)
 
 test: php2v
-	v test tests/
+	v -path "src:@vlib" test tests/
 
 clean:
 	rm -rf bin/

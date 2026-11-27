@@ -34,40 +34,18 @@ const tpl_instance_context = 'PHP_METHOD({{CLASS}}, {{PHP_METHOD}}) {
     extern void {{V_FUNC}}(void* v_ptr, vphp_context_internal ctx);
     extern vphp_class_handlers* {{HANDLER_CLASS}}_handlers();
     zend_object *vphp_this_obj = Z_OBJ_P(getThis());
-    vphp_object_addref(vphp_this_obj);
+    vphp_task_native_pin *vphp_this_pin = vphp_pin_native_receiver(vphp_this_obj);
     vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, {{HANDLER_CLASS}}_handlers());
     if (!wrapper->v_ptr) {
-        vphp_object_release(vphp_this_obj);
+        vphp_unpin_native_receiver(vphp_this_obj, vphp_this_pin);
         RETURN_FALSE;
     }
     {{V_FUNC}}(wrapper->v_ptr, ctx);
     if (EG(exception)) {
-        vphp_object_release(vphp_this_obj);
+        vphp_unpin_native_receiver(vphp_this_obj, vphp_this_pin);
         return;
     }
-    vphp_object_release(vphp_this_obj);
-    if (!vphp_validate_internal_return(execute_data, return_value)) {
-        return;
-    }
-}'
-
-const tpl_inherited_instance_context = 'PHP_METHOD({{CLASS}}, {{PHP_METHOD}}) {
-    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
-    extern void {{V_FUNC}}(void* v_ptr, vphp_context_internal ctx);
-    extern vphp_class_handlers* {{HANDLER_CLASS}}_handlers();
-    zend_object *vphp_this_obj = Z_OBJ_P(getThis());
-    vphp_object_addref(vphp_this_obj);
-    vphp_object_wrapper *wrapper = vphp_ensure_owned_instance_binding(vphp_this_obj, {{HANDLER_CLASS}}_handlers());
-    if (!wrapper->v_ptr) {
-        vphp_object_release(vphp_this_obj);
-        RETURN_FALSE;
-    }
-    {{V_FUNC}}(wrapper->v_ptr, ctx);
-    if (EG(exception)) {
-        vphp_object_release(vphp_this_obj);
-        return;
-    }
-    vphp_object_release(vphp_this_obj);
+    vphp_unpin_native_receiver(vphp_this_obj, vphp_this_pin);
     if (!vphp_validate_internal_return(execute_data, return_value)) {
         return;
     }

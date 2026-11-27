@@ -114,33 +114,34 @@ pub fn allowed_methods_for(routes []VSlimRoute, raw_path string) []string {
 		if !ok {
 			continue
 		}
-		allowed = collect_allowed_methods(allowed, route.method)
+		append_allowed_methods(mut allowed, route.method)
 	}
+	append_options(mut allowed)
+	return allowed
+}
+
+fn append_options(mut allowed []string) {
 	if allowed.len > 0 && 'OPTIONS' !in allowed {
 		allowed << 'OPTIONS'
 	}
-	return allowed
 }
 
 pub fn collect_allowed_methods(existing []string, route_method string) []string {
 	mut out := existing.clone()
-	mut incoming := []string{}
-	match route_method {
-		'*' {
-			incoming = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']
-		}
-		'GET' {
-			incoming = ['GET', 'HEAD']
-		}
-		else {
-			incoming = [route_method]
-		}
+	append_allowed_methods(mut out, route_method)
+	return out
+}
+
+fn append_allowed_methods(mut allowed []string, route_method string) {
+	incoming := match route_method {
+		'*' { ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'] }
+		'GET' { ['GET', 'HEAD'] }
+		else { [route_method] }
 	}
 
 	for method in incoming {
-		if method !in out {
-			out << method
+		if method !in allowed {
+			allowed << method
 		}
 	}
-	return out
 }

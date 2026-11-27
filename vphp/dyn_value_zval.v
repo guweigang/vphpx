@@ -1,5 +1,7 @@
 module vphp
 
+import vphp.zval
+
 // from_zval detaches a ZVal into a plain dynamic value tree.
 pub fn DynValue.from_zval(z ZVal) !DynValue {
 	if !z.is_valid() || z.is_null() || z.is_undef() {
@@ -18,24 +20,16 @@ pub fn DynValue.from_zval(z ZVal) !DynValue {
 		return DynValue.of_string(z.to_string())
 	}
 	if z.is_array() {
-		mut out := map[string]DynValue{}
-		mut err_msg := ''
-		z.foreach_with_ctx[voidptr]( // SAFETY: mutable reference to local variable out
-		 unsafe { &mut out }, fn [mut err_msg] (key ZVal, v ZVal, mut ctx voidptr) {
-			if err_msg != '' {
-				return
-			}
-			m := unsafe { &MapDynValue(ctx) }
-			decoded := DynValue.from_zval(v) or {
-				err_msg = err.msg()
-				return
-			}
-			(*m)[key.to_string()] = decoded
-		})
-		if err_msg != '' {
-			return error(err_msg)
+		state := z.foreach_with_ctx(DynArrayDecode{
+			array: DynArray.new_boxed()
+		}, decode_dyn_array_item)
+		if state.err_msg != '' {
+			return error(state.err_msg)
 		}
-		return DynValue.of_map(out)
+		mut array := state.array
+		array.n_next_idx = zval.array_next_index(z.handle())
+		array.next_index_from_php = true
+		return dyn_value_adopt_array(array)
 	}
 	if z.is_callable() {
 		callable := PhpCallable.from_zval(z) or { return error('zval is not callable') }
@@ -101,6 +95,23 @@ pub fn (v DynValue) to_zval(mut out ZVal) ! {
 		}
 		.string_ {
 			out.set_string(v.str)
+		}
+		.array_ {
+			out.array_init()
+			if v.array != unsafe { nil } {
+				mut iter := v.array.iter()
+				for {
+					item := iter.next() or { break }
+					if item.key.type == .int_ {
+						out.add_index_dyn_value(item.key.int_value(), item.val)!
+					} else {
+						out.add_assoc_dyn_value(item.key.to_string(), item.val)!
+					}
+				}
+				if v.array.next_index_from_php {
+					zval.array_restore_next_index(out.handle(), v.array.n_next_idx)
+				}
+			}
 		}
 		.list_ {
 			out.array_init()
@@ -181,4 +192,25 @@ pub fn (v DynValue) new_zval() !ZVal {
 
 pub fn (v DynValue) to_value() !PhpValue {
 	return PhpValue.adopt_zval(v.new_zval()!)
+}
+
+struct DynArrayDecode {
+mut:
+	array   &DynArray
+	err_msg string
+}
+
+fn decode_dyn_array_item(key ZVal, val ZVal, mut state DynArrayDecode) {
+	if state.err_msg != '' {
+		return
+	}
+	decoded := DynValue.from_zval(val) or {
+		state.err_msg = err.msg()
+		return
+	}
+	if key.is_long() {
+		state.array.set_int(key.to_i64(), decoded)
+	} else {
+		state.array.set_str(key.to_string(), decoded)
+	}
 }

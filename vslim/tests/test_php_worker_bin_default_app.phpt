@@ -22,49 +22,11 @@ if (is_file($probe)) {
 <?php
 declare(strict_types=1);
 
-define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-$autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
-if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
-require_once $autoload;
+require_once __DIR__ . '/worker_wire_fixture.php';
 
-$root = dirname(__DIR__);
-$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 2) . '/vhttpd';
-$workerBin = $vhttpdRoot . '/php/package/bin/vphp-worker';
-$extSo = $root . '/vslim.so';
-$sock = sys_get_temp_dir() . '/vslim_php_worker_bin_default_' . getmypid() . '.sock';
-$log = sys_get_temp_dir() . '/vslim_php_worker_bin_default_' . getmypid() . '.log';
-@unlink($sock);
-@unlink($log);
+$client = new WorkerWireFixture();
+echo "worker_ready\n";
 
-$cmd = sprintf(
-    'php -d extension=%s %s --socket %s > %s 2>&1 & echo $!',
-    escapeshellarg($extSo),
-    escapeshellarg($workerBin),
-    escapeshellarg($sock),
-    escapeshellarg($log),
-);
-$out = [];
-exec($cmd, $out, $code);
-$pid = isset($out[0]) ? (int) trim((string) $out[0]) : 0;
-
-$ready = false;
-$deadline = microtime(true) + 5.0;
-while (microtime(true) < $deadline) {
-    if (file_exists($sock)) {
-        $ready = true;
-        break;
-    }
-    usleep(50_000);
-}
-echo $ready ? "worker_ready\n" : "worker_not_ready\n";
-if (!$ready) {
-    if ($pid > 0) {
-        exec(sprintf('kill %d >/dev/null 2>&1', $pid));
-    }
-    exit;
-}
-
-$client = new \VHttpd\PhpWorker\Client($sock);
 $health = $client->request([
     'id' => 'health',
     'method' => 'GET',
@@ -122,9 +84,6 @@ $user = $client->request([
 ]);
 echo $user['status'] . '|' . $user['body'] . PHP_EOL;
 
-if ($pid > 0) {
-    exec(sprintf('kill %d >/dev/null 2>&1', $pid));
-}
 ?>
 --EXPECT--
 worker_ready

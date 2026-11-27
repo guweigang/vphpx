@@ -1,32 +1,11 @@
 import os
+import v.cmdexec
 import vphp.compiler
 
-fn sanitize_ldflags(ldflags string) string {
-	mut kept := []string{}
-	for token in ldflags.split(' ') {
-		t := token.trim_space()
-		if t == '' {
-			continue
-		}
-		if t.starts_with('-L') && t.len > 2 {
-			path := t[2..]
-			if !os.exists(path) {
-				continue
-			}
-		}
-		kept << t
-	}
-	return kept.join(' ')
-}
-
-fn detect_v_root_include_flags() string {
-	v_exe := os.find_abs_path_of_executable('v') or { '' }
-	if v_exe == '' {
-		return ''
-	}
-	v_root := os.dir(os.real_path(v_exe))
+fn detect_v_root_include_flags() []string {
+	v_root := os.dir(os.real_path(@VEXE))
 	if v_root == '' {
-		return ''
+		return []
 	}
 	mut flags := []string{}
 	// Generated C can pull V's compress module, which includes miniz.h from V's tree.
@@ -34,14 +13,14 @@ fn detect_v_root_include_flags() string {
 	if os.exists(zip_include) {
 		flags << '-I${zip_include}'
 	}
-	return flags.join(' ')
+	return flags
 }
 
 fn detect_v_gc_mode() string {
 	gc_mode := os.getenv_opt('VPHP_V_GC') or { '' }
 	mode := gc_mode.trim_space()
 	if mode == '' || mode == 'auto' {
-		res := os.execute('pkg-config --exists bdw-gc')
+		res := os.exec(['pkg-config', '--exists', 'bdw-gc'])
 		if res.exit_code == 0 {
 			return 'boehm'
 		}
@@ -50,28 +29,13 @@ fn detect_v_gc_mode() string {
 	return mode
 }
 
-fn pkg_config_flags(args string) string {
-	cmd := 'pkg-config ${args}'
-	res := os.execute(cmd)
+fn pkg_config_flags(option string) ![]string {
+	args := ['pkg-config', option, 'bdw-gc']
+	res := os.exec(args)
 	if res.exit_code != 0 {
-		eprintln('❌ 执行 `${cmd}` 失败: ${res.output.trim_space()}')
-		exit(1)
+		return error('pkg-config ${option} bdw-gc failed: ${res.output.trim_space()}')
 	}
-	return res.output.trim_space()
-}
-
-fn detect_gc_compile_flags(gc_mode string) string {
-	return match gc_mode {
-		'boehm' { '${pkg_config_flags('--cflags bdw-gc')} -DGC_THREADS=1 -include gc/gc.h' }
-		else { '' }
-	}
-}
-
-fn detect_gc_link_flags(gc_mode string) string {
-	return match gc_mode {
-		'boehm' { pkg_config_flags('--libs bdw-gc') }
-		else { '' }
-	}
+	return os.split_args(res.output)
 }
 
 fn main() {
@@ -117,61 +81,36 @@ fn main() {
 
 	// Step 2: V -> C transpilation
 	transpiled_c := os.join_path(project_root, '${ext_name}_generated.c')
+	flags_path := transpiled_c + '.flags'
 	legacy_transpiled_c := os.join_path(project_root, 'vphp_ext_${ext_name}.c')
 	output_so := os.join_path(project_root, 'vphptest.so')
 	gc_mode := detect_v_gc_mode()
-	gc_compile_flags := detect_gc_compile_flags(gc_mode)
-	gc_link_flags := detect_gc_link_flags(gc_mode)
 	println('🛠️  2. 转译 V 逻辑为 C -> ${transpiled_c}')
 	println('   使用 V GC 模式: ${gc_mode}')
 	os.rm(output_so) or {}
 	os.rm(legacy_transpiled_c) or {}
 
-	v_res :=
-		os.execute('v -nocache -enable-globals -gc ${gc_mode} -path ".:..:@vlib" -shared -o ${transpiled_c} ${project_root}')
+	v_res := os.exec([@VEXE, '-nocache', '-enable-globals', '-gc', gc_mode, '-path', '.:..:@vlib',
+		'-exclude', os.join_path(project_root, 'build.v'), '-shared', '-dump-c-flags', flags_path,
+		'-o', transpiled_c, project_root])
 	if v_res.exit_code != 0 {
 		println('❌ V 编译失败: ${v_res.output}')
+		exit(1)
+	}
+	native_inputs := compiler.native_link_inputs(flags_path) or {
+		eprintln('❌ 无法读取 V 的链接输入: ${err}')
+		exit(1)
+	}
+	objects_path := transpiled_c + '.objects'
+	os.write_file(objects_path, native_inputs.map(os.quoted_path(it)).join('\n') + '\n') or {
+		eprintln('❌ 无法保存 V 的链接输入: ${err}')
 		exit(1)
 	}
 
 	// Step 3: GCC final link
 	println('🛠️  3. GCC 最终链接...')
-	is_macos := os.user_os() == 'macos'
-	mut disabled_warnings := '-Wno-pointer-to-int-cast -Wno-incompatible-pointer-types'
-	if is_macos {
-		disabled_warnings += ' -Wno-initializer-overrides'
-	} else {
-		disabled_warnings += ' -Wno-override-init'
-	}
-	brew_path := '/opt/homebrew'
-	v_root_cflags := detect_v_root_include_flags()
-	os.setenv('C_INCLUDE_PATH', '${brew_path}/include/cjson', true)
-
-	php_inc := os.execute('php-config --includes').output.trim_space()
-	php_ldflags := sanitize_ldflags(os.execute('php-config --ldflags').output.trim_space())
-	php_libs := os.execute('php-config --libs').output.replace('-lzip', '').trim_space()
-	mut platform_link_flags := '-fvisibility=default'
-	if is_macos {
-		platform_link_flags = '-undefined dynamic_lookup -fvisibility=default'
-	}
-	mut extra_compile_flags := ''
-	mut extra_link_flags := ''
-	if gc_compile_flags != '' {
-		extra_compile_flags = '${gc_compile_flags} '
-	}
-	if gc_link_flags != '' {
-		extra_link_flags = ' ${gc_link_flags}'
-	}
-
-	gcc_cmd := 'gcc -shared -fPIC ${disabled_warnings} -DCOMPILE_DL_${ext_name.to_upper()}=1 ' +
-		'${v_root_cflags} ${extra_compile_flags}-I${brew_path}/include -L${brew_path}/lib -lcjson ' +
-		'-DcJSON_GetErrorPos=cJSON_GetErrorPtr ' +
-		'${php_inc} ${transpiled_c} php_bridge.c ../vphp/v_bridge.c -o ${output_so} ' +
-		'-I../vphp ' + '${php_ldflags} ${php_libs}${extra_link_flags} ${platform_link_flags}'
-
-	println('执行命令: ${gcc_cmd}')
-	if os.system(gcc_cmd) != 0 {
-		eprintln('❌ GCC 编译失败')
+	link_extension(ext_name, transpiled_c, output_so, native_inputs, gc_mode) or {
+		eprintln('❌ GCC 编译失败: ${err.msg()}')
 		exit(1)
 	}
 
@@ -181,4 +120,43 @@ fn main() {
 	}
 
 	println('✅ 构建成功！vphptest.so 已就绪。')
+}
+
+fn link_extension(ext_name string, transpiled_c string, output_so string, native_inputs []string, gc_mode string) ! {
+	is_macos := os.user_os() == 'macos'
+	brew_path := '/opt/homebrew'
+	os.setenv('C_INCLUDE_PATH', '${brew_path}/include/cjson', true)
+	php := compiler.php_link_flags('php-config')!
+
+	mut args := ['gcc', '-shared', '-fPIC', '-Wno-pointer-to-int-cast',
+		'-Wno-incompatible-pointer-types']
+	args << if is_macos { '-Wno-initializer-overrides' } else { '-Wno-override-init' }
+	args << ['-D_GNU_SOURCE', '-DCOMPILE_DL_${ext_name.to_upper()}=1']
+	args << detect_v_root_include_flags()
+	if gc_mode == 'boehm' {
+		args << pkg_config_flags('--cflags')!
+		args << ['-DGC_THREADS=1', '-include', 'gc/gc.h']
+	}
+	args << ['-I${brew_path}/include', '-L${brew_path}/lib', '-lcjson',
+		'-DcJSON_GetErrorPos=cJSON_GetErrorPtr']
+	args << php.includes
+	args << [transpiled_c, 'php_bridge.c', '../vphp/v_bridge.c']
+	args << native_inputs
+	args << ['-o', output_so, '-I../vphp']
+	args << php.ldflags
+	args << php.libs
+	if gc_mode == 'boehm' {
+		args << pkg_config_flags('--libs')!
+	}
+	if is_macos {
+		args << ['-undefined', 'dynamic_lookup']
+	} else if os.user_os() == 'linux' {
+		args << '-Wl,-z,nodelete'
+	}
+	args << '-fvisibility=default'
+	println('执行命令: ${cmdexec.display(args[0], args[1..])}')
+	code := os.system_args(args)
+	if code != 0 {
+		return error('gcc exited with code ${code}')
+	}
 }

@@ -2,30 +2,29 @@ module mcpx
 
 import vphp
 
-@[php_attr: 'VHttpd\\Attribute\\Dispatchable("mcp")']
-@[php_class: 'VSlim\\Mcp\\App']
+@[vphp.PhpClassAttribute(name: 'VHttpd\\Attribute\\Dispatchable', args: '"mcp"')]
+@[vphp.PhpExportClass(name: 'VSlim\\Mcp\\App')]
 @[heap]
 pub struct VSlimMcpApp {
 mut:
-	method_handlers       map[string]vphp.PhpCallable @[php_ignore]
-	tool_handlers         map[string]vphp.PhpCallable @[php_ignore]
-	tool_descriptions     map[string]string           @[php_ignore]
-	tool_schemas          map[string]vphp.PhpArray    @[php_ignore]
-	resource_handlers     map[string]vphp.PhpCallable @[php_ignore]
-	resource_names        map[string]string           @[php_ignore]
-	resource_descriptions map[string]string           @[php_ignore]
-	resource_mime_types   map[string]string           @[php_ignore]
-	prompt_handlers       map[string]vphp.PhpCallable @[php_ignore]
-	prompt_descriptions   map[string]string           @[php_ignore]
-	prompt_arguments      map[string]vphp.PhpArray    @[php_ignore]
-	server_info           map[string]string           @[php_ignore]
-	server_capabilities   map[string]vphp.PhpArray    @[php_ignore]
+	method_handlers       map[string]vphp.PhpCallable @[vphp.PhpIgnoreField]
+	tool_handlers         map[string]vphp.PhpCallable @[vphp.PhpIgnoreField]
+	tool_descriptions     map[string]string           @[vphp.PhpIgnoreField]
+	tool_schemas          map[string]vphp.PhpArray    @[vphp.PhpIgnoreField]
+	resource_handlers     map[string]vphp.PhpCallable @[vphp.PhpIgnoreField]
+	resource_names        map[string]string           @[vphp.PhpIgnoreField]
+	resource_descriptions map[string]string           @[vphp.PhpIgnoreField]
+	resource_mime_types   map[string]string           @[vphp.PhpIgnoreField]
+	prompt_handlers       map[string]vphp.PhpCallable @[vphp.PhpIgnoreField]
+	prompt_descriptions   map[string]string           @[vphp.PhpIgnoreField]
+	prompt_arguments      map[string]vphp.PhpArray    @[vphp.PhpIgnoreField]
+	server_info           map[string]string           @[vphp.PhpIgnoreField]
+	server_capabilities   map[string]vphp.PhpArray    @[vphp.PhpIgnoreField]
 }
 
-@[php_arg_name(server_info: 'serverInfo', server_capabilities: 'serverCapabilities')]
-@[php_arg_default(server_info: '[]', server_capabilities: '[]')]
-@[php_arg_optional(server_info: true, server_capabilities: true)]
-@[php_method]
+@[vphp.PhpArgNames(names: 'server_info=serverInfo,server_capabilities=serverCapabilities')]
+@[vphp.PhpArgDefaults(defaults: 'server_info=[],server_capabilities=[]')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimMcpApp) construct(server_info ?vphp.PhpArray, server_capabilities ?vphp.PhpArray) &VSlimMcpApp {
 	app.method_handlers = map[string]vphp.PhpCallable{}
 	app.tool_handlers = map[string]vphp.PhpCallable{}
@@ -58,7 +57,7 @@ pub fn VSlimMcpApp.new_default() &VSlimMcpApp {
 	return app
 }
 
-@[php_method: 'serverInfo']
+@[vphp.PhpExportMethod(name: 'serverInfo')]
 pub fn (mut app VSlimMcpApp) server_info(info vphp.PhpArray) &VSlimMcpApp {
 	for key in info.assoc_keys() {
 		app.server_info[key] = info.value_at(key).to_string()
@@ -66,7 +65,7 @@ pub fn (mut app VSlimMcpApp) server_info(info vphp.PhpArray) &VSlimMcpApp {
 	return &app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimMcpApp) capability(name string, definition vphp.PhpArray) &VSlimMcpApp {
 	key := name.trim_space()
 	if key == '' {
@@ -80,7 +79,7 @@ pub fn (mut app VSlimMcpApp) capability(name string, definition vphp.PhpArray) &
 	return &app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimMcpApp) capabilities(definitions vphp.PhpArray) &VSlimMcpApp {
 	for key in definitions.assoc_keys() {
 		mut definition := definitions.array_value(key) or { vphp.PhpArray.new() }
@@ -90,7 +89,7 @@ pub fn (mut app VSlimMcpApp) capabilities(definitions vphp.PhpArray) &VSlimMcpAp
 	return &app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimMcpApp) register(method string, handler vphp.PhpCallable) &VSlimMcpApp {
 	key := method.trim_space()
 	if key == '' || !handler.is_valid() || !handler.is_callable() {
@@ -106,8 +105,8 @@ pub fn (mut app VSlimMcpApp) register(method string, handler vphp.PhpCallable) &
 	return &app
 }
 
-@[php_arg_name(input_schema: 'inputSchema')]
-@[php_method]
+@[vphp.PhpArgName(v_name: 'input_schema', php_name: 'inputSchema')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimMcpApp) tool(name string, description string, input_schema vphp.PhpArray, handler vphp.PhpCallable) &VSlimMcpApp {
 	key := name.trim_space()
 	if key == '' || !handler.is_valid() || !handler.is_callable() {
@@ -129,8 +128,8 @@ pub fn (mut app VSlimMcpApp) tool(name string, description string, input_schema 
 	return &app
 }
 
-@[php_arg_name(mime_type: 'mimeType')]
-@[php_method]
+@[vphp.PhpArgName(v_name: 'mime_type', php_name: 'mimeType')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimMcpApp) resource(uri string, name string, description string, mime_type string, handler vphp.PhpCallable) &VSlimMcpApp {
 	key := uri.trim_space()
 	if key == '' || !handler.is_valid() || !handler.is_callable() {
@@ -149,7 +148,7 @@ pub fn (mut app VSlimMcpApp) resource(uri string, name string, description strin
 	return &app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimMcpApp) prompt(name string, description string, arguments vphp.PhpArray, handler vphp.PhpCallable) &VSlimMcpApp {
 	key := name.trim_space()
 	if key == '' || !handler.is_valid() || !handler.is_callable() {
@@ -171,44 +170,43 @@ pub fn (mut app VSlimMcpApp) prompt(name string, description string, arguments v
 	return &app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimMcpApp.notification(method string, params vphp.PhpArray) string {
 	payload := new_rpc_notification(method, params)
 	return payload.to_json_with_flags(256)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimMcpApp.request(id vphp.PhpValue, method string, params vphp.PhpArray) string {
 	payload := new_rpc_request(id, method, params)
 	return payload.to_json_with_flags(256)
 }
 
-@[php_arg_name(model_preferences: 'modelPreferences', system_prompt: 'systemPrompt', max_tokens: 'maxTokens', tool_choice: 'toolChoice')]
-@[php_method: 'samplingRequest']
+@[vphp.PhpArgNames(names: 'model_preferences=modelPreferences,system_prompt=systemPrompt,max_tokens=maxTokens,tool_choice=toolChoice')]
+@[vphp.PhpExportMethod(name: 'samplingRequest')]
 pub fn VSlimMcpApp.sampling_request(id vphp.PhpValue, messages vphp.PhpArray, model_preferences vphp.PhpValue, system_prompt string, max_tokens int, temperature vphp.PhpValue, tools vphp.PhpValue, tool_choice vphp.PhpValue) string {
 	payload := new_sampling_request(id, messages, model_preferences, system_prompt, max_tokens,
 		temperature, tools, tool_choice)
 	return payload.to_json_with_flags(256)
 }
 
-@[php_arg_name(protocol_version: 'protocolVersion', session_id: 'sessionId')]
-@[php_method: 'queuedResult']
+@[vphp.PhpArgNames(names: 'protocol_version=protocolVersion,session_id=sessionId')]
+@[vphp.PhpExportMethod(name: 'queuedResult')]
 pub fn VSlimMcpApp.queued_result(id vphp.PhpValue, result vphp.PhpValue, notifications vphp.PhpArray, status int, protocol_version string, session_id string, headers vphp.PhpArray) vphp.PhpArray {
 	return new_queued_result(id, result, notifications, status, protocol_version, session_id,
 		headers_or_default(headers))
 }
 
-@[php_arg_name(protocol_version: 'protocolVersion', session_id: 'sessionId')]
-@[php_method: 'queueMessages']
+@[vphp.PhpArgNames(names: 'protocol_version=protocolVersion,session_id=sessionId')]
+@[vphp.PhpExportMethod(name: 'queueMessages')]
 pub fn VSlimMcpApp.queue_messages(id vphp.PhpValue, result vphp.PhpValue, messages vphp.PhpArray, status int, protocol_version string, session_id string, headers vphp.PhpArray) vphp.PhpArray {
 	return new_queued_result(id, result, messages, status, protocol_version, session_id,
 		headers_or_default(headers))
 }
 
-@[php_arg_name(session_id: 'sessionId', protocol_version: 'protocolVersion')]
-@[php_arg_default(result: 'null', status: '200', headers: '[]')]
-@[php_arg_optional(result: true, status: true, headers: true)]
-@[php_method]
+@[vphp.PhpArgNames(names: 'session_id=sessionId,protocol_version=protocolVersion')]
+@[vphp.PhpArgDefaults(defaults: 'result=["queued" => true],status=200,headers=[]')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimMcpApp.notify(id vphp.PhpValue, method string, params vphp.PhpArray, session_id string, protocol_version string, result ?vphp.PhpValue, status int, headers ?vphp.PhpArray) vphp.PhpArray {
 	mut notifications := vphp.PhpArray.new()
 	notifications.push_string(VSlimMcpApp.notification(method, params))
@@ -225,14 +223,14 @@ pub fn VSlimMcpApp.notify(id vphp.PhpValue, method string, params vphp.PhpArray,
 		protocol_version, session_id, header_values)
 }
 
-@[php_arg_name(session_id: 'sessionId', protocol_version: 'protocolVersion')]
-@[php_method: 'queueNotification']
+@[vphp.PhpArgNames(names: 'session_id=sessionId,protocol_version=protocolVersion')]
+@[vphp.PhpExportMethod(name: 'queueNotification')]
 pub fn VSlimMcpApp.queue_notification(id vphp.PhpValue, method string, params vphp.PhpArray, session_id string, protocol_version string) vphp.PhpArray {
 	return VSlimMcpApp.notify(id, method, params, session_id, protocol_version, none, 200, none)
 }
 
-@[php_arg_name(response_id: 'responseId', request_id: 'requestId', session_id: 'sessionId', protocol_version: 'protocolVersion')]
-@[php_method: 'queueRequest']
+@[vphp.PhpArgNames(names: 'response_id=responseId,request_id=requestId,session_id=sessionId,protocol_version=protocolVersion')]
+@[vphp.PhpExportMethod(name: 'queueRequest')]
 pub fn VSlimMcpApp.queue_request(response_id vphp.PhpValue, request_id vphp.PhpValue, method string, params vphp.PhpArray, session_id string, protocol_version string) vphp.PhpArray {
 	mut messages := vphp.PhpArray.new()
 	messages.push_string(VSlimMcpApp.request(request_id, method, params))
@@ -240,8 +238,8 @@ pub fn VSlimMcpApp.queue_request(response_id vphp.PhpValue, request_id vphp.PhpV
 		protocol_version, session_id, default_mcp_headers())
 }
 
-@[php_arg_name(progress_token: 'progressToken', session_id: 'sessionId', protocol_version: 'protocolVersion')]
-@[php_method: 'queueProgress']
+@[vphp.PhpArgNames(names: 'progress_token=progressToken,session_id=sessionId,protocol_version=protocolVersion')]
+@[vphp.PhpExportMethod(name: 'queueProgress')]
 pub fn VSlimMcpApp.queue_progress(id vphp.PhpValue, progress_token vphp.PhpValue, progress vphp.PhpValue, total vphp.PhpValue, message string, session_id string, protocol_version string) vphp.PhpArray {
 	mut params := vphp.PhpArray.new()
 	params.set('progressToken', progress_token)
@@ -256,8 +254,8 @@ pub fn VSlimMcpApp.queue_progress(id vphp.PhpValue, progress_token vphp.PhpValue
 		none, 200, none)
 }
 
-@[php_arg_name(session_id: 'sessionId', protocol_version: 'protocolVersion')]
-@[php_method: 'queueLog']
+@[vphp.PhpArgNames(names: 'session_id=sessionId,protocol_version=protocolVersion')]
+@[vphp.PhpExportMethod(name: 'queueLog')]
 pub fn VSlimMcpApp.queue_log(id vphp.PhpValue, level string, message string, data vphp.PhpValue, logger string, session_id string, protocol_version string) vphp.PhpArray {
 	mut params := vphp.PhpArray.new()
 	params.string('level', level)
@@ -279,8 +277,8 @@ pub fn VSlimMcpApp.queue_log(id vphp.PhpValue, level string, message string, dat
 		none, 200, none)
 }
 
-@[php_arg_name(response_id: 'responseId', sampling_id: 'samplingId', session_id: 'sessionId', protocol_version: 'protocolVersion', model_preferences: 'modelPreferences', system_prompt: 'systemPrompt', max_tokens: 'maxTokens')]
-@[php_method: 'queueSampling']
+@[vphp.PhpArgNames(names: 'response_id=responseId,sampling_id=samplingId,session_id=sessionId,protocol_version=protocolVersion,model_preferences=modelPreferences,system_prompt=systemPrompt,max_tokens=maxTokens')]
+@[vphp.PhpExportMethod(name: 'queueSampling')]
 pub fn VSlimMcpApp.queue_sampling(response_id vphp.PhpValue, sampling_id vphp.PhpValue, messages vphp.PhpArray, session_id string, protocol_version string, model_preferences vphp.PhpValue, system_prompt string, max_tokens int) vphp.PhpArray {
 	mut queue := vphp.PhpArray.new()
 	queue.push_string(VSlimMcpApp.sampling_request(sampling_id, messages, model_preferences,
@@ -289,13 +287,13 @@ pub fn VSlimMcpApp.queue_sampling(response_id vphp.PhpValue, sampling_id vphp.Ph
 		protocol_version, session_id, default_mcp_headers())
 }
 
-@[php_method: 'clientCapabilities']
+@[vphp.PhpExportMethod(name: 'clientCapabilities')]
 pub fn VSlimMcpApp.client_capabilities(frame vphp.PhpArray) vphp.PhpArray {
 	caps_raw := frame.raw_string_at('client_capabilities_json', '')
 	if caps_raw.trim_space() == '' {
 		return vphp.PhpArray.new()
 	}
-	caps := vphp.PhpJson.decode_assoc_value(caps_raw)
+	mut caps := vphp.PhpJson.decode_assoc_value(caps_raw)
 	defer {
 		caps.release()
 	}
@@ -305,7 +303,7 @@ pub fn VSlimMcpApp.client_capabilities(frame vphp.PhpArray) vphp.PhpArray {
 	return caps.as_array() or { vphp.PhpArray.new() }
 }
 
-@[php_method: 'clientSupports']
+@[vphp.PhpExportMethod(name: 'clientSupports')]
 pub fn VSlimMcpApp.client_supports(frame vphp.PhpArray, name string) bool {
 	key := name.trim_space()
 	if key == '' {
@@ -318,7 +316,7 @@ pub fn VSlimMcpApp.client_supports(frame vphp.PhpArray, name string) bool {
 	return !caps.value_at(key).is_null()
 }
 
-@[php_method: 'capabilityError']
+@[vphp.PhpExportMethod(name: 'capabilityError')]
 pub fn VSlimMcpApp.capability_error(frame vphp.PhpArray, message string, status int) vphp.PhpArray {
 	mut out := vphp.PhpArray.new()
 	out.bool('handled', true)
@@ -336,7 +334,7 @@ pub fn VSlimMcpApp.capability_error(frame vphp.PhpArray, message string, status 
 	return out
 }
 
-@[php_method: 'requireCapability']
+@[vphp.PhpExportMethod(name: 'requireCapability')]
 pub fn VSlimMcpApp.require_capability(frame vphp.PhpArray, name string, message string, status int) vphp.PhpValue {
 	caps_raw := frame.raw_string_at('client_capabilities_json', '')
 	if caps_raw.trim_space() == '' {
@@ -345,10 +343,11 @@ pub fn VSlimMcpApp.require_capability(frame vphp.PhpArray, name string, message 
 	if VSlimMcpApp.client_supports(frame, name) {
 		return vphp.PhpValue.null()
 	}
-	return VSlimMcpApp.capability_error(frame, message, status).take_value()
+	mut response := VSlimMcpApp.capability_error(frame, message, status)
+	return response.take_value()
 }
 
-@[php_method: 'handleMcpDispatch']
+@[vphp.PhpExportMethod(name: 'handleMcpDispatch')]
 pub fn (app &VSlimMcpApp) handle_mcp_dispatch(frame vphp.PhpArray) vphp.PhpArray {
 	protocol_version := frame.string_at('protocol_version', '')
 	raw := frame.raw_string_at('jsonrpc_raw', '')
@@ -431,12 +430,12 @@ pub fn (app &VSlimMcpApp) handle_mcp_dispatch(frame vphp.PhpArray) vphp.PhpArray
 	return new_mcp_result_response(id_value, result, 200, protocol_version)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (app &VSlimMcpApp) handle(frame vphp.PhpArray) vphp.PhpArray {
 	return app.handle_mcp_dispatch(frame)
 }
 
-@[php_method: 'handleMcp']
+@[vphp.PhpExportMethod(name: 'handleMcp')]
 pub fn (app &VSlimMcpApp) handle_mcp(frame vphp.PhpArray) vphp.PhpArray {
 	return app.handle_mcp_dispatch(frame)
 }

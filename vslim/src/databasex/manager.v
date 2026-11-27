@@ -2,7 +2,7 @@ module databasex
 
 import vhttpdx
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut db VSlimDatabaseManager) construct() &VSlimDatabaseManager {
 	if db.config_ref == unsafe { nil } {
 		mut cfg := &VSlimDatabaseConfig{}
@@ -15,7 +15,7 @@ pub fn (mut db VSlimDatabaseManager) construct() &VSlimDatabaseManager {
 	return &db
 }
 
-@[php_method: 'setConfig']
+@[vphp.PhpExportMethod(name: 'setConfig')]
 pub fn (mut db VSlimDatabaseManager) set_config(config &VSlimDatabaseConfig) &VSlimDatabaseManager {
 	db.config_ref = config
 	db.config_ref.ensure()
@@ -23,7 +23,7 @@ pub fn (mut db VSlimDatabaseManager) set_config(config &VSlimDatabaseConfig) &VS
 	return &db
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut db VSlimDatabaseManager) config() &VSlimDatabaseConfig {
 	if db.config_ref == unsafe { nil } {
 		mut cfg := &VSlimDatabaseConfig{}
@@ -34,17 +34,17 @@ pub fn (mut db VSlimDatabaseManager) config() &VSlimDatabaseConfig {
 	return db.config_ref
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (db &VSlimDatabaseManager) driver() string {
 	return db.config_ref.driver()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (db &VSlimDatabaseManager) transport() string {
 	return db.config_ref.transport()
 }
 
-@[php_method: 'vhttpdClient']
+@[vphp.PhpExportMethod(name: 'vhttpdClient')]
 pub fn (mut db VSlimDatabaseManager) vhttpd_client() &vhttpdx.VSlimVhttpdClient {
 	db.construct()
 	if db.vhttpd_client_ref == unsafe { nil } {
@@ -56,32 +56,32 @@ pub fn (mut db VSlimDatabaseManager) vhttpd_client() &vhttpdx.VSlimVhttpdClient 
 	return db.vhttpd_client_ref
 }
 
-@[php_method: 'poolSize']
+@[vphp.PhpExportMethod(name: 'poolSize')]
 pub fn (db &VSlimDatabaseManager) pool_size_value() int {
 	return db.config_ref.pool_size_value()
 }
 
-@[php_method: 'isConnected']
+@[vphp.PhpExportMethod(name: 'isConnected')]
 pub fn (db &VSlimDatabaseManager) is_connected() bool {
 	return db.mysql_connected || db.upstream_connected
 }
 
-@[php_method: 'lastError']
+@[vphp.PhpExportMethod(name: 'lastError')]
 pub fn (db &VSlimDatabaseManager) last_error_message() string {
 	return db.last_error
 }
 
-@[php_method: 'affectedRows']
+@[vphp.PhpExportMethod(name: 'affectedRows')]
 pub fn (db &VSlimDatabaseManager) affected_rows_value() int {
 	return int(db.last_affected_rows)
 }
 
-@[php_method: 'lastInsertId']
+@[vphp.PhpExportMethod(name: 'lastInsertId')]
 pub fn (db &VSlimDatabaseManager) last_insert_id_value() i64 {
 	return db.last_insert_id
 }
 
-@[php_method: 'table']
+@[vphp.PhpExportMethod(name: 'table')]
 pub fn (mut db VSlimDatabaseManager) table_query(name string) &VSlimDatabaseQuery {
 	mut query := &VSlimDatabaseQuery{}
 	query.construct()

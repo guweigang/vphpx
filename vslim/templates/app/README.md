@@ -5,6 +5,7 @@
 目标不是展示所有能力，而是给一个可以直接作为新项目起点的目录：
 
 - `bin/vslim`
+- `bin/vslim-build`
 - `composer.json`
 - `Makefile`
 - `public/index.php`
@@ -19,6 +20,7 @@
 - `config/logging.toml`
 - `config/stream.toml`
 - `vhttpd.example.toml`
+- `vslim.yaml`
 - `bootstrap/runtime.php`
 - `bootstrap/cli.php`
 - `app/Providers/AppServiceProvider.php`
@@ -39,7 +41,7 @@
 
 1. 复制这个目录到新项目
 2. 运行 `composer install`
-3. 用 `make serve EXT=./vslim.so` 启 HTTP 入口
+3. 用 `bin/vslim serve`（或 `make serve EXT=./vslim.so`）通过当前 PHP 启动开发服务器
 4. 用 `make vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd` 启 worker 入口
 5. 用 `make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd` 跑一次最薄的 worker 验收
 6. 用 `make cli-help EXT=./vslim.so` 看 CLI 入口
@@ -58,6 +60,8 @@
 模板自带的项目级入口有：
 
 - `make serve EXT=./vslim.so`
+- `make serve-embedded EXT=./vslim.so`（实验性 embedded Runtime）
+- `make build-app`
 - `make vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd`
 - `make smoke-vhttpd EXT=./vslim.so VHTTPD_ROOT=/path/to/vhttpd`
 - `make cli EXT=./vslim.so`
@@ -68,6 +72,10 @@
 如果你不想走 `Makefile`，也可以直接用原始命令：
 
 ```bash
+bin/vslim serve
+bin/vslim serve --host=127.0.0.1 --port=8080
+bin/vslim build --target=linux-arm64
+bin/vslim serve --engine=embedded
 php -d extension=./vslim.so -S 127.0.0.1:8080 public/index.php
 VHTTPD_APP=$(pwd)/public/worker.php /path/to/vhttpd/vhttpd \
   --host 127.0.0.1 \
@@ -87,6 +95,46 @@ php -d extension=./vslim.so bin/vslim about --help
 ```php
 $app = (new VSlim\App())->bootstrapDir(__DIR__);
 ```
+
+## 构建应用镜像
+
+`bin/vslim build` 会把应用代码、`vendor/` 和静态资源写入一个稳定排序的 `.vslim-app` 镜像，同时生成 Runtime 清单：
+
+```bash
+composer install --no-dev --classmap-authoritative
+bin/vslim build --target=linux-arm64
+```
+
+默认输出类似：
+
+```text
+dist/app-template-linux-arm64.vslim-app
+dist/app-template-linux-arm64.manifest.json
+```
+
+`.env`、`.git`、`tests`、`node_modules` 和 `dist` 默认不进入镜像。`vslim.yaml` 只属于 application 运行配置，不承载 PHP Runtime 制作参数。
+
+PHP 版本和基础扩展集合定义在 `vslim/server/runtime/<target>.json`。本机可验证的目标是 `macos-arm64.json` 和 OrbStack 对应的 `linux-arm64.json`；`linux-amd64.json` 留给后续 CI。应用自身的额外扩展需求来自 `composer.json`、`composer.lock` 中的生产 `ext-*` 依赖。Runtime 构建阶段将平台基础集合与应用需求合并；扩展在构建时确定，而不是部署后安装。
+
+构建器默认要求存在 `vendor/autoload.php`，防止生成一个离开源码仓库就无法运行的“成功”产物。`--allow-missing-vendor` 只用于构建器测试，不应进入正式发布流程。
+
+默认产物是“应用镜像”，不是最终独立可执行文件。`vslim/server` 的实验构建链可以进一步嵌入该镜像以及匹配的 VSlim 扩展。
+
+已经准备好 ZTS embed PHP SDK 和对应的 `vslim-server-extension.so` 时，可以验证当前的 host-linked 单文件原型：
+
+```bash
+bin/vslim build \
+  --runtime=embedded \
+  --link-mode=shared \
+  --target=macos-arm64 \
+  --embed-prefix=/usr/local/php-embed \
+  --extension=/path/to/vslim-server-extension.so \
+  --output=dist/my-app
+```
+
+这个可执行文件包含应用镜像和 VSlim ZTS 扩展，首次启动会释放到内容寻址缓存。它当前仍动态依赖匹配的 `libphp.dylib` / `libphp.so`，所以称为 host-linked 原型；只有后续完成 static/mostly-static PHP Runtime 后，才能宣称跨机器自包含。
+
+Linux 发布目标使用 `--link-mode=mostly-static`：`libphp.a` 被链接进应用程序，VSlim 扩展仍在启动时释放并动态加载，因此目标环境需要兼容的 glibc。当前不接受 `--link-mode=static`，因为完全静态的 musl 程序不能按现有方式加载 VSlim 动态扩展。
 
 如果你更喜欢显式装配，模板也提供了 [`bootstrap/app.php`](vslim/templates/app/bootstrap/app.php)。
 它返回一份 bootstrap spec，把 `config_path`、`providers`、`modules`、`middleware_setup`、`routes`、

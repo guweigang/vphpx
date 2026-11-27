@@ -1,5 +1,7 @@
 module builder
 
+import compiler.php_types
+
 struct PhpTypeDecl {
 	raw        string
 	clean      string
@@ -19,7 +21,7 @@ fn parse_php_type_decl(raw_type string) PhpTypeDecl {
 		allow_null = true
 		clean = clean[1..]
 	}
-	clean = normalize_php_type_literal(clean)
+	clean = php_types.normalize_php_type_literal(clean)
 	return PhpTypeDecl{
 		raw:        raw_type
 		clean:      clean
@@ -46,8 +48,8 @@ fn is_class_literal_type(raw_type string) bool {
 
 fn is_php_builtin_type(raw_type string) bool {
 	decl := parse_php_type_decl(raw_type)
-	return decl.clean in ['array', 'string', 'int', 'i64', 'bool', 'f64', 'f32', 'object', 'callable',
-		'iterable', 'mixed', 'null', 'false', 'true', 'static', 'never', 'void']
+	return decl.clean in ['array', 'string', 'int', 'i64', 'bool', 'float', 'f64', 'f32', 'object',
+		'callable', 'iterable', 'mixed', 'null', 'false', 'true', 'static', 'never', 'void']
 }
 
 fn php_builtin_type_info(raw_type string) ?PhpBuiltinTypeInfo {
@@ -77,7 +79,7 @@ fn php_builtin_type_info_from_clean(clean string) ?PhpBuiltinTypeInfo {
 				code: '_IS_BOOL'
 			}
 		}
-		'f64', 'f32' {
+		'float', 'f64', 'f32' {
 			PhpBuiltinTypeInfo{
 				code: 'IS_DOUBLE'
 			}

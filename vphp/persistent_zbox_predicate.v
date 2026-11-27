@@ -106,7 +106,7 @@ pub fn (v PersistentOwnedZBox) is_string() bool {
 pub fn (v PersistentOwnedZBox) is_array() bool {
 	match v.kind {
 		.dyn_data {
-			return v.dyn_data.type in [.list_, .map_]
+			return v.dyn_data.type in [.array_, .list_, .map_]
 		}
 		.fallback_zval {
 			return v.z.is_array()

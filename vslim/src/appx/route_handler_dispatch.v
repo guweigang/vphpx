@@ -30,12 +30,13 @@ fn (app &VSlimApp) resolve_middleware_target(handler vphp.PhpValue) !(vphp.PhpVa
 		method := if parts.len >= 2 { parts[1] } else { '' }
 		return service, method
 	}
-	return handler, ''
+	return handler.borrowed(), ''
 }
 
 fn (app &VSlimApp) resolve_phase_middleware_target(handler vphp.PhpValue) !vphp.PhpValue {
-	target, explicit_method := app.resolve_middleware_target(handler)!
+	mut target, explicit_method := app.resolve_middleware_target(handler)!
 	if !middlewarex.is_phase_middleware_target(target, explicit_method) {
+		target.release()
 		return error('Phase middleware must implement Psr\\Http\\Server\\MiddlewareInterface')
 	}
 	return target
@@ -49,13 +50,15 @@ fn (app &VSlimApp) resolve_route_target(handler vphp.PhpValue) !(vphp.PhpValue, 
 		if !app.has_container() {
 			return error('Route handler container is not configured')
 		}
-		target_value := app.resolve_container_service(handler.to_string())!
+		mut target_value := app.resolve_container_service(handler.to_string())!
 		if !target_value.is_object() {
+			target_value.release()
 			return error('Route handler service "${handler.to_string()}" must be an object')
 		}
 		if target_value.is_instance_of('Psr\\Http\\Server\\RequestHandlerInterface') {
 			return target_value, 'handle'
 		}
+		target_value.release()
 		return error('Route handler service "${handler.to_string()}" must implement Psr\\Http\\Server\\RequestHandlerInterface')
 	}
 	if handler.is_array() {
@@ -66,15 +69,18 @@ fn (app &VSlimApp) resolve_route_target(handler vphp.PhpValue) !(vphp.PhpValue, 
 		if parts.len != 2 || parts[0] == '' || parts[1].trim_space() == '' {
 			return error('Route handler array must be ["service", "method"]')
 		}
-		target_value := app.resolve_container_service(parts[0])!
-		routex.validate_route_service_method(target_value, parts[0], parts[1])!
+		mut target_value := app.resolve_container_service(parts[0])!
+		routex.validate_route_service_method(target_value, parts[0], parts[1]) or {
+			target_value.release()
+			return err
+		}
 		return target_value, parts[1]
 	}
 	return handler, ''
 }
 
 fn (app &VSlimApp) bind_route_target_if_supported(target vphp.PhpValue) {
-	target_obj := target.as_object() or { return }
+	target_obj := target.require_object() or { return }
 	if target_obj.is_instance_of('Psr\\Http\\Server\\MiddlewareInterface') {
 		// Cached middleware instances should be bound once at registration or
 		// first construction, not rebound on every dispatch.
@@ -92,7 +98,10 @@ fn (app &VSlimApp) dispatch_route_handler(handler vphp.PhpValue, payload vphp.Ph
 		return error('Invalid route handler')
 	}
 	if handler.is_string() || handler.is_array() {
-		target, method := app.resolve_route_target(handler)!
+		mut target, method := app.resolve_route_target(handler)!
+		defer {
+			target.release()
+		}
 		app.bind_route_target_if_supported(target)
 		mut psr_payload := httpx.normalize_psr15_server_request(payload, route_params)
 		defer {
@@ -101,7 +110,7 @@ fn (app &VSlimApp) dispatch_route_handler(handler vphp.PhpValue, payload vphp.Ph
 		mut route_args := []vphp.PhpArgInput{}
 		route_args << psr_payload
 		mut result := routex.call_route_target_method(target, method, route_args)
-		return routex.route_handler_response(result)
+		return routex.route_handler_response(mut result)
 	}
 	if httpx.is_psr15_request_handler(handler) {
 		mut psr_payload := httpx.normalize_psr15_server_request(payload, route_params)
@@ -114,16 +123,16 @@ fn (app &VSlimApp) dispatch_route_handler(handler vphp.PhpValue, payload vphp.Ph
 	defer {
 		psr_payload.release()
 	}
-	if callable := handler.as_callable() {
+	if callable := vphp.PhpCallable.from_zval(handler.to_zval()) {
 		mut result := callable.invoke(psr_payload)
-		return routex.route_handler_response(result)
+		return routex.route_handler_response(mut result)
 	}
-	if handler_obj := handler.as_object() {
+	if handler_obj := vphp.PhpObject.from_zval(handler.to_zval()) {
 		if httpx.is_psr15_request_handler_like_object(handler_obj) {
 			return error('Route handler object must implement Psr\\Http\\Server\\RequestHandlerInterface')
 		}
 		if liveviewx.is_live_route_handler_object(handler_obj) {
-			effective_payload := if httpx.is_psr_server_request_payload(payload) {
+			mut effective_payload := if httpx.is_psr_server_request_payload(payload) {
 				httpx.legacy_middleware_payload(payload, route_params)
 			} else {
 				payload.owned()

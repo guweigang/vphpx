@@ -2,19 +2,20 @@ module vphp
 
 import vphp.zend
 
+// Values are the Zend zval type tags from zend_types.h.
 pub enum PHPType {
 	unknown   = -1
-	undef     = zend.is_undef
-	null      = zend.is_null
-	false_    = zend.is_false
-	true_     = zend.is_true
-	long      = zend.is_long
-	double    = zend.is_double
-	string    = zend.is_string
-	array     = zend.is_array
-	object    = zend.is_object
-	resource  = zend.is_resource
-	reference = zend.is_reference
+	undef     = 0
+	null      = 1
+	false_    = 2
+	true_     = 3
+	long      = 4
+	double    = 5
+	string    = 6
+	array     = 7
+	object    = 8
+	resource  = 9
+	reference = 10
 }
 
 pub fn PHPType.from_id(id int) PHPType {

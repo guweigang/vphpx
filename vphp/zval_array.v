@@ -29,6 +29,18 @@ pub fn (v ZVal) add_assoc_zval(key string, val ZVal) {
 	zval.array_add_assoc_zval(v.handle(), key, val.handle())
 }
 
+pub fn (v ZVal) add_index_zval(index i64, val ZVal) {
+	zval.array_add_index_zval(v.handle(), index, val.handle())
+}
+
+pub fn (v ZVal) remove_array_key(key string) bool {
+	return zval.array_remove_key(v.handle(), key)
+}
+
+pub fn (v ZVal) remove_array_index(index i64) bool {
+	return zval.array_remove_index(v.handle(), index)
+}
+
 fn (v ZVal) add_assoc_dyn_value(key string, val DynValue) ! {
 	mut temp := RequestOwnedZBox.new_null()
 	defer {
@@ -37,6 +49,16 @@ fn (v ZVal) add_assoc_dyn_value(key string, val DynValue) ! {
 	mut sub := temp.to_zval()
 	val.to_zval(mut sub)!
 	v.add_assoc_zval(key, sub)
+}
+
+fn (v ZVal) add_index_dyn_value(index i64, val DynValue) ! {
+	mut temp := RequestOwnedZBox.new_null()
+	defer {
+		temp.release()
+	}
+	mut sub := temp.to_zval()
+	val.to_zval(mut sub)!
+	v.add_index_zval(index, sub)
 }
 
 pub fn (v ZVal) push_string(s string) {
@@ -99,7 +121,7 @@ pub fn (v ZVal) keys() ZVal {
 	mut out := ZVal.new_null()
 	out.array_init()
 	v.foreach_with_ctx[ZVal](out, fn (key ZVal, _ ZVal, mut acc ZVal) {
-		acc.add_next_val(key.dup())
+		acc.add_next_val(key)
 	})
 	return out
 }
@@ -113,7 +135,7 @@ pub fn (v ZVal) values() ZVal {
 	mut out := ZVal.new_null()
 	out.array_init()
 	v.foreach_with_ctx[ZVal](out, fn (_ ZVal, val ZVal, mut acc ZVal) {
-		acc.add_next_val(val.dup())
+		acc.add_next_val(val)
 	})
 	return out
 }
@@ -150,8 +172,17 @@ pub fn (v ZVal) get(key string) !ZVal {
 	return ZVal.from_handle(res)
 }
 
-// value_at returns the value for a string array key, or a request-owned null
-// value when the key is absent. Use get() when absence should remain explicit.
+// find_array_key borrows a value using PHP string-key rules, including null.
+pub fn (v ZVal) find_array_key(key string) ?ZVal {
+	res := zval.array_find_string_key(v.handle(), key)
+	if !res.is_valid() {
+		return none
+	}
+	return ZVal.from_handle(res)
+}
+
+// value_at returns a request-owned null when get() finds no non-null value.
+// Use find_array_key() to distinguish a null entry from a missing key.
 pub fn (v ZVal) value_at(key string) ZVal {
 	return v.get(key) or { ZVal.new_null() }
 }
@@ -194,25 +225,16 @@ pub fn (v ZVal) bool_at(key string, default_value bool) bool {
 	return raw.to_string().trim_space().to_lower() in ['1', 'true', 'yes', 'on']
 }
 
+// get_key borrows the value at a PHP integer or string key, including null.
 pub fn (v ZVal) get_key(key ZVal) !ZVal {
-	if !v.is_valid() || zval.is_null(v.handle()) {
+	if !v.is_array() {
 		return error('invalid zval or not an array')
 	}
-	if key.is_long() {
-		index := key.to_i64()
-		if index < 0 {
-			return error('negative array index ${index} is not supported')
-		}
-		res := zval.array_get_index(v.handle(), int(index))
-		if !res.is_valid() || zval.is_null(res) {
-			return error('index ${index} not found')
-		}
-		return ZVal.from_handle(res)
+	res := zval.array_find_key(v.handle(), key.handle())
+	if !res.is_valid() {
+		return error('array key not found or unsupported key type: ${key.type_name()}')
 	}
-	if key.is_string() {
-		return v.get(key.to_string())
-	}
-	return error('unsupported array key type: ${key.type_name()}')
+	return ZVal.from_handle(res)
 }
 
 // 按字符串 key 取值（返回默认值）

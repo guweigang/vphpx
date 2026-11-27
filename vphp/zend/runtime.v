@@ -32,7 +32,7 @@ pub fn throw_exception_object(exception &C.zval) {
 
 pub fn throw_exception_object_ptr(exception voidptr) {
 	throw_exception_object( // SAFETY: exception is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(exception) })
+	unsafe { &C.zval(exception) })
 }
 
 pub fn has_exception() bool {
@@ -45,8 +45,8 @@ pub fn exception_message() string {
 	if written <= 0 {
 		return ''
 	}
-	return // SAFETY: buffer contains valid UTF-8 of known length
-	 unsafe { (&char(&buffer[0])).vstring_with_len(written).clone() }
+	// SAFETY: buffer contains valid UTF-8 of known length
+	return unsafe { (&char(&buffer[0])).vstring_with_len(written).clone() }
 }
 
 pub fn exception_message_opt() ?string {
@@ -64,6 +64,14 @@ pub fn clear_exception() {
 	C.vphp_clear_exception()
 }
 
+pub fn take_exception(result voidptr) bool {
+	return unsafe { C.vphp_take_exception(&C.zval(result)) }
+}
+
+pub fn append_exception(primary voidptr, previous voidptr) {
+	unsafe { C.vphp_append_exception(&C.zval(primary), &C.zval(previous)) }
+}
+
 pub fn report_error(level int, msg string) {
 	// SAFETY: C interop block with valid pointer arguments
 	unsafe {
@@ -78,11 +86,61 @@ pub fn output_write(msg string) {
 	}
 }
 
+fn C.vphp_init_fiber_observers()
+fn C.vphp_current_fiber_id() usize
+fn C.GC_disable()
+fn C.GC_enable()
+fn C.GC_add_roots(voidptr, voidptr)
+fn C.GC_remove_roots(voidptr, voidptr)
+
+@[export: 'vphp_has_boehm_gc']
+fn has_boehm_gc() bool {
+	$if gcboehm ? {
+		return true
+	} $else {
+		return false
+	}
+}
+
+@[export: 'vphp_pause_v_gc']
+fn pause_v_gc() {
+	$if gcboehm ? {
+		C.GC_disable()
+	}
+}
+
+@[export: 'vphp_resume_v_gc']
+fn resume_v_gc() {
+	$if gcboehm ? {
+		C.GC_enable()
+	}
+}
+
+@[export: 'vphp_add_v_gc_roots']
+fn add_v_gc_roots(low voidptr, high voidptr) {
+	$if gcboehm ? {
+		C.GC_add_roots(low, high)
+	}
+}
+
+@[export: 'vphp_remove_v_gc_roots']
+fn remove_v_gc_roots(low voidptr, high voidptr) {
+	$if gcboehm ? {
+		C.GC_remove_roots(low, high)
+	}
+}
+
+pub fn current_fiber_id() usize {
+	return C.vphp_current_fiber_id()
+}
+
 pub fn framework_init(module_number int) {
 	// SAFETY: C interop block with valid pointer arguments
 	unsafe {
 		C.vphp_init_registry()
 		C.vphp_init_resource_system(module_number)
+		C.vphp_init_generator_system(module_number)
+		C.vphp_init_fiber_observers()
 		C.vphp_install_runtime_binding_hooks()
 	}
 }
@@ -121,7 +179,7 @@ pub fn autorelease_add(z &C.zval) {
 
 pub fn autorelease_add_ptr(z voidptr) {
 	autorelease_add( // SAFETY: z is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(z) })
+	unsafe { &C.zval(z) })
 }
 
 pub fn autorelease_forget(z &C.zval) {
@@ -130,7 +188,7 @@ pub fn autorelease_forget(z &C.zval) {
 
 pub fn autorelease_forget_ptr(z voidptr) {
 	autorelease_forget( // SAFETY: z is a valid zval pointer from Zend runtime
-	 unsafe { &C.zval(z) })
+	unsafe { &C.zval(z) })
 }
 
 pub fn autorelease_drain(mark int) {

@@ -18,6 +18,14 @@ $model = (new VSlim\Database\Model())
     ]);
 
 echo json_encode($model->attributes(), JSON_UNESCAPED_SLASHES) . PHP_EOL;
+$get = new ReflectionMethod($model, 'get');
+$fallback = $get->getParameters()[1];
+if ($get->getNumberOfRequiredParameters() !== 2 || $fallback->getName() !== 'defaultValue'
+    || (string) $fallback->getType() !== 'mixed' || $model->get(defaultValue: null, key: 'missing') !== null
+    || $model->get(defaultValue: 'fallback', key: 'missing') !== 'fallback'
+    || $model->get(defaultValue: 'fallback', key: 'name') !== 'alice') {
+    throw new RuntimeException('Unexpected Model::get signature or fallback');
+}
 echo ($model->exists() ? 'exists' : 'new') . PHP_EOL;
 echo $model->newQuery()->toSql() . PHP_EOL;
 echo $model->findQuery(7)->toSql() . PHP_EOL;

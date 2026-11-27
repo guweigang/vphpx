@@ -14,12 +14,33 @@ on:
           - macos-amd64
           - macos-arm64
           - windows-amd64
+      macos_runner:
+        description: macOS version for manually dispatched jobs
+        required: false
+        default: '15'
+        type: choice
+        options:
+          - '15'
+          - '26'
   push:
+    branches:
+      - main
+    paths:
+      - 'vslim/**'
+      - 'vphp/**'
+      - 'vphptest/run-tests.php'
+      - '.github/workflows/vslim-release.yml'
     tags:
       - 'vslim-*'
+  pull_request:
+    paths:
+      - 'vslim/**'
+      - 'vphp/**'
+      - 'vphptest/run-tests.php'
+      - '.github/workflows/vslim-release.yml'
 
 env:
-  V_VERSION: '0.5.1'
+  V_REF: master
 
 jobs:
   package:
@@ -37,8 +58,16 @@ jobs:
             artifact_name: vslim-linux-amd64-binary
             needs_build: true
             emit_only: false
+          - name: linux amd64 PHP 8.6 compatibility
+            runs_on: ubuntu-latest
+            platform: linux-amd64
+            php-version: '8.6'
+            package_type: binary
+            extension_file: vslim.so
+            needs_build: true
+            verify_only: true
           - name: macos amd64 bundle
-            runs_on: macos-15-intel
+            runs_on: ${{ inputs.macos_runner == '26' && 'macos-26-intel' || 'macos-15-intel' }}
             platform: macos-amd64
             package_type: binary
             extension_file: vslim.so
@@ -46,7 +75,7 @@ jobs:
             needs_build: true
             emit_only: false
           - name: macos arm64 bundle
-            runs_on: macos-15
+            runs_on: ${{ inputs.macos_runner == '26' && 'macos-26' || 'macos-15' }}
             platform: macos-arm64
             package_type: binary
             extension_file: vslim.so
@@ -54,7 +83,7 @@ jobs:
             needs_build: true
             emit_only: false
           - name: windows amd64 bundle
-            runs_on: windows-latest
+            runs_on: windows-2022
             platform: windows-amd64
             package_type: binary
             extension_file: php_vslim.dll
@@ -66,10 +95,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.5
+      - name: Setup PHP ${{ matrix.php-version || '8.5' }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: ${{ matrix.php-version || '8.5' }}
           coverage: none
           extensions: zip
 
@@ -78,43 +107,35 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          case "${{ matrix.platform }}" in
-            linux-amd64) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_linux.zip" ;;
-            macos-amd64) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_macos_x86_64.zip" ;;
-            macos-arm64) v_url="https://github.com/vlang/v/releases/download/${V_VERSION}/v_macos_arm64.zip" ;;
-            *) echo "unsupported platform: ${{ matrix.platform }}"; exit 1 ;;
-          esac
-          curl -fsSL "$v_url" -o /tmp/v.zip
-          rm -rf /tmp/v /tmp/vlang
-          unzip -q /tmp/v.zip -d /tmp
-          chmod +x /tmp/v/v
-          mv /tmp/v /tmp/vlang
-          echo "/tmp/vlang" >> "$GITHUB_PATH"
-          /tmp/vlang/v version
+          if command -v v >/dev/null; then
+            v version
+            exit 0
+          fi
+          git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v "$RUNNER_TEMP/vlang"
+          make -C "$RUNNER_TEMP/vlang"
+          echo "$RUNNER_TEMP/vlang" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/vlang/v" version
 
       - name: Setup MSVC on Windows
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: amd64
+          toolset: '14.44'
 
       - name: Setup V on Windows
         if: matrix.needs_build && runner.os == 'Windows'
         shell: pwsh
         run: |
-          $vUrl = "https://github.com/vlang/v/releases/download/$env:V_VERSION/v_windows.zip"
-          $zipPath = Join-Path $env:RUNNER_TEMP "v.zip"
-          $extractRoot = Join-Path $env:RUNNER_TEMP "v-extract"
+          if (Get-Command v.exe -ErrorAction SilentlyContinue) {
+            & v.exe version
+            exit $LASTEXITCODE
+          }
           $installRoot = Join-Path $env:RUNNER_TEMP "vlang"
-          Invoke-WebRequest -Uri $vUrl -OutFile $zipPath
-          if (Test-Path $extractRoot) {
-            Remove-Item -Recurse -Force $extractRoot
-          }
-          if (Test-Path $installRoot) {
-            Remove-Item -Recurse -Force $installRoot
-          }
-          Expand-Archive -Path $zipPath -DestinationPath $extractRoot -Force
-          Move-Item -Force (Join-Path $extractRoot "v") $installRoot
+          git clone --depth=1 --branch $env:V_REF https://github.com/vlang/v $installRoot
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & (Join-Path $installRoot "makev.bat") -msvc
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Add-Content -Path $env:GITHUB_PATH -Value $installRoot
           & (Join-Path $installRoot "v.exe") version
 
@@ -193,32 +214,60 @@ jobs:
           & cl
           & nmake /?
           & v.exe -cc msvc -path ".;..;@vlib" run build.v -emit-only
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\scripts\build_windows_dll.ps1
 
-      - name: Smoke check binary bundle
+      - name: Run architecture scan and PHPT smoke tests
         if: matrix.package_type == 'binary' && runner.os != 'Windows'
         working-directory: vslim
         shell: bash
         run: |
+          v test tests/boundary_scan_test.v
           TEST_PHP_EXECUTABLE="$(command -v php)" php ../vphptest/run-tests.php -q --show-all -d extension=./${{ matrix.extension_file }} \
             tests/test_vslim_database_bundle_smoke.phpt \
             tests/test_vslim_config_toml.phpt \
+            tests/test_vslim_container_lazy_proxy.phpt \
             tests/test_vslim_psr7_psr17_interface_contracts.phpt \
+            tests/test_vslim_psr7_uri_copy.phpt \
+            tests/test_vslim_psr6_clock_integration.phpt \
+            tests/test_vslim_psr16_clock_integration.phpt \
+            tests/test_vslim_psr14_contracts.phpt \
+            tests/test_vslim_request_state.phpt \
+            tests/test_vslim_stream_response.phpt \
+            tests/test_vslim_stream_static_factory.phpt \
+            tests/test_vslim_stub_generator.phpt \
             tests/test_vslim_template_project_metadata.phpt
 
-      - name: Smoke check binary bundle on Windows
+      - name: Run architecture scan and PHPT smoke tests on Windows
         if: matrix.package_type == 'binary' && runner.os == 'Windows'
         working-directory: vslim
         shell: pwsh
         env:
           VSLIM_CLI_DEBUG_FILE: ${{ runner.temp }}\vslim-cli-debug.log
         run: |
+          & v.exe -cc msvc test tests/boundary_scan_test.v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $env:TEST_PHP_EXECUTABLE = (Get-Command php).Source
+          $extension = (Resolve-Path ".\${{ matrix.extension_file }}").Path
+          $sdkBin = Join-Path $env:VSLIM_MYSQL_ROOT "bin"
+          $env:PATH = "$(Split-Path -Parent $extension);$sdkBin;$env:PATH"
+          php -n -d "extension=$extension" --ri vslim
+          if ($LASTEXITCODE -ne 0) {
+            & dumpbin /DEPENDENTS $extension
+            exit 1
+          }
           $exitCode = 0
-          php ..\vphptest\run-tests.php -q --show-all -d extension=.\${{ matrix.extension_file }} `
+          php ..\vphptest\run-tests.php -n -q --show-all -d "extension=$extension" `
             tests/test_vslim_database_bundle_smoke.phpt `
+            tests/test_vslim_cli_enum_input_types.phpt `
+            tests/test_vslim_cli_nested_invocation.phpt `
             tests/test_vslim_config_toml.phpt `
+            tests/test_vslim_container_lazy_proxy.phpt `
             tests/test_vslim_psr7_psr17_interface_contracts.phpt `
+            tests/test_vslim_psr7_uri_copy.phpt `
+            tests/test_vslim_psr6_clock_integration.phpt `
+            tests/test_vslim_psr16_clock_integration.phpt `
+            tests/test_vslim_request_state.phpt `
             tests/test_vslim_template_project_metadata.phpt
           if ($LASTEXITCODE -ne 0) {
             $exitCode = $LASTEXITCODE
@@ -230,7 +279,7 @@ jobs:
           exit $exitCode
 
       - name: Build release bundle
-        if: runner.os != 'Windows'
+        if: ${{ !matrix.verify_only && runner.os != 'Windows' && (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch') }}
         working-directory: vslim
         shell: bash
         env:
@@ -252,7 +301,7 @@ jobs:
           fi
 
       - name: Build release bundle on Windows
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch')
         working-directory: vslim
         shell: pwsh
         env:
@@ -266,6 +315,7 @@ jobs:
             --ext-path=".\${{ matrix.extension_file }}"
 
       - name: Upload bundle artifact
+        if: ${{ !matrix.verify_only && (github.ref_type == 'tag' || github.event_name == 'workflow_dispatch') }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}

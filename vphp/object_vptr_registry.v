@@ -6,6 +6,7 @@ pub fn register_vptr_root(ptr voidptr) {
 	object.register_root(ptr)
 }
 
+@[export: 'vphp_ensure_vptr_root']
 pub fn ensure_vptr_root(ptr voidptr) {
 	object.ensure_root(ptr)
 }

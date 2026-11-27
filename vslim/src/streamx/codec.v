@@ -2,12 +2,12 @@ module streamx
 
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimStreamNdjsonDecoder.decode(stream vphp.PhpValue) vphp.PhpArray {
 	return value_subject(stream).ndjson_rows()
 }
 
-@[php_method: 'fromOllama']
+@[vphp.PhpExportMethod(name: 'fromOllama')]
 pub fn VSlimStreamSseEncoder.from_ollama(rows vphp.PhpArray, model string) vphp.PhpArray {
 	return encode_ollama_sse_events(rows, model)
 }
@@ -15,7 +15,7 @@ pub fn VSlimStreamSseEncoder.from_ollama(rows vphp.PhpArray, model string) vphp.
 fn (subject PhpValueSubject) ndjson_rows() vphp.PhpArray {
 	mut rows := vphp.PhpArray.new()
 	stream_value := subject.value
-	stream := stream_value.as_resource() or { return rows }
+	mut stream := stream_value.as_resource() or { return rows }
 	defer {
 		stream.release()
 	}

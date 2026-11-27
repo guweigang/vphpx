@@ -130,12 +130,33 @@ namespace {
     var_dump($client->timeout(5) === $client);
 
     $requestException = new VSlim\Psr18\RequestException('bad request', 0);
+    var_dump($requestException->requestRef === null
+        && $requestException->getRequest() instanceof Psr\Http\Message\RequestInterface);
+    $requestSlot =& $requestException->requestRef;
     $requestException->attachRequest($request);
-    var_dump($requestException->getRequest() === $request);
+    var_dump($requestException->getRequest() === $request && $requestSlot === $request);
+    unset($requestSlot);
 
     $networkException = new VSlim\Psr18\NetworkException('network down', 0);
+    $networkSlot =& $networkException->requestRef;
     $networkException->attachRequest($request);
-    var_dump($networkException->getRequest() === $request);
+    var_dump($networkException->getRequest() === $request && $networkSlot === $request);
+    unset($networkSlot);
+
+    class DerivedNetworkException extends VSlim\Psr18\NetworkException {}
+
+    $otherRequest = $requestFactory->createRequest('POST', 'https://example.com/other');
+    $derived = new DerivedNetworkException(message: 'derived', code: 41, previous: $networkException);
+    $derived->attachRequest($otherRequest);
+    var_dump($derived->getRequest() === $otherRequest
+        && $networkException->getRequest() === $request
+        && $derived->getMessage() === 'derived'
+        && $derived->getCode() === 41
+        && $derived->getPrevious() === $networkException);
+
+    $requestRef = new ReflectionProperty(VSlim\Psr18\NetworkException::class, 'requestRef');
+    var_dump($requestRef->getDeclaringClass()->getName() === VSlim\Psr18\RequestException::class,
+        $requestRef->isPublic() && !$requestRef->hasType(), $requestRef->getValue($networkException) === $request);
 
     $sendRequest = new ReflectionMethod(VSlim\Psr18\Client::class, 'sendRequest');
     $requestExGetRequest = new ReflectionMethod(VSlim\Psr18\RequestException::class, 'getRequest');
@@ -156,6 +177,11 @@ namespace {
 }
 ?>
 --EXPECT--
+bool(true)
+bool(true)
+bool(true)
+bool(true)
+bool(true)
 bool(true)
 bool(true)
 bool(true)

@@ -7,12 +7,22 @@ pub fn (handle Handle) read_property_ptr(name string, rv voidptr) voidptr {
 	return zend.read_property_ptr(handle.raw_ptr(), name, rv)
 }
 
-pub fn (handle Handle) read_property(name string) zval.ReadResult {
+@[params]
+pub struct PropertyReadOptions {
+pub:
+	inherited_storage bool
+}
+
+pub fn (handle Handle) read_property(name string, options PropertyReadOptions) zval.ReadResult {
 	rv := zval.new_request()
 	if !rv.is_valid() {
 		return zval.ReadResult{}
 	}
-	res := handle.read_property_ptr(name, rv.raw_ptr())
+	res := if options.inherited_storage {
+		zend.read_inherited_property_ptr(handle.raw_ptr(), name, rv.raw_ptr())
+	} else {
+		handle.read_property_ptr(name, rv.raw_ptr())
+	}
 	return zval.ReadResult{
 		rv:  rv
 		res: zval.Handle.from_ptr(res)
@@ -21,6 +31,10 @@ pub fn (handle Handle) read_property(name string) zval.ReadResult {
 
 pub fn (handle Handle) write_property_ptr(name string, value voidptr) {
 	zend.write_property_ptr(handle.raw_ptr(), name, value)
+}
+
+pub fn (handle Handle) write_inherited_property_ptr(name string, value voidptr) {
+	zend.write_inherited_property_ptr(handle.raw_ptr(), name, value)
 }
 
 pub fn (handle Handle) has_property(name string) bool {

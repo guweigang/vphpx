@@ -296,6 +296,9 @@ Fields:
 - `php_name`
   - PHP-visible enum class name
 
+- `backing`
+  - Integer, string, or unit (no PHP backing value)
+
 - `cases`
   - Enum cases, stored as `PhpEnumCaseRepr`
 
@@ -307,11 +310,14 @@ Fields:
 
 Fields:
 
-- `name`
-  - Final exported case name
+- `v_name`
+  - Original V case name used for V source and constant references
+
+- `php_name`
+  - Exported case name used for Zend registration and Reflection
 
 - `value`
-  - Literal string value used by code generation
+  - PHP backing value used by code generation for backed enums
 
 ## Function Repr
 

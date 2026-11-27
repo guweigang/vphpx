@@ -91,7 +91,7 @@ pub fn PersistentOwnedZBox.of_object(z ZVal) PersistentOwnedZBox {
 }
 
 pub fn own_persistent_dyn(value DynValue) PersistentOwnedZBox {
-	return PersistentOwnedZBox.from_dyn(value)
+	return PersistentOwnedZBox.from_dyn_checked(value) or { PersistentOwnedZBox.new_null() }
 }
 
 pub fn PersistentOwnedZBox.from_zval(z ZVal) PersistentOwnedZBox {
@@ -118,10 +118,18 @@ pub fn PersistentOwnedZBox.from_dyn(value DynValue) PersistentOwnedZBox {
 	return DynValue.persistent_owned_zbox(value)
 }
 
+pub fn PersistentOwnedZBox.from_dyn_checked(value DynValue) !PersistentOwnedZBox {
+	return DynValue.persistent_owned_zbox(value.to_request_escapable()!)
+}
+
 // of_data is the preferred long-lived entry point when the caller already has
 // detached V-side data instead of a Zend value.
 pub fn PersistentOwnedZBox.of_data(value DynValue) PersistentOwnedZBox {
 	return PersistentOwnedZBox.from_dyn(value)
+}
+
+pub fn PersistentOwnedZBox.of_checked_data(value DynValue) !PersistentOwnedZBox {
+	return PersistentOwnedZBox.from_dyn_checked(value)
 }
 
 pub fn PersistentOwnedZBox.from_detached_zval(z ZVal) ?PersistentOwnedZBox {
@@ -192,5 +200,5 @@ pub fn PersistentOwnedZBox.new_string(s string) PersistentOwnedZBox {
 }
 
 pub fn PersistentOwnedZBox.new_array() PersistentOwnedZBox {
-	return PersistentOwnedZBox.from_dyn(DynValue.of_list([]DynValue{}))
+	return PersistentOwnedZBox.from_dyn(DynValue.empty_array())
 }

@@ -31,12 +31,40 @@ shim strategy:
   five-argument form with a cache slot while PHP 8.5 uses the four-argument
   form without it. These are shim-worthy but do not justify dropping PHP 8.2.
 
+- PHP 8.6 uses runtime `zend_arg_info` with `zend_string` names for native
+  closures and property setters. VPHP converts the generated arginfo on
+  that branch. PHP 8.2–8.5 use the existing internal arginfo layout.
+- PHP 8.6 also takes ownership of native trait metadata, exposes a different
+  property variance entry point, and asks internal functions to unwrap
+  reference returns for by-value calls. VPHP handles these at compile time
+  with `PHP_VERSION_ID >= 80600`.
+
 The practical policy is: maintain PHP 8.2+ support while 8.2 remains officially
 supported by PHP, and revisit the minimum after PHP 8.2 reaches end-of-life.
 
-`vphp-ci.yml` must keep a PHP 8.2, 8.3, 8.4, and 8.5 matrix for `vphptest`.
-Local development may only have one PHP minor installed, so CI is the required
-cross-version confirmation for compatibility shims.
+`vphp-ci.yml` builds and tests `vphptest` and standalone extensions against
+PHP 8.2 through 8.6. Each job compiles against its own PHP SDK. The standalone
+job loads the resulting extension and produces and lints the stub using the
+matching PHP executable. VSlim also builds and runs compatibility smoke tests
+on PHP 8.6, alongside its PHP 8.5 release builds.
+
+The same V sources target each PHP minor. Select the target's `php-config`
+when building and its `php` when generating the stub. The C compiler reads
+`PHP_VERSION_ID` from the selected headers. Use that value to gate native
+registration and Zend internals. Property hooks are registered from 8.4.
+Property and hook `#[Override]` and callable `#[NoDiscard]` are registered
+from 8.5. Runtime arginfo conversion for 8.6 preserves the same PHP signatures.
+
+For a class method introduced in a PHP minor, declare
+`@[vphp.PhpMethodSince(version: .php85)]` or
+`@[vphp.PhpMethodSince(version: .php86)]`. Use
+`@[vphp.PhpFunctionSince(version: .php86)]` for an exported PHP function
+and `@[vphp.PhpGlobalConstantSince(version: .php86)]` for an exported global
+constant. Generated C guards the export and its metadata at the declared version. Stub
+generation reflects the extension loaded by the matching PHP executable.
+Use `VPHP_PHP_CONFIG` to select the SDK for both VPHP CLI and the VSlim build,
+and `VPHP_PHP` to select the VPHP CLI stub runtime. For VSlim's Makefile
+stub and test targets, put the matching `php` and `php-config` on `PATH`.
 
 ## Source Of Truth
 
@@ -51,6 +79,7 @@ Compatibility information should come from primary PHP sources:
   - `PHP-8.3`
   - `PHP-8.4`
   - `PHP-8.5`
+  - `PHP-8.6`
   - `master` only as a forward-looking signal
 - the local headers used by the active build, for example `php-config --include-dir`
 - php-src `NEWS`, RFCs, and migration notes as supporting context
@@ -144,7 +173,8 @@ struct layout differs across supported PHP 8 minors.
 | Area | Direct Zend APIs / contracts | Current risk | Action |
 | --- | --- | --- | --- |
 | Global constants | `REGISTER_*_CONSTANT` macros in generated `php_bridge.c` | low | Keep official macros. They are extension-facing APIs used by php-src generated arginfo. Do not replace just to normalize naming. |
-| Callable invocation | `zend_fcall_info_init`, `zend_call_function`, `call_user_function` | medium | Direct `zend_fcall_info_init` and `zend_call_function` calls now go through Layer 0. `call_user_function` remains an official extension-facing helper; wrap later only if a branch comparison proves a signature or ownership difference. |
+| Callable invocation | `zend_is_callable_ex`, `zend_fcall_info`, `zend_call_function` | medium | Layer 0 resolves positional and named calls through the same Zend API, with an optional receiver for instance methods. Failed calls preserve the pending PHP exception and expose no return value. |
+| Object construction | `object_init_with_constructor`, `object_init_ex`, `zend_object_store_ctor_failed` | medium | Positional and named construction share the same Layer 0 wrapper. PHP 8.4+ uses the native helper for public constructors. The fallback handles PHP 8.2–8.3, visibility checks, and classes without a constructor. |
 | Closure creation | `zend_create_closure`, manual `zend_internal_function` setup, `arg_info` layout | high | Direct `zend_create_closure` calls now go through Layer 0. The manual `zend_internal_function` layout and closure arginfo remain ABI-sensitive and need focused PHP-8.2..PHP-8.5 branch checks before deeper closure work. |
 | Include execution | `zend_stream_init_filename`, `zend_resolve_path`, `zend_execute_scripts`, `EG(included_files)` | medium | `zend_execute_scripts` now goes through Layer 0. Continue auditing ownership of `opened_path`/`resolved_path` across supported minors. |
 | Attributes | `zend_add_class_attribute`, `zend_add_parameter_attribute`, `zend_attribute`, internal attribute validators | medium | Generated class and parameter attributes now go through Layer 0. VPHP does not currently register internal attribute validators, so PHP 8.5's validator-return change does not affect existing code. |
@@ -153,6 +183,7 @@ struct layout differs across supported PHP 8 minors.
 | Runtime type verification | `ZEND_TYPE_*`, `ZEND_CALL_*`, `zend_verify_*`, `zend_check_user_type_slow` | high | Partly wrapped. Keep checking `zend_type` and `zend_arg_info` layout across supported minors. |
 | Runtime interface binding | `zend_do_implement_interface`, `zend_class_implements_interface`, `CG(class_table)` access | high | Direct `zend_class_implements_interface` and `zend_do_implement_interface` calls now go through Layer 0. `CG(class_table)` reads remain direct because there is no better public accessor for this runtime binding path. |
 | Resources | `zend_register_list_destructors_ex`, `zend_register_resource`, `zend_fetch_resource` | medium | Direct resource registration/fetch calls now go through Layer 0. Continue branch checks before adding richer resource wrappers. |
+| Streams | `php_stream_open_wrapper_ex`, `php_stream_context_from_zval`, `php_stream_to_zval`, `php_stream.wrapperdata` | medium | The bridge keeps native stream pointers in C. V receives a request-owned resource or a copy of wrapper data. The open flags control warning reporting and use the stream layer's usual wrapper and context checks. |
 | Exceptions | `zend_throw_exception`, `zend_throw_exception_object`, `zend_read_property(EG(exception), ...)`, `zend_clear_exception` | medium | Throwing, clearing, and exception-message property reads now go through Layer 0. |
 | HashTable helpers | `zend_hash_*`, `ZEND_HASH_FOREACH_*` | low-medium | Prefer official macros/functions; wrap only if a direct function contract changes. |
 | Strings | `zend_string_init`, `zend_string_release`, `zend_string_tolower`, `zend_string_equals_*` | low | Stable-looking extension-facing APIs; keep direct unless a branch comparison proves otherwise. |
@@ -208,7 +239,7 @@ Keep watching these direct uses, but do not wrap them preemptively:
 For each candidate:
 
 1. Locate all VPHP call sites with `rg`.
-2. Compare php-src `PHP-8.2`, `PHP-8.3`, `PHP-8.4`, and `PHP-8.5` headers and
+2. Compare php-src `PHP-8.2` through `PHP-8.6` headers and
    implementations for the exact function, macro, struct field, or handler
    signature.
 3. Record whether it is:
@@ -220,7 +251,7 @@ For each candidate:
    - `make -C vphptest build`
    - `bash vphptest/run_tests.sh`
    - `make -C vslim build`
-5. Add or update CI matrix coverage for PHP 8.2, 8.3, 8.4, and 8.5 whenever a
+5. Add or update CI matrix coverage for PHP 8.2 through 8.6 whenever a
    compatibility boundary changes.
 
 ## Notes

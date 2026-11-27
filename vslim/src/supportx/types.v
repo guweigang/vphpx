@@ -2,16 +2,16 @@ module supportx
 
 import vphp
 
-@[php_class: 'VSlim\\Support\\ServiceProvider']
+@[vphp.PhpExportClass(name: 'VSlim\\Support\\ServiceProvider')]
 @[heap]
 pub struct VSlimServiceProvider {
 mut:
-	app_ref vphp.PhpObject = vphp.PhpObject.invalid() @[php_ignore]
+	app_ref vphp.PhpObject = vphp.PhpObject.invalid() @[vphp.PhpIgnoreField]
 }
 
-@[php_class: 'VSlim\\Support\\Module']
+@[vphp.PhpExportClass(name: 'VSlim\\Support\\Module')]
 @[heap]
 pub struct VSlimModule {
 mut:
-	app_ref vphp.PhpObject = vphp.PhpObject.invalid() @[php_ignore]
+	app_ref vphp.PhpObject = vphp.PhpObject.invalid() @[vphp.PhpIgnoreField]
 }

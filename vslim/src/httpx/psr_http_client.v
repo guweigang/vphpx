@@ -3,6 +3,11 @@ module httpx
 import configx
 import vphp
 
+@[vphp.PhpExternalInterface(name: 'Psr\\Http\\Client\\ClientInterface')]
+pub interface PsrHttpClientContract {}
+
+pub type PsrHttpClient = vphp.PhpInterface[PsrHttpClientContract]
+
 struct Psr18OutboundRequest {
 	method           string
 	url              string
@@ -22,7 +27,7 @@ mut:
 	header_names     map[string]string
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut client VSlimPsr18Client) construct() &VSlimPsr18Client {
 	if client.timeout_seconds <= 0 {
 		client.timeout_seconds = 30
@@ -37,7 +42,15 @@ pub fn VSlimPsr18Client.from_config(config &configx.VSlimConfig) &VSlimPsr18Clie
 	return client
 }
 
-@[php_method]
+pub fn VSlimPsr18Client.object_from_config(config &configx.VSlimConfig) vphp.PhpObject {
+	mut value := vphp.bind_owned_object_value[VSlimPsr18Client](VSlimPsr18Client.from_config(config))
+	defer {
+		value.release()
+	}
+	return value.as_object() or { vphp.PhpObject.invalid() }
+}
+
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut client VSlimPsr18Client) timeout(seconds int) &VSlimPsr18Client {
 	client.timeout_seconds = if seconds <= 0 { 30 } else { seconds }
 	return &client
@@ -52,8 +65,8 @@ pub fn (mut client VSlimPsr18Client) configure_defaults(config &configx.VSlimCon
 	}
 }
 
-@[php_arg_name: 'err_no=errNo,err_str=errStr,err_file=errFile,err_line=errLine']
-@[php_method: 'ignorePhpWarning']
+@[vphp.PhpArgNames(names: 'err_no=errNo,err_str=errStr,err_file=errFile,err_line=errLine')]
+@[vphp.PhpExportMethod(name: 'ignorePhpWarning')]
 pub fn VSlimPsr18Client.ignore_warning(err_no int, err_str string, err_file string, err_line int) bool {
 	_ = err_no
 	_ = err_str
@@ -62,41 +75,50 @@ pub fn VSlimPsr18Client.ignore_warning(err_no int, err_str string, err_file stri
 	return true
 }
 
-@[php_method: 'timeoutSecondsValue']
+@[vphp.PhpExportMethod(name: 'timeoutSecondsValue')]
 pub fn (client &VSlimPsr18Client) timeout_seconds_value() int {
 	return if client.timeout_seconds <= 0 { 30 } else { client.timeout_seconds }
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'sendRequest']
-pub fn (client &VSlimPsr18Client) send_request(request vphp.PhpObject) &VSlimPsr7Response {
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'sendRequest')]
+pub fn (client &VSlimPsr18Client) export_send_request(request PsrRequest) !&VSlimPsr7Response {
+	return client.send_request(request.to_object())
+}
+
+pub fn (client &VSlimPsr18Client) send_request(request vphp.PhpObject) !&VSlimPsr7Response {
 	outbound := normalize_psr18_request(request) or {
 		throw_psr18_request_exception(err.msg(), request)
-		return unsafe { nil }
+		return err
 	}
-	clear_last_error()
-	mut ctx := new_psr18_stream_context(client, outbound)
+	mut context := new_psr18_stream_context(client, outbound) or {
+		if !vphp.has_exception() {
+			throw_psr18_network_exception('failed to create an upstream stream context', request)
+		}
+		return err
+	}
 	defer {
-		ctx.release()
+		context.release()
 	}
-	mut fp := psr18_open_stream(outbound.url, ctx)
-	defer {
-		fp.release()
-	}
-	mut stream := fp.as_resource() or {
-		throw_psr18_network_exception(last_error_message('failed to open upstream stream'), request)
-		return unsafe { nil }
+	mut stream := vphp.PhpResource.open_stream(outbound.url, 'r',
+		context:       context
+		report_errors: false
+	) or {
+		if !vphp.has_exception() {
+			throw_psr18_network_exception('failed to open upstream stream', request)
+		}
+		return err
 	}
 	defer {
 		stream.release()
 	}
-	if !stream.is_stream() {
-		throw_psr18_network_exception(last_error_message('failed to open upstream stream'), request)
-		return unsafe { nil }
+	mut head := Psr18ParsedResponseHead.from_stream(stream)
+	body := read_psr18_response_body(stream, mut head, outbound.method) or {
+		if !vphp.has_exception() {
+			throw_psr18_network_exception(err.msg(), request)
+		}
+		return err
 	}
-	head := Psr18ParsedResponseHead.read_last_http_response()
-	body := stream.contents() or { '' }
 	_ = stream.close()
 	return &VSlimPsr7Response{
 		status:           default_status(head.status)
@@ -108,32 +130,29 @@ pub fn (client &VSlimPsr18Client) send_request(request vphp.PhpObject) &VSlimPsr
 	}
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
-@[php_method: 'attachRequest']
-pub fn (mut e VSlimPsr18RequestException) attach_request(request vphp.PhpObject) {
-	_ = e
-	psr18_exception_store_request(request)
+@[vphp.PhpExportMethod(name: 'attachRequest')]
+pub fn (mut e VSlimPsr18RequestException) attach_request(request PsrRequest) {
+	object := request.to_object()
+	if object.is_valid() {
+		e.request_ref = object.to_value()
+	}
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
-@[php_method: 'getRequest']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\RequestInterface')]
+@[vphp.PhpExportMethod(name: 'getRequest')]
 pub fn (e &VSlimPsr18RequestException) get_request() vphp.PhpObject {
-	_ = e
-	return psr18_exception_load_request()
+	return psr18_exception_request_or_default(e.request_ref)
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\RequestInterface']
-@[php_method: 'attachRequest']
-pub fn (mut e VSlimPsr18NetworkException) attach_request(request vphp.PhpObject) {
-	_ = e
-	psr18_exception_store_request(request)
+@[vphp.PhpExportMethod(name: 'attachRequest')]
+pub fn (mut e VSlimPsr18NetworkException) attach_request(request PsrRequest) {
+	e.VSlimPsr18RequestException.attach_request(request)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\RequestInterface']
-@[php_method: 'getRequest']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\RequestInterface')]
+@[vphp.PhpExportMethod(name: 'getRequest')]
 pub fn (e &VSlimPsr18NetworkException) get_request() vphp.PhpObject {
-	_ = e
-	return psr18_exception_load_request()
+	return e.VSlimPsr18RequestException.get_request()
 }
 
 pub fn VSlimPsr18RequestException.new_object(message string, code int) vphp.PhpObject {
@@ -154,7 +173,7 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 	method := validate_method_or_throw(method_raw) or {
 		return error('request method must be a non-empty token')
 	}
-	mut uri_value := request.call_method('getUri')
+	mut uri_value := request.call_method_by_value('getUri')
 	if !uri_value.is_valid() || !uri_value.is_object() {
 		uri_value.release()
 		return error('request URI must be a valid UriInterface object')
@@ -179,8 +198,13 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 	target_raw := request.with_method_result[vphp.PhpString, string]('getRequestTarget', fn (z vphp.PhpString) string {
 		return z.value()
 	}) or { '' }
-	request_target := if target_raw.trim_space() == '' { build_psr7_request_target(&uri) } else { validate_request_target_or_throw(target_raw) or {
-			''} }
+	request_target := if target_raw.trim_space() == '' {
+		build_psr7_request_target(&uri)
+	} else {
+		validate_request_target_or_throw(target_raw) or {
+			''
+		}
+	}
 	if request_target == '' {
 		return error('request target must be a non-empty string without whitespace')
 	}
@@ -190,7 +214,7 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 	if !request_target.starts_with('/') && !request_target.contains('://') {
 		return error('request target must be origin-form or absolute-form for the stream transport')
 	}
-	mut headers_value := request.call_method('getHeaders')
+	mut headers_value := request.call_method_by_value('getHeaders')
 	defer {
 		headers_value.release()
 	}
@@ -198,9 +222,11 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 	if normalize_header_name('Host') !in headers {
 		apply_psr7_host_header(mut headers, mut header_names, &uri)
 	}
-	body := request.with_method_result[vphp.PhpValue, string]('getBody', fn (z vphp.PhpValue) string {
-		return VSlimPsr7Stream.from_value(z).stream_string()
-	}) or { '' }
+	mut body_value := request.call_method_by_value('getBody')
+	defer {
+		body_value.release()
+	}
+	body := VSlimPsr7Stream.from_value(body_value).stream_string()
 	return Psr18OutboundRequest{
 		method:           method
 		url:              url
@@ -214,7 +240,7 @@ fn normalize_psr18_request(request vphp.PhpObject) !Psr18OutboundRequest {
 	}
 }
 
-fn new_psr18_stream_context(client &VSlimPsr18Client, request Psr18OutboundRequest) vphp.PhpValue {
+fn new_psr18_stream_context(client &VSlimPsr18Client, request Psr18OutboundRequest) !vphp.PhpResource {
 	mut http_options := vphp.PhpArray.new()
 	http_options.string('method', request.method)
 	headers := implode_lines(new_psr18_header_lines(request.headers, request.header_names))
@@ -231,53 +257,14 @@ fn new_psr18_stream_context(client &VSlimPsr18Client, request Psr18OutboundReque
 	http_options.int('timeout', client.timeout_seconds_value())
 	http_options.bool('ignore_errors', true)
 	http_options.int('follow_location', 0)
+	http_options.bool('auto_decode', false)
 	mut ctx_opts := vphp.PhpArray.new()
+	defer {
+		ctx_opts.release()
+	}
 	ctx_opts.set('http', http_options)
 	http_options.release()
-	mut ctx := vphp.PhpFunction.named('stream_context_create').invoke(ctx_opts)
-	return ctx
-}
-
-fn psr18_open_stream(url string, ctx vphp.PhpValue) vphp.PhpValue {
-	if vphp.PhpFunction.named('set_error_handler').exists()
-		&& vphp.PhpFunction.named('restore_error_handler').exists() {
-		mut handler := psr18_warning_handler()
-		defer {
-			handler.release()
-		}
-		_ = vphp.PhpFunction.named('set_error_handler').with_result[vphp.PhpValue, bool](fn (_ vphp.PhpValue) bool {
-			return true
-		}, handler) or { false }
-		mut url_arg := vphp.PhpString.of(url)
-		mut mode_arg := vphp.PhpString.of('r')
-		mut use_include_path_arg := vphp.PhpBool.of(false)
-		defer {
-			url_arg.release()
-			mode_arg.release()
-			use_include_path_arg.release()
-		}
-		mut fp :=
-			vphp.PhpFunction.named('fopen').invoke(url_arg, mode_arg, use_include_path_arg, ctx)
-		_ = vphp.PhpFunction.named('restore_error_handler').result_bool()
-		return fp
-	}
-	mut url_arg := vphp.PhpString.of(url)
-	mut mode_arg := vphp.PhpString.of('r')
-	mut use_include_path_arg := vphp.PhpBool.of(false)
-	defer {
-		url_arg.release()
-		mode_arg.release()
-		use_include_path_arg.release()
-	}
-	mut fp := vphp.PhpFunction.named('fopen').invoke(url_arg, mode_arg, use_include_path_arg, ctx)
-	return fp
-}
-
-fn psr18_warning_handler() vphp.PhpArray {
-	mut handler := vphp.PhpArray.new()
-	handler.push_string('VSlim\\Psr18\\Client')
-	handler.push_string('ignorePhpWarning')
-	return handler
+	return vphp.PhpResource.new_stream_context(ctx_opts)
 }
 
 fn new_psr18_header_lines(headers map[string][]string, header_names map[string]string) vphp.PhpArray {
@@ -315,46 +302,42 @@ fn normalize_psr18_protocol_version(version string) f64 {
 	}
 }
 
-fn Psr18ParsedResponseHead.read_last_http_response() Psr18ParsedResponseHead {
-	if !vphp.PhpFunction.named('http_get_last_response_headers').exists() {
-		return Psr18ParsedResponseHead{
-			headers:      map[string][]string{}
-			header_names: map[string]string{}
-		}
+pub fn http_stream_response_status(stream vphp.PhpResource) int {
+	return default_status(Psr18ParsedResponseHead.from_stream(stream).status)
+}
+
+fn Psr18ParsedResponseHead.from_stream(stream vphp.PhpResource) Psr18ParsedResponseHead {
+	mut current := Psr18ParsedResponseHead{
+		headers:      map[string][]string{}
+		header_names: map[string]string{}
 	}
-	return vphp.PhpFunction.named('http_get_last_response_headers').with_result[vphp.PhpArray, Psr18ParsedResponseHead](fn (headers vphp.PhpArray) Psr18ParsedResponseHead {
-		mut current := Psr18ParsedResponseHead{
-			headers:      map[string][]string{}
-			header_names: map[string]string{}
-		}
-		for line_value in headers.value_items() {
-			line := line_value.to_string().trim_space()
-			if line == '' {
-				continue
-			}
-			if line.starts_with('HTTP/') {
-				current = Psr18ParsedResponseHead.from_status_line(line)
-				continue
-			}
-			sep := line.index(':') or { continue }
-			name := line[..sep].trim_space()
-			value := line[sep + 1..].trim_space()
-			key := normalize_header_name(name)
-			if key == '' {
-				continue
-			}
-			mut values := current.headers[key] or { []string{} }
-			values << value
-			current.headers[key] = values
-			current.header_names[key] = name
-		}
-		return current
-	}) or {
-		Psr18ParsedResponseHead{
-			headers:      map[string][]string{}
-			header_names: map[string]string{}
-		}
+	mut metadata := stream.stream_wrapper_data() or { return current }
+	defer {
+		metadata.release()
 	}
+	headers := metadata.as_array() or { return current }
+	for line_value in headers.value_items() {
+		line := line_value.to_string().trim_space()
+		if line == '' {
+			continue
+		}
+		if line.starts_with('HTTP/') {
+			current = Psr18ParsedResponseHead.from_status_line(line)
+			continue
+		}
+		sep := line.index(':') or { continue }
+		name := line[..sep].trim_space()
+		value := line[sep + 1..].trim_space()
+		key := normalize_header_name(name)
+		if key == '' {
+			continue
+		}
+		mut values := current.headers[key] or { []string{} }
+		values << value
+		current.headers[key] = values
+		current.header_names[key] = name
+	}
+	return current
 }
 
 fn Psr18ParsedResponseHead.from_status_line(line string) Psr18ParsedResponseHead {
@@ -381,25 +364,6 @@ fn Psr18ParsedResponseHead.from_status_line(line string) Psr18ParsedResponseHead
 	}
 }
 
-fn clear_last_error() {
-	if vphp.PhpFunction.named('error_clear_last').exists() {
-		_ = vphp.PhpFunction.named('error_clear_last').result_bool()
-	}
-}
-
-fn last_error_message(default_message string) string {
-	if !vphp.PhpFunction.named('error_get_last').exists() {
-		return default_message
-	}
-	return vphp.PhpFunction.named('error_get_last').with_result[vphp.PhpValue, string](fn [default_message] (err vphp.PhpValue) string {
-		if !err.is_array() {
-			return default_message
-		}
-		message := err.string_at('message', '').trim_space()
-		return if message == '' { default_message } else { message }
-	}) or { default_message }
-}
-
 fn throw_psr18_request_exception(message string, request vphp.PhpObject) {
 	throw_psr18_exception_object(VSlimPsr18RequestException.new_object(message, 0), request)
 }
@@ -423,8 +387,7 @@ fn psr18_exception_new_object(class_name string, message string, code int) vphp.
 fn throw_psr18_exception_object(exception_obj vphp.PhpObject, request vphp.PhpObject) {
 	mut exception := exception_obj
 	if exception.is_valid() {
-		// attachRequest → store_request will dup the zval to anchor
-		// its own refcount in the exception's property table.
+		// attachRequest keeps the request alive in the exception's property table.
 		exception.with_method_result[vphp.PhpValue, bool]('attachRequest', fn (result vphp.PhpValue) bool {
 			return result.is_valid()
 		}, request) or { false }
@@ -434,21 +397,9 @@ fn throw_psr18_exception_object(exception_obj vphp.PhpObject, request vphp.PhpOb
 	}
 }
 
-fn psr18_exception_store_request(request vphp.PhpObject) {
-	obj := vphp.ZendObject.current()
-	if !obj.is_valid() || !request.is_valid() {
-		return
-	}
-	obj.set_prop_input('requestRef', request)
-}
-
-fn psr18_exception_load_request() vphp.PhpObject {
-	obj := vphp.ZendObject.current()
-	if obj.is_valid() {
-		value := obj.prop_borrowed('requestRef')
-		if value.is_valid() && !value.is_null() && !value.is_undef() {
-			return vphp.PhpObject.borrowed(value)
-		}
+fn psr18_exception_request_or_default(value vphp.PhpValue) vphp.PhpObject {
+	if value.is_valid() && !value.is_null() {
+		return vphp.PhpObject.borrowed_zbox(value.to_borrowed_zbox())
 	}
 	return VSlimPsr7Request.new_object()
 }

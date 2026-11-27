@@ -2,14 +2,14 @@ module viewx
 
 import vphp
 
-@[php_class: 'VSlim\\View']
+@[vphp.PhpExportClass(name: 'VSlim\\View')]
 @[heap]
 pub struct VSlimView {
 pub mut:
-	base_path     string                      @[php_prop: basePath]
-	assets_prefix string                      @[php_prop: assetsPrefix]
-	cache_enabled bool                        @[php_prop: cacheEnabled]
-	helpers       map[string]vphp.PhpCallable @[php_ignore]
+	base_path     string                      @[vphp.PhpProperty(name: 'basePath')]
+	assets_prefix string                      @[vphp.PhpProperty(name: 'assetsPrefix')]
+	cache_enabled bool                        @[vphp.PhpProperty(name: 'cacheEnabled')]
+	helpers       map[string]vphp.PhpCallable @[vphp.PhpIgnoreField]
 }
 
 pub struct ViewSettings {
@@ -29,8 +29,8 @@ pub fn VSlimView.from_settings(settings ViewSettings) &VSlimView {
 	}
 }
 
-@[php_arg_name: 'base_path=basePath,assets_prefix=assetsPrefix']
-@[php_method]
+@[vphp.PhpArgNames(names: 'base_path=basePath,assets_prefix=assetsPrefix')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut view VSlimView) construct(base_path string, assets_prefix string) &VSlimView {
 	view.base_path = base_path.trim_space()
 	view.assets_prefix = normalize_assets_prefix(assets_prefix)
@@ -39,25 +39,25 @@ pub fn (mut view VSlimView) construct(base_path string, assets_prefix string) &V
 	return &view
 }
 
-@[php_arg_name: 'base_path=basePath']
-@[php_method: 'setBasePath']
+@[vphp.PhpArgName(v_name: 'base_path', php_name: 'basePath')]
+@[vphp.PhpExportMethod(name: 'setBasePath')]
 pub fn (mut view VSlimView) set_base_path(base_path string) &VSlimView {
 	view.base_path = base_path.trim_space()
 	return &view
 }
 
-@[php_method: 'basePath']
+@[vphp.PhpExportMethod(name: 'basePath')]
 pub fn (view &VSlimView) base_path() string {
 	return view.base_path
 }
 
-@[php_method: 'setAssetsPrefix']
+@[vphp.PhpExportMethod(name: 'setAssetsPrefix')]
 pub fn (mut view VSlimView) set_assets_prefix(prefix string) &VSlimView {
 	view.assets_prefix = normalize_assets_prefix(prefix)
 	return &view
 }
 
-@[php_method: 'assetsPrefix']
+@[vphp.PhpExportMethod(name: 'assetsPrefix')]
 pub fn (view &VSlimView) assets_prefix() string {
 	if view.assets_prefix == '' {
 		return '/assets'
@@ -65,24 +65,24 @@ pub fn (view &VSlimView) assets_prefix() string {
 	return view.assets_prefix
 }
 
-@[php_method: 'setCacheEnabled']
+@[vphp.PhpExportMethod(name: 'setCacheEnabled')]
 pub fn (mut view VSlimView) set_cache_enabled(enabled bool) &VSlimView {
 	view.cache_enabled = enabled
 	return &view
 }
 
-@[php_method: 'cacheEnabled']
+@[vphp.PhpExportMethod(name: 'cacheEnabled')]
 pub fn (view &VSlimView) cache_enabled() bool {
 	return view.cache_enabled
 }
 
-@[php_method: 'clearCache']
+@[vphp.PhpExportMethod(name: 'clearCache')]
 pub fn (mut view VSlimView) clear_cache() &VSlimView {
 	clear_template_source_cache()
 	return &view
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut view VSlimView) helper(name string, handler vphp.PhpCallable) &VSlimView {
 	key := name.trim_space()
 	if key == '' {
@@ -93,7 +93,7 @@ pub fn (mut view VSlimView) helper(name string, handler vphp.PhpCallable) &VSlim
 	return &view
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (view &VSlimView) asset(path string) string {
 	clean := path.trim_space().trim_left('/')
 	if clean == '' {
@@ -102,7 +102,7 @@ pub fn (view &VSlimView) asset(path string) string {
 	return '${view.assets_prefix()}/${clean}'
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (view &VSlimView) render(template string, data vphp.PhpValue) string {
 	scalars, lists, objects := value_subject(data).template_data()
 	return view.render_maps(template, scalars, lists, objects)
@@ -127,7 +127,7 @@ fn (view &VSlimView) render_map_with_depth(template string, scalars map[string]s
 	}
 }
 
-@[php_method: 'renderWithLayout']
+@[vphp.PhpExportMethod(name: 'renderWithLayout')]
 pub fn (view &VSlimView) render_with_layout(template string, layout string, data vphp.PhpValue) string {
 	scalars, lists, objects := value_subject(data).template_data()
 	return view.render_maps_with_layout(template, layout, scalars, lists, objects)

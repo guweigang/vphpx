@@ -139,25 +139,43 @@ fn (c PhpClosure) request_owned(args ...PhpArgInput) RequestOwnedZBox {
 }
 
 pub fn (c PhpClosure) invoke(args ...PhpArgInput) PhpValue {
-	mut result := c.request_owned(args)
+	mut result := c.request_owned(...args)
 	return result.take_value()
 }
 
+pub fn (c PhpClosure) invoke_args(args PhpArray) PhpValue {
+	return c.callable.with_request_callable[PhpValue](fn [args] (callable PhpCallable) PhpValue {
+		return callable.invoke_args(args)
+	}) or { PhpValue.invalid() }
+}
+
 pub fn (c PhpClosure) call[T](args ...PhpArgInput) !T {
-	mut result := c.request_owned(args)
+	mut result := c.request_owned(...args)
 	defer {
 		result.release()
 	}
 	return php_call_copied_result_as[T](result.to_zval())
 }
 
+pub fn (c PhpClosure) call_reference(args ...PhpArgInput) !PhpReference {
+	mut result := c.request_owned(...args)
+	return php_call_reference_result(mut result)
+}
+
+// call_reference_args accepts positional and named PHP arguments.
+pub fn (c PhpClosure) call_reference_args(args PhpArray) !PhpReference {
+	mut result := c.callable.with_request_callable[RequestOwnedZBox](fn [args] (callable PhpCallable) RequestOwnedZBox {
+		return callable.request_owned_args(args)
+	}) or { RequestOwnedZBox.adopt_zval(invalid_zval()) }
+	return php_call_reference_result(mut result)
+}
+
 pub fn (c PhpClosure) with_result[T, R](run fn (T) R, args ...PhpArgInput) !R {
-	mut result := c.request_owned(args)
+	mut result := c.request_owned(...args)
 	defer {
 		result.release()
 	}
-	value := php_call_result_as[T](result.to_zval())!
-	return run(value)
+	return php_with_call_result[T, R](result.to_zval(), run)
 }
 
 pub fn (c PhpClosure) with_result_zval[T](run fn (ZVal) T, args ...ZVal) T {
@@ -165,7 +183,8 @@ pub fn (c PhpClosure) with_result_zval[T](run fn (ZVal) T, args ...ZVal) T {
 	defer {
 		result.release()
 	}
-	return run(result.to_zval())
+	z := result.to_zval()
+	return run(z)
 }
 
 pub fn (c PhpClosure) kind_name() string {
@@ -199,7 +218,8 @@ pub fn (c PhpClosure) with_fn_result_zval[T](run fn (ZVal) T, args ...ZVal) T {
 	defer {
 		result.release()
 	}
-	return run(result.to_zval())
+	z := result.to_zval()
+	return run(z)
 }
 
 pub fn (mut c PhpClosure) release() {

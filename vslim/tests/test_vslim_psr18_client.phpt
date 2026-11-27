@@ -17,6 +17,8 @@ if (!$probe) {
 }
 fclose($probe);
 ?>
+--INI--
+disable_functions=http_get_last_response_headers
 --FILE--
 <?php
 namespace Psr\Http\Message {
@@ -196,7 +198,10 @@ namespace {
     $get = $requestFactory
         ->createRequest('GET', 'http://127.0.0.1:' . $port . '/echo?foo=bar')
         ->withHeader('X-Test', 'alpha');
-    $response = $client->sendRequest($get);
+    $response = $client->sendRequest(request: $get);
+    if (!$response instanceof VSlim\Psr7\Response) {
+        throw new RuntimeException('The client bridge returned a different response class');
+    }
     $payload = json_decode((string) $response->getBody(), true);
     echo $response->getStatusCode() . '|' . $response->getHeaderLine('x-reply-path') . '|' . $payload['method'] . '|' . $payload['query']['foo'] . '|' . $payload['headers']['X-Test'] . PHP_EOL;
 
@@ -208,9 +213,52 @@ namespace {
     $postPayload = json_decode((string) $postResponse->getBody(), true);
     echo $postResponse->getStatusCode() . '|' . $postPayload['method'] . '|' . $postPayload['body'] . '|' . $postPayload['headers']['Content-Type'] . PHP_EOL;
 
+    $byReference = new class($post->getUri(), $streamFactory->createStream("out\0bound")) extends VSlim\Psr7\Request {
+        private array $refHeaders = ['Content-Type' => ['application/octet-stream'], 'X-Reference' => ['outgoing']];
+
+        public function __construct(
+            private Psr\Http\Message\UriInterface $refUri,
+            private Psr\Http\Message\StreamInterface $refBody,
+        ) {
+            parent::__construct();
+            $this->method = 'POST';
+        }
+        public function getRequestTarget(): string { return $this->refUri->getPath(); }
+        public function &getUri(): Psr\Http\Message\UriInterface { return $this->refUri; }
+        public function &getHeaders(): array { return $this->refHeaders; }
+        public function &getBody(): Psr\Http\Message\StreamInterface { return $this->refBody; }
+    };
+    $referenced = $client->sendRequest($byReference);
+    $payload = json_decode((string) $referenced->getBody(), true, flags: JSON_THROW_ON_ERROR);
+    if ($referenced->getStatusCode() !== 200 || $payload['method'] !== 'POST'
+        || $payload['headers']['X-Reference'] !== 'outgoing'
+        || $payload['headers']['Content-Type'] !== 'application/octet-stream' || $payload['body'] !== "out\0bound") {
+        throw new RuntimeException('The client lost a referenced URI, headers, or body bytes');
+    }
+
     $notFound = $client->sendRequest($requestFactory->createRequest('GET', 'http://127.0.0.1:' . $port . '/status/404'));
     $serverError = $client->sendRequest($requestFactory->createRequest('GET', 'http://127.0.0.1:' . $port . '/status/500'));
     echo $notFound->getStatusCode() . '|' . $serverError->getStatusCode() . PHP_EOL;
+
+    $ollama = new VSlim\Stream\OllamaClient('http://127.0.0.1:' . $port . '/submit', 'test-model', 'test-key', '');
+    $opened = $ollama->openStream(['messages' => [['role' => 'user', 'content' => 'hello']]]);
+    if (!$opened['ok'] || $opened['status'] !== 200 || !is_resource($opened['stream'])) {
+        throw new RuntimeException('Ollama lost the successful upstream stream');
+    }
+    $upstream = json_decode(stream_get_contents($opened['stream']), true, flags: JSON_THROW_ON_ERROR);
+    fclose($opened['stream']);
+    $body = json_decode($upstream['body'], true, flags: JSON_THROW_ON_ERROR);
+    if ($upstream['method'] !== 'POST' || $upstream['headers']['Authorization'] !== 'Bearer test-key'
+        || $body !== ['model' => 'test-model', 'stream' => true, 'messages' => [['role' => 'user', 'content' => 'hello']]]) {
+        throw new RuntimeException('Ollama lost the native stream context options');
+    }
+
+    $ollama = new VSlim\Stream\OllamaClient('http://127.0.0.1:' . $port . '/ollama-redirect', 'test-model', '', '');
+    $opened = $ollama->openStream(['messages' => []]);
+    if ($opened['ok'] || $opened['status'] !== 404 || $opened['stream'] !== null
+        || (json_decode($opened['error'], true)['path'] ?? '') !== '/status/404') {
+        throw new RuntimeException('Ollama did not report the final status and body of its own stream');
+    }
 
     $badRequest = $requestFactory->createRequest('GET', 'ftp://127.0.0.1/file.txt');
     try {
@@ -227,6 +275,49 @@ namespace {
         echo "network-miss\n";
     } catch (\Throwable $e) {
         echo get_class($e) . '|' . ($e instanceof Psr\Http\Client\NetworkExceptionInterface ? 'net' : 'no') . '|' . ($e->getRequest() === $networkRequest ? 'same' : 'diff') . PHP_EOL;
+        $weakException = WeakReference::create($e);
+    }
+    unset($e);
+    gc_collect_cycles();
+    if (isset($weakException) && $weakException->get() !== null) {
+        throw new RuntimeException('The bridge retained a released PSR-18 exception');
+    }
+
+    $complete = $requestFactory->createRequest('GET', 'http://127.0.0.1:' . $port . '/complete-response');
+    $response = (new VSlim\Psr18\Client())->timeout(1)->sendRequest($complete);
+    if ($response->getStatusCode() !== 200 || (string) $response->getBody() !== 'abc') {
+        throw new RuntimeException('The response did not finish at Content-Length while the socket was still open');
+    }
+
+    $head = $requestFactory->createRequest('HEAD', 'http://127.0.0.1:' . $port . '/short-response');
+    $response = $client->sendRequest($head);
+    if ($response->getStatusCode() !== 200 || $response->getHeaderLine('Content-Length') !== '6'
+        || (string) $response->getBody() !== '') {
+        throw new RuntimeException('HEAD did not preserve the declared representation length and empty body');
+    }
+
+    $chunked = $requestFactory->createRequest('GET', 'http://127.0.0.1:' . $port . '/chunked-response');
+    $response = $client->sendRequest($chunked);
+    if ($response->getStatusCode() !== 200 || (string) $response->getBody() !== "a\0bcd"
+        || $response->hasHeader('Transfer-Encoding') || $response->hasHeader('X-Trace')) {
+        throw new RuntimeException('The chunked response did not preserve decoded content and response headers');
+    }
+
+    $incomplete = [];
+    foreach (['chunked-no-last', 'chunked-short-data', 'chunked-short-trailer',
+        'chunked-bad-delimiter', 'short-response', 'slow-response'] as $path) {
+        $request = $requestFactory->createRequest('GET', 'http://127.0.0.1:' . $port . '/' . $path);
+        try {
+            $response = $client->timeout(1)->sendRequest($request);
+            $incomplete[] = $path . ' returned ' . $response->getStatusCode() . ' with ' . (string) $response->getBody();
+        } catch (\Psr\Http\Client\NetworkExceptionInterface $e) {
+            if ($e->getRequest() !== $request || !str_contains($e->getMessage(), 'upstream response body')) {
+                throw new RuntimeException('The body read failure lost its request or phase', previous: $e);
+            }
+        }
+    }
+    if ($incomplete !== []) {
+        throw new RuntimeException(implode('; ', $incomplete));
     }
 
     stop_fixture_server($proc);

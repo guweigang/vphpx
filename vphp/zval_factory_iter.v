@@ -1,6 +1,29 @@
 module vphp
 
 import vphp.zval
+import vphp.zend
+
+type IterableValueCallback = fn (ZVal) bool
+
+struct IterableValueVisit {
+	callback IterableValueCallback
+mut:
+	completed bool = true
+}
+
+fn iterable_value_callback(ctx voidptr, _ &C.zval, value &C.zval) bool {
+	unsafe {
+		mut visit := &IterableValueVisit(ctx)
+		visit.completed = visit.callback(ZVal.from_ptr(value))
+		return visit.completed
+	}
+}
+
+fn (v ZVal) iterable_values_while(callback IterableValueCallback) bool {
+	mut visit := IterableValueVisit{ callback: callback }
+	zend.iterable_foreach_while(v.raw_ptr(), &visit, iterable_value_callback)
+	return visit.completed
+}
 
 // ======== 工厂方法 ========
 

@@ -85,7 +85,7 @@ Form helpers:
 - `VSlim\Live\Form::input_or('name', 'Guest')` -> read a form value with fallback
 - `VSlim\Live\Form::forget('name')` -> remove one input value from assigns
 - `VSlim\Live\Form::forget_many(['name', 'email'])` -> remove many input values at once
-- `VSlim\Live\Socket::old()` / `old_or()` remain as compatibility aliases
+- `VSlim\Live\Socket::old()` / `oldOr()` are compatibility aliases for `input()` / `inputOr()` and emit a deprecation notice on PHP 8.4 and newer
 - `VSlim\Live\Form::errors(['email' => 'Invalid', 'name' => 'Required'])` -> stores many `error_*` fields at once
 - `VSlim\Live\Form::error('label')` -> reads `error_label` without manual key building
 - `VSlim\Live\Form::has_error('label')` -> checks whether `error_label` exists

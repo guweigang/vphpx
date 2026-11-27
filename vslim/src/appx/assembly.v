@@ -1,5 +1,7 @@
 module appx
 
+import registrationx
+import os
 import configx as cfgx
 import loggerx
 import mcpx as mcp
@@ -7,70 +9,55 @@ import cachex
 import containerx
 import controllerx
 import eventx
-
 import httpx
 import middlewarex
 import supportx
 import vphp
 
-pub fn (mut app VSlimApp) apply_bootstrap_file_result(path string, value vphp.PhpValue) ! {
-	if !value.is_valid() || value.is_null() || value.is_undef() {
-		return error(supportx.bootstrap_file_return_error(path))
-	}
-	if value.is_callable() {
-		mut app_value := (&app).self_value()
-		defer {
-			app_value.release()
-		}
-		callable := value.as_callable() or {
-			return error(supportx.bootstrap_file_return_error(path))
-		}
-		mut result := callable.invoke(app_value)
-		defer {
-			result.release()
-		}
-		if !result.is_valid() || result.is_null() || result.is_undef() {
-			return
-		}
-		if result.is_object() && result.is_instance_of('VSlim\\App') {
-			return
-		}
-		app.apply_bootstrap_spec(result)!
-		return
-	}
-	if value.is_object() && value.is_instance_of('VSlim\\App') {
-		return
-	}
-	app.apply_bootstrap_spec(value)!
+fn (mut app VSlimApp) bootstrap_file_apply(path string) ! {
+	file := supportx.resolve_bootstrap_file(path, 'bootstrap')!
+	app.apply_bootstrap_file(file)!
 }
 
-fn (mut app VSlimApp) bootstrap_file_apply(path string) ! {
-	clean := path.trim_space()
-	if clean == '' {
-		return error('bootstrap path must not be empty')
+pub fn (mut app VSlimApp) apply_bootstrap_file(file supportx.BootstrapFile) ! {
+	state := app.watch_service_state()
+	defer {
+		state.close()
 	}
-	mut result := vphp.PhpIncludeFile.at(clean).load()
+	source := 'file:' + os.real_path(file.resolved_path)
+	mut progress := supportx.start_bootstrap_progress(mut app.bootstrap_progress, source)!
+	defer {
+		progress.stop()
+	}
+	if app.resume_bootstrap_boot(source)! {
+		supportx.finish_bootstrap_progress(mut app.bootstrap_progress, source)
+		return
+	}
+	if app.configure_bootstrap_file(file, mut progress)! {
+		app.finish_bootstrap_boot(source)!
+	} else {
+		app.defer_bootstrap_boot(source)
+	}
+	supportx.finish_bootstrap_progress(mut app.bootstrap_progress, source)
+}
+
+pub fn (mut app VSlimApp) configure_bootstrap_file(file supportx.BootstrapFile, mut progress supportx.BootstrapProgress) !bool {
+	mut result := progress.load_file(file)!
 	defer {
 		result.release()
 	}
-	lower := clean.to_lower()
-	should_preload := lower.ends_with('/bootstrap/app.php')
-		|| lower.ends_with('\\bootstrap\\app.php') || lower.ends_with('/app.php')
-		|| lower.ends_with('\\app.php')
-	file_exists := supportx.is_file(clean)
-	loggerx.cli_debug_log('bootstrap_file clean="${clean}" lower="${lower}" should_preload=${should_preload} is_file=${file_exists}')
-	if should_preload && file_exists {
-		project_root := if supportx.is_bootstrap_dir_path(supportx.dirname(clean)) {
-			supportx.dirname(supportx.dirname(clean))
-		} else {
-			supportx.dirname(clean)
-		}
-		if project_root != '' {
-			loggerx.cli_debug_log('bootstrap_file preload project_root="${project_root}"')
-			supportx.preload_bootstrap_spec_classes(project_root, result)
-		}
+	receiver := &app
+	mut spec := progress.evaluate_file_spec(result, 'VSlim\\App',
+		supportx.bootstrap_file_return_error(file.path), fn [receiver] () vphp.PhpValue {
+			return receiver.self_value()
+		})!
+	defer {
+		spec.release()
 	}
-	app.apply_bootstrap_file_result(clean, result)!
+	if spec.is_valid() {
+		return app.configure_bootstrap_spec_with_progress(spec, file.project_root, 'file', mut progress)
+	}
+	return false
 }
 
 fn (mut app VSlimApp) apply_bootstrap_container(spec vphp.PhpArray) ! {
@@ -148,9 +135,14 @@ fn (mut app VSlimApp) apply_bootstrap_services(spec vphp.PhpArray) ! {
 		app.set_cache_pool(pool)
 	}
 	if value := supportx.app_bootstrap_spec(spec).lookup(['http_client', 'httpClient']) {
-		client := supportx.require_native_bootstrap_object[httpx.VSlimPsr18Client](value,
-			'VSlim\\Psr18\\Client', 'http_client')!
-		app.set_http_client(client)
+		mut object := value.as_object() or { return error('bootstrap http_client must implement ClientInterface') }
+		defer {
+			object.release()
+		}
+		client := vphp.PhpInterface.from_object[httpx.PsrHttpClientContract](object) or {
+			return error('bootstrap http_client must implement ClientInterface')
+		}
+		app.set_psr_http_client(client)
 	}
 	if value := supportx.app_bootstrap_spec(spec).lookup(['mcp']) {
 		if value.is_callable() {
@@ -161,6 +153,10 @@ fn (mut app VSlimApp) apply_bootstrap_services(spec vphp.PhpArray) ! {
 			app_value.with_object[bool](fn [value] (app_obj vphp.PhpObject) bool {
 				return app_obj.with_method_result[vphp.PhpValue, bool]('mcp', fn [value] (mcp_value vphp.PhpValue) bool {
 					callable := vphp.PhpCallable.from_value(value) or { return false }
+					mut scope := registrationx.begin_registration_scope()
+					defer {
+						scope.finish()
+					}
 					callable.with_result[vphp.PhpValue, bool](fn (result vphp.PhpValue) bool {
 						return result.is_valid()
 					}, mcp_value) or { false }
@@ -190,25 +186,33 @@ fn (mut app VSlimApp) apply_bootstrap_handlers(spec vphp.PhpArray) ! {
 	}
 }
 
-fn (mut app VSlimApp) apply_bootstrap_helpers(spec vphp.PhpArray) ! {
+fn (mut app VSlimApp) apply_bootstrap_helpers(spec vphp.PhpArray, step string, mut progress supportx.BootstrapProgress) ! {
 	helpers := supportx.app_bootstrap_spec(spec).lookup(['helpers', 'view_helpers', 'viewHelpers']) or {
 		return
 	}
 	iter := helpers.as_iterable() or { return error('bootstrap helpers must be iterable') }
-	mut normalized := iter.to_array()!
+	mut normalized := progress.normalize(step + ':list', iter)!
 	defer {
 		normalized.release()
 	}
 	for key in normalized.assoc_keys() {
+		item_step := '${step}:item:${key}'
+		if progress.done(item_step) {
+			continue
+		}
 		handler := normalized.value_at(key)
 		callable := vphp.PhpCallable.from_value(handler) or {
 			return error('bootstrap helper "${key}" must be callable')
 		}
 		app.helper(key, callable)
+		if vphp.has_exception() {
+			return error('bootstrap helper registration failed')
+		}
+		progress.complete(item_step)
 	}
 }
 
-fn (mut app VSlimApp) apply_bootstrap_middleware_stack(spec vphp.PhpArray, keys []string, kind middlewarex.MiddlewareRegistrationKind, label string) ! {
+fn (mut app VSlimApp) apply_bootstrap_middleware_stack(spec vphp.PhpArray, keys []string, kind middlewarex.MiddlewareRegistrationKind, label string, step string, mut progress supportx.BootstrapProgress) ! {
 	value := supportx.app_bootstrap_spec(spec).lookup(keys) or { return }
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return error('bootstrap ${label} must not be null')
@@ -221,15 +225,20 @@ fn (mut app VSlimApp) apply_bootstrap_middleware_stack(spec vphp.PhpArray, keys 
 	iter := value.as_iterable() or {
 		return error('bootstrap ${label} must be a middleware registration or list')
 	}
-	mut normalized := iter.to_array()!
+	mut normalized := progress.normalize_values(step + ':list', iter)!
 	defer {
 		normalized.release()
 	}
-	for item in normalized.value_items() {
+	for index, item in normalized.value_items() {
+		item_step := '${step}:item:${index}'
+		if progress.done(item_step) {
+			continue
+		}
 		if !middlewarex.supports_registration(kind, item) {
 			return error('bootstrap ${label} entries must be middleware registrations')
 		}
 		app.apply_bootstrap_middleware_item(kind, label, item)!
+		progress.complete(item_step)
 	}
 }
 
@@ -237,95 +246,78 @@ fn (mut app VSlimApp) apply_bootstrap_middleware_item(kind middlewarex.Middlewar
 	if !middlewarex.supports_registration(kind, handler) {
 		return error('bootstrap ${label} must contain valid middleware registrations')
 	}
-	match kind {
-		.standard { app.middleware(handler) }
-		.before { app.before(handler) }
-		.after { app.after(handler) }
+	app.middleware_at_phase(handler, kind)
+	if vphp.has_exception() {
+		return error('bootstrap ${label} registration failed')
 	}
 }
 
-fn (mut app VSlimApp) apply_bootstrap_convention_providers(path string) !bool {
-	if !supportx.is_file(path) {
-		return false
-	}
-	mut raw := vphp.PhpIncludeFile.at(path).load()
-	defer {
-		raw.release()
-	}
-	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
-		return error('bootstrap providers file "${path}" must return iterable providers')
-	}
-	providers := raw.as_iterable() or {
-		return error('bootstrap providers file "${path}" must return iterable providers')
-	}
-	app.register_many(providers)
-	return true
-}
-
-fn (mut app VSlimApp) apply_bootstrap_convention_modules(path string) !bool {
-	if !supportx.is_file(path) {
-		return false
-	}
-	mut raw := vphp.PhpIncludeFile.at(path).load()
-	defer {
-		raw.release()
-	}
-	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
-		return error('bootstrap modules file "${path}" must return iterable modules')
-	}
-	modules := raw.as_iterable() or {
-		return error('bootstrap modules file "${path}" must return iterable modules')
-	}
-	app.module_many(modules)
-	return true
-}
-
-fn (mut app VSlimApp) apply_bootstrap_convention_provider_classes(project_root string) !bool {
+fn (mut app VSlimApp) apply_bootstrap_component_conventions(project_root string, kind AppComponentKind, files []string, mut progress supportx.BootstrapProgress) !bool {
+	label := kind.label()
+	plural := label + 's'
+	config_path := supportx.join_path(project_root, 'bootstrap/${plural}.php')
 	mut applied := false
-	for file in supportx.glob_paths(supportx.join_path(project_root, 'app/Providers/*.php')) {
-		_ = supportx.include_once_file(file)
-		class_name := 'App\\Providers\\' + supportx.file_stem(file)
-		if !supportx.class_exists(class_name) {
-			return error('provider convention file "${file}" must declare class ${class_name}')
+	config_step := 'components:' + config_path
+	if progress.done(config_step) {
+		applied = true
+	} else if supportx.is_file(config_path) {
+		mut raw := progress.load(config_path)!
+		defer {
+			raw.release()
 		}
-		app.register_service_provider_class(class_name)!
+		if vphp.has_exception() {
+			return error('bootstrap ${plural} file evaluation failed')
+		}
+		values := raw.borrowed().as_iterable() or {
+			return error('bootstrap ${plural} file "${config_path}" must return iterable ${plural}')
+		}
+		app.register_bootstrap_components(values, kind, config_step, mut progress)!
+		progress.complete(config_step)
+		applied = true
+	}
+	namespace := plural.capitalize()
+	for file in files {
+		step := 'component:' + file
+		if progress.done(step) {
+			applied = true
+			continue
+		}
+		class_name := 'App\\${namespace}\\' + supportx.file_stem(file)
+		if !supportx.class_exists(class_name) {
+			return error('${label} convention file "${file}" must declare class ${class_name}')
+		}
+		app.register_component_class(class_name, kind)!
+		progress.complete(step)
 		applied = true
 	}
 	return applied
 }
 
-fn (mut app VSlimApp) apply_bootstrap_convention_module_classes(project_root string) !bool {
-	mut applied := false
-	for file in supportx.glob_paths(supportx.join_path(project_root, 'app/Modules/*.php')) {
-		_ = supportx.include_once_file(file)
-		class_name := 'App\\Modules\\' + supportx.file_stem(file)
-		if !supportx.class_exists(class_name) {
-			return error('module convention file "${file}" must declare class ${class_name}')
-		}
-		app.register_module_class(class_name)!
-		applied = true
-	}
-	return applied
-}
-
-fn (mut app VSlimApp) apply_bootstrap_convention_http_classes(project_root string) !bool {
+fn (mut app VSlimApp) apply_bootstrap_convention_http_classes(files supportx.BootstrapProjectFiles, mut progress supportx.BootstrapProgress) !bool {
 	mut applied := false
 	mut container := app.container()
 	mut app_value := (&app).self_value()
 	defer {
 		app_value.release()
 	}
-	for file in supportx.glob_paths(supportx.join_path(project_root, 'app/Http/Controllers/*.php')) {
-		_ = supportx.include_once_file(file)
+	for file in files.controllers {
+		step := 'controller:' + file
+		if progress.done(step) {
+			applied = true
+			continue
+		}
 		class_name := 'App\\Http\\Controllers\\' + supportx.file_stem(file)
 		if !supportx.class_exists(class_name) {
 			return error('controller convention file "${file}" must declare class ${class_name}')
 		}
 		controllerx.register_convention_controller(mut container, class_name, app_value)!
+		if vphp.has_exception() {
+			return error('bootstrap controller registration failed')
+		}
+		progress.complete(step)
 		applied = true
 	}
-	for file in supportx.glob_paths(supportx.join_path(project_root, 'app/Http/Middleware/*.php')) {
-		_ = supportx.include_once_file(file)
+	for file in files.middleware {
 		class_name := 'App\\Http\\Middleware\\' + supportx.file_stem(file)
 		if !supportx.class_exists(class_name) {
 			return error('middleware convention file "${file}" must declare class ${class_name}')
@@ -335,18 +327,43 @@ fn (mut app VSlimApp) apply_bootstrap_convention_http_classes(project_root strin
 	return applied
 }
 
-fn (mut app VSlimApp) apply_bootstrap_convention_spec(path string, label string) !bool {
+struct ProjectBootstrap {
+	root   string
+	source string
+	resume BootstrapBootStage
+}
+
+fn (mut app VSlimApp) apply_bootstrap_convention_spec(project ProjectBootstrap, relative string, label string, stage BootstrapBootStage, mut progress supportx.BootstrapProgress) !bool {
+	if int(project.resume) > int(stage) {
+		return false
+	}
+	if project.resume == stage {
+		app.apply_boot()!
+		return true
+	}
+	step := 'convention:' + relative
+	if progress.done(step) {
+		return true
+	}
+	path := supportx.join_path(project.root, relative)
 	if !supportx.is_file(path) {
 		return false
 	}
-	mut raw := vphp.PhpIncludeFile.at(path).load()
+	mut raw := progress.load(path)!
 	defer {
 		raw.release()
+	}
+	if vphp.has_exception() {
+		return error('bootstrap ${label} file evaluation failed')
 	}
 	if !raw.is_valid() || raw.is_null() || raw.is_undef() {
 		return error('bootstrap ${label} file "${path}" must return iterable spec or callable')
 	}
 	if raw.is_callable() {
+		mut callback_scope := registrationx.begin_registration_scope()
+		defer {
+			callback_scope.finish()
+		}
 		callable := raw.as_callable() or {
 			return error('bootstrap ${label} file "${path}" must return callable')
 		}
@@ -357,36 +374,46 @@ fn (mut app VSlimApp) apply_bootstrap_convention_spec(path string, label string)
 		callable.with_result[vphp.PhpValue, bool](fn (result vphp.PhpValue) bool {
 			return result.is_valid()
 		}, app_value) or { false }
+		if vphp.has_exception() {
+			return error('bootstrap ${label} callback failed')
+		}
+		progress.complete(step)
 		return true
 	}
-	app.apply_bootstrap_spec(raw)!
+	if app.configure_bootstrap_spec_with_progress(raw, '', step, mut progress)! && !app.booted {
+		app.boot_bootstrap_stage(project.source, stage)!
+	}
+	progress.complete(step)
 	return true
 }
 
-pub fn (mut app VSlimApp) apply_bootstrap_shared_conventions(project_root string) !bool {
-	mut applied := false
-	config_candidates := [supportx.join_path(project_root, 'config'),
-		supportx.join_path(project_root, 'config/app.toml'), supportx.join_path(project_root, 'app.toml')]
-	for candidate in config_candidates {
-		if supportx.is_file(candidate) || supportx.is_dir(candidate) {
-			app.load_config(candidate)
-			applied = true
-			break
+fn (mut app VSlimApp) apply_preloaded_bootstrap_conventions(project ProjectBootstrap, components supportx.BootstrapComponentFiles, mut progress supportx.BootstrapProgress) !bool {
+	project_root := project.root
+	mut applied := project.resume != .configure
+	if project.resume == .configure && !progress.done('project:config') {
+		config_candidates := [supportx.join_path(project_root, 'config'),
+			supportx.join_path(project_root, 'config/app.toml'),
+			supportx.join_path(project_root, 'app.toml')]
+		for candidate in config_candidates {
+			if supportx.is_file(candidate) || supportx.is_dir(candidate) {
+				app.load_config(candidate)
+				if vphp.has_exception() {
+					return error('bootstrap project config failed')
+				}
+				progress.complete('project:config')
+				applied = true
+				break
+			}
 		}
 	}
-	if app.apply_bootstrap_convention_spec(supportx.join_path(project_root, 'bootstrap/runtime.php'),
-		'runtime')!
-	{
+	applied = applied || progress.done('project:config')
+	if app.apply_bootstrap_convention_spec(project, 'bootstrap/runtime.php', 'runtime', .runtime, mut progress)! {
 		applied = true
 	}
-	if app.apply_bootstrap_convention_spec(supportx.join_path(project_root, 'bootstrap/services.php'),
-		'services')!
-	{
+	if app.apply_bootstrap_convention_spec(project, 'bootstrap/services.php', 'services', .services, mut progress)! {
 		applied = true
 	}
-	if app.apply_bootstrap_convention_spec(supportx.join_path(project_root, 'bootstrap/errors.php'),
-		'errors')!
-	{
+	if app.apply_bootstrap_convention_spec(project, 'bootstrap/errors.php', 'errors', .shared_errors, mut progress)! {
 		applied = true
 	}
 	if app.view_base_path() == '' {
@@ -401,227 +428,243 @@ pub fn (mut app VSlimApp) apply_bootstrap_shared_conventions(project_root string
 			break
 		}
 	}
-	if app.apply_bootstrap_convention_providers(supportx.join_path(project_root,
-		'bootstrap/providers.php'))!
-	{
-		applied = true
-	}
-	if app.apply_bootstrap_convention_provider_classes(project_root)! {
-		applied = true
-	}
-	if app.apply_bootstrap_convention_modules(supportx.join_path(project_root, 'bootstrap/modules.php'))! {
-		applied = true
-	}
-	if app.apply_bootstrap_convention_module_classes(project_root)! {
-		applied = true
-	}
+	providers_applied := app.apply_bootstrap_component_conventions(project_root, .provider,
+		components.providers, mut progress)!
+	modules_applied := app.apply_bootstrap_component_conventions(project_root, .module_,
+		components.modules, mut progress)!
+	applied = applied || providers_applied || modules_applied
 	return applied
 }
 
-fn (mut app VSlimApp) apply_bootstrap_http_conventions(project_root string) !bool {
+fn (mut app VSlimApp) apply_bootstrap_http_conventions(project ProjectBootstrap, files supportx.BootstrapProjectFiles, mut progress supportx.BootstrapProgress) !bool {
+	project_root := project.root
 	mut applied := false
-	if app.apply_bootstrap_convention_http_classes(project_root)! {
-		applied = true
+	if project.resume != .http_errors {
+		applied = app.apply_bootstrap_convention_http_classes(files, mut progress)!
 	}
 	mut app_value := (&app).self_value()
 	defer {
 		app_value.release()
 	}
-	if app.apply_bootstrap_convention_spec(supportx.join_path(project_root, 'app/Http/errors.php'),
-		'errors')!
+	if app.apply_bootstrap_convention_spec(project, 'app/Http/errors.php', 'errors', .http_errors, mut progress)! {
+		applied = true
+	}
+	if supportx.bootstrap_convention_hook_file(supportx.join_path(project_root,
+		'app/Http/controllers.php')).apply(app_value, 'controllers', mut progress)!
 	{
 		applied = true
 	}
 	if supportx.bootstrap_convention_hook_file(supportx.join_path(project_root,
-		'app/Http/controllers.php')).apply(app_value, 'controllers')!
+		'bootstrap/middleware.php')).apply(app_value, 'middleware', mut progress)!
 	{
 		applied = true
 	}
 	if supportx.bootstrap_convention_hook_file(supportx.join_path(project_root,
-		'bootstrap/middleware.php')).apply(app_value, 'middleware')!
+		'app/Http/middleware.php')).apply(app_value, 'middleware', mut progress)!
 	{
 		applied = true
 	}
-	if supportx.bootstrap_convention_hook_file(supportx.join_path(project_root,
-		'app/Http/middleware.php')).apply(app_value, 'middleware')!
-	{
+	for route_file in progress.glob_files(supportx.join_path(project_root, 'routes/*.php'))! {
+		_ = supportx.bootstrap_convention_hook_file(route_file).apply(app_value, 'routes', mut progress)!
 		applied = true
 	}
-	for route_file in supportx.glob_paths(supportx.join_path(project_root, 'routes/*.php')) {
-		_ = supportx.bootstrap_convention_hook_file(route_file).apply(app_value, 'routes')!
-		applied = true
-	}
-	for route_file in supportx.glob_paths(supportx.join_path(project_root, 'app/Http/routes/*.php')) {
-		_ = supportx.bootstrap_convention_hook_file(route_file).apply(app_value, 'routes')!
+	for route_file in progress.glob_files(supportx.join_path(project_root, 'app/Http/routes/*.php'))! {
+		_ = supportx.bootstrap_convention_hook_file(route_file).apply(app_value, 'routes', mut progress)!
 		applied = true
 	}
 	return applied
 }
 
-fn (mut app VSlimApp) apply_bootstrap_conventions(path string) ! {
-	project_root := if supportx.is_bootstrap_dir_path(path) { supportx.dirname(path) } else { path }
-	if project_root == '' {
-		return error('bootstrap directory "${path}" has no project root')
-	}
-	shared_applied := app.apply_bootstrap_shared_conventions(project_root)!
-	http_applied := app.apply_bootstrap_http_conventions(project_root)!
-	applied := shared_applied || http_applied
-	if !applied {
-		return error('bootstrap directory "${path}" must contain bootstrap/app.php, app.php, or convention files')
-	}
-	app.boot()
+pub enum ProjectBootstrapMode {
+	web
+	cli
 }
 
-fn (mut app VSlimApp) apply_bootstrap_spec(spec vphp.PhpValue) ! {
-	normalized := supportx.normalize_app_bootstrap_spec(spec)!
+fn project_bootstrap_source(project_root string, mode ProjectBootstrapMode) string {
+	return 'project:${mode}:' + os.real_path(project_root)
+}
+
+fn (mut app VSlimApp) apply_project_bootstrap_conventions(project ProjectBootstrap, mode ProjectBootstrapMode, mut progress supportx.BootstrapProgress) !bool {
+	if mode == .cli {
+		components := supportx.preload_bootstrap_components(project.root, mut progress)!
+		return app.apply_preloaded_bootstrap_conventions(project, components, mut progress)
+	}
+	if project.resume == .http_errors {
+		return app.apply_bootstrap_http_conventions(project, supportx.BootstrapProjectFiles{}, mut progress)
+	}
+	files := supportx.preload_bootstrap_project_classes(project.root, mut progress)!
+	shared_applied := app.apply_preloaded_bootstrap_conventions(project, files.components, mut progress)!
+	http_applied := app.apply_bootstrap_http_conventions(project, files, mut progress)!
+	return shared_applied || http_applied
+}
+
+pub fn (mut app VSlimApp) apply_project_bootstrap(project_root string, mode ProjectBootstrapMode) !bool {
+	state := app.watch_service_state()
+	defer {
+		state.close()
+	}
+	source := project_bootstrap_source(project_root, mode)
+	mut progress := supportx.start_bootstrap_progress(mut app.bootstrap_progress, source)!
+	defer {
+		progress.stop()
+	}
+	if app.resume_bootstrap_boot(source)! {
+		supportx.finish_bootstrap_progress(mut app.bootstrap_progress, source)
+		return true
+	}
+	saved := app.bootstrap_boot_stages[source]
+	resume := if saved == .deferred { BootstrapBootStage.configure } else { saved }
+	entry := if resume == .configure { progress.project_entry(project_root)! } else { '' }
+	if entry != '' {
+		boot := app.configure_bootstrap_file(supportx.BootstrapFile{
+			path:          entry
+			resolved_path: entry
+			project_root:  project_root
+		}, mut progress)!
+		// Web entry files control boot themselves or defer it until dispatch.
+		if boot || mode == .cli {
+			app.finish_bootstrap_boot(source)!
+		} else {
+			app.defer_bootstrap_boot(source)
+		}
+		supportx.finish_bootstrap_progress(mut app.bootstrap_progress, source)
+		return true
+	}
+	applied := app.apply_project_bootstrap_conventions(ProjectBootstrap{
+		root:   project_root
+		source: source
+		resume: resume
+	}, mode, mut progress)!
+	if applied {
+		app.finish_bootstrap_boot(source)!
+	}
+	supportx.finish_bootstrap_progress(mut app.bootstrap_progress, source)
+	return applied
+}
+
+fn (mut app VSlimApp) configure_bootstrap_spec_with_progress(spec vphp.PhpValue, project_root string, scope string, mut progress supportx.BootstrapProgress) !bool {
+	iterable := spec.as_iterable() or { return error('bootstrap spec must be iterable') }
+	mut normalized := progress.normalize(scope + ':spec', iterable)!
 	defer {
 		normalized.release()
 	}
-	app.apply_bootstrap_array(normalized)!
+	if project_root != '' && !progress.done(scope + ':preload') {
+		supportx.preload_bootstrap_spec_classes(project_root, supportx.app_bootstrap_spec(normalized))!
+		progress.complete(scope + ':preload')
+	}
+	return app.configure_bootstrap_array_with_progress(normalized, scope, mut progress)
 }
 
-fn (mut app VSlimApp) apply_bootstrap_iterable(spec vphp.PhpIterable) ! {
-	normalized := supportx.normalize_app_bootstrap_iterable(spec)!
-	defer {
-		normalized.release()
-	}
-	app.apply_bootstrap_array(normalized)!
+enum BootstrapConfigStep {
+	container
+	config
+	runtime
+	services
+	handlers
+	helpers
+	before
+	middleware
+	after
+	providers
+	modules
+	middleware_setup
+	routes
 }
 
-fn (mut app VSlimApp) apply_bootstrap_array(normalized vphp.PhpArray) ! {
-	app.apply_bootstrap_container(normalized)!
-	app.apply_bootstrap_config(normalized)!
-	app.apply_bootstrap_runtime_flags(normalized)
-	app.apply_bootstrap_services(normalized)!
-	app.apply_bootstrap_handlers(normalized)!
-	app.apply_bootstrap_helpers(normalized)!
-	app.apply_bootstrap_middleware_stack(normalized, ['before'], .before, 'before')!
-	app.apply_bootstrap_middleware_stack(normalized, ['middleware', 'middlewares'], .standard,
-		'middleware')!
-	app.apply_bootstrap_middleware_stack(normalized, ['after'], .after, 'after')!
-	if providers := supportx.app_bootstrap_spec(normalized).lookup(['providers']) {
-		provider_iter := providers.as_iterable() or {
-			return error('bootstrap providers must be iterable')
+fn (mut app VSlimApp) configure_bootstrap_array_with_progress(normalized vphp.PhpArray, scope string, mut progress supportx.BootstrapProgress) !bool {
+	if vphp.has_exception() {
+		return error('bootstrap spec evaluation failed')
+	}
+	spec := supportx.app_bootstrap_spec(normalized)
+	for stage in [BootstrapConfigStep.container, .config, .runtime, .services, .handlers, .helpers,
+		.before, .middleware, .after, .providers, .modules, .middleware_setup, .routes] {
+		step := '${scope}:${stage}'
+		if progress.done(step) {
+			continue
 		}
-		app.register_many(provider_iter)
-	}
-	if modules := supportx.app_bootstrap_spec(normalized).lookup(['modules']) {
-		module_iter := modules.as_iterable() or {
-			return error('bootstrap modules must be iterable')
+		match stage {
+			.container { app.apply_bootstrap_container(normalized)! }
+			.config { app.apply_bootstrap_config(normalized)! }
+			.runtime { app.apply_bootstrap_runtime_flags(normalized) }
+			.services { app.apply_bootstrap_services(normalized)! }
+			.handlers { app.apply_bootstrap_handlers(normalized)! }
+			.helpers { app.apply_bootstrap_helpers(normalized, step, mut progress)! }
+			.before {
+				app.apply_bootstrap_middleware_stack(normalized, ['before'], .before, 'before', step, mut progress)!
+			}
+			.middleware {
+				app.apply_bootstrap_middleware_stack(normalized, ['middleware', 'middlewares'], .standard, 'middleware', step, mut progress)!
+			}
+			.after {
+				app.apply_bootstrap_middleware_stack(normalized, ['after'], .after, 'after', step, mut progress)!
+			}
+			.providers { app.apply_bootstrap_component_list(spec, .provider, step, mut progress)! }
+			.modules { app.apply_bootstrap_component_list(spec, .module_, step, mut progress)! }
+			.middleware_setup, .routes {
+				mut app_value := (&app).self_value()
+				defer {
+					app_value.release()
+				}
+				if stage == .routes {
+					spec.call_hooks(['routes'], app_value, 'routes', step, mut progress)!
+				} else {
+					spec.call_hooks(['middleware_setup', 'middlewareSetup'], app_value, 'middleware_setup', step, mut progress)!
+				}
+			}
 		}
-		app.module_many(module_iter)
-	}
-	mut app_value := (&app).self_value()
-	defer {
-		app_value.release()
-	}
-	supportx.app_bootstrap_spec(normalized).call_hooks(['middleware_setup', 'middlewareSetup'],
-		app_value, 'middleware_setup')!
-	supportx.app_bootstrap_spec(normalized).call_hooks(['routes'], app_value, 'routes')!
-	if should_boot := supportx.app_bootstrap_spec(normalized).bool(['boot']) {
-		if should_boot {
-			app.boot()
+		if vphp.has_exception() {
+			return error('bootstrap ${stage} configuration failed')
 		}
+		progress.complete(step)
 	}
+	boot := spec.boot_option().enabled()
+	if vphp.has_exception() {
+		return error('bootstrap boot option evaluation failed')
+	}
+	return boot
 }
 
-@[php_method]
+fn (mut app VSlimApp) apply_bootstrap_component_list(spec supportx.AppBootstrapSpec, kind AppComponentKind, step string, mut progress supportx.BootstrapProgress) ! {
+	label := kind.label() + 's'
+	value := spec.lookup([label]) or { return }
+	iterable := value.as_iterable() or { return error('bootstrap ${label} must be iterable') }
+	app.register_bootstrap_components(iterable, kind, step, mut progress)!
+}
+
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) bootstrap(spec vphp.PhpIterable) &VSlimApp {
 	app.apply_bootstrap_iterable(spec) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
+		raise_app_error('InvalidArgumentException', err)
 		return &app
 	}
 	return &app
 }
 
-@[php_method: 'bootstrapFile']
+@[vphp.PhpExportMethod(name: 'bootstrapFile')]
 pub fn (mut app VSlimApp) bootstrap_file(path string) &VSlimApp {
 	app.bootstrap_file_apply(path) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
+		raise_app_error('InvalidArgumentException', err)
 		return &app
 	}
 	return &app
 }
 
-@[php_method: 'bootstrapDir']
+@[vphp.PhpExportMethod(name: 'bootstrapDir')]
 pub fn (mut app VSlimApp) bootstrap_dir(path string) &VSlimApp {
-	clean := supportx.normalize_dir_path(path)
-	if clean == '' {
+	directory := supportx.resolve_bootstrap_directory(path, 'bootstrap directory') or {
+		raise_app_error('InvalidArgumentException', err)
+		return &app
+	}
+	if directory.explicit_file {
+		return app.bootstrap_file(directory.path)
+	}
+	applied := app.apply_project_bootstrap(directory.project_root, .web) or {
+		raise_app_error('InvalidArgumentException', err)
+		return &app
+	}
+	if !applied {
 		vphp.PhpException.raise_class('InvalidArgumentException',
-			'bootstrap directory must not be empty', 0)
-		return &app
-	}
-	if !clean.ends_with('.php') {
-		supportx.preload_bootstrap_project_classes(clean)
-	}
-	if clean.ends_with('.php') && supportx.is_file(clean) {
-		mut result := vphp.PhpIncludeFile.at(clean).load()
-		defer {
-			result.release()
-		}
-		lower := clean.to_lower()
-		should_preload := lower.ends_with('/bootstrap/app.php')
-			|| lower.ends_with('\\bootstrap\\app.php') || lower.ends_with('/app.php')
-			|| lower.ends_with('\\app.php')
-		if should_preload {
-			project_root := if supportx.is_bootstrap_dir_path(supportx.dirname(clean)) {
-				supportx.dirname(supportx.dirname(clean))
-			} else {
-				supportx.dirname(clean)
-			}
-			if project_root != '' {
-				supportx.preload_bootstrap_spec_classes(project_root, result)
-			}
-		}
-		app.apply_bootstrap_file_result(clean, result) or {
-			vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
-			return &app
-		}
-		return &app
-	}
-	bootstrap_candidate := clean + '/bootstrap/app.php'
-	if supportx.is_file(bootstrap_candidate) {
-		mut result := vphp.PhpIncludeFile.at(bootstrap_candidate).load()
-		defer {
-			result.release()
-		}
-		project_root := if supportx.is_bootstrap_dir_path(supportx.dirname(bootstrap_candidate)) {
-			supportx.dirname(supportx.dirname(bootstrap_candidate))
-		} else {
-			supportx.dirname(bootstrap_candidate)
-		}
-		if project_root != '' {
-			supportx.preload_bootstrap_spec_classes(project_root, result)
-		}
-		app.apply_bootstrap_file_result(bootstrap_candidate, result) or {
-			vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
-			return &app
-		}
-		return &app
-	}
-	app_candidate := clean + '/app.php'
-	if supportx.is_file(app_candidate) {
-		mut result := vphp.PhpIncludeFile.at(app_candidate).load()
-		defer {
-			result.release()
-		}
-		project_root := if supportx.is_bootstrap_dir_path(supportx.dirname(app_candidate)) {
-			supportx.dirname(supportx.dirname(app_candidate))
-		} else {
-			supportx.dirname(app_candidate)
-		}
-		if project_root != '' {
-			supportx.preload_bootstrap_spec_classes(project_root, result)
-		}
-		app.apply_bootstrap_file_result(app_candidate, result) or {
-			vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
-			return &app
-		}
-		return &app
-	}
-	app.apply_bootstrap_conventions(clean) or {
-		vphp.PhpException.raise_class('InvalidArgumentException', err.msg(), 0)
-		return &app
+			'bootstrap directory "${directory.path}" must contain bootstrap/app.php, app.php, or convention files', 0)
 	}
 	return &app
 }

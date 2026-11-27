@@ -99,8 +99,7 @@ namespace {
     use Psr\Http\Server\MiddlewareInterface;
     use Psr\Http\Server\RequestHandlerInterface;
 
-    $app = new VSlim\App();
-    $app->bootstrap([
+    $spec = [
         'before' => new class implements MiddlewareInterface {
             public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
@@ -160,9 +159,23 @@ namespace {
             });
         },
         'boot' => true,
-    ]);
+    ];
+    $app = new VSlim\App();
+    $app->bootstrap($spec);
+    $ordered = $spec['middleware'];
+    $spec['middleware'] = (static function () use ($ordered): Generator {
+        foreach ($ordered as $entry) {
+            yield 8 => $entry;
+        }
+    })();
+    $generated = new VSlim\App();
+    $generated->bootstrap($spec);
 
     $res = $app->dispatch('GET', '/stack');
+    $withRepeatedKeys = $generated->dispatch('GET', '/stack');
+    if ($withRepeatedKeys->status !== $res->status || $withRepeatedKeys->body !== $res->body) {
+        throw new RuntimeException('A repeated generator key removed a middleware');
+    }
     echo $res->status . PHP_EOL;
     echo $res->body . PHP_EOL;
 }

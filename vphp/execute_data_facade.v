@@ -59,6 +59,14 @@ pub fn (ex ZendExecuteData) php_arg_meta(meta PhpArgMeta) PhpArg {
 	return PhpArg.from_meta_zval(meta, ex.arg(meta.index))
 }
 
+fn (ex ZendExecuteData) php_arg_default(meta PhpArgMeta) !PhpArg {
+	value := ZVal.new_null()
+	if !ex.handle.read_arg_default(meta.index, value.handle()) {
+		return error('failed to read PHP default for argument ${meta.name}')
+	}
+	return PhpArg.from_meta_zval(meta, value)
+}
+
 pub fn (ex ZendExecuteData) v_arg[T](index int) T {
 	val := ex.arg(index)
 	if !val.is_valid() {

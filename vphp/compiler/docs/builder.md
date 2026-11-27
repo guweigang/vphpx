@@ -324,7 +324,7 @@ This means the builder layer is both:
 
 These are known and acceptable for now.
 
-1. `ClassBuilder.export_fragments()` does not yet carry full class implementations
+1. The class emitter supplies the implementations that `ClassBuilder.export_fragments()` wraps in PHP version guards
 2. `FuncBuilder` still relies on `c_emitter.v` for wrapper bodies
 3. `ModuleBuilder` is string-heavy and still fairly C-specific
 

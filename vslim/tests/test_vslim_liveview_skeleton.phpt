@@ -51,6 +51,37 @@ $socket
 echo $socket->get('title') . '|' . ($socket->has('missing') ? 'yes' : 'no') . '|' . ($socket->connected() ? 'connected' : 'disconnected') . PHP_EOL;
 echo $socket->get('label') . '|' . $socket->get('tags') . '|' . $socket->get('error_label') . PHP_EOL;
 echo $socket->input('label') . '|' . $socket->inputOr('missing', 'fallback') . '|' . ($socket->hasError('label') ? 'has-error' : 'no-error') . '|' . $socket->error('label') . PHP_EOL;
+$legacyFunctions = [
+    'old' => 'Use input()',
+    'oldOr' => 'Use inputOr()',
+];
+$expectDeprecated = PHP_VERSION_ID >= 80400;
+$expectedWarnings = [];
+foreach ($legacyFunctions as $method => $message) {
+    $reflection = new ReflectionMethod($socket, $method);
+    $attributes = $reflection->getAttributes(Deprecated::class);
+    if ($reflection->isDeprecated() !== $expectDeprecated || count($attributes) !== (int) $expectDeprecated
+        || ($expectDeprecated && $attributes[0]->getArguments() !== ['message' => $message])) {
+        throw new RuntimeException("Unexpected deprecation metadata for $method");
+    }
+    if ($expectDeprecated) {
+        $expectedWarnings[] = "Method VSlim\\Live\\Socket::$method() is deprecated, $message";
+    }
+}
+$warnings = [];
+set_error_handler(static function (int $severity, string $message) use (&$warnings): bool {
+    $warnings[] = $message;
+    return true;
+}, E_DEPRECATED);
+try {
+    $legacyResults = [$socket->old(field: 'label'), $socket->oldOr(fallback: 'fallback', field: 'missing')];
+} finally {
+    restore_error_handler();
+}
+if ($legacyResults !== [$socket->input('label'), $socket->inputOr('missing', 'fallback')]
+    || $warnings !== $expectedWarnings) {
+    throw new RuntimeException('Unexpected behavior from the compatibility aliases: ' . var_export($warnings, true));
+}
 
 $patches = $socket->patches();
 echo $patches[0]['op'] . '|' . $patches[0]['id'] . '|' . (str_contains($patches[0]['html'], 'Patched|7') ? 'html-ok' : 'html-miss') . PHP_EOL;

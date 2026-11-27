@@ -1,14 +1,34 @@
 module clix
 
+import registrationx
 import os
 import strconv
 import vphp
 
+// vfmt off
+@[vphp.PhpExportEnum(name: 'VSlim\\Cli\\InputValueType')]
 pub enum CliInputValueType {
-	string_
-	bool_
-	int_
-	float_
+	string_  @[vphp.PhpEnumCaseName(name: 'String'); vphp.PhpEnumCaseValue(value: 'string')]
+	bool_    @[vphp.PhpEnumCaseName(name: 'Bool'); vphp.PhpEnumCaseValue(value: 'bool')]
+	int_     @[vphp.PhpEnumCaseName(name: 'Int'); vphp.PhpEnumCaseValue(value: 'int')]
+	float_   @[vphp.PhpEnumCaseName(name: 'Float'); vphp.PhpEnumCaseValue(value: 'float')]
+}
+
+struct CliInputValueTypeAliases {
+	string_ CliInputValueType @[vphp.PhpClassConstantName(name: 'string_'); vphp.PhpClassConstantAttribute(name: 'Deprecated', args: 'message: "Use InputValueType::String"')]
+	bool_   CliInputValueType @[vphp.PhpClassConstantName(name: 'bool_'); vphp.PhpClassConstantAttribute(name: 'Deprecated', args: 'message: "Use InputValueType::Bool"')]
+	int_    CliInputValueType @[vphp.PhpClassConstantName(name: 'int_'); vphp.PhpClassConstantAttribute(name: 'Deprecated', args: 'message: "Use InputValueType::Int"')]
+	float_  CliInputValueType @[vphp.PhpClassConstantName(name: 'float_'); vphp.PhpClassConstantAttribute(name: 'Deprecated', args: 'message: "Use InputValueType::Float"')]
+}
+// vfmt on
+
+const cli_input_value_type_aliases = vphp.PhpConstantTable[CliInputValueType, CliInputValueTypeAliases]{
+	values: CliInputValueTypeAliases{
+		string_: .string_
+		bool_:   .bool_
+		int_:    .int_
+		float_:  .float_
+	}
 }
 
 pub struct CliCommandArgumentSpec {
@@ -152,14 +172,10 @@ pub fn cli_string_list_value(value vphp.PhpValue) ![]string {
 		return if item == '' { []string{} } else { [item] }
 	}
 	iter := value.as_iterable() or { return error('value must be iterable') }
-	mut normalized := iter.to_array()!
-	defer {
-		normalized.release()
-	}
 	mut out := []string{}
 	mut seen := map[string]bool{}
-	for idx := 0; idx < normalized.count(); idx++ {
-		item := normalized.index_value(idx).to_string().trim_space()
+	for text in cli_iterable_strings(iter)! {
+		item := text.trim_space()
 		if item == '' || item in seen {
 			continue
 		}
@@ -170,9 +186,16 @@ pub fn cli_string_list_value(value vphp.PhpValue) ![]string {
 }
 
 fn (subject CliSpec) cli_value_type(keys []string, fallback CliInputValueType) !CliInputValueType {
-	raw := subject.string(keys) or { return fallback }
+	input := subject.lookup(keys) or { return fallback }
+	if case_ := input.as_enum_case() {
+		return case_.to_v[CliInputValueType]() or {
+			return error('unsupported CLI value type "${case_.enum_name()}::${case_.name()}"')
+		}
+	}
+	raw := input.to_string().trim_space()
 	return match raw.to_lower() {
-		'', 'string', 'str' { .string_ }
+		'' { fallback }
+		'string', 'str' { .string_ }
 		'bool', 'boolean', 'flag' { .bool_ }
 		'int', 'integer' { .int_ }
 		'float', 'double', 'number' { .float_ }
@@ -183,13 +206,9 @@ fn (subject CliSpec) cli_value_type(keys []string, fallback CliInputValueType) !
 fn (subject CliSpec) cli_choices(keys []string) ![]string {
 	if raw_choices := subject.lookup(keys) {
 		iter := raw_choices.as_iterable() or { return error('CLI choices must be iterable') }
-		mut normalized := iter.to_array()!
-		defer {
-			normalized.release()
-		}
 		mut out := []string{}
-		for idx := 0; idx < normalized.count(); idx++ {
-			choice := normalized.index_value(idx).to_string().trim_space()
+		for text in cli_iterable_strings(iter)! {
+			choice := text.trim_space()
 			if choice != '' {
 				out << choice
 			}
@@ -206,7 +225,7 @@ fn (subject CliSpec) cli_string_list(keys []string) ![]string {
 	return []string{}
 }
 
-fn cli_default_strings(value vphp.PhpValue, multiple bool) ![]string {
+fn cli_default_strings(value vphp.PhpValue) ![]string {
 	if !value.is_valid() || value.is_null() || value.is_undef() {
 		return []string{}
 	}
@@ -214,22 +233,14 @@ fn cli_default_strings(value vphp.PhpValue, multiple bool) ![]string {
 		bool_value := if value.to_bool() { 'true' } else { 'false' }
 		return [bool_value]
 	}
-	if value.is_array() {
-		arr := value.as_array() or { return []string{} }
-		mut normalized := arr.borrow()
-		defer {
-			normalized.release()
-		}
-		mut out := []string{}
-		for idx := 0; idx < normalized.count(); idx++ {
-			out << normalized.index_value(idx).to_string()
-		}
-		return out
+	if iterable := value.borrowed().as_iterable() {
+		return cli_iterable_strings(iterable)
 	}
-	if multiple {
-		return [value.to_string()]
+	text := value.to_string()
+	if vphp.has_exception() {
+		return error('CLI default value conversion failed')
 	}
-	return [value.to_string()]
+	return [text]
 }
 
 fn (subject CliSpec) cli_string(keys []string) string {
@@ -264,7 +275,7 @@ fn parse_cli_argument_spec_value(item vphp.PhpValue) !CliCommandArgumentSpec {
 	}
 	multiple := cli_spec(spec_arr).cli_bool(['multiple', 'variadic', 'array'], false)
 	default_values := if default_value := cli_spec(spec_arr).lookup(['default']) {
-		cli_default_strings(default_value, multiple)!
+		cli_default_strings(default_value)!
 	} else {
 		[]string{}
 	}
@@ -311,7 +322,7 @@ fn parse_cli_option_spec_value(item vphp.PhpValue) !CliCommandOptionSpec {
 		return error('CLI option "${name}" cannot be both bool and multiple')
 	}
 	default_values := if default_value := cli_spec(spec_arr).lookup(['default']) {
-		cli_default_strings(default_value, multiple)!
+		cli_default_strings(default_value)!
 	} else {
 		[]string{}
 	}
@@ -360,7 +371,7 @@ pub fn parse_command_definition_value(raw vphp.PhpValue) !CliCommandDefinition {
 		iter := raw_args.as_iterable() or {
 			return error('CLI arguments definition must be iterable')
 		}
-		mut normalized := iter.to_array()!
+		mut normalized := iter.to_list()!
 		defer {
 			normalized.release()
 		}
@@ -379,7 +390,7 @@ pub fn parse_command_definition_value(raw vphp.PhpValue) !CliCommandDefinition {
 		iter := raw_options.as_iterable() or {
 			return error('CLI options definition must be iterable')
 		}
-		mut normalized := iter.to_array()!
+		mut normalized := iter.to_list()!
 		defer {
 			normalized.release()
 		}
@@ -470,7 +481,7 @@ fn cli_value_from_defaults(values []string, value_type CliInputValueType, multip
 		for item in values {
 			out << cli_parse_scalar_value(item, value_type, label, choices)!
 		}
-		return vphp.DynValue.of_list(out)
+		return vphp.DynValue.array_from_list(out)
 	}
 	if values.len == 0 {
 		return vphp.DynValue.null()
@@ -516,12 +527,28 @@ fn (spec CliCommandOptionSpec) deprecation_warning() string {
 }
 
 pub fn command_definition(runtime vphp.PhpValue) !CliCommandDefinition {
-	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists('definition') {
+	if !command_has_definition(runtime) {
 		return error('command has no CLI definition')
+	}
+	return read_command_definition(runtime, false)
+}
+
+fn command_has_definition(runtime vphp.PhpValue) bool {
+	return runtime.is_valid() && runtime.is_object() && runtime.method_exists('definition')
+}
+
+fn read_command_definition(runtime vphp.PhpValue, allow_non_iterable bool) !CliCommandDefinition {
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
 	}
 	mut definition_z := runtime.call_method('definition')
 	defer {
 		definition_z.release()
+	}
+	// Registration uses only metadata and accepts legacy commands with a scalar definition.
+	if allow_non_iterable && !definition_z.is_iterable() {
+		return CliCommandDefinition{}
 	}
 	return parse_command_definition_value(definition_z)!
 }
@@ -541,6 +568,10 @@ pub fn runtime_string_list_method(runtime vphp.PhpValue, method_name string) []s
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return []string{}
 	}
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
+	}
 	mut value_z := runtime.call_method(method_name)
 	defer {
 		value_z.release()
@@ -551,6 +582,10 @@ pub fn runtime_string_list_method(runtime vphp.PhpValue, method_name string) []s
 pub fn runtime_bool_method(runtime vphp.PhpValue, method_name string, fallback bool) bool {
 	if !runtime.is_valid() || !runtime.is_object() || !runtime.method_exists(method_name) {
 		return fallback
+	}
+	mut scope := registrationx.begin_registration_scope()
+	defer {
+		scope.finish()
 	}
 	mut value_z := runtime.call_method(method_name)
 	defer {

@@ -19,6 +19,12 @@ echo ($migrator->manager() instanceof VSlim\Database\Manager ? 'manager' : 'no-m
 echo $migrator->migrationsPath() . PHP_EOL;
 echo $migrator->seedsPath() . PHP_EOL;
 echo ($app->migrator() === $migrator ? 'cached' : 'new') . PHP_EOL;
+$replacement = new VSlim\Database\Migrator();
+$app->setMigrator(migrator: $replacement);
+if (!$app->hasMigrator() || $app->migrator() !== $replacement || $replacement->manager() !== $app->db()
+    || $replacement->migrationsPath() !== $migrator->migrationsPath()) {
+    throw new RuntimeException('Unexpected replacement migrator bindings');
+}
 ?>
 --EXPECTF--
 manager

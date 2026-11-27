@@ -3,7 +3,7 @@ module streamx
 import httpx
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (c &VSlimStreamOllamaClient) payload(input vphp.PhpArray) vphp.PhpArray {
 	query := input['query']
 	body_input := input['body']
@@ -23,8 +23,8 @@ pub fn (c &VSlimStreamOllamaClient) payload(input vphp.PhpArray) vphp.PhpArray {
 	return payload
 }
 
-@[php_arg_name(request_payload: 'requestPayload')]
-@[php_method: 'payloadFromRequest']
+@[vphp.PhpArgName(v_name: 'request_payload', php_name: 'requestPayload')]
+@[vphp.PhpExportMethod(name: 'payloadFromRequest')]
 pub fn (c &VSlimStreamOllamaClient) payload_from_request(request_payload vphp.PhpValue) vphp.PhpArray {
 	req := c.request_from_ollama_source(request_payload)
 	return c.payload_from_vslim_request(req)
@@ -60,7 +60,7 @@ fn vslim_request_decode_body_payload(req &httpx.VSlimRequest) vphp.PhpArray {
 	if body == '' {
 		return vphp.PhpArray.new()
 	}
-	decoded := vphp.PhpJson.decode_assoc_value(body)
+	mut decoded := vphp.PhpJson.decode_assoc_value(body)
 	defer {
 		decoded.release()
 	}
@@ -154,7 +154,7 @@ fn (subject PhpValueSubject) ollama_body_payload() vphp.PhpArray {
 	if input.to_string().trim_space() == '' {
 		return vphp.PhpArray.new()
 	}
-	decoded := vphp.PhpJson.decode_assoc_value(input.to_string())
+	mut decoded := vphp.PhpJson.decode_assoc_value(input.to_string())
 	defer {
 		decoded.release()
 	}

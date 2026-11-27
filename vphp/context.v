@@ -38,19 +38,53 @@ pub fn (ctx Context) args() PhpArgs {
 }
 
 pub fn (ctx Context) args_with_meta(metas []PhpArgMeta) PhpArgs {
+	return PhpArgs.new(ctx.arg_items(metas, 0))
+}
+
+fn (ctx Context) arg_items(metas []PhpArgMeta, min_capacity int) []PhpArg {
 	num := ctx.num_args()
-	mut items := []PhpArg{cap: num}
+	mut indexed := true
+	for index, meta in metas {
+		if meta.index != index {
+			indexed = false
+			break
+		}
+	}
+	capacity := if num > min_capacity { num } else { min_capacity }
+	mut items := []PhpArg{cap: capacity}
 	for index in 0 .. num {
 		mut arg_meta := PhpArgMeta{
 			index: index
 		}
-		for meta in metas {
-			if meta.index == index {
-				arg_meta = meta.with_attribute_target(.parameter)
-				break
+		if indexed {
+			if index < metas.len {
+				arg_meta = metas[index]
+			}
+		} else {
+			for meta in metas {
+				if meta.index == index {
+					arg_meta = meta
+					break
+				}
 			}
 		}
-		items << ctx.arg_meta(arg_meta)
+		items << ctx.arg_meta(arg_meta.with_attribute_target(.parameter))
+	}
+	return items
+}
+
+pub fn (ctx Context) args_with_php_defaults(metas []PhpArgMeta) !PhpArgs {
+	mut items := ctx.arg_items(metas, metas.len)
+	for meta in metas {
+		if !meta.use_php_default || meta.index < 0
+			|| (meta.index < items.len && items[meta.index].is_present()) {
+			continue
+		}
+		arg := ctx.ex.php_arg_default(meta.with_attribute_target(.parameter))!
+		for items.len <= meta.index {
+			items << PhpArg.from_value(PhpValue.invalid())
+		}
+		items[meta.index] = arg
 	}
 	return PhpArgs.new(items)
 }

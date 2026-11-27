@@ -8,6 +8,7 @@ struct ClassLifecycleGlue {
 	lower_name         string
 	has_cleanup_method bool
 	has_free_method    bool
+	copy_parent_embeds []string
 }
 
 fn ClassLifecycleGlue.new(class_name string, type_ref string, lower_name string, r &repr.PhpClassRepr) ClassLifecycleGlue {
@@ -17,6 +18,7 @@ fn ClassLifecycleGlue.new(class_name string, type_ref string, lower_name string,
 		lower_name:         lower_name
 		has_cleanup_method: r.has_cleanup_method
 		has_free_method:    r.has_free_method
+		copy_parent_embeds: r.copy_parent_embeds
 	}
 }
 
@@ -38,15 +40,24 @@ fn (glue ClassLifecycleGlue) render_new_raw_lines() []string {
 }
 
 fn (glue ClassLifecycleGlue) render_free_raw_lines() []string {
-	return [
+	mut lines := [
 		"@[export: '${glue.lower_name}_free_raw']",
 		'pub fn ${glue.lower_name}_free_raw(ptr voidptr) {',
 		'    if ptr == 0 {',
 		'        return',
 		'    }',
-		'    vphp.generic_free_raw[${glue.type_ref}](ptr)',
-		'}',
 	]
+	if glue.copy_parent_embeds.len > 0 {
+		lines << '    mut obj := unsafe { &${glue.type_ref}(ptr) }'
+		mut field := 'obj'
+		for parent in glue.copy_parent_embeds {
+			field += '.${parent}'
+			lines << '    vphp.generic_release_fields(mut ${field})'
+		}
+	}
+	lines << '    vphp.generic_free_raw[${glue.type_ref}](ptr)'
+	lines << '}'
+	return lines
 }
 
 fn (glue ClassLifecycleGlue) render_cleanup_raw_lines() []string {

@@ -15,43 +15,44 @@ struct VSlimLogLevelConsts {
 	debug    string
 }
 
-const vslim_log_level_consts = VSlimLogLevelConsts{
-	disabled: 'disabled'
-	fatal:    'fatal'
-	error:    'error'
-	warn:     'warn'
-	info:     'info'
-	debug:    'debug'
-}
-
-@[php_class: 'VSlim\\Log\\Logger']
+@[vphp.PhpExportClass(name: 'VSlim\\Log\\Logger')]
 @[heap]
 pub struct VSlimLogger {
 mut:
-	engine_ref         &log.Log = unsafe { nil } @[php_ignore]
+	engine_ref         &log.Log = unsafe { nil } @[vphp.PhpIgnoreField]
 	channel            string
 	context            map[string]string
-	level_name         string @[php_prop: levelName]
-	output_file        string @[php_prop: outputFile]
-	console_target     string @[php_prop: consoleTarget]
-	local_time_enabled bool = true   @[php_prop: localTimeEnabled]
-	short_tag_enabled  bool   @[php_prop: shortTagEnabled]
+	level_name         string      @[vphp.PhpProperty(name: 'levelName')]
+	output_file        string      @[vphp.PhpProperty(name: 'outputFile')]
+	console_target     string      @[vphp.PhpProperty(name: 'consoleTarget')]
+	local_time_enabled bool = true @[vphp.PhpProperty(name: 'localTimeEnabled')]
+	short_tag_enabled  bool        @[vphp.PhpProperty(name: 'shortTagEnabled')]
 }
 
-@[php_implements: 'Psr\\Log\\LoggerInterface']
-@[php_class: 'VSlim\\Log\\PsrLogger']
+@[vphp.PhpImplements(names: 'Psr\\Log\\LoggerInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Log\\PsrLogger')]
 @[heap]
 pub struct VSlimPsrLogger {
 mut:
-	logger_ref &VSlimLogger = unsafe { nil } @[php_ignore]
+	logger_ref &VSlimLogger = unsafe { nil } @[vphp.PhpIgnoreField]
 }
 
-@[php_const: 'vslim_log_level_consts']
-@[php_class: 'VSlim\\Log\\Level']
+@[vphp.PhpExportClass(name: 'VSlim\\Log\\Level')]
 @[heap]
 pub struct VSlimLogLevel {}
 
-@[php_method]
+const vslim_log_levels = vphp.PhpConstantTable[VSlimLogLevel, VSlimLogLevelConsts]{
+	values: VSlimLogLevelConsts{
+		disabled: 'disabled'
+		fatal:    'fatal'
+		error:    'error'
+		warn:     'warn'
+		info:     'info'
+		debug:    'debug'
+	}
+}
+
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) construct() &VSlimLogger {
 	log_writer.ensure()
 	return log_writer
@@ -65,67 +66,67 @@ pub fn VSlimLogger.app_default(config &cfgx.VSlimConfig) &VSlimLogger {
 	return log_writer
 }
 
-@[php_method: 'disabledLevel']
+@[vphp.PhpExportMethod(name: 'disabledLevel')]
 pub fn VSlimLogger.disabled_level() string {
 	return VSlimLogLevel.disabled()
 }
 
-@[php_method: 'fatalLevel']
+@[vphp.PhpExportMethod(name: 'fatalLevel')]
 pub fn VSlimLogger.fatal_level() string {
 	return VSlimLogLevel.fatal()
 }
 
-@[php_method: 'errorLevel']
+@[vphp.PhpExportMethod(name: 'errorLevel')]
 pub fn VSlimLogger.error_level() string {
 	return VSlimLogLevel.error()
 }
 
-@[php_method: 'warnLevel']
+@[vphp.PhpExportMethod(name: 'warnLevel')]
 pub fn VSlimLogger.warn_level() string {
 	return VSlimLogLevel.warn()
 }
 
-@[php_method: 'infoLevel']
+@[vphp.PhpExportMethod(name: 'infoLevel')]
 pub fn VSlimLogger.info_level() string {
 	return VSlimLogLevel.info()
 }
 
-@[php_method: 'debugLevel']
+@[vphp.PhpExportMethod(name: 'debugLevel')]
 pub fn VSlimLogger.debug_level() string {
 	return VSlimLogLevel.debug()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimLogLevel.disabled() string {
 	return 'disabled'
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimLogLevel.fatal() string {
 	return 'fatal'
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimLogLevel.error() string {
 	return 'error'
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimLogLevel.warn() string {
 	return 'warn'
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimLogLevel.info() string {
 	return 'info'
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimLogLevel.debug() string {
 	return 'debug'
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimLogLevel.all() map[string]string {
 	return {
 		'disabled': VSlimLogLevel.disabled()
@@ -137,7 +138,7 @@ pub fn VSlimLogLevel.all() map[string]string {
 	}
 }
 
-@[php_method: 'setLevel']
+@[vphp.PhpExportMethod(name: 'setLevel')]
 pub fn (mut log_writer VSlimLogger) set_level(level string) &VSlimLogger {
 	log_writer.ensure()
 	parsed := vslim_log_level_from_name(level) or { log.Level.info }
@@ -146,12 +147,12 @@ pub fn (mut log_writer VSlimLogger) set_level(level string) &VSlimLogger {
 	return log_writer
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (log_writer &VSlimLogger) level() string {
 	return if log_writer.level_name == '' { 'info' } else { log_writer.level_name }
 }
 
-@[php_method: 'setChannel']
+@[vphp.PhpExportMethod(name: 'setChannel')]
 pub fn (mut log_writer VSlimLogger) set_channel(channel string) &VSlimLogger {
 	log_writer.ensure()
 	log_writer.channel = normalize_logger_channel(channel)
@@ -159,24 +160,24 @@ pub fn (mut log_writer VSlimLogger) set_channel(channel string) &VSlimLogger {
 	return log_writer
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (log_writer &VSlimLogger) channel() string {
 	return if log_writer.channel == '' { 'vslim' } else { log_writer.channel }
 }
 
-@[php_method: 'setContext']
+@[vphp.PhpExportMethod(name: 'setContext')]
 pub fn (mut log_writer VSlimLogger) set_context(context vphp.PhpArray) &VSlimLogger {
 	log_writer.ensure()
 	log_writer.context = normalize_log_context(context)
 	return log_writer
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (log_writer &VSlimLogger) context() map[string]string {
 	return log_writer.context.clone()
 }
 
-@[php_method: 'withContext']
+@[vphp.PhpExportMethod(name: 'withContext')]
 pub fn (mut log_writer VSlimLogger) with_context(key string, value string) &VSlimLogger {
 	log_writer.ensure()
 	if key.trim_space() != '' {
@@ -185,14 +186,14 @@ pub fn (mut log_writer VSlimLogger) with_context(key string, value string) &VSli
 	return log_writer
 }
 
-@[php_method: 'clearContext']
+@[vphp.PhpExportMethod(name: 'clearContext')]
 pub fn (mut log_writer VSlimLogger) clear_context() &VSlimLogger {
 	log_writer.ensure()
 	log_writer.context = map[string]string{}
 	return log_writer
 }
 
-@[php_method: 'setLocalTime']
+@[vphp.PhpExportMethod(name: 'setLocalTime')]
 pub fn (mut log_writer VSlimLogger) set_local_time(enabled bool) &VSlimLogger {
 	log_writer.ensure()
 	log_writer.local_time_enabled = enabled
@@ -200,7 +201,7 @@ pub fn (mut log_writer VSlimLogger) set_local_time(enabled bool) &VSlimLogger {
 	return log_writer
 }
 
-@[php_method: 'setShortTag']
+@[vphp.PhpExportMethod(name: 'setShortTag')]
 pub fn (mut log_writer VSlimLogger) set_short_tag(enabled bool) &VSlimLogger {
 	log_writer.ensure()
 	log_writer.short_tag_enabled = enabled
@@ -208,7 +209,7 @@ pub fn (mut log_writer VSlimLogger) set_short_tag(enabled bool) &VSlimLogger {
 	return log_writer
 }
 
-@[php_method: 'setOutputFile']
+@[vphp.PhpExportMethod(name: 'setOutputFile')]
 pub fn (mut log_writer VSlimLogger) set_output_file(path string) &VSlimLogger {
 	log_writer.ensure()
 	if path.trim_space() == '' {
@@ -219,12 +220,12 @@ pub fn (mut log_writer VSlimLogger) set_output_file(path string) &VSlimLogger {
 	return log_writer
 }
 
-@[php_method: 'outputFile']
+@[vphp.PhpExportMethod(name: 'outputFile')]
 pub fn (log_writer &VSlimLogger) output_file() string {
 	return log_writer.output_file
 }
 
-@[php_method: 'useStdout']
+@[vphp.PhpExportMethod(name: 'useStdout')]
 pub fn (mut log_writer VSlimLogger) use_stdout() &VSlimLogger {
 	log_writer.ensure()
 	log_writer.console_target = 'stdout'
@@ -232,7 +233,7 @@ pub fn (mut log_writer VSlimLogger) use_stdout() &VSlimLogger {
 	return log_writer
 }
 
-@[php_method: 'useStderr']
+@[vphp.PhpExportMethod(name: 'useStderr')]
 pub fn (mut log_writer VSlimLogger) use_stderr() &VSlimLogger {
 	log_writer.ensure()
 	log_writer.console_target = 'stderr'
@@ -240,7 +241,7 @@ pub fn (mut log_writer VSlimLogger) use_stderr() &VSlimLogger {
 	return log_writer
 }
 
-@[php_method: 'outputTarget']
+@[vphp.PhpExportMethod(name: 'outputTarget')]
 pub fn (log_writer &VSlimLogger) output_target() string {
 	if log_writer.output_file != '' {
 		if log_writer.console_target != '' {
@@ -251,106 +252,106 @@ pub fn (log_writer &VSlimLogger) output_target() string {
 	return if log_writer.console_target == '' { 'stderr' } else { log_writer.console_target }
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) log(level string, message string) &VSlimLogger {
 	log_writer.ensure()
 	log_writer.write_log(level, message, map[string]string{})
 	return log_writer
 }
 
-@[php_method: 'logContext']
+@[vphp.PhpExportMethod(name: 'logContext')]
 pub fn (mut log_writer VSlimLogger) log_context(level string, message string, context vphp.PhpArray) &VSlimLogger {
 	log_writer.ensure()
 	log_writer.write_log(level, message, normalize_log_context(context))
 	return log_writer
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) debug(message string) &VSlimLogger {
 	return log_writer.log('debug', message)
 }
 
-@[php_method: 'debugContext']
+@[vphp.PhpExportMethod(name: 'debugContext')]
 pub fn (mut log_writer VSlimLogger) debug_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return log_writer.log_context('debug', message, context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) info(message string) &VSlimLogger {
 	return log_writer.log('info', message)
 }
 
-@[php_method: 'infoContext']
+@[vphp.PhpExportMethod(name: 'infoContext')]
 pub fn (mut log_writer VSlimLogger) info_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return log_writer.log_context('info', message, context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) warn(message string) &VSlimLogger {
 	return log_writer.log('warn', message)
 }
 
-@[php_method: 'warnContext']
+@[vphp.PhpExportMethod(name: 'warnContext')]
 pub fn (mut log_writer VSlimLogger) warn_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return log_writer.log_context('warn', message, context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) error(message string) &VSlimLogger {
 	return log_writer.log('error', message)
 }
 
-@[php_method: 'errorContext']
+@[vphp.PhpExportMethod(name: 'errorContext')]
 pub fn (mut log_writer VSlimLogger) error_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return log_writer.log_context('error', message, context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) warning(message string) &VSlimLogger {
 	return log_writer.warn(message)
 }
 
-@[php_method: 'warningContext']
+@[vphp.PhpExportMethod(name: 'warningContext')]
 pub fn (mut log_writer VSlimLogger) warning_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return log_writer.warn_context(message, context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) notice(message string) &VSlimLogger {
 	return log_writer.log('notice', message)
 }
 
-@[php_method: 'noticeContext']
+@[vphp.PhpExportMethod(name: 'noticeContext')]
 pub fn (mut log_writer VSlimLogger) notice_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return log_writer.log_context('notice', message, context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) critical(message string) &VSlimLogger {
 	return log_writer.log('critical', message)
 }
 
-@[php_method: 'criticalContext']
+@[vphp.PhpExportMethod(name: 'criticalContext')]
 pub fn (mut log_writer VSlimLogger) critical_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return log_writer.log_context('critical', message, context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) alert(message string) &VSlimLogger {
 	return log_writer.log('alert', message)
 }
 
-@[php_method: 'alertContext']
+@[vphp.PhpExportMethod(name: 'alertContext')]
 pub fn (mut log_writer VSlimLogger) alert_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return log_writer.log_context('alert', message, context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimLogger) emergency(message string) &VSlimLogger {
 	return log_writer.log('emergency', message)
 }
 
-@[php_method: 'emergencyContext']
+@[vphp.PhpExportMethod(name: 'emergencyContext')]
 pub fn (mut log_writer VSlimLogger) emergency_context(message string, context vphp.PhpArray) &VSlimLogger {
 	return log_writer.log_context('emergency', message, context)
 }
@@ -397,7 +398,7 @@ pub fn (mut log_writer VSlimLogger) set_output_file_only(path string) &VSlimLogg
 	return log_writer.set_output_file(path)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) construct() &VSlimPsrLogger {
 	log_writer.ensure()
 	return log_writer
@@ -410,68 +411,68 @@ pub fn VSlimPsrLogger.from_logger(inner &VSlimLogger) &VSlimPsrLogger {
 	return log_writer
 }
 
-@[php_method: 'setLogger']
+@[vphp.PhpExportMethod(name: 'setLogger')]
 pub fn (mut log_writer VSlimPsrLogger) set_logger(inner &VSlimLogger) &VSlimPsrLogger {
 	log_writer.logger_ref = inner
 	return log_writer
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) logger() &VSlimLogger {
 	log_writer.ensure()
 	return log_writer.logger_ref
 }
 
-@[php_method: 'setLevel']
+@[vphp.PhpExportMethod(name: 'setLevel')]
 pub fn (mut log_writer VSlimPsrLogger) set_level(level string) &VSlimPsrLogger {
 	mut inner := log_writer.logger()
 	inner.set_level(level)
 	return log_writer
 }
 
-@[php_method: 'setChannel']
+@[vphp.PhpExportMethod(name: 'setChannel')]
 pub fn (mut log_writer VSlimPsrLogger) set_channel(channel string) &VSlimPsrLogger {
 	mut inner := log_writer.logger()
 	inner.set_channel(channel)
 	return log_writer
 }
 
-@[php_method: 'setContext']
+@[vphp.PhpExportMethod(name: 'setContext')]
 pub fn (mut log_writer VSlimPsrLogger) set_context(context vphp.PhpArray) &VSlimPsrLogger {
 	mut inner := log_writer.logger()
 	inner.set_context(context)
 	return log_writer
 }
 
-@[php_method: 'withContext']
+@[vphp.PhpExportMethod(name: 'withContext')]
 pub fn (mut log_writer VSlimPsrLogger) with_context(key string, value string) &VSlimPsrLogger {
 	mut inner := log_writer.logger()
 	inner.with_context(key, value)
 	return log_writer
 }
 
-@[php_method: 'clearContext']
+@[vphp.PhpExportMethod(name: 'clearContext')]
 pub fn (mut log_writer VSlimPsrLogger) clear_context() &VSlimPsrLogger {
 	mut inner := log_writer.logger()
 	inner.clear_context()
 	return log_writer
 }
 
-@[php_method: 'setOutputFile']
+@[vphp.PhpExportMethod(name: 'setOutputFile')]
 pub fn (mut log_writer VSlimPsrLogger) set_output_file(path string) &VSlimPsrLogger {
 	mut inner := log_writer.logger()
 	inner.set_output_file(path)
 	return log_writer
 }
 
-@[php_method: 'useStdout']
+@[vphp.PhpExportMethod(name: 'useStdout')]
 pub fn (mut log_writer VSlimPsrLogger) use_stdout() &VSlimPsrLogger {
 	mut inner := log_writer.logger()
 	inner.use_stdout()
 	return log_writer
 }
 
-@[php_method: 'useStderr']
+@[vphp.PhpExportMethod(name: 'useStderr')]
 pub fn (mut log_writer VSlimPsrLogger) use_stderr() &VSlimPsrLogger {
 	mut inner := log_writer.logger()
 	inner.use_stderr()
@@ -483,7 +484,7 @@ struct VSlimPsrLoggerContextParams {
 	context vphp.PhpArray
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) log(level vphp.PhpValue, message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := log_writer.logger()
 	level_name := log_message_from_value(level)
@@ -495,55 +496,55 @@ pub fn (mut log_writer VSlimPsrLogger) log(level vphp.PhpValue, message vphp.Php
 	inner.log_context(level_name, log_message_from_value(message), params.context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) emergency(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := log_writer.logger()
 	inner.log_context('emergency', log_message_from_value(message), params.context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) alert(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := log_writer.logger()
 	inner.log_context('alert', log_message_from_value(message), params.context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) critical(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := log_writer.logger()
 	inner.log_context('critical', log_message_from_value(message), params.context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) error(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := log_writer.logger()
 	inner.log_context('error', log_message_from_value(message), params.context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) warning(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := log_writer.logger()
 	inner.log_context('warning', log_message_from_value(message), params.context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) notice(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := log_writer.logger()
 	inner.log_context('notice', log_message_from_value(message), params.context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) info(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := log_writer.logger()
 	inner.log_context('info', log_message_from_value(message), params.context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut log_writer VSlimPsrLogger) debug(message vphp.PhpValue, params VSlimPsrLoggerContextParams) {
 	mut inner := log_writer.logger()
 	inner.log_context('debug', log_message_from_value(message), params.context)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (log_writer &VSlimPsrLogger) str() string {
 	if log_writer.logger_ref == unsafe { nil } {
 		return 'VSlim\\Log\\PsrLogger(uninitialized)'
@@ -551,7 +552,7 @@ pub fn (log_writer &VSlimPsrLogger) str() string {
 	return 'VSlim\\Log\\PsrLogger(' + log_writer.logger_ref.str() + ')'
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (log_writer &VSlimLogger) str() string {
 	return 'VSlim\\Log\\Logger(channel=${log_writer.channel()}, level=${log_writer.level()})'
 }

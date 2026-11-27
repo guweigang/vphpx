@@ -59,5 +59,5 @@ pub fn (handle Handle) wrapper_ptr() voidptr {
 }
 
 pub fn (handle Handle) bound_v_ptr() voidptr {
-	return zend.object_wrapper_v_ptr(handle.wrapper_ptr())
+	return zend.object_bound_v_ptr(handle.raw_ptr())
 }

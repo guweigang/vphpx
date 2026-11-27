@@ -93,6 +93,10 @@ Options:
                 <sdir> the path to your source files and <tdir> some path in
                 your web page hierarchy with <url> pointing to <tdir>.
 
+    --artifact-prefix <prefix>
+                Prefix generated test filenames while leaving them in their
+                usual directories.
+
     --keep-[all|php|skip|clean]
                 Do not delete 'all' files, 'php' test file, 'skip' or 'clean'
                 file.
@@ -152,7 +156,7 @@ function main(): void
            $log_format, $no_clean, $no_file_cache,
            $pass_options, $php, $php_cgi, $preload,
            $result_tests_file, $slow_min_ms, $start_time,
-           $temp_source, $temp_target, $test_cnt,
+           $temp_source, $temp_target, $artifact_prefix, $test_cnt,
            $test_files, $test_idx, $test_results, $testfile,
            $valgrind, $sum_results, $shuffle, $file_cache, $num_repeats,
            $show_progress;
@@ -335,6 +339,7 @@ function main(): void
     $valgrind = null;
     $temp_source = null;
     $temp_target = null;
+    $artifact_prefix = '';
     $conf_passed = null;
     $no_clean = false;
     $colorize = true;
@@ -546,6 +551,12 @@ function main(): void
                     break;
                 case '--temp-target':
                     $temp_target = $argv[++$i];
+                    break;
+                case '--artifact-prefix':
+                    $artifact_prefix = $argv[++$i] ?? '';
+                    if (!preg_match('/\A[A-Za-z0-9_.-]+\z/', $artifact_prefix)) {
+                        error('The artifact prefix must contain only letters, digits, dots, underscores or hyphens.');
+                    }
                     break;
                 case 'v':
                 case '--verbose':
@@ -811,10 +822,11 @@ function verify_config(string $php): void
 function write_information(array $user_tests, $phpdbg): void
 {
     global $php, $php_cgi, $php_info, $ini_overwrites, $pass_options, $exts_to_test, $valgrind, $no_file_cache;
+    global $artifact_prefix;
     $php_escaped = escapeshellarg($php);
 
     // Get info from php
-    $info_file = __DIR__ . '/run-test-info.php';
+    $info_file = __DIR__ . '/' . $artifact_prefix . 'run-test-info.php';
     @unlink($info_file);
     $php_info = '<?php echo "
 PHP_SAPI    : " , PHP_SAPI , "
@@ -1801,7 +1813,7 @@ function run_test(string $php, $file, array $env): string
 {
     global $log_format, $ini_overwrites, $PHP_FAILED_TESTS;
     global $pass_options, $DETAILED, $IN_REDIRECT, $test_cnt, $test_idx;
-    global $valgrind, $temp_source, $temp_target, $cfg, $environment;
+    global $valgrind, $temp_source, $temp_target, $artifact_prefix, $cfg, $environment;
     global $no_clean;
     global $SHOW_ONLY_GROUPS;
     global $no_file_cache;
@@ -1939,7 +1951,7 @@ TEST $file
         $temp_dir = str_replace($temp_source, $temp_target, $temp_dir);
     }
 
-    $main_file_name = basename($file, 'phpt');
+    $main_file_name = $artifact_prefix . basename($file, 'phpt');
 
     $diff_filename = $temp_dir . DIRECTORY_SEPARATOR . $main_file_name . 'diff';
     $log_filename = $temp_dir . DIRECTORY_SEPARATOR . $main_file_name . 'log';
@@ -1956,13 +1968,13 @@ TEST $file
     $test_clean = $test_dir . DIRECTORY_SEPARATOR . $main_file_name . 'clean.php';
     $preload_filename = $temp_dir . DIRECTORY_SEPARATOR . $main_file_name . 'preload.php';
     $tmp_post = $temp_dir . DIRECTORY_SEPARATOR . $main_file_name . 'post';
-    $tmp_relative_file = str_replace(__DIR__ . DIRECTORY_SEPARATOR, '', $test_file) . 't';
+    $tmp_relative_file = str_replace(__DIR__ . DIRECTORY_SEPARATOR, '', $test_dir . DIRECTORY_SEPARATOR . basename($file));
 
     if ($temp_source && $temp_target) {
         $temp_skipif .= 's';
         $temp_file .= 's';
         $temp_clean .= 's';
-        $copy_file = $temp_dir . DIRECTORY_SEPARATOR . basename($file) . '.phps';
+        $copy_file = $temp_dir . DIRECTORY_SEPARATOR . $artifact_prefix . basename($file) . '.phps';
 
         if (!is_dir(dirname($copy_file))) {
             mkdir(dirname($copy_file), 0777, true) or error("Cannot create output directory - " . dirname($copy_file));

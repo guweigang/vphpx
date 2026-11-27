@@ -19,7 +19,9 @@
 4. 检查框架健康状态
    - `bin/vslim app:doctor`
 5. 跑 HTTP 最小链路
-   - `make serve EXT=./vslim.so`
+   - `bin/vslim serve`
+   - 或 `make serve EXT=./vslim.so`（使用当前 PHP）
+   - embedded Runtime 仅通过 `bin/vslim serve --engine=embedded` 显式验证
 6. 跑 worker 最小链路
    - `make runtime-check VHTTPD_ROOT=/path/to/vhttpd`
 

@@ -5,6 +5,19 @@ fn (v DynValue) is_persistent_safe() bool {
 		.null_, .bool_, .int_, .float_, .string_ {
 			true
 		}
+		.array_ {
+			if v.array == unsafe { nil } {
+				return true
+			}
+			mut iter := v.array.iter()
+			for {
+				item := iter.next() or { break }
+				if !item.val.is_persistent_safe() {
+					return false
+				}
+			}
+			true
+		}
 		.list_ {
 			for item in v.list {
 				if !item.is_persistent_safe() {
@@ -72,6 +85,18 @@ fn (v DynValue) to_string() string {
 
 fn (v DynValue) to_string_list() []string {
 	return match v.type {
+		.array_ {
+			if v.array == unsafe { nil } {
+				return []string{}
+			}
+			mut out := []string{}
+			mut iter := v.array.iter()
+			for {
+				item := iter.next() or { break }
+				out << item.val.to_string()
+			}
+			out
+		}
 		.list_ {
 			mut out := []string{}
 			for item in v.list {
@@ -94,6 +119,18 @@ fn (v DynValue) to_string_list() []string {
 
 fn (v DynValue) to_string_map() map[string]string {
 	return match v.type {
+		.array_ {
+			if v.array == unsafe { nil } {
+				return map[string]string{}
+			}
+			mut out := map[string]string{}
+			mut iter := v.array.iter()
+			for {
+				item := iter.next() or { break }
+				out[item.key.to_string()] = item.val.to_string()
+			}
+			out
+		}
 		.map_ {
 			mut out := map[string]string{}
 			for key, item in v.map {
@@ -113,13 +150,37 @@ fn (v DynValue) to_string_map() map[string]string {
 
 fn (v DynValue) to_bool() bool {
 	return match v.type {
-		.null_ { false }
-		.bool_ { v.bool_value() }
-		.int_ { v.int_value() != 0 }
-		.float_ { v.float_value() != 0.0 }
-		.string_ { v.string_value().len > 0 }
-		.list_, .map_ { true }
-		else { false }
+		.null_ {
+			false
+		}
+		.bool_ {
+			v.bool_value()
+		}
+		.int_ {
+			v.int_value() != 0
+		}
+		.float_ {
+			v.float_value() != 0.0
+		}
+		.string_ {
+			v.string_value().len > 0
+		}
+		.array_ {
+			if v.array == unsafe { nil } {
+				false
+			} else {
+				v.array.count() > 0
+			}
+		}
+		.list_ {
+			v.list.len > 0
+		}
+		.map_ {
+			v.map.len > 0
+		}
+		else {
+			false
+		}
 	}
 }
 

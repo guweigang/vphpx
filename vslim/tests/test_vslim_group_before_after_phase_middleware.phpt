@@ -121,53 +121,114 @@ namespace {
         }
     }
 
-    $app = new VSlim\App();
-    $app->before(AppBeforePhaseMiddleware::class);
-    $container = $app->container();
-
-    $container->set('phase.after', new class implements MiddlewareInterface {
-        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-        {
-            $response = $handler->handle($request);
-            return $response->withBody(new VSlim\Psr7\Stream((string) $response->getBody() . '|group-after'));
+    function dispatchPhaseProbe(bool $typed): array
+    {
+        $app = new VSlim\App();
+        if ($typed) {
+            $app->middleware(phase: VSlim\MiddlewarePhase::before, handler: AppBeforePhaseMiddleware::class);
+        } else {
+            $app->before(AppBeforePhaseMiddleware::class);
         }
-    });
+        $container = $app->container();
 
-    $api = $app->group('/api');
-    $api->before(GroupBeforePhaseMiddleware::class);
-    $api->after(['phase.after', 'process']);
-    $api->get('/users/:id', new class implements RequestHandlerInterface {
-        public function handle(ServerRequestInterface $request): ResponseInterface
-        {
-            $response = new VSlim\Psr7\Response(200, '');
-            return $response->withBody(new VSlim\Psr7\Stream(
-                'api:' . $request->getAttribute('id')
-                . ':' . $request->getAttribute('group_count')
-                . ':' . ($request->getAttribute('group_flag') ? 'yes' : 'no')
-                . ':' . json_encode($request->getAttribute('global_meta'))
-            ));
+        $container->set('phase.after', new class implements MiddlewareInterface {
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+            {
+                $response = $handler->handle($request);
+                return $response->withBody(new VSlim\Psr7\Stream((string) $response->getBody() . '|group-after'));
+            }
+        });
+
+        $api = $app->group('/api');
+        if ($typed) {
+            $app->groupMiddleware(phase: VSlim\MiddlewarePhase::before, handler: GroupBeforePhaseMiddleware::class, prefix: '/api');
+            $app->groupMiddleware('/api', ['phase.after', 'process'], VSlim\MiddlewarePhase::after);
+        } else {
+            $app->groupBefore(handler: GroupBeforePhaseMiddleware::class, prefix: '/api');
+            $app->groupAfter(handler: ['phase.after', 'process'], prefix: '/api');
         }
-    });
+        $api->get('/users/:id', new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $response = new VSlim\Psr7\Response(200, '');
+                return $response->withBody(new VSlim\Psr7\Stream(
+                    'api:' . $request->getAttribute('id')
+                    . ':' . $request->getAttribute('group_count')
+                    . ':' . ($request->getAttribute('group_flag') ? 'yes' : 'no')
+                    . ':' . json_encode($request->getAttribute('global_meta'))
+                ));
+            }
+        });
 
-    $web = $app->group('/web');
-    $web->get('/users/:id', new class implements RequestHandlerInterface {
-        public function handle(ServerRequestInterface $request): ResponseInterface
-        {
-            $response = new VSlim\Psr7\Response(200, '');
-            return $response->withBody(new VSlim\Psr7\Stream('web:' . $request->getAttribute('id')));
+        $web = $app->group('/web');
+        $standard = new class implements MiddlewareInterface {
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+            {
+                $response = $handler->handle($request);
+                return $response->withBody(new VSlim\Psr7\Stream((string) $response->getBody() . '|group-standard'));
+            }
+        };
+        if ($typed) {
+            $app->groupMiddleware(handler: $standard, prefix: '/web');
+        } else {
+            $app->groupMiddleware('/web', $standard, VSlim\MiddlewarePhase::standard);
         }
-    });
+        $web->get('/users/:id', new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $response = new VSlim\Psr7\Response(200, '');
+                return $response->withBody(new VSlim\Psr7\Stream('web:' . $request->getAttribute('id')));
+            }
+        });
 
-    $apiOk = $app->dispatch('GET', '/api/users/9');
-    $apiBlocked = $app->dispatch('GET', '/api/blocked');
-    $webOk = $app->dispatch('GET', '/web/users/9');
+        $apiOk = $app->dispatch('GET', '/api/users/9');
+        $apiBlocked = $app->dispatch('GET', '/api/blocked');
+        $webOk = $app->dispatch('GET', '/web/users/9');
 
-    echo $apiOk->status . '|' . $apiOk->body . PHP_EOL;
-    echo $apiBlocked->status . '|' . $apiBlocked->body . PHP_EOL;
-    echo $webOk->status . '|' . $webOk->body . PHP_EOL;
+        return [
+            $apiOk->status . '|' . $apiOk->body,
+            $apiBlocked->status . '|' . $apiBlocked->body,
+            $webOk->status . '|' . $webOk->body,
+        ];
+    }
+
+    $contract = new ReflectionMethod(VSlim\MiddlewareRegistrar::class, 'middleware');
+    $requiredPhase = $contract->getParameters()[1];
+    if (!(new VSlim\App() instanceof VSlim\MiddlewareRegistrar)
+        || $contract->getNumberOfRequiredParameters() !== 1 || $requiredPhase->getName() !== 'phase'
+        || (string) $requiredPhase->getType() !== VSlim\MiddlewarePhase::class
+        || $requiredPhase->getDefaultValueConstantName() !== 'VSlim\MiddlewarePhase::standard'
+        || $requiredPhase->getDefaultValue() !== VSlim\MiddlewarePhase::standard) {
+        throw new RuntimeException('Unexpected middleware phase on the registrar interface');
+    }
+    foreach (['middleware' => 1, 'groupMiddleware' => 2] as $method => $required) {
+        $metadata = new ReflectionMethod(VSlim\App::class, $method);
+        $phase = $metadata->getParameters()[$required];
+        if ($metadata->getNumberOfRequiredParameters() !== $required || $phase->getName() !== 'phase'
+            || (string) $phase->getType() !== VSlim\MiddlewarePhase::class
+            || $phase->getDefaultValue() !== VSlim\MiddlewarePhase::standard
+            || $phase->getDefaultValueConstantName() !== 'VSlim\MiddlewarePhase::standard') {
+            throw new RuntimeException("Unexpected middleware phase signature for $method");
+        }
+    }
+    foreach ([null, 'before'] as $invalidPhase) {
+        try {
+            (new VSlim\App())->middleware(handler: AppBeforePhaseMiddleware::class, phase: $invalidPhase);
+            throw new RuntimeException('Invalid middleware phase was accepted');
+        } catch (TypeError $error) {
+            if (!str_contains($error->getMessage(), 'VSlim\MiddlewarePhase')) {
+                throw $error;
+            }
+        }
+    }
+    $legacy = dispatchPhaseProbe(false);
+    if (dispatchPhaseProbe(true) !== $legacy) {
+        throw new RuntimeException('The typed phase registration changed dispatch order or behavior');
+    }
+    echo implode(PHP_EOL, $legacy), PHP_EOL;
 }
 ?>
 --EXPECT--
 200|api:9:2:yes:{"scope":"app"}|group-after
 230|group-blocked|group-after
-200|web:9
+200|web:9|group-standard

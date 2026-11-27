@@ -6,7 +6,7 @@ VSlim App can merge config overlays into shared config repository
 <?php
 $app = VSlim\App::demo();
 
-$app->loadConfigText(<<<TOML
+$app->loadConfigText(text: <<<TOML
 [app]
 name = "base"
 
@@ -14,7 +14,7 @@ name = "base"
 prefix = "base"
 TOML);
 
-$app->mergeConfigText(<<<TOML
+$app->mergeConfigText(text: <<<TOML
 [cache]
 prefix = "overlay"
 default_ttl_seconds = 30

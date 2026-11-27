@@ -113,7 +113,7 @@ fn (app VSlimRuntime) dispatch_route(req httpx.VSlimRequest) httpx.VSlimResponse
 }
 
 fn vslim_demo_with_trace_id(req httpx.VSlimRequest, next VSlimNext) httpx.VSlimResponse {
-	mut out := req
+	mut out := req.snapshot()
 	if out.query['trace_id'] == '' {
 		out.query['trace_id'] = 'trace-local-mvp'
 	}

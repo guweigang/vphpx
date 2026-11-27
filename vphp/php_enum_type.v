@@ -92,6 +92,11 @@ pub fn (c PhpEnumCase) to_object() PhpObject {
 	return c.object
 }
 
+// to_v converts this case to the matching V enum using its exported case name.
+pub fn (c PhpEnumCase) to_v[T]() !T {
+	return ZendObject.from_zval(c.to_zval()).enum_case_to_v[T]()
+}
+
 pub fn (c PhpEnumCase) to_borrowed() PhpEnumCase {
 	return PhpEnumCase{
 		object: c.object.to_borrowed()

@@ -13,6 +13,7 @@ V_ROOT := $(if $(V_EXE),$(shell dirname "$(shell realpath "$(V_EXE)")"))
 V_ZIP_INCLUDE := $(if $(V_ROOT),$(V_ROOT)/thirdparty/zip)
 V_ROOT_CFLAGS := $(if $(wildcard $(V_ZIP_INCLUDE)),-I$(V_ZIP_INCLUDE),)
 EXT_C := $(firstword $(wildcard *_generated.c))
+V_OBJECTS := $(addprefix @,$(wildcard $(EXT_C).objects))
 GC_CFLAGS :=
 GC_LIBS :=
 ifeq ($(RESOLVED_VPHP_V_GC),boehm)
@@ -23,6 +24,8 @@ UNAME_S := $(shell uname -s)
 PLATFORM_LDFLAGS :=
 ifeq ($(UNAME_S),Darwin)
 PLATFORM_LDFLAGS += -undefined dynamic_lookup
+else ifeq ($(UNAME_S),Linux)
+PLATFORM_LDFLAGS += -Wl,-z,nodelete
 endif
 
 # 默认目标：构建扩展
@@ -39,10 +42,10 @@ ext:
 		exit 1; \
 	fi
 	C_INCLUDE_PATH="$(BREW_PATH)/include/cjson" \
-	gcc -shared -fPIC $(DISABLED_WARNINGS) -DCOMPILE_DL_VPHPTEST=1 \
+	gcc -shared -fPIC $(DISABLED_WARNINGS) -D_GNU_SOURCE -DCOMPILE_DL_VPHPTEST=1 \
 		$(GC_CFLAGS) $(V_ROOT_CFLAGS) -I$(BREW_PATH)/include -L$(BREW_PATH)/lib -lcjson \
 		-DcJSON_GetErrorPos=cJSON_GetErrorPtr \
-		$(PHP_INC) $(EXT_C) php_bridge.c ../vphp/v_bridge.c -o vphptest.so \
+		$(PHP_INC) $(EXT_C) php_bridge.c ../vphp/v_bridge.c $(V_OBJECTS) -o vphptest.so \
 		-I../vphp $(PHP_LDFLAGS) $(PHP_LIBS) $(GC_LIBS) $(PLATFORM_LDFLAGS) -fvisibility=default
 
 # 运行测试
@@ -52,4 +55,4 @@ test: build
 # 清理所有生成产物
 clean:
 	rm -f vphptest.so
-	rm -f *_generated.c
+	rm -f *_generated.c *_generated.c.flags *_generated.c.objects

@@ -91,10 +91,10 @@ namespace {
     $provider = new DemoProvider();
 
     var_dump($app->booted());
-    var_dump($app->register($provider) === $app);
+    var_dump($app->register(provider: $provider) === $app);
     echo implode(',', $provider->events) . PHP_EOL;
     var_dump($app->providerCount());
-    var_dump($app->hasProvider(DemoProvider::class));
+    var_dump($app->hasProvider(className: DemoProvider::class));
     var_dump($app->register(DemoProvider::class) === $app);
     var_dump($app->providerCount());
 
@@ -125,7 +125,7 @@ namespace {
     var_dump($app2->booted());
 
     $app3 = new VSlim\App();
-    $app3->registerMany([BatchProvider::class, new AutoBootProvider()]);
+    $app3->registerMany(providers: new ArrayIterator([BatchProvider::class, new AutoBootProvider()]));
     var_dump($app3->providerCount());
     $app3->boot();
     echo $app3->container()->get('batch.message') . '|' . $app3->container()->get('auto.booted') . PHP_EOL;

@@ -3,26 +3,26 @@ module httpx
 import net.http
 import vphp
 
-@[php_class: 'VSlim\\VHttpd\\Request']
+@[vphp.PhpExportClass(name: 'VSlim\\VHttpd\\Request')]
 @[heap]
 pub struct VSlimRequest {
 pub mut:
 	method           string
-	raw_path         string @[php_prop: rawPath]
+	raw_path         string @[vphp.PhpProperty(name: 'rawPath')]
 	body             string
 	scheme           string
 	host             string
 	port             string
-	protocol_version string @[php_prop: protocolVersion]
-	remote_addr      string @[php_prop: remoteAddr]
-	path             string @[php_ignore]
-	query_string     string @[php_ignore]
+	protocol_version string @[vphp.PhpProperty(name: 'protocolVersion')]
+	remote_addr      string @[vphp.PhpProperty(name: 'remoteAddr')]
+	path             string @[vphp.PhpIgnoreField]
+	query_string     string @[vphp.PhpIgnoreField]
 	query            map[string]string
 	headers          map[string]string
 	cookies          map[string]string
 	attributes       map[string]string
 	server           map[string]string
-	uploaded_files   []string @[php_prop: uploadedFiles]
+	uploaded_files   []string @[vphp.PhpProperty(name: 'uploadedFiles')]
 	params           map[string]string
 }
 
@@ -30,8 +30,8 @@ pub fn (req &VSlimRequest) free() {
 	_ = req
 }
 
-@[php_arg_name: 'raw_path=rawPath']
-@[php_method]
+@[vphp.PhpArgName(v_name: 'raw_path', php_name: 'rawPath')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut r VSlimRequest) construct(method string, raw_path string, body string) &VSlimRequest {
 	r.apply_defaults()
 	r.set_method(method)
@@ -40,26 +40,26 @@ pub fn (mut r VSlimRequest) construct(method string, raw_path string, body strin
 	return r
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimRequest) str() string {
 	return '${r.method} ${r.raw_path}'
 }
 
-@[php_method: 'setQuery']
+@[vphp.PhpExportMethod(name: 'setQuery')]
 pub fn (mut r VSlimRequest) set_query(query vphp.PhpArray) &VSlimRequest {
 	r.query = snapshot_string_map(query.to_string_map())
 	r.query_string = r.raw_query_string()
 	return r
 }
 
-@[php_method: 'setMethod']
+@[vphp.PhpExportMethod(name: 'setMethod')]
 pub fn (mut r VSlimRequest) set_method(method string) &VSlimRequest {
 	r.method = method.clone()
 	return r
 }
 
-@[php_arg_name: 'raw_path=rawPath']
-@[php_method: 'setTarget']
+@[vphp.PhpArgName(v_name: 'raw_path', php_name: 'rawPath')]
+@[vphp.PhpExportMethod(name: 'setTarget')]
 pub fn (mut r VSlimRequest) set_target(raw_path string) &VSlimRequest {
 	r.raw_path = raw_path.clone()
 	r.path, r.query_string = Path.normalize_target(raw_path)
@@ -67,7 +67,7 @@ pub fn (mut r VSlimRequest) set_target(raw_path string) &VSlimRequest {
 	return r
 }
 
-@[php_method: 'path']
+@[vphp.PhpExportMethod(name: 'path')]
 pub fn (r &VSlimRequest) path_value() string {
 	path, _ := Path.normalize_target(r.raw_path)
 	return path
@@ -77,133 +77,131 @@ pub fn (r &VSlimRequest) normalized_path() string {
 	return Path.normalize(r.path_value())
 }
 
-@[php_method: 'queryString']
+@[vphp.PhpExportMethod(name: 'queryString')]
 pub fn (r &VSlimRequest) query_string_value() string {
 	return r.effective_query_string()
 }
 
-@[php_method: 'setBody']
+@[vphp.PhpExportMethod(name: 'setBody')]
 pub fn (mut r VSlimRequest) set_body(body string) &VSlimRequest {
 	r.body = body.clone()
 	return r
 }
 
-@[php_method: 'setScheme']
+@[vphp.PhpExportMethod(name: 'setScheme')]
 pub fn (mut r VSlimRequest) set_scheme(scheme string) &VSlimRequest {
 	r.scheme = scheme.clone()
 	return r
 }
 
-@[php_method: 'setHost']
+@[vphp.PhpExportMethod(name: 'setHost')]
 pub fn (mut r VSlimRequest) set_host(host string) &VSlimRequest {
 	r.host = host.clone()
 	return r
 }
 
-@[php_method: 'setPort']
+@[vphp.PhpExportMethod(name: 'setPort')]
 pub fn (mut r VSlimRequest) set_port(port string) &VSlimRequest {
 	r.port = port.clone()
 	return r
 }
 
-@[php_arg_name: 'protocol_version=protocolVersion']
-@[php_method: 'setProtocolVersion']
+@[vphp.PhpArgName(v_name: 'protocol_version', php_name: 'protocolVersion')]
+@[vphp.PhpExportMethod(name: 'setProtocolVersion')]
 pub fn (mut r VSlimRequest) set_protocol_version(protocol_version string) &VSlimRequest {
 	r.protocol_version = protocol_version.clone()
 	return r
 }
 
-@[php_arg_name: 'remote_addr=remoteAddr']
-@[php_method: 'setRemoteAddr']
+@[vphp.PhpArgName(v_name: 'remote_addr', php_name: 'remoteAddr')]
+@[vphp.PhpExportMethod(name: 'setRemoteAddr')]
 pub fn (mut r VSlimRequest) set_remote_addr(remote_addr string) &VSlimRequest {
 	r.remote_addr = remote_addr.clone()
 	return r
 }
 
-@[php_method: 'setHeaders']
+@[vphp.PhpExportMethod(name: 'setHeaders')]
 pub fn (mut r VSlimRequest) set_headers(headers vphp.PhpArray) &VSlimRequest {
 	r.headers = snapshot_string_map(normalize_header_map(headers.to_string_map()))
 	return r
 }
 
-@[php_method: 'setCookies']
+@[vphp.PhpExportMethod(name: 'setCookies')]
 pub fn (mut r VSlimRequest) set_cookies(cookies vphp.PhpArray) &VSlimRequest {
 	r.cookies = snapshot_string_map(cookies.to_string_map())
 	return r
 }
 
-@[php_method: 'setAttributes']
+@[vphp.PhpExportMethod(name: 'setAttributes')]
 pub fn (mut r VSlimRequest) set_attributes(attributes vphp.PhpArray) &VSlimRequest {
 	r.attributes = snapshot_string_map(attributes.to_scalar_string_map())
 	return r
 }
 
-@[php_method: 'setServer']
+@[vphp.PhpExportMethod(name: 'setServer')]
 pub fn (mut r VSlimRequest) set_server(server vphp.PhpArray) &VSlimRequest {
 	r.server = snapshot_string_map(server.to_string_map())
 	return r
 }
 
-@[php_arg_name: 'uploaded_files=uploadedFiles']
-@[php_method: 'setUploadedFiles']
+@[vphp.PhpArgName(v_name: 'uploaded_files', php_name: 'uploadedFiles')]
+@[vphp.PhpExportMethod(name: 'setUploadedFiles')]
 pub fn (mut r VSlimRequest) set_uploaded_files(uploaded_files vphp.PhpArray) &VSlimRequest {
 	r.uploaded_files = snapshot_string_list(uploaded_files.to_string_list())
 	return r
 }
 
-@[php_method: 'setParams']
+@[vphp.PhpExportMethod(name: 'setParams')]
 pub fn (mut r VSlimRequest) set_params(params vphp.PhpArray) &VSlimRequest {
 	r.params = snapshot_string_map(params.to_string_map())
 	return r
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimRequest) query(key string) string {
 	return r.query_values()[key] or { '' }
 }
 
-@[php_method: 'queryParams']
+@[vphp.PhpExportMethod(name: 'queryParams')]
 pub fn (r &VSlimRequest) query_params() map[string]string {
 	return r.query_values()
 }
 
-@[php_method: 'hasQuery']
+@[vphp.PhpExportMethod(name: 'hasQuery')]
 pub fn (r &VSlimRequest) has_query(key string) bool {
 	return key in r.query_values()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimRequest) input(key string) string {
 	inputs := r.input_values()
 	return inputs[key] or { '' }
 }
 
-@[php_arg_name: 'default_value=defaultValue']
-@[php_arg_default: 'default_value=""']
-@[php_arg_optional: 'default_value']
-@[php_method: 'inputOr']
+@[vphp.PhpStringParam('default_value', php_name: 'defaultValue', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: 'inputOr')]
 pub fn (r &VSlimRequest) input_or(key string, default_value string) string {
 	inputs := r.input_values()
 	return inputs[key] or { default_value }
 }
 
-@[php_method: 'hasInput']
+@[vphp.PhpExportMethod(name: 'hasInput')]
 pub fn (r &VSlimRequest) has_input(key string) bool {
 	inputs := r.input_values()
 	return key in inputs
 }
 
-@[php_method: 'allInputs']
+@[vphp.PhpExportMethod(name: 'allInputs')]
 pub fn (r &VSlimRequest) all_inputs() map[string]string {
 	return r.input_values()
 }
 
-@[php_method: 'parsedBody']
+@[vphp.PhpExportMethod(name: 'parsedBody')]
 pub fn (r &VSlimRequest) parsed_body() map[string]string {
 	return r.parsed_body_values()
 }
 
-@[php_method: 'bodyFormat']
+@[vphp.PhpExportMethod(name: 'bodyFormat')]
 pub fn (r &VSlimRequest) body_format() string {
 	raw_content_type := r.content_type()
 	content_type := raw_content_type.to_lower()
@@ -226,22 +224,22 @@ pub fn (r &VSlimRequest) body_format() string {
 	return 'none'
 }
 
-@[php_method: 'isJsonBody']
+@[vphp.PhpExportMethod(name: 'isJsonBody')]
 pub fn (r &VSlimRequest) is_json_body() bool {
 	return r.body_format() == 'json'
 }
 
-@[php_method: 'isFormBody']
+@[vphp.PhpExportMethod(name: 'isFormBody')]
 pub fn (r &VSlimRequest) is_form_body() bool {
 	return r.body_format() == 'form'
 }
 
-@[php_method: 'isMultipartBody']
+@[vphp.PhpExportMethod(name: 'isMultipartBody')]
 pub fn (r &VSlimRequest) is_multipart_body() bool {
 	return r.body_format() == 'multipart'
 }
 
-@[php_method: 'jsonBody']
+@[vphp.PhpExportMethod(name: 'jsonBody')]
 pub fn (r &VSlimRequest) json_body() map[string]string {
 	if !r.is_json_body() {
 		return map[string]string{}
@@ -249,7 +247,7 @@ pub fn (r &VSlimRequest) json_body() map[string]string {
 	return r.parsed_body_values()
 }
 
-@[php_method: 'formBody']
+@[vphp.PhpExportMethod(name: 'formBody')]
 pub fn (r &VSlimRequest) form_body() map[string]string {
 	if !r.is_form_body() {
 		return map[string]string{}
@@ -257,7 +255,7 @@ pub fn (r &VSlimRequest) form_body() map[string]string {
 	return r.parsed_body_values()
 }
 
-@[php_method: 'multipartBody']
+@[vphp.PhpExportMethod(name: 'multipartBody')]
 pub fn (r &VSlimRequest) multipart_body() map[string]string {
 	if !r.is_multipart_body() {
 		return map[string]string{}
@@ -265,7 +263,7 @@ pub fn (r &VSlimRequest) multipart_body() map[string]string {
 	return r.parsed_body_values()
 }
 
-@[php_method: 'parseError']
+@[vphp.PhpExportMethod(name: 'parseError')]
 pub fn (r &VSlimRequest) parse_error() string {
 	if !r.is_json_body() {
 		return ''
@@ -286,34 +284,34 @@ pub fn (r &VSlimRequest) parse_error() string {
 	return err_msg
 }
 
-@[php_method: 'queryAll']
+@[vphp.PhpExportMethod(name: 'queryAll')]
 pub fn (r &VSlimRequest) query_all() map[string]string {
 	return r.query_params()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimRequest) header(name string) string {
 	headers := r.header_values()
 	return headers[Header.normalize_name(name)] or { '' }
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimRequest) headers() map[string]string {
 	return r.header_values()
 }
 
-@[php_method: 'hasHeader']
+@[vphp.PhpExportMethod(name: 'hasHeader')]
 pub fn (r &VSlimRequest) has_header(name string) bool {
 	headers := r.header_values()
 	return Header.normalize_name(name) in headers
 }
 
-@[php_method: 'contentType']
+@[vphp.PhpExportMethod(name: 'contentType')]
 pub fn (r &VSlimRequest) content_type() string {
 	return r.header('content-type')
 }
 
-@[php_method: 'requestId']
+@[vphp.PhpExportMethod(name: 'requestId')]
 pub fn (r &VSlimRequest) request_id() string {
 	header_id := r.header('x-request-id')
 	if header_id != '' {
@@ -330,7 +328,7 @@ pub fn (r &VSlimRequest) request_id() string {
 	return ''
 }
 
-@[php_method: 'traceId']
+@[vphp.PhpExportMethod(name: 'traceId')]
 pub fn (r &VSlimRequest) trace_id() string {
 	mut trace := r.header('x-vhttpd-trace-id')
 	if trace != '' {
@@ -370,120 +368,120 @@ pub fn (r &VSlimRequest) effective_method() string {
 	return method
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimRequest) cookie(name string) string {
 	cookies := r.cookie_values()
 	return cookies[name] or { '' }
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimRequest) cookies() map[string]string {
 	return r.cookie_values()
 }
 
-@[php_method: 'hasCookie']
+@[vphp.PhpExportMethod(name: 'hasCookie')]
 pub fn (r &VSlimRequest) has_cookie(name string) bool {
 	cookies := r.cookie_values()
 	return name in cookies
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimRequest) param(name string) string {
 	params := r.route_param_values()
 	return params[name] or { '' }
 }
 
-@[php_method: 'routeParams']
+@[vphp.PhpExportMethod(name: 'routeParams')]
 pub fn (r &VSlimRequest) route_params() map[string]string {
 	return r.route_param_values()
 }
 
-@[php_method: 'hasParam']
+@[vphp.PhpExportMethod(name: 'hasParam')]
 pub fn (r &VSlimRequest) has_param(name string) bool {
 	params := r.route_param_values()
 	return name in params
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimRequest) attribute(name string) string {
 	attrs := r.attribute_values()
 	return attrs[name] or { '' }
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (r &VSlimRequest) attributes() map[string]string {
 	return r.attribute_values()
 }
 
-@[php_method: 'hasAttribute']
+@[vphp.PhpExportMethod(name: 'hasAttribute')]
 pub fn (r &VSlimRequest) has_attribute(name string) bool {
 	attrs := r.attribute_values()
 	return name in attrs
 }
 
-@[php_method: 'serverValue']
+@[vphp.PhpExportMethod(name: 'serverValue')]
 pub fn (r &VSlimRequest) server_value(name string) string {
 	values := r.server_param_values()
 	return values[name] or { '' }
 }
 
-@[php_method: 'serverParams']
+@[vphp.PhpExportMethod(name: 'serverParams')]
 pub fn (r &VSlimRequest) server_params() map[string]string {
 	return r.server_param_values()
 }
 
-@[php_method: 'hasServer']
+@[vphp.PhpExportMethod(name: 'hasServer')]
 pub fn (r &VSlimRequest) has_server(name string) bool {
 	values := r.server_param_values()
 	return name in values
 }
 
-@[php_method: 'uploadedFileCount']
+@[vphp.PhpExportMethod(name: 'uploadedFileCount')]
 pub fn (r &VSlimRequest) uploaded_file_count() int {
 	return r.uploaded_file_values().len
 }
 
-@[php_method: 'uploadedFiles']
+@[vphp.PhpExportMethod(name: 'uploadedFiles')]
 pub fn (r &VSlimRequest) uploaded_files() []string {
 	return r.uploaded_file_values()
 }
 
-@[php_method: 'hasUploadedFiles']
+@[vphp.PhpExportMethod(name: 'hasUploadedFiles')]
 pub fn (r &VSlimRequest) has_uploaded_files() bool {
 	return r.uploaded_file_values().len > 0
 }
 
-@[php_method: 'isSecure']
+@[vphp.PhpExportMethod(name: 'isSecure')]
 pub fn (r &VSlimRequest) is_secure() bool {
 	return r.scheme.to_lower() == 'https'
 }
 
-@[php_method: 'headersAll']
+@[vphp.PhpExportMethod(name: 'headersAll')]
 pub fn (r &VSlimRequest) headers_all() map[string]string {
 	return r.headers()
 }
 
-@[php_method: 'cookiesAll']
+@[vphp.PhpExportMethod(name: 'cookiesAll')]
 pub fn (r &VSlimRequest) cookies_all() map[string]string {
 	return r.cookies()
 }
 
-@[php_method: 'paramsAll']
+@[vphp.PhpExportMethod(name: 'paramsAll')]
 pub fn (r &VSlimRequest) params_all() map[string]string {
 	return r.route_params()
 }
 
-@[php_method: 'attributesAll']
+@[vphp.PhpExportMethod(name: 'attributesAll')]
 pub fn (r &VSlimRequest) attributes_all() map[string]string {
 	return r.attributes()
 }
 
-@[php_method: 'serverAll']
+@[vphp.PhpExportMethod(name: 'serverAll')]
 pub fn (r &VSlimRequest) server_all() map[string]string {
 	return r.server_params()
 }
 
-@[php_method: 'uploadedFilesAll']
+@[vphp.PhpExportMethod(name: 'uploadedFilesAll')]
 pub fn (r &VSlimRequest) uploaded_files_all() []string {
 	return r.uploaded_files()
 }

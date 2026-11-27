@@ -2,11 +2,11 @@ module routex
 
 import vphp
 
-@[php_class: 'VSlim\\RouteGroup']
+@[vphp.PhpExportClass(name: 'VSlim\\RouteGroup')]
 @[heap]
 pub struct RouteGroup {
 mut:
-	app_ref vphp.PhpObject = vphp.PhpObject.invalid() @[php_ignore]
+	app_ref vphp.PhpObject = vphp.PhpObject.invalid() @[vphp.PhpIgnoreField]
 	prefix  string
 }
 
@@ -43,7 +43,7 @@ fn (group &RouteGroup) prefixed_pattern(pattern string) string {
 }
 
 fn (group &RouteGroup) call_app(method string, args ...vphp.PhpArgInput) {
-	app := group.app_object() or { return }
+	mut app := group.app_object() or { return }
 	defer {
 		app.release()
 	}
@@ -89,16 +89,16 @@ fn (group &RouteGroup) call_app_resource_opts(method string, resource_path strin
 	group.call_app(method, path_arg, controller_arg, options)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) group(prefix string) &RouteGroup {
-	app := group.app_object() or { return RouteGroup.empty() }
+	mut app := group.app_object() or { return RouteGroup.empty() }
 	defer {
 		app.release()
 	}
 	return RouteGroup.from_app_object(app, prefixed_group_pattern(group.prefix, prefix))
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) middleware(handler vphp.PhpValue) &RouteGroup {
 	mut prefix_arg := vphp.PhpString.of(group.normalized_prefix())
 	defer {
@@ -108,7 +108,7 @@ pub fn (group &RouteGroup) middleware(handler vphp.PhpValue) &RouteGroup {
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) before(handler vphp.PhpValue) &RouteGroup {
 	mut prefix_arg := vphp.PhpString.of(group.normalized_prefix())
 	defer {
@@ -118,7 +118,7 @@ pub fn (group &RouteGroup) before(handler vphp.PhpValue) &RouteGroup {
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) after(handler vphp.PhpValue) &RouteGroup {
 	mut prefix_arg := vphp.PhpString.of(group.normalized_prefix())
 	defer {
@@ -128,67 +128,67 @@ pub fn (group &RouteGroup) after(handler vphp.PhpValue) &RouteGroup {
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) get(pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_with_pattern('get', pattern, handler)
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) post(pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_with_pattern('post', pattern, handler)
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) put(pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_with_pattern('put', pattern, handler)
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) head(pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_with_pattern('head', pattern, handler)
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) options(pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_with_pattern('options', pattern, handler)
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) patch(pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_with_pattern('patch', pattern, handler)
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) delete(pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_with_pattern('delete', pattern, handler)
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) any(pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_with_pattern('any', pattern, handler)
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) live(pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_with_pattern('live', pattern, handler)
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) websocket(pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_with_pattern('websocket', pattern, handler)
 	return group
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) map(methods vphp.PhpValue, pattern string, handler vphp.PhpValue) &RouteGroup {
 	mut pattern_arg := vphp.PhpString.of(group.prefixed_pattern(pattern))
 	defer {
@@ -198,61 +198,61 @@ pub fn (group &RouteGroup) map(methods vphp.PhpValue, pattern string, handler vp
 	return group
 }
 
-@[php_method: 'getNamed']
+@[vphp.PhpExportMethod(name: 'getNamed')]
 pub fn (group &RouteGroup) get_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_named_with_pattern('getNamed', name, pattern, handler)
 	return group
 }
 
-@[php_method: 'postNamed']
+@[vphp.PhpExportMethod(name: 'postNamed')]
 pub fn (group &RouteGroup) post_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_named_with_pattern('postNamed', name, pattern, handler)
 	return group
 }
 
-@[php_method: 'putNamed']
+@[vphp.PhpExportMethod(name: 'putNamed')]
 pub fn (group &RouteGroup) put_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_named_with_pattern('putNamed', name, pattern, handler)
 	return group
 }
 
-@[php_method: 'headNamed']
+@[vphp.PhpExportMethod(name: 'headNamed')]
 pub fn (group &RouteGroup) head_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_named_with_pattern('headNamed', name, pattern, handler)
 	return group
 }
 
-@[php_method: 'optionsNamed']
+@[vphp.PhpExportMethod(name: 'optionsNamed')]
 pub fn (group &RouteGroup) options_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_named_with_pattern('optionsNamed', name, pattern, handler)
 	return group
 }
 
-@[php_method: 'patchNamed']
+@[vphp.PhpExportMethod(name: 'patchNamed')]
 pub fn (group &RouteGroup) patch_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_named_with_pattern('patchNamed', name, pattern, handler)
 	return group
 }
 
-@[php_method: 'deleteNamed']
+@[vphp.PhpExportMethod(name: 'deleteNamed')]
 pub fn (group &RouteGroup) delete_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_named_with_pattern('deleteNamed', name, pattern, handler)
 	return group
 }
 
-@[php_method: 'anyNamed']
+@[vphp.PhpExportMethod(name: 'anyNamed')]
 pub fn (group &RouteGroup) any_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_named_with_pattern('anyNamed', name, pattern, handler)
 	return group
 }
 
-@[php_method: 'websocketNamed']
+@[vphp.PhpExportMethod(name: 'websocketNamed')]
 pub fn (group &RouteGroup) websocket_named(name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	group.call_app_named_with_pattern('websocketNamed', name, pattern, handler)
 	return group
 }
 
-@[php_method: 'mapNamed']
+@[vphp.PhpExportMethod(name: 'mapNamed')]
 pub fn (group &RouteGroup) map_named(methods vphp.PhpValue, name string, pattern string, handler vphp.PhpValue) &RouteGroup {
 	mut name_arg := vphp.PhpString.of(name)
 	mut pattern_arg := vphp.PhpString.of(group.prefixed_pattern(pattern))
@@ -264,57 +264,57 @@ pub fn (group &RouteGroup) map_named(methods vphp.PhpValue, name string, pattern
 	return group
 }
 
-@[php_arg_name(resource_path: 'resourcePath')]
-@[php_method]
+@[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) resource(resource_path string, controller string) &RouteGroup {
 	group.call_app_resource('resource', resource_path, controller)
 	return group
 }
 
-@[php_arg_name(resource_path: 'resourcePath')]
-@[php_method: 'apiResource']
+@[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
+@[vphp.PhpExportMethod(name: 'apiResource')]
 pub fn (group &RouteGroup) api_resource(resource_path string, controller string) &RouteGroup {
 	group.call_app_resource('apiResource', resource_path, controller)
 	return group
 }
 
-@[php_arg_name(resource_path: 'resourcePath')]
-@[php_method]
+@[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (group &RouteGroup) singleton(resource_path string, controller string) &RouteGroup {
 	group.call_app_resource('singleton', resource_path, controller)
 	return group
 }
 
-@[php_arg_name(resource_path: 'resourcePath')]
-@[php_method: 'apiSingleton']
+@[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
+@[vphp.PhpExportMethod(name: 'apiSingleton')]
 pub fn (group &RouteGroup) api_singleton(resource_path string, controller string) &RouteGroup {
 	group.call_app_resource('apiSingleton', resource_path, controller)
 	return group
 }
 
-@[php_arg_name(resource_path: 'resourcePath')]
-@[php_method: 'resourceOpts']
+@[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
+@[vphp.PhpExportMethod(name: 'resourceOpts')]
 pub fn (group &RouteGroup) resource_opts(resource_path string, controller string, options vphp.PhpArray) &RouteGroup {
 	group.call_app_resource_opts('resourceOpts', resource_path, controller, options)
 	return group
 }
 
-@[php_arg_name(resource_path: 'resourcePath')]
-@[php_method: 'apiResourceOpts']
+@[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
+@[vphp.PhpExportMethod(name: 'apiResourceOpts')]
 pub fn (group &RouteGroup) api_resource_opts(resource_path string, controller string, options vphp.PhpArray) &RouteGroup {
 	group.call_app_resource_opts('apiResourceOpts', resource_path, controller, options)
 	return group
 }
 
-@[php_arg_name(resource_path: 'resourcePath')]
-@[php_method: 'singletonOpts']
+@[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
+@[vphp.PhpExportMethod(name: 'singletonOpts')]
 pub fn (group &RouteGroup) singleton_opts(resource_path string, controller string, options vphp.PhpArray) &RouteGroup {
 	group.call_app_resource_opts('singletonOpts', resource_path, controller, options)
 	return group
 }
 
-@[php_arg_name(resource_path: 'resourcePath')]
-@[php_method: 'apiSingletonOpts']
+@[vphp.PhpArgName(v_name: 'resource_path', php_name: 'resourcePath')]
+@[vphp.PhpExportMethod(name: 'apiSingletonOpts')]
 pub fn (group &RouteGroup) api_singleton_opts(resource_path string, controller string, options vphp.PhpArray) &RouteGroup {
 	group.call_app_resource_opts('apiSingletonOpts', resource_path, controller, options)
 	return group

@@ -47,12 +47,22 @@ pub mut:
 
 // start_gateway 启动 veb HTTP 常驻服务网关
 pub fn start_gateway(port int, entry_fn fn () PhpVal) {
+	start_gateway_with_config(port, entry_fn, '')
+}
+
+pub fn start_gateway_with_config(port int, entry_fn fn () PhpVal, config_path string) {
 	unsafe {
 		C.php2v_set_v_callback(my_v_callback_handler)
 		C.php2v_register_mysqli_classes()
 	}
 	mut config_file := 'gateway.yaml'
-	if os.args.len > 1 {
+	if config_path != '' {
+		if os.exists(config_path) {
+			config_file = config_path
+		} else {
+			eprintln('[GATEWAY CONFIG] Config file "${config_path}" not found, falling back to default "${config_file}"')
+		}
+	} else if os.args.len > 1 {
 		arg_path := os.args[1]
 		if os.exists(arg_path) {
 			config_file = arg_path

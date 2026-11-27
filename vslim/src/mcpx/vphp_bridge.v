@@ -48,18 +48,20 @@ pub fn vslim_mcp_app_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_mcp_app_construct']
-pub fn vphp_wrap_vslim_mcp_app_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_mcp_app_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimMcpApp(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'serverInfo', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'serverCapabilities', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'serverInfo').array()
-    arg_1 := php_args.at_named_or_index(1, 'serverCapabilities').array()
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'serverInfo', use_php_default: true },
+        vphp.PhpArgMeta{ index: 1, name: 'serverCapabilities', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).array()
+    arg_1 := php_args.at(1).array()
     res := recv.construct(arg_0, arg_1)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimMcpApp](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_mcp_app_server_info']
 pub fn vphp_wrap_vslim_mcp_app_server_info(ptr voidptr, ctx vphp.Context) voidptr {
@@ -67,12 +69,11 @@ pub fn vphp_wrap_vslim_mcp_app_server_info(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'info', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'info' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'info').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.server_info(arg_0)
     return voidptr(res)
@@ -83,14 +84,13 @@ pub fn vphp_wrap_vslim_mcp_app_capability(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'definition', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'definition' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'definition').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.capability(arg_0, arg_1)
     return voidptr(res)
@@ -101,12 +101,11 @@ pub fn vphp_wrap_vslim_mcp_app_capabilities(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'definitions', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'definitions' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'definitions').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.capabilities(arg_0)
     return voidptr(res)
@@ -117,14 +116,13 @@ pub fn vphp_wrap_vslim_mcp_app_register(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'method', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'method' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'method').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').callable() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.register(arg_0, arg_1)
     return voidptr(res)
@@ -135,22 +133,20 @@ pub fn vphp_wrap_vslim_mcp_app_tool(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'description', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'inputSchema', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'description' },
+        vphp.PhpArgMeta{ index: 2, name: 'inputSchema' },
+        vphp.PhpArgMeta{ index: 3, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'description').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'inputSchema').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
-    arg_3 := php_args.at_named_or_index(3, 'handler').callable() or {
+    arg_3 := php_args.at(3).callable() or {
         vphp.throw_exception('argument 3 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.tool(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
@@ -161,20 +157,19 @@ pub fn vphp_wrap_vslim_mcp_app_resource(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'uri', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'description', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'mimeType', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'uri' },
+        vphp.PhpArgMeta{ index: 1, name: 'name' },
+        vphp.PhpArgMeta{ index: 2, name: 'description' },
+        vphp.PhpArgMeta{ index: 3, name: 'mimeType' },
+        vphp.PhpArgMeta{ index: 4, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'uri').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'name').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'description').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'mimeType').as_v[string]()
-    arg_4 := php_args.at_named_or_index(4, 'handler').callable() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).as_v[string]()
+    arg_4 := php_args.at(4).callable() or {
         vphp.throw_exception('argument 4 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.resource(arg_0, arg_1, arg_2, arg_3, arg_4)
     return voidptr(res)
@@ -185,22 +180,20 @@ pub fn vphp_wrap_vslim_mcp_app_prompt(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'description', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'arguments', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'description' },
+        vphp.PhpArgMeta{ index: 2, name: 'arguments' },
+        vphp.PhpArgMeta{ index: 3, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'description').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'arguments').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
-    arg_3 := php_args.at_named_or_index(3, 'handler').callable() or {
+    arg_3 := php_args.at(3).callable() or {
         vphp.throw_exception('argument 3 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.prompt(arg_0, arg_1, arg_2, arg_3)
     return voidptr(res)
@@ -210,11 +203,11 @@ pub fn vphp_wrap_vslim_mcp_app_notification(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'method', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'method' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'method').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return
     }
@@ -226,13 +219,13 @@ pub fn vphp_wrap_vslim_mcp_app_request(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'method', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'method' },
+        vphp.PhpArgMeta{ index: 2, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').value
-    arg_1 := php_args.at_named_or_index(1, 'method').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'params').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return
     }
@@ -244,26 +237,26 @@ pub fn vphp_wrap_vslim_mcp_app_sampling_request(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'messages', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'modelPreferences', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'systemPrompt', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'maxTokens', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'temperature', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 6, name: 'tools', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 7, name: 'toolChoice', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'messages' },
+        vphp.PhpArgMeta{ index: 2, name: 'modelPreferences' },
+        vphp.PhpArgMeta{ index: 3, name: 'systemPrompt' },
+        vphp.PhpArgMeta{ index: 4, name: 'maxTokens' },
+        vphp.PhpArgMeta{ index: 5, name: 'temperature' },
+        vphp.PhpArgMeta{ index: 6, name: 'tools' },
+        vphp.PhpArgMeta{ index: 7, name: 'toolChoice' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').value
-    arg_1 := php_args.at_named_or_index(1, 'messages').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).array() or {
         vphp.throw_exception('argument 1 must be array', 0)
         return
     }
-    arg_2 := php_args.at_named_or_index(2, 'modelPreferences').value
-    arg_3 := php_args.at_named_or_index(3, 'systemPrompt').as_v[string]()
-    arg_4 := php_args.at_named_or_index(4, 'maxTokens').as_v[int]()
-    arg_5 := php_args.at_named_or_index(5, 'temperature').value
-    arg_6 := php_args.at_named_or_index(6, 'tools').value
-    arg_7 := php_args.at_named_or_index(7, 'toolChoice').value
+    arg_2 := php_args.at(2).value
+    arg_3 := php_args.at(3).as_v[string]()
+    arg_4 := php_args.at(4).as_v[int]()
+    arg_5 := php_args.at(5).value
+    arg_6 := php_args.at(6).value
+    arg_7 := php_args.at(7).value
     res := VSlimMcpApp.sampling_request(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     ctx.return().v[string](res)
 }
@@ -272,24 +265,24 @@ pub fn vphp_wrap_vslim_mcp_app_queued_result(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'result', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'notifications', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'protocolVersion', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'sessionId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 6, name: 'headers', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'result' },
+        vphp.PhpArgMeta{ index: 2, name: 'notifications' },
+        vphp.PhpArgMeta{ index: 3, name: 'status' },
+        vphp.PhpArgMeta{ index: 4, name: 'protocolVersion' },
+        vphp.PhpArgMeta{ index: 5, name: 'sessionId' },
+        vphp.PhpArgMeta{ index: 6, name: 'headers' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').value
-    arg_1 := php_args.at_named_or_index(1, 'result').value
-    arg_2 := php_args.at_named_or_index(2, 'notifications').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return
     }
-    arg_3 := php_args.at_named_or_index(3, 'status').as_v[int]()
-    arg_4 := php_args.at_named_or_index(4, 'protocolVersion').as_v[string]()
-    arg_5 := php_args.at_named_or_index(5, 'sessionId').as_v[string]()
-    arg_6 := php_args.at_named_or_index(6, 'headers').array() or {
+    arg_3 := php_args.at(3).as_v[int]()
+    arg_4 := php_args.at(4).as_v[string]()
+    arg_5 := php_args.at(5).as_v[string]()
+    arg_6 := php_args.at(6).array() or {
         vphp.throw_exception('argument 6 must be array', 0)
         return
     }
@@ -301,24 +294,24 @@ pub fn vphp_wrap_vslim_mcp_app_queue_messages(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'result', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'messages', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'protocolVersion', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'sessionId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 6, name: 'headers', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'result' },
+        vphp.PhpArgMeta{ index: 2, name: 'messages' },
+        vphp.PhpArgMeta{ index: 3, name: 'status' },
+        vphp.PhpArgMeta{ index: 4, name: 'protocolVersion' },
+        vphp.PhpArgMeta{ index: 5, name: 'sessionId' },
+        vphp.PhpArgMeta{ index: 6, name: 'headers' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').value
-    arg_1 := php_args.at_named_or_index(1, 'result').value
-    arg_2 := php_args.at_named_or_index(2, 'messages').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return
     }
-    arg_3 := php_args.at_named_or_index(3, 'status').as_v[int]()
-    arg_4 := php_args.at_named_or_index(4, 'protocolVersion').as_v[string]()
-    arg_5 := php_args.at_named_or_index(5, 'sessionId').as_v[string]()
-    arg_6 := php_args.at_named_or_index(6, 'headers').array() or {
+    arg_3 := php_args.at(3).as_v[int]()
+    arg_4 := php_args.at(4).as_v[string]()
+    arg_5 := php_args.at(5).as_v[string]()
+    arg_6 := php_args.at(6).array() or {
         vphp.throw_exception('argument 6 must be array', 0)
         return
     }
@@ -329,27 +322,29 @@ pub fn vphp_wrap_vslim_mcp_app_queue_messages(ctx vphp.Context)  {
 pub fn vphp_wrap_vslim_mcp_app_notify(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'method', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'params', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'sessionId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'protocolVersion', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'result', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 6, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 7, name: 'headers', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'id').value
-    arg_1 := php_args.at_named_or_index(1, 'method').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'params').array() or {
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'method' },
+        vphp.PhpArgMeta{ index: 2, name: 'params' },
+        vphp.PhpArgMeta{ index: 3, name: 'sessionId' },
+        vphp.PhpArgMeta{ index: 4, name: 'protocolVersion' },
+        vphp.PhpArgMeta{ index: 5, name: 'result', use_php_default: true },
+        vphp.PhpArgMeta{ index: 6, name: 'status', use_php_default: true },
+        vphp.PhpArgMeta{ index: 7, name: 'headers', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return
     }
-    arg_3 := php_args.at_named_or_index(3, 'sessionId').as_v[string]()
-    arg_4 := php_args.at_named_or_index(4, 'protocolVersion').as_v[string]()
-    arg_5 := if php_args.has_named_or_index(5, 'result') { ?vphp.PhpValue(php_args.at_named_or_index(5, 'result').value) } else { none }
-    arg_6 := if php_args.has_named_or_index(6, 'status') { php_args.at_named_or_index(6, 'status').as_v[int]() } else { 200 }
-    arg_7 := php_args.at_named_or_index(7, 'headers').array()
+    arg_3 := php_args.at(3).as_v[string]()
+    arg_4 := php_args.at(4).as_v[string]()
+    arg_5 := if php_args.has(5) { ?vphp.PhpValue(php_args.at(5).value) } else { none }
+    arg_6 := php_args.at(6).as_v[int]()
+    arg_7 := php_args.at(7).array()
     res := VSlimMcpApp.notify(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     ctx.return().v[vphp.PhpArray](res)
 }
@@ -358,20 +353,20 @@ pub fn vphp_wrap_vslim_mcp_app_queue_notification(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'method', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'params', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'sessionId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'protocolVersion', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'method' },
+        vphp.PhpArgMeta{ index: 2, name: 'params' },
+        vphp.PhpArgMeta{ index: 3, name: 'sessionId' },
+        vphp.PhpArgMeta{ index: 4, name: 'protocolVersion' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').value
-    arg_1 := php_args.at_named_or_index(1, 'method').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'params').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return
     }
-    arg_3 := php_args.at_named_or_index(3, 'sessionId').as_v[string]()
-    arg_4 := php_args.at_named_or_index(4, 'protocolVersion').as_v[string]()
+    arg_3 := php_args.at(3).as_v[string]()
+    arg_4 := php_args.at(4).as_v[string]()
     res := VSlimMcpApp.queue_notification(arg_0, arg_1, arg_2, arg_3, arg_4)
     ctx.return().v[vphp.PhpArray](res)
 }
@@ -380,22 +375,22 @@ pub fn vphp_wrap_vslim_mcp_app_queue_request(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'responseId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'requestId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'method', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'params', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'sessionId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'protocolVersion', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'responseId' },
+        vphp.PhpArgMeta{ index: 1, name: 'requestId' },
+        vphp.PhpArgMeta{ index: 2, name: 'method' },
+        vphp.PhpArgMeta{ index: 3, name: 'params' },
+        vphp.PhpArgMeta{ index: 4, name: 'sessionId' },
+        vphp.PhpArgMeta{ index: 5, name: 'protocolVersion' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'responseId').value
-    arg_1 := php_args.at_named_or_index(1, 'requestId').value
-    arg_2 := php_args.at_named_or_index(2, 'method').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'params').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).array() or {
         vphp.throw_exception('argument 3 must be array', 0)
         return
     }
-    arg_4 := php_args.at_named_or_index(4, 'sessionId').as_v[string]()
-    arg_5 := php_args.at_named_or_index(5, 'protocolVersion').as_v[string]()
+    arg_4 := php_args.at(4).as_v[string]()
+    arg_5 := php_args.at(5).as_v[string]()
     res := VSlimMcpApp.queue_request(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5)
     ctx.return().v[vphp.PhpArray](res)
 }
@@ -404,21 +399,21 @@ pub fn vphp_wrap_vslim_mcp_app_queue_progress(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'progressToken', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'progress', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'total', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'sessionId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 6, name: 'protocolVersion', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'progressToken' },
+        vphp.PhpArgMeta{ index: 2, name: 'progress' },
+        vphp.PhpArgMeta{ index: 3, name: 'total' },
+        vphp.PhpArgMeta{ index: 4, name: 'message' },
+        vphp.PhpArgMeta{ index: 5, name: 'sessionId' },
+        vphp.PhpArgMeta{ index: 6, name: 'protocolVersion' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').value
-    arg_1 := php_args.at_named_or_index(1, 'progressToken').value
-    arg_2 := php_args.at_named_or_index(2, 'progress').value
-    arg_3 := php_args.at_named_or_index(3, 'total').value
-    arg_4 := php_args.at_named_or_index(4, 'message').as_v[string]()
-    arg_5 := php_args.at_named_or_index(5, 'sessionId').as_v[string]()
-    arg_6 := php_args.at_named_or_index(6, 'protocolVersion').as_v[string]()
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
+    arg_2 := php_args.at(2).value
+    arg_3 := php_args.at(3).value
+    arg_4 := php_args.at(4).as_v[string]()
+    arg_5 := php_args.at(5).as_v[string]()
+    arg_6 := php_args.at(6).as_v[string]()
     res := VSlimMcpApp.queue_progress(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6)
     ctx.return().v[vphp.PhpArray](res)
 }
@@ -427,21 +422,21 @@ pub fn vphp_wrap_vslim_mcp_app_queue_log(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'level', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'data', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'logger', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'sessionId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 6, name: 'protocolVersion', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
+        vphp.PhpArgMeta{ index: 1, name: 'level' },
+        vphp.PhpArgMeta{ index: 2, name: 'message' },
+        vphp.PhpArgMeta{ index: 3, name: 'data' },
+        vphp.PhpArgMeta{ index: 4, name: 'logger' },
+        vphp.PhpArgMeta{ index: 5, name: 'sessionId' },
+        vphp.PhpArgMeta{ index: 6, name: 'protocolVersion' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').value
-    arg_1 := php_args.at_named_or_index(1, 'level').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'message').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'data').value
-    arg_4 := php_args.at_named_or_index(4, 'logger').as_v[string]()
-    arg_5 := php_args.at_named_or_index(5, 'sessionId').as_v[string]()
-    arg_6 := php_args.at_named_or_index(6, 'protocolVersion').as_v[string]()
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).value
+    arg_4 := php_args.at(4).as_v[string]()
+    arg_5 := php_args.at(5).as_v[string]()
+    arg_6 := php_args.at(6).as_v[string]()
     res := VSlimMcpApp.queue_log(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6)
     ctx.return().v[vphp.PhpArray](res)
 }
@@ -450,26 +445,26 @@ pub fn vphp_wrap_vslim_mcp_app_queue_sampling(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'responseId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'samplingId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'messages', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'sessionId', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'protocolVersion', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'modelPreferences', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 6, name: 'systemPrompt', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 7, name: 'maxTokens', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'responseId' },
+        vphp.PhpArgMeta{ index: 1, name: 'samplingId' },
+        vphp.PhpArgMeta{ index: 2, name: 'messages' },
+        vphp.PhpArgMeta{ index: 3, name: 'sessionId' },
+        vphp.PhpArgMeta{ index: 4, name: 'protocolVersion' },
+        vphp.PhpArgMeta{ index: 5, name: 'modelPreferences' },
+        vphp.PhpArgMeta{ index: 6, name: 'systemPrompt' },
+        vphp.PhpArgMeta{ index: 7, name: 'maxTokens' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'responseId').value
-    arg_1 := php_args.at_named_or_index(1, 'samplingId').value
-    arg_2 := php_args.at_named_or_index(2, 'messages').array() or {
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
+    arg_2 := php_args.at(2).array() or {
         vphp.throw_exception('argument 2 must be array', 0)
         return
     }
-    arg_3 := php_args.at_named_or_index(3, 'sessionId').as_v[string]()
-    arg_4 := php_args.at_named_or_index(4, 'protocolVersion').as_v[string]()
-    arg_5 := php_args.at_named_or_index(5, 'modelPreferences').value
-    arg_6 := php_args.at_named_or_index(6, 'systemPrompt').as_v[string]()
-    arg_7 := php_args.at_named_or_index(7, 'maxTokens').as_v[int]()
+    arg_3 := php_args.at(3).as_v[string]()
+    arg_4 := php_args.at(4).as_v[string]()
+    arg_5 := php_args.at(5).value
+    arg_6 := php_args.at(6).as_v[string]()
+    arg_7 := php_args.at(7).as_v[int]()
     res := VSlimMcpApp.queue_sampling(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     ctx.return().v[vphp.PhpArray](res)
 }
@@ -478,9 +473,9 @@ pub fn vphp_wrap_vslim_mcp_app_client_capabilities(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'frame', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'frame' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'frame').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
@@ -492,14 +487,14 @@ pub fn vphp_wrap_vslim_mcp_app_client_supports(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'frame', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'frame' },
+        vphp.PhpArgMeta{ index: 1, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'frame').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'name').as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := VSlimMcpApp.client_supports(arg_0, arg_1)
     ctx.return().v[bool](res)
 }
@@ -508,16 +503,16 @@ pub fn vphp_wrap_vslim_mcp_app_capability_error(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'frame', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'frame' },
+        vphp.PhpArgMeta{ index: 1, name: 'message' },
+        vphp.PhpArgMeta{ index: 2, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'frame').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'message').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'status').as_v[int]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[int]()
     res := VSlimMcpApp.capability_error(arg_0, arg_1, arg_2)
     ctx.return().v[vphp.PhpArray](res)
 }
@@ -526,18 +521,18 @@ pub fn vphp_wrap_vslim_mcp_app_require_capability(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'frame', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'message', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'frame' },
+        vphp.PhpArgMeta{ index: 1, name: 'name' },
+        vphp.PhpArgMeta{ index: 2, name: 'message' },
+        vphp.PhpArgMeta{ index: 3, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'frame').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'name').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'message').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'status').as_v[int]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).as_v[int]()
     res := VSlimMcpApp.require_capability(arg_0, arg_1, arg_2, arg_3)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -547,9 +542,9 @@ pub fn vphp_wrap_vslim_mcp_app_handle_mcp_dispatch(ptr voidptr, ctx vphp.Context
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'frame', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'frame' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'frame').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
@@ -562,9 +557,9 @@ pub fn vphp_wrap_vslim_mcp_app_handle(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'frame', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'frame' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'frame').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
@@ -577,9 +572,9 @@ pub fn vphp_wrap_vslim_mcp_app_handle_mcp(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'frame', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'frame' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'frame').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
@@ -588,13 +583,13 @@ pub fn vphp_wrap_vslim_mcp_app_handle_mcp(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_mcp_app_handlers']
 pub fn vslim_mcp_app_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_mcp_app_get_prop),
-        write_handler: voidptr(vslim_mcp_app_set_prop),
-        sync_handler: voidptr(vslim_mcp_app_sync_props),
-        new_raw: voidptr(vslim_mcp_app_new_raw),
-        cleanup_raw: voidptr(vslim_mcp_app_cleanup_raw),
-        free_raw: voidptr(vslim_mcp_app_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_mcp_app_get_prop,
+        write_handler: vslim_mcp_app_set_prop,
+        sync_handler: vslim_mcp_app_sync_props,
+        new_raw: vslim_mcp_app_new_raw,
+        cleanup_raw: vslim_mcp_app_cleanup_raw,
+        free_raw: vslim_mcp_app_free_raw
     )
 }
 pub fn VSlimMcpApp.php_class_entry() vphp.ZendClassEntry {

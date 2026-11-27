@@ -13,14 +13,11 @@ if (!is_file(dirname(__DIR__) . '/examples/vendor/autoload.php')) {
 ?>
 --FILE--
 <?php
-define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-$autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
-if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
-require_once $autoload;
+declare(strict_types=1);
 
-putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/throwing_app_fixture.php');
-$worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
-$panic = $worker->dispatchRequest([
+require_once __DIR__ . '/worker_wire_fixture.php';
+$worker = new WorkerWireFixture(__DIR__ . '/fixtures/throwing_app_fixture.php', '\VSlim\Worker\Adapter::http');
+$panic = $worker->request([
     'id' => 'req-panic',
     'method' => 'GET',
     'path' => '/any',
@@ -39,9 +36,8 @@ $panic = $worker->dispatchRequest([
 ]);
 echo $panic['status'] . '|' . $panic['headers']['x-worker-error-class'] . PHP_EOL;
 
-putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/invalid_app_fixture.php');
-$worker2 = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
-$bad = $worker2->dispatchRequest([
+$worker2 = new WorkerWireFixture(__DIR__ . '/fixtures/invalid_app_fixture.php', '\VSlim\Worker\Adapter::http');
+$bad = $worker2->request([
     'id' => 'req-contract',
     'method' => 'GET',
     'path' => '/anything',

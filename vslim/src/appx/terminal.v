@@ -14,7 +14,7 @@ fn (app &VSlimApp) normalize_or_handle_error_with_context(ctx middlewarex.Pipeli
 }
 
 fn (app &VSlimApp) normalize_or_handle_error_with_context_psr(ctx middlewarex.PipelineRequestContext, result vphp.PhpValue, fallback_status int, fallback_message string) &httpx.VSlimPsr7Response {
-	res, ok := httpx.VSlimPsr7Response.from_route_result(result)
+	res, ok := httpx.VSlimPsr7Response.from_route_result(result, ctx.response_import)
 	if ok {
 		return res
 	}
@@ -63,7 +63,7 @@ fn (app &VSlimApp) build_terminal_response_psr(meta middlewarex.MiddlewareTermin
 			} else {
 				res := meta.fixed_response_ref
 				res.clone_with(res.protocol_version, httpx.clone_header_values(res.headers),
-					httpx.clone_header_names(res.header_names), res.body_or_empty(), res.status,
+					httpx.clone_header_names(res.header_names), res.body_ref, res.status,
 					res.reason_phrase)
 			}
 		}
@@ -104,7 +104,7 @@ fn (app &VSlimApp) build_method_not_allowed_response_with_context_psr(ctx middle
 }
 
 fn (app &VSlimApp) run_not_found(req &httpx.VSlimRequest) httpx.VSlimResponse {
-	payload := httpx.vslim_request_build_value(req, map[string]string{})
+	mut payload := httpx.vslim_request_build_value(req, map[string]string{})
 	path := req.normalized_path()
 	ctx := middlewarex.PipelineRequestContext.from_value(path, payload, map[string]string{})
 	res := app.run_not_found_core_with_context(ctx)
@@ -119,10 +119,8 @@ fn (app &VSlimApp) run_not_found_core_with_context(ctx middlewarex.PipelineReque
 		defer {
 			psr_payload.release()
 		}
-		mut raw := nf.invoke(psr_payload)
-		defer {
-			raw.release()
-		}
+		mut result := nf.invoke(psr_payload)
+		raw := result.move_to_request_scope_by_value()
 		return app.normalize_or_handle_error_with_context(ctx, raw, 404, 'Not Found')
 	}
 	return app.default_error_response(404, 'Not Found', 'not_found')
@@ -135,10 +133,8 @@ fn (app &VSlimApp) run_not_found_core_with_context_psr(ctx middlewarex.PipelineR
 		defer {
 			psr_payload.release()
 		}
-		mut raw := nf.invoke(psr_payload)
-		defer {
-			raw.release()
-		}
+		mut result := nf.invoke(psr_payload)
+		raw := result.move_to_request_scope_by_value()
 		return app.normalize_or_handle_error_with_context_psr(ctx, raw, 404, 'Not Found')
 	}
 	return app.default_error_response_psr(404, 'Not Found', 'not_found')
@@ -162,10 +158,8 @@ fn (app &VSlimApp) run_error_handler_with_context(ctx middlewarex.PipelineReques
 		message_arg.release()
 		status_arg.release()
 	}
-	mut raw := eh.invoke(psr_payload, message_arg, status_arg)
-	defer {
-		raw.release()
-	}
+	mut result := eh.invoke(psr_payload, message_arg, status_arg)
+	raw := result.move_to_request_scope_by_value()
 	res, ok := httpx.VSlimResponse.from_route_result(raw)
 	if !ok {
 		return none
@@ -186,11 +180,9 @@ fn (app &VSlimApp) run_error_handler_with_context_psr(ctx middlewarex.PipelineRe
 		message_arg.release()
 		status_arg.release()
 	}
-	mut raw := eh.invoke(psr_payload, message_arg, status_arg)
-	defer {
-		raw.release()
-	}
-	res, ok := httpx.VSlimPsr7Response.from_route_result(raw)
+	mut result := eh.invoke(psr_payload, message_arg, status_arg)
+	raw := result.move_to_request_scope_by_value()
+	res, ok := httpx.VSlimPsr7Response.from_route_result(raw, ctx.response_import)
 	if !ok {
 		return none
 	}

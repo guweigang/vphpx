@@ -186,7 +186,7 @@
 
 例如：
 
-- `@[php_implements]` 无法稳定覆盖 Composer/autoload 场景
+- 使用 `vphp.PhpImplements` 声明的接口绑定在 Composer 自动加载场景下失败
 - internal class 与 userland interface 的绑定有 first-touch 顺序问题
 - 标准接口的方法签名在桥接层不能可靠校验
 

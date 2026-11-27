@@ -44,18 +44,18 @@ pub fn vslim_vhttpd_client_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_vhttpd_client_construct']
-pub fn vphp_wrap_vslim_vhttpd_client_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_vhttpd_client_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimVhttpdClient(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'socketPath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'connectTimeoutSeconds', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'socketPath' },
+        vphp.PhpArgMeta{ index: 1, name: 'connectTimeoutSeconds' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'socketPath').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'connectTimeoutSeconds').as_v[f64]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[f64]()
     res := recv.construct(arg_0, arg_1)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimVhttpdClient](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_vhttpd_client_socket_path']
 pub fn vphp_wrap_vslim_vhttpd_client_socket_path(ptr voidptr, ctx vphp.Context)  {
@@ -79,9 +79,9 @@ pub fn vphp_wrap_vslim_vhttpd_client_request(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'payload', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'payload' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'payload').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
@@ -93,27 +93,29 @@ pub fn vphp_wrap_vslim_vhttpd_client_request_frames(ptr voidptr, ctx vphp.Contex
     mut recv := unsafe { &VSlimVhttpdClient(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'payload', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'frames', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'payload').array() or {
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'payload' },
+        vphp.PhpArgMeta{ index: 1, name: 'frames', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
         return
     }
-    arg_1 := php_args.at_named_or_index(1, 'frames').array()
+    arg_1 := php_args.at(1).array()
     res := recv.request_frames(arg_0, arg_1)
     ctx.return().v[vphp.PhpArray](res)
 }
 @[export: 'vslim_vhttpd_client_handlers']
 pub fn vslim_vhttpd_client_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_vhttpd_client_get_prop),
-        write_handler: voidptr(vslim_vhttpd_client_set_prop),
-        sync_handler: voidptr(vslim_vhttpd_client_sync_props),
-        new_raw: voidptr(vslim_vhttpd_client_new_raw),
-        cleanup_raw: voidptr(vslim_vhttpd_client_cleanup_raw),
-        free_raw: voidptr(vslim_vhttpd_client_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_vhttpd_client_get_prop,
+        write_handler: vslim_vhttpd_client_set_prop,
+        sync_handler: vslim_vhttpd_client_sync_props,
+        new_raw: vslim_vhttpd_client_new_raw,
+        cleanup_raw: vslim_vhttpd_client_cleanup_raw,
+        free_raw: vslim_vhttpd_client_free_raw
     )
 }
 pub fn VSlimVhttpdClient.php_class_entry() vphp.ZendClassEntry {

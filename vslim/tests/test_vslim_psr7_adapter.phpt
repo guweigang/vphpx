@@ -24,11 +24,11 @@ final class TestBody {
     public function __toString(): string { return $this->content; }
 }
 
-final class TestServerRequest {
+class TestServerRequest {
     public function __construct(
         private string $method,
-        private TestUri $uri,
-        private array $headers,
+        protected TestUri $uri,
+        protected array $headers,
         private array $cookies,
         private array $query,
         private array $attributes,
@@ -64,6 +64,17 @@ echo $vreq->query('trace_id') . '|' . $vreq->cookie('sid') . '|' . $vreq->attrib
 
 $env = VSlim\Psr7Adapter::toWorkerEnvelope($req);
 echo $env['method'] . '|' . $env['path'] . '|' . $env['headers']['x-trace-id'] . '|' . $env['cookies']['sid'] . '|' . $env['query']['trace_id'] . PHP_EOL;
+
+$byReference = new class('POST', new TestUri('https', 'example.com', null, '/ref', ''),
+    ['X-Reference' => ['first', 'second']], [], [], [], [], new TestBody("a\0b")) extends TestServerRequest {
+    public function &getUri(): TestUri { return $this->uri; }
+    public function &getHeaders(): array { return $this->headers; }
+};
+$converted = VSlim\Psr7Adapter::toWorkerEnvelope($byReference);
+if ($converted['host'] !== 'example.com' || $converted['path'] !== '/ref'
+    || $converted['headers']['x-reference'] !== 'first, second' || $converted['body'] !== "a\0b") {
+    throw new RuntimeException('The request adapter lost a referenced URI, headers, or body bytes');
+}
 
 $psr = (new VSlim\Psr7\Response())
     ->withStatus(200)

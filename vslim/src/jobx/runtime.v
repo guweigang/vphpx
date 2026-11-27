@@ -80,7 +80,7 @@ fn job_worker_manager_or_throw(worker &VSlimJobWorker) ?&databasex.VSlimDatabase
 	return worker.manager_ref
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut dispatcher VSlimJobDispatcher) construct() &VSlimJobDispatcher {
 	return &dispatcher
 }
@@ -92,19 +92,19 @@ pub fn VSlimJobDispatcher.from_manager(manager &databasex.VSlimDatabaseManager) 
 	return dispatcher
 }
 
-@[php_method: 'setManager']
+@[vphp.PhpExportMethod(name: 'setManager')]
 pub fn (mut dispatcher VSlimJobDispatcher) set_manager(manager &databasex.VSlimDatabaseManager) &VSlimJobDispatcher {
 	dispatcher.manager_ref = manager
 	return &dispatcher
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (dispatcher &VSlimJobDispatcher) manager() &databasex.VSlimDatabaseManager {
 	return dispatcher.manager_ref
 }
 
-@[php_arg_name: 'job_class=jobClass,delay_seconds=delaySeconds,max_attempts=maxAttempts']
-@[php_method]
+@[vphp.PhpArgNames(names: 'job_class=jobClass,delay_seconds=delaySeconds,max_attempts=maxAttempts')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut dispatcher VSlimJobDispatcher) dispatch(job_class string, payload vphp.PhpValue, queue string, delay_seconds int, max_attempts int) i64 {
 	clean_class := job_class.trim_space()
 	if clean_class == '' {
@@ -124,19 +124,19 @@ pub fn (mut dispatcher VSlimJobDispatcher) dispatch(job_class string, payload vp
 	stored_payload := if payload_json == '' { 'null' } else { payload_json }
 	ok := job_exec_params(db,
 		"INSERT INTO vslim_jobs (queue, job_class, payload_json, status, attempts, max_attempts, available_at, created_at, updated_at) VALUES (?, ?, ?, 'pending', 0, ?, DATE_ADD(NOW(), INTERVAL ? SECOND), NOW(), NOW())", [
-		clean_queue,
-		clean_class,
-		stored_payload,
-		attempt_limit.str(),
-		delay.str(),
-	])
+			clean_queue,
+			clean_class,
+			stored_payload,
+			attempt_limit.str(),
+			delay.str(),
+		])
 	if !ok {
 		return 0
 	}
 	return db.last_insert_id_value()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut worker VSlimJobWorker) construct() &VSlimJobWorker {
 	worker.worker_id = job_now_worker_id()
 	return &worker
@@ -149,32 +149,32 @@ pub fn VSlimJobWorker.from_manager(manager &databasex.VSlimDatabaseManager) &VSl
 	return worker
 }
 
-@[php_method: 'setManager']
+@[vphp.PhpExportMethod(name: 'setManager')]
 pub fn (mut worker VSlimJobWorker) set_manager(manager &databasex.VSlimDatabaseManager) &VSlimJobWorker {
 	worker.manager_ref = manager
 	return &worker
 }
 
-@[php_arg_name: 'worker_id=workerId']
-@[php_method: 'setWorkerId']
+@[vphp.PhpArgName(v_name: 'worker_id', php_name: 'workerId')]
+@[vphp.PhpExportMethod(name: 'setWorkerId')]
 pub fn (mut worker VSlimJobWorker) set_worker_id(worker_id string) &VSlimJobWorker {
 	clean := worker_id.trim_space()
 	worker.worker_id = if clean == '' { job_now_worker_id() } else { clean }
 	return &worker
 }
 
-@[php_method: 'workerId']
+@[vphp.PhpExportMethod(name: 'workerId')]
 pub fn (worker &VSlimJobWorker) worker_id_value() string {
 	return worker.worker_id
 }
 
-@[php_method: 'setRetryDelaySeconds']
+@[vphp.PhpExportMethod(name: 'setRetryDelaySeconds')]
 pub fn (mut worker VSlimJobWorker) set_retry_delay_seconds(seconds int) &VSlimJobWorker {
 	worker.retry_delay_seconds = if seconds < 0 { 0 } else { seconds }
 	return &worker
 }
 
-@[php_method: 'setReserveTimeoutSeconds']
+@[vphp.PhpExportMethod(name: 'setReserveTimeoutSeconds')]
 pub fn (mut worker VSlimJobWorker) set_reserve_timeout_seconds(seconds int) &VSlimJobWorker {
 	worker.reserve_timeout_secs = if seconds <= 0 { 300 } else { seconds }
 	return &worker
@@ -185,9 +185,9 @@ fn (mut worker VSlimJobWorker) release_stale_reserved(queue string) {
 	clean_queue := if queue.trim_space() == '' { 'default' } else { queue.trim_space() }
 	_ = job_exec_params(db,
 		"UPDATE vslim_jobs SET status = 'pending', reserved_at = NULL, reserved_by = NULL, updated_at = NOW() WHERE queue = ? AND status = 'reserved' AND reserved_at IS NOT NULL AND reserved_at < DATE_SUB(NOW(), INTERVAL ? SECOND)", [
-		clean_queue,
-		worker.reserve_timeout_secs.str(),
-	])
+			clean_queue,
+			worker.reserve_timeout_secs.str(),
+		])
 }
 
 fn (mut worker VSlimJobWorker) reserve(queue string) ?VSlimReservedJob {
@@ -196,17 +196,17 @@ fn (mut worker VSlimJobWorker) reserve(queue string) ?VSlimReservedJob {
 	worker.release_stale_reserved(clean_queue)
 	mut row_box := job_query_one_params(db,
 		"SELECT id, queue, job_class, payload_json, attempts, max_attempts FROM vslim_jobs WHERE queue = ? AND status = 'pending' AND available_at <= NOW() ORDER BY available_at ASC, id ASC LIMIT 1", [
-		clean_queue,
-	])
+			clean_queue,
+		])
 	defer {
 		row_box.release()
 	}
 	reserved := job_reserved_from_row(row_box) or { return none }
 	ok := job_exec_params(db,
 		"UPDATE vslim_jobs SET status = 'reserved', attempts = attempts + 1, reserved_at = NOW(), reserved_by = ?, updated_at = NOW() WHERE id = ? AND status = 'pending' AND available_at <= NOW()", [
-		worker.worker_id,
-		reserved.id.str(),
-	])
+			worker.worker_id,
+			reserved.id.str(),
+		])
 	if !ok || db.affected_rows_value() == 0 {
 		return none
 	}
@@ -220,8 +220,8 @@ fn (mut worker VSlimJobWorker) complete(reserved VSlimReservedJob) bool {
 	mut db := job_worker_manager_or_throw(worker) or { return false }
 	return job_exec_params(db,
 		"UPDATE vslim_jobs SET status = 'completed', completed_at = NOW(), reserved_at = NULL, reserved_by = NULL, last_error = NULL, updated_at = NOW() WHERE id = ?", [
-		reserved.id.str(),
-	])
+			reserved.id.str(),
+		])
 }
 
 fn (mut worker VSlimJobWorker) fail_or_release(reserved VSlimReservedJob, message string) bool {
@@ -230,30 +230,30 @@ fn (mut worker VSlimJobWorker) fail_or_release(reserved VSlimReservedJob, messag
 	if reserved.attempts >= reserved.max_attempts {
 		ok := job_exec_params(db,
 			"UPDATE vslim_jobs SET status = 'failed', failed_at = NOW(), reserved_at = NULL, reserved_by = NULL, last_error = ?, updated_at = NOW() WHERE id = ?", [
-			error_message,
-			reserved.id.str(),
-		])
+				error_message,
+				reserved.id.str(),
+			])
 		_ = job_exec_params(db,
 			'INSERT INTO vslim_failed_jobs (job_id, queue, job_class, payload_json, attempts, error_message, error_trace, failed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, NULL, NOW(), NOW())', [
-			reserved.id.str(),
-			reserved.queue,
-			reserved.job_class,
-			reserved.payload_json,
-			reserved.attempts.str(),
-			error_message,
-		])
+				reserved.id.str(),
+				reserved.queue,
+				reserved.job_class,
+				reserved.payload_json,
+				reserved.attempts.str(),
+				error_message,
+			])
 		return ok
 	}
 	return job_exec_params(db,
 		"UPDATE vslim_jobs SET status = 'pending', reserved_at = NULL, reserved_by = NULL, available_at = DATE_ADD(NOW(), INTERVAL ? SECOND), last_error = ?, updated_at = NOW() WHERE id = ?", [
-		worker.retry_delay_seconds.str(),
-		error_message,
-		reserved.id.str(),
-	])
+			worker.retry_delay_seconds.str(),
+			error_message,
+			reserved.id.str(),
+		])
 }
 
 fn (mut worker VSlimJobWorker) perform(reserved VSlimReservedJob) bool {
-	payload := vphp.PhpJson.decode_assoc_value(reserved.payload_json)
+	mut payload := vphp.PhpJson.decode_assoc_value(reserved.payload_json)
 	if !payload.is_valid() || vphp.PhpJson.last_error_code() != 0 {
 		return worker.fail_or_release(reserved,
 			'job payload is not valid JSON: ${vphp.PhpJson.last_error_message()}')
@@ -265,24 +265,35 @@ fn (mut worker VSlimJobWorker) perform(reserved VSlimReservedJob) bool {
 	// and pass the transient value directly into userland; no request zval is
 	// retained across requests or worker iterations.
 	mut result := dispatch_job_class(reserved.job_class, payload) or {
-		return worker.fail_or_release(reserved, err.msg())
+		message := take_job_exception_message() or { err.msg() }
+		return !vphp.has_exception() && worker.fail_or_release(reserved, message)
 	}
 	defer {
 		result.release()
 	}
-	if message := vphp.PhpException.current_message_opt() {
-		vphp.PhpException.clear()
+	if message := take_job_exception_message() {
 		return worker.fail_or_release(reserved, message)
 	}
-	return worker.complete(reserved)
+	return !vphp.has_exception() && worker.complete(reserved)
+}
+
+fn take_job_exception_message() ?string {
+	mut exception := vphp.PhpException.take_current()?
+	defer {
+		exception.release()
+	}
+	return exception.message()
 }
 
 fn dispatch_job_class(job_class string, payload vphp.PhpValue) !vphp.PhpValue {
 	if !vphp.PhpClass.named(job_class).exists() {
 		return error('job class does not exist: ${job_class}')
 	}
-	instance_obj := vphp.PhpClass.named(job_class).construct() or {
+	mut instance_obj := vphp.PhpClass.named(job_class).construct() or {
 		return error('job class could not be instantiated: ${job_class}')
+	}
+	defer {
+		instance_obj.release()
 	}
 	if !instance_obj.method_exists('handle') {
 		return error('job class must define handle(array payload): ${job_class}')
@@ -290,14 +301,14 @@ fn dispatch_job_class(job_class string, payload vphp.PhpValue) !vphp.PhpValue {
 	return instance_obj.call_method('handle', payload)
 }
 
-@[php_method: 'runOnce']
+@[vphp.PhpExportMethod(name: 'runOnce')]
 pub fn (mut worker VSlimJobWorker) run_once(queue string) int {
 	reserved := worker.reserve(queue) or { return 0 }
 	return if worker.perform(reserved) { 1 } else { 0 }
 }
 
-@[php_arg_name: 'max_jobs=maxJobs,sleep_ms=sleepMs,stop_when_empty=stopWhenEmpty']
-@[php_method]
+@[vphp.PhpArgNames(names: 'max_jobs=maxJobs,sleep_ms=sleepMs,stop_when_empty=stopWhenEmpty')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut worker VSlimJobWorker) run(queue string, max_jobs int, sleep_ms int, stop_when_empty bool) int {
 	mut processed := 0
 	delay := if sleep_ms < 0 { 0 } else { sleep_ms }

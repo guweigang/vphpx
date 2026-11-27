@@ -1,28 +1,30 @@
 module liveviewx
 
-@[php_class: 'VSlim\\Live\\View']
+import vphp
+
+@[vphp.PhpExportClass(name: 'VSlim\\Live\\View')]
 @[heap]
 pub struct VSlimLiveView {
 mut:
 	host    VSlimViewHost
-	root_id string @[php_prop: rootId]
+	root_id string @[vphp.PhpProperty(name: 'rootId')]
 	sockets map[string]&VSlimLiveSocket
 }
 
-@[php_class: 'VSlim\\Live\\Component']
+@[vphp.PhpExportClass(name: 'VSlim\\Live\\Component')]
 @[heap]
 pub struct VSlimLiveComponent {
 mut:
 	host       VSlimViewHost
 	id         string
 	assigns    map[string]string
-	socket_ref &VSlimLiveSocket = unsafe { nil } @[php_ignore]
+	socket_ref &VSlimLiveSocket = unsafe { nil } @[vphp.PhpIgnoreField]
 }
 
-@[php_class: 'VSlim\\Live\\ComponentState']
+@[vphp.PhpExportClass(name: 'VSlim\\Live\\ComponentState')]
 @[heap]
 pub struct VSlimLiveComponentState {
 mut:
-	component_id string           @[php_prop: componentId]
-	socket_ref   &VSlimLiveSocket = unsafe { nil } @[php_ignore]
+	component_id string @[vphp.PhpProperty(name: 'componentId')]
+	socket_ref   &VSlimLiveSocket = unsafe { nil } @[vphp.PhpIgnoreField]
 }

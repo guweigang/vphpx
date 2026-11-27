@@ -6,12 +6,12 @@ if (!extension_loaded("vslim")) print "skip";
 ?>
 --FILE--
 <?php
-require_once __DIR__ . '/php_worker_package_bootstrap.php';
+require_once __DIR__ . '/worker_wire_fixture.php';
 
 $fixture = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/examples/mcp-app.php';
-$server = new VHttpd\PhpWorker\Server('/tmp/vhttpd_mcp_test.sock', $fixture);
+$server = new WorkerWireFixture($fixture);
 
-$initialize = $server->dispatchRequest([
+$initialize = $server->request([
     'id' => 'req-init',
     'mode' => 'mcp',
     'event' => 'message',
@@ -23,7 +23,7 @@ $initialize = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-05"}}',
 ]);
 
-$toolsList = $server->dispatchRequest([
+$toolsList = $server->request([
     'id' => 'req-tools',
     'mode' => 'mcp',
     'event' => 'message',
@@ -35,7 +35,7 @@ $toolsList = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}',
 ]);
 
-$toolsCall = $server->dispatchRequest([
+$toolsCall = $server->request([
     'id' => 'req-call',
     'mode' => 'mcp',
     'event' => 'message',
@@ -47,7 +47,7 @@ $toolsCall = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"echo","arguments":{"text":"hello helper"}}}',
 ]);
 
-$resourcesList = $server->dispatchRequest([
+$resourcesList = $server->request([
     'id' => 'req-resources',
     'mode' => 'mcp',
     'event' => 'message',
@@ -59,7 +59,7 @@ $resourcesList = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":4,"method":"resources/list","params":{}}',
 ]);
 
-$resourcesRead = $server->dispatchRequest([
+$resourcesRead = $server->request([
     'id' => 'req-resource-read',
     'mode' => 'mcp',
     'event' => 'message',
@@ -71,7 +71,7 @@ $resourcesRead = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":5,"method":"resources/read","params":{"uri":"resource://demo/readme"}}',
 ]);
 
-$promptsList = $server->dispatchRequest([
+$promptsList = $server->request([
     'id' => 'req-prompts',
     'mode' => 'mcp',
     'event' => 'message',
@@ -83,7 +83,7 @@ $promptsList = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":6,"method":"prompts/list","params":{}}',
 ]);
 
-$promptsGet = $server->dispatchRequest([
+$promptsGet = $server->request([
     'id' => 'req-prompt-get',
     'mode' => 'mcp',
     'event' => 'message',
@@ -95,7 +95,7 @@ $promptsGet = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":7,"method":"prompts/get","params":{"name":"welcome","arguments":{"name":"codex"}}}',
 ]);
 
-$notify = $server->dispatchRequest([
+$notify = $server->request([
     'id' => 'req-notify',
     'mode' => 'mcp',
     'event' => 'message',
@@ -108,7 +108,7 @@ $notify = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":8,"method":"debug/notify","params":{"text":"queued hello"}}',
 ]);
 
-$sample = $server->dispatchRequest([
+$sample = $server->request([
     'id' => 'req-sample',
     'mode' => 'mcp',
     'event' => 'message',
@@ -121,7 +121,7 @@ $sample = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":9,"method":"debug/sample","params":{"topic":"runtime contract"}}',
 ]);
 
-$progress = $server->dispatchRequest([
+$progress = $server->request([
     'id' => 'req-progress',
     'mode' => 'mcp',
     'event' => 'message',
@@ -134,7 +134,7 @@ $progress = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":10,"method":"debug/progress","params":{}}',
 ]);
 
-$log = $server->dispatchRequest([
+$log = $server->request([
     'id' => 'req-log',
     'mode' => 'mcp',
     'event' => 'message',
@@ -147,7 +147,7 @@ $log = $server->dispatchRequest([
     'jsonrpc_raw' => '{"jsonrpc":"2.0","id":11,"method":"debug/log","params":{"message":"hello log"}}',
 ]);
 
-$queuedRequest = $server->dispatchRequest([
+$queuedRequest = $server->request([
     'id' => 'req-request',
     'mode' => 'mcp',
     'event' => 'message',

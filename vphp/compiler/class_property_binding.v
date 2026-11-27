@@ -144,7 +144,7 @@ fn (field ClassPropertyFieldBinding) getter_expr() ?string {
 		'PhpValue', 'vphp.PhpValue', 'PhpObject', 'vphp.PhpObject', 'PhpString', 'vphp.PhpString',
 		'PhpInt', 'vphp.PhpInt', 'PhpBool', 'vphp.PhpBool', 'PhpDouble', 'vphp.PhpDouble',
 		'PhpArray', 'vphp.PhpArray' {
-			'ret.v[${prop.v_type}](obj.${prop.v_field_name})'
+			'vphp.PhpObjectPropertyHandler.return_value(ret, ${field.php_value_expr()})'
 		}
 		else {
 			none
@@ -180,6 +180,10 @@ fn (field ClassPropertyFieldBinding) setter_lines() []string {
 	}
 	prop := field.prop
 	expr := field.setter_expr() or { return [] }
+	if prop.v_type !in ['string', 'int', 'i64', 'bool', 'f64'] {
+		return property_name_guard_lines(prop.name,
+			'mut previous := obj.${prop.v_field_name}\n            ${expr}\n            previous.release()')
+	}
 	return property_name_guard_lines(prop.name, expr)
 }
 
@@ -267,30 +271,16 @@ fn (field ClassPropertyFieldBinding) sync_lines() []string {
 
 fn (field ClassPropertyFieldBinding) sync_expr() ?string {
 	prop := field.prop
-	return match prop.v_type {
-		'string' {
-			"out.add_property_string('${prop.name}', obj.${prop.v_field_name})"
-		}
-		'int', 'i64' {
-			"out.add_property_long('${prop.name}', i64(obj.${prop.v_field_name}))"
-		}
-		'f64' {
-			"out.add_property_double('${prop.name}', obj.${prop.v_field_name})"
-		}
-		'bool' {
-			"out.add_property_bool('${prop.name}', obj.${prop.v_field_name})"
-		}
-		else {
-			match clean_type(prop.v_type) {
-				'PhpValue', 'PhpObject', 'PhpString', 'PhpInt', 'PhpBool', 'PhpDouble', 'PhpArray' {
-					"out.set_prop('${prop.name}', obj.${prop.v_field_name}.to_zval())"
-				}
-				else {
-					none
-				}
-			}
-		}
+	value := match prop.v_type {
+		'string', 'int', 'i64', 'f64', 'bool' { 'obj.${prop.v_field_name}' }
+		else { field.php_value_expr() }
 	}
+	return "vphp.PhpObjectPropertyHandler.sync_property(out, '${prop.name}', ${value})"
+}
+
+fn (field ClassPropertyFieldBinding) php_value_expr() string {
+	value := 'obj.${field.prop.v_field_name}'
+	return if clean_type(field.prop.v_type) == 'PhpValue' { value } else { '${value}.to_value()' }
 }
 
 fn property_name_guard_lines(name string, expr string) []string {

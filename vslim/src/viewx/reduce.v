@@ -3,6 +3,14 @@ module viewx
 import math
 
 pub fn reduce_template_values(items []string, reducer string, seed string) (string, string) {
+	$if vslim_view_arena ? {
+		return reduce_template_values_in_arena(items, reducer, seed)
+	} $else {
+		return reduce_template_values_scratch(items, reducer, seed)
+	}
+}
+
+fn reduce_template_values_scratch(items []string, reducer string, seed string) (string, string) {
 	if items.len == 0 && seed.trim_space() == '' {
 		return '', ''
 	}

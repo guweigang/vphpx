@@ -14,14 +14,17 @@ pub:
 // 模块构建器：负责 zend_module_entry 相关的 C 代码生成
 pub struct ModuleBuilder {
 pub mut:
-	ext_name      string
-	version       string
-	description   string
-	functions     []FuncBuilder
-	minit_content []string // 注入到 MINIT 中的代码行
-	rinit_content []string // 注入到 RINIT 中的代码行
-	ini_entries   []IniEntry
-	globals       repr.PhpGlobalsRepr
+	ext_name           string
+	version            string
+	description        string
+	functions          []FuncBuilder
+	minit_content      []string // 注入到 MINIT 中的代码行
+	rinit_content      []string // 注入到 RINIT 中的代码行
+	mshutdown_content  []string
+	ini_entries        []IniEntry
+	globals            repr.PhpGlobalsRepr
+	has_native_traits  bool
+	has_static_request bool
 }
 
 pub fn new_module_builder(ext_name string, version string, description string) &ModuleBuilder {
@@ -53,7 +56,11 @@ pub fn (b &ModuleBuilder) render_functions_table() string {
 	mut res := strings.new_builder(512)
 	res.write_string('static const zend_function_entry ${b.ext_name}_functions[] = {\n')
 	for f in b.functions {
-		res.write_string(f.render_fe() + '\n')
+		res.write_string(f.for_php_version([f.render_fe()]).join('\n') + '\n')
+	}
+	if b.has_static_request {
+		name := 'vphp_${b.ext_name}_with_static_request'
+		res.write_string('    PHP_FE(${name}, arginfo_${name})\n')
 	}
 	res.write_string('    PHP_FE_END\n};\n')
 	return res.str()
@@ -119,6 +126,32 @@ pub fn (b &ModuleBuilder) render_ginit() string {
 pub fn (b &ModuleBuilder) render_minit() string {
 	mut res := strings.new_builder(1024)
 	res.write_string('PHP_MINIT_FUNCTION(${b.ext_name}) {\n')
+	if compound_min_version := b.compound_function_min_version() {
+		mut setup := []string{}
+		setup << '#if PHP_VERSION_ID >= 80300'
+		setup << b.compound_function_setup()
+		setup << '#endif'
+		setup << '    if (zend_register_functions(NULL, ${b.ext_name}_functions, NULL, type) != SUCCESS) {'
+		setup << '        return FAILURE;'
+		setup << '    }'
+		setup << '    EG(current_module)->functions = ${b.ext_name}_functions;'
+		// PHP 8.2 only accepts scalar masks and literal class names during registration.
+		if compound_min_version == 0 {
+			setup << '#if PHP_VERSION_ID < 80300'
+			for function in b.functions {
+				if function.min_php_version != 0 || function.compound_arginfo_setup().len == 0 {
+					continue
+				}
+				lines := registered_compound_arginfo_setup(function.php_name, 'CG(function_table)',
+					function.return_spec, if function.uses_context { [] } else { function.args },
+					function.table)
+				setup << lines.map('    ' + it)
+			}
+			setup << '#endif'
+		}
+		res.write_string(for_php_version(compound_min_version, setup).join('\n') + '\n')
+	}
+	res.write_string('    _vinit_caller();\n')
 	res.write_string('    vphp_framework_init(module_number);\n')
 	res.write_string('    vphp_call_optional_void_symbol("vphp_ext_auto_startup");\n')
 	res.write_string('    vphp_call_optional_void_symbol("vphp_ext_startup");\n')
@@ -131,9 +164,30 @@ pub fn (b &ModuleBuilder) render_minit() string {
 		res.write_string('    ${line}\n')
 	}
 	res.write_string('    vphp_apply_auto_interface_bindings(0);\n')
+	if b.has_native_traits {
+		res.write_string('    vphp_init_native_trait_cache_guard(module_number);\n')
+	}
 
 	res.write_string('    return SUCCESS;\n}\n')
 	return res.str()
+}
+
+fn (b &ModuleBuilder) compound_function_setup() []string {
+	mut lines := []string{}
+	for function in b.functions {
+		lines << function.for_php_version(function.compound_arginfo_setup().map('    ' + it))
+	}
+	return lines
+}
+
+fn (b &ModuleBuilder) compound_function_min_version() ?int {
+	mut min_version := max_int
+	for function in b.functions {
+		if function.min_php_version < min_version && function.compound_arginfo_setup().len > 0 {
+			min_version = function.min_php_version
+		}
+	}
+	return if min_version == max_int { none } else { min_version }
 }
 
 // 渲染 MSHUTDOWN (如果需要卸载 INI)
@@ -146,6 +200,17 @@ pub fn (b &ModuleBuilder) render_mshutdown() string {
 	res.write_string('    vphp_call_optional_void_symbol("vphp_ext_shutdown");\n')
 	res.write_string('    vphp_call_optional_void_symbol("vphp_ext_auto_shutdown");\n')
 	res.write_string('    vphp_framework_shutdown();\n')
+	for line in b.mshutdown_content {
+		res.write_string('    ${line}\n')
+	}
+	res.write_string('    vphp_release_attribute_arrays();\n')
+	res.write_string('    vphp_release_php_property_storage();\n')
+	res.write_string('#if PHP_VERSION_ID >= 80400\n    vphp_release_property_hooks();\n#endif\n')
+	res.write_string('    _vcleanup_caller();\n')
+	res.write_string('    if (type != MODULE_TEMPORARY) { vphp_release_enum_case_aliases(); }\n')
+	if b.has_native_traits {
+		res.write_string('    vphp_release_native_trait_cache_guard();\n')
+	}
 	res.write_string('    return SUCCESS;\n}\n')
 	return res.str()
 }
@@ -153,6 +218,9 @@ pub fn (b &ModuleBuilder) render_mshutdown() string {
 pub fn (b &ModuleBuilder) render_rinit() string {
 	mut res := strings.new_builder(256)
 	res.write_string('PHP_RINIT_FUNCTION(${b.ext_name}) {\n')
+	if b.has_native_traits {
+		res.write_string('    vphp_enable_native_trait_cache_guard();\n')
+	}
 	res.write_string('    vphp_framework_request_startup();\n')
 	res.write_string('    vphp_call_optional_void_symbol("vphp_ext_request_auto_startup");\n')
 	res.write_string('    vphp_call_optional_void_symbol("vphp_ext_request_startup");\n')
@@ -169,6 +237,7 @@ pub fn (b &ModuleBuilder) render_rshutdown() string {
 	res.write_string('    vphp_call_optional_void_symbol("vphp_ext_request_shutdown");\n')
 	res.write_string('    vphp_call_optional_void_symbol("vphp_ext_request_auto_shutdown");\n')
 	res.write_string('    vphp_framework_request_shutdown();\n')
+	res.write_string('    if (type == MODULE_TEMPORARY) { vphp_release_enum_case_aliases(); }\n')
 	res.write_string('    return SUCCESS;\n}\n')
 	return res.str()
 }
@@ -195,14 +264,28 @@ pub fn (b &ModuleBuilder) render_minfo() string {
 pub fn (b &ModuleBuilder) render_module_entry() string {
 	mut res := strings.new_builder(512)
 	mshutdown := 'PHP_MSHUTDOWN(${b.ext_name})'
-	ginit := if b.globals.name != '' { 'php_${b.ext_name}_init_globals' } else { 'NULL' }
 
 	res.write_string('zend_module_entry ${b.ext_name}_module_entry = {\n')
-	res.write_string('    STANDARD_MODULE_HEADER, "${b.ext_name}", ${b.ext_name}_functions,\n')
+	// Zend registers module entry functions before MINIT. Compound arginfo needs
+	// initialized Zend strings, so that module registers its table from MINIT.
+	res.write_string('    STANDARD_MODULE_HEADER, "${b.ext_name}",\n')
+	if compound_min_version := b.compound_function_min_version() {
+		if compound_min_version > 0 {
+			res.write_string('#if PHP_VERSION_ID >= ${compound_min_version}\n    NULL,\n#else\n    ${b.ext_name}_functions,\n#endif\n')
+		} else {
+			res.write_string('    NULL,\n')
+		}
+	} else {
+		res.write_string('    ${b.ext_name}_functions,\n')
+	}
 	res.write_string('    PHP_MINIT(${b.ext_name}), ${mshutdown}, PHP_RINIT(${b.ext_name}), PHP_RSHUTDOWN(${b.ext_name}), PHP_MINFO(${b.ext_name}), "${b.version}",\n')
-	res.write_string('    PHP_MODULE_GLOBALS(${b.ext_name}),\n')
-	res.write_string('    (void (*)(void*)) ${ginit},\n')
-	res.write_string('    NULL,\n') // GSHUTDOWN
+	if b.globals.name != '' {
+		res.write_string('    PHP_MODULE_GLOBALS(${b.ext_name}),\n')
+		res.write_string('    (void (*)(void*)) php_${b.ext_name}_init_globals,\n')
+		res.write_string('    NULL,\n') // GSHUTDOWN
+	} else {
+		res.write_string('    NO_MODULE_GLOBALS,\n')
+	}
 	res.write_string('    NULL,\n') // post_deactivate
 	res.write_string('    STANDARD_MODULE_PROPERTIES_EX\n};\n')
 	return res.str()
@@ -224,7 +307,7 @@ pub fn (b &ModuleBuilder) render_globals_getter() string {
 	return '
 void* vphp_get_active_globals() {
 #ifdef ZTS
-    return TSRMG(${b.ext_name}_globals_id, zend_${b.ext_name}_globals *, 0);
+    return ZEND_MODULE_GLOBALS_BULK(${b.ext_name});
 #else
     return &${b.ext_name}_globals;
 #endif
@@ -235,8 +318,10 @@ void* vphp_get_active_globals() {
 // 渲染所需的显示声明，防止编译器警告
 pub fn (b &ModuleBuilder) render_declarations() string {
 	return '
-typedef struct { void* str; int len; int is_lit; } v_string;
+typedef struct { void* str; int64_t len; int64_t is_lit; } v_string;
 
+extern void _vinit_caller(void);
+extern void _vcleanup_caller(void);
 extern void vphp_framework_init(int module_number);
 extern void vphp_framework_shutdown(void);
 extern void vphp_framework_request_startup(void);

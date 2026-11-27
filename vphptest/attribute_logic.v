@@ -15,7 +15,8 @@ pub fn (mut s DispatchableSample) construct(name string) &DispatchableSample {
 	return s
 }
 
-@[php_param_attr(name: 'FromQuery("name"), MustBeString')]
+@[vphp.PhpParameterAttribute(v_name: 'name', name: 'FromQuery', args: '"name"')]
+@[php_param_attr(name: 'MustBeString')]
 @[php_method: 'tagged']
 pub fn (s &DispatchableSample) tagged(name string) string {
 	return '${s.name}:${name}'

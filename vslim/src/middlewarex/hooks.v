@@ -31,12 +31,13 @@ pub fn clone_combined_hooks(base []vphp.PhpValue, extra []vphp.PhpValue) []vphp.
 pub fn clone_standard_hooks(base []vphp.PhpValue, extra []vphp.PhpValue) []vphp.PhpValue {
 	mut out := []vphp.PhpValue{}
 	for idx, hook in base {
-		cloned := hook.owned()
+		// Push the owned value directly so V does not clone an owned local.
+		out << hook.owned()
 		if idx == 0 {
+			cloned := out.last().borrowed()
 			slot_addr := unsafe { usize(&base[idx]) }
 			loggerx.cli_debug_log('middleware.collect app idx=${idx} slot=${slot_addr} src_kind=${hook.kind_name()} src_valid=${hook.is_valid()} src_null=${hook.is_null()} src_undef=${hook.is_undef()} clone_valid=${cloned.is_valid()} clone_null=${cloned.is_null()} clone_undef=${cloned.is_undef()}')
 		}
-		out << cloned
 	}
 	for hook in extra {
 		out << hook.owned()

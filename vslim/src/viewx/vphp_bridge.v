@@ -75,9 +75,9 @@ pub fn vslim_view_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimView(ptr)
-        out.add_property_string('basePath', obj.base_path)
-        out.add_property_string('assetsPrefix', obj.assets_prefix)
-        out.add_property_bool('cacheEnabled', obj.cache_enabled)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'basePath', obj.base_path)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'assetsPrefix', obj.assets_prefix)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'cacheEnabled', obj.cache_enabled)
     }
 }
 @[export: 'vphp_wrap_vslim_view_render_response']
@@ -86,11 +86,11 @@ pub fn vphp_wrap_vslim_view_render_response(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'template', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'data', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'template' },
+        vphp.PhpArgMeta{ index: 1, name: 'data' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'template').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'data').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.render_response(arg_0, arg_1)
     return voidptr(res)
 }
@@ -100,29 +100,29 @@ pub fn vphp_wrap_vslim_view_render_response_with_layout(ptr voidptr, ctx vphp.Co
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'template', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'layout', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'data', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'template' },
+        vphp.PhpArgMeta{ index: 1, name: 'layout' },
+        vphp.PhpArgMeta{ index: 2, name: 'data' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'template').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'layout').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'data').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.render_response_with_layout(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
 @[export: 'vphp_wrap_vslim_view_construct']
-pub fn vphp_wrap_vslim_view_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_view_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimView(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'basePath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'assetsPrefix', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'basePath' },
+        vphp.PhpArgMeta{ index: 1, name: 'assetsPrefix' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'basePath').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'assetsPrefix').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.construct(arg_0, arg_1)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimView](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_view_set_base_path']
 pub fn vphp_wrap_vslim_view_set_base_path(ptr voidptr, ctx vphp.Context) voidptr {
@@ -130,9 +130,9 @@ pub fn vphp_wrap_vslim_view_set_base_path(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'basePath', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'basePath' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'basePath').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_base_path(arg_0)
     return voidptr(res)
 }
@@ -150,9 +150,9 @@ pub fn vphp_wrap_vslim_view_set_assets_prefix(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'prefix', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'prefix' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'prefix').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_assets_prefix(arg_0)
     return voidptr(res)
 }
@@ -170,9 +170,9 @@ pub fn vphp_wrap_vslim_view_set_cache_enabled(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'enabled', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'enabled' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'enabled').as_v[bool]()
+    arg_0 := php_args.at(0).as_v[bool]()
     res := recv.set_cache_enabled(arg_0)
     return voidptr(res)
 }
@@ -198,14 +198,13 @@ pub fn vphp_wrap_vslim_view_helper(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'handler', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'handler' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'handler').callable() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).callable() or {
         vphp.throw_exception('argument 1 must be callable', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.helper(arg_0, arg_1)
     return voidptr(res)
@@ -216,9 +215,9 @@ pub fn vphp_wrap_vslim_view_asset(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.asset(arg_0)
     ctx.return().v[string](res)
 }
@@ -228,11 +227,11 @@ pub fn vphp_wrap_vslim_view_render(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'template', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'data', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'template' },
+        vphp.PhpArgMeta{ index: 1, name: 'data' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'template').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'data').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.render(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -242,25 +241,25 @@ pub fn vphp_wrap_vslim_view_render_with_layout(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'template', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'layout', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'data', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'template' },
+        vphp.PhpArgMeta{ index: 1, name: 'layout' },
+        vphp.PhpArgMeta{ index: 2, name: 'data' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'template').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'layout').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'data').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.render_with_layout(arg_0, arg_1, arg_2)
     ctx.return().v[string](res)
 }
 @[export: 'vslim_view_handlers']
 pub fn vslim_view_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_view_get_prop),
-        write_handler: voidptr(vslim_view_set_prop),
-        sync_handler: voidptr(vslim_view_sync_props),
-        new_raw: voidptr(vslim_view_new_raw),
-        cleanup_raw: voidptr(vslim_view_cleanup_raw),
-        free_raw: voidptr(vslim_view_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_view_get_prop,
+        write_handler: vslim_view_set_prop,
+        sync_handler: vslim_view_sync_props,
+        new_raw: vslim_view_new_raw,
+        cleanup_raw: vslim_view_cleanup_raw,
+        free_raw: vslim_view_free_raw
     )
 }
 pub fn VSlimView.php_class_entry() vphp.ZendClassEntry {

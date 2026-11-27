@@ -27,7 +27,8 @@ pub fn (v PersistentOwnedZBox) with_request_zval[T](run fn (ZVal) T) T {
 	defer {
 		temp.release()
 	}
-	return run(temp.to_zval())
+	z := temp.to_zval()
+	return run(z)
 }
 
 pub fn (v PersistentOwnedZBox) with_request_value[T](run fn (PhpValue) T) T {
@@ -79,8 +80,7 @@ pub fn (v PersistentOwnedZBox) with_fn_result[T, R](run fn (T) R, args ...PhpArg
 	defer {
 		result.release()
 	}
-	value := php_call_result_as[T](result.to_zval())!
-	return run(value)
+	return php_with_call_result[T, R](result.to_zval(), run)
 }
 
 pub fn (v PersistentOwnedZBox) with_method_result[T, R](method string, run fn (T) R, args ...PhpArgInput) !R {
@@ -88,8 +88,7 @@ pub fn (v PersistentOwnedZBox) with_method_result[T, R](method string, run fn (T
 	defer {
 		result.release()
 	}
-	value := php_call_result_as[T](result.to_zval())!
-	return run(value)
+	return php_with_call_result[T, R](result.to_zval(), run)
 }
 
 // with_fn_result_zval keeps PHP callable result ownership inside the callback
@@ -99,7 +98,8 @@ pub fn (v PersistentOwnedZBox) with_fn_result_zval[T](run fn (ZVal) T, args ...Z
 	defer {
 		result.release()
 	}
-	return run(result.to_zval())
+	z := result.to_zval()
+	return run(z)
 }
 
 // with_method_result_zval mirrors with_fn_result_zval for object method dispatch.
@@ -108,7 +108,8 @@ pub fn (v PersistentOwnedZBox) with_method_result_zval[T](method string, run fn 
 	defer {
 		result.release()
 	}
-	return run(result.to_zval())
+	z := result.to_zval()
+	return run(z)
 }
 
 pub fn (mut v PersistentOwnedZBox) release() {

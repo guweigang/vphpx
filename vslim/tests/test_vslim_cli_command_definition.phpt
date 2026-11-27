@@ -10,7 +10,7 @@ file_put_contents($bootstrapFile, <<<'PHP'
 declare(strict_types=1);
 
 return function (VSlim\Cli\App $cli): void {
-    $cli->command('inspect', new class {
+    $cli->command(handler: new class {
         public function definition(): array
         {
             return [
@@ -39,8 +39,8 @@ return function (VSlim\Cli\App $cli): void {
 
         public function handle(array $args, VSlim\Cli\App $cli): int
         {
-            $extras = $cli->argument('extras', []);
-            $tags = $cli->option('tag', []);
+            $extras = $cli->argument(defaultValue: [], name: 'extras');
+            $tags = $cli->option(defaultValue: [], name: 'tag');
             $arguments = $cli->arguments();
             $options = $cli->options();
             $warnings = $cli->warnings();
@@ -65,7 +65,7 @@ return function (VSlim\Cli\App $cli): void {
 
             return count($args);
         }
-    });
+    }, name: 'inspect');
 };
 PHP);
 
@@ -73,8 +73,24 @@ putenv('VSLIM_LANG=fr');
 putenv('VSLIM_SUBJECT=env-subject');
 
 $cli = new VSlim\Cli\App();
+foreach (['option', 'argument'] as $method) {
+    $reflection = new ReflectionMethod($cli, $method);
+    $parameters = $reflection->getParameters();
+    if ($reflection->getNumberOfRequiredParameters() !== 1 || $parameters[0]->getName() !== 'name'
+        || $parameters[1]->getName() !== 'defaultValue' || !$parameters[1]->isDefaultValueAvailable()
+        || $parameters[1]->getDefaultValue() !== null || (string) $reflection->getReturnType() !== 'mixed'
+        || $cli->$method(name: 'missing') !== null || $cli->$method(name: 'missing', defaultValue: null) !== null
+        || $cli->$method(defaultValue: 'fallback', name: 'missing') !== 'fallback') {
+        throw new RuntimeException("Unexpected signature or fallback for $method");
+    }
+}
+$projectRoot = new ReflectionProperty($cli, 'projectRoot');
+if (!$projectRoot->isProtected() || (string) $projectRoot->getType() !== 'string') {
+    throw new RuntimeException('Unexpected projectRoot property');
+}
+
 ob_start();
-$code = $cli->runArgv([
+$code = $cli->runArgv(argv: [
     'bin/vslim',
     '--bootstrap-file',
     $bootstrapFile,
@@ -104,13 +120,13 @@ echo implode('|', $cli->warnings()), PHP_EOL;
 $cli2 = new VSlim\Cli\App();
 $cli2->bootstrapFile($bootstrapFile);
 ob_start();
-$code2 = $cli2->run('inspect', []);
+$code2 = $cli2->run(args: new ArrayIterator([]), name: 'inspect');
 $output2 = trim((string) ob_get_clean());
 echo $code2, '|', $output2, PHP_EOL;
 
 $helpCli = new VSlim\Cli\App();
 $helpCode = $helpCli->runArgv(['bin/vslim', '--bootstrap-file', $bootstrapFile, 'inspect', '--help']);
-$help = $helpCli->commandHelp('inspect');
+$help = $helpCli->commandHelp(commandName: 'inspect');
 echo $helpCode, '|',
     (str_contains($help, 'Inspect parsed CLI input.') ? 'desc_yes' : 'desc_no'), '|',
     (str_contains($help, '<target>') ? 'subject_yes' : 'subject_no'), '|',

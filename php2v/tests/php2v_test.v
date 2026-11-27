@@ -9,21 +9,22 @@ fn test_transpiler_end_to_end() {
 	if !os.exists(fixtures_dir) {
 		fixtures_dir = os.join_path(pwd, 'tests/fixtures')
 	}
-	files := os.ls(fixtures_dir) or { panic(err) }
+	mut files := os.ls(fixtures_dir) or { panic(err) }
+	files.sort()
 
 	// 预期生成的 V 代码特征片段，用于进行高精度源码结构比对测试
 	expected_snippets := {
-		'01_echo.php': [
-			'rt.print_str(\'Hello World\\n\')',
+		'01_echo.php':                      [
+			"rt.print_str('Hello World\\n')",
 		]
-		'02_variables.php': [
+		'02_variables.php':                 [
 			"mut var_a := ''",
 			"var_a = 'hello'",
 			"var_b = 'world\\n'",
 			'rt.print_str(var_a)',
 			'rt.print_str(var_b)',
 		]
-		'03_arithmetic.php': [
+		'03_arithmetic.php':                [
 			'mut var_a := i64(0)',
 			'var_a = 10 + 20',
 			'var_b = var_a - 5',
@@ -31,76 +32,83 @@ fn test_transpiler_end_to_end() {
 			'var_d = var_c / 5',
 			'rt.print_str(var_d.str())',
 		]
-		'04_string_concat.php': [
+		'04_string_concat.php':             [
 			"mut var_name := ''",
 			"var_name = 'PHP'",
 			"rt.print_str('Hello ' + var_name",
 		]
-		'05_if_else.php': [
+		'05_if_else.php':                   [
 			'mut var_a := i64(0)',
 			'var_a = 15',
-			'if var_a > 20 {',
-			'} else if var_a > 10 {',
+			'if_cond_1 := var_a > 20',
+			'if_cond_2 := var_a > 10',
+			'if if_cond_1 {',
+			'} else if if_cond_2 {',
 			'} else {',
 		]
-		'06_truthy.php': [
+		'06_truthy.php':                    [
 			"mut var_a := ''",
-			'if var_a.len > 0 && var_a != \'0\' {',
+			"if_cond_1 := var_a.len > 0 && var_a != '0'",
+			'if if_cond_1 {',
 			"var_b = '0'",
-			"var_c = 123",
-			'if var_c != 0 {',
+			'var_c = 123',
+			'if_cond_3 := var_c != 0',
+			'if if_cond_3 {',
 		]
-		'07_functions.php': [
+		'07_functions.php':                 [
 			'fn add_five(val i64) i64 {',
 			'return val + 5',
 			'mut var_res := i64(0)',
 			'var_res = add_five(10)',
 			'rt.print_str(var_res.str())',
 		]
-		'08_arrays.php': [
+		'08_arrays.php':                    [
 			'mut var_arr := rt.new_null()',
 			'var_arr = rt.create_array([rt.ArrayItem{ key: none, val: 10 },',
 			'var_arr.array_push(30)',
-			'var_arr.array_set(\'key\', \'hello\')',
+			"var_arr.array_set('key', 'hello')",
 			'rt.echo_val(var_arr.array_get(rt.new_int(0)))',
 			'rt.print_str(var_arr.clone().array_count().str())',
 		]
-		'09_foreach.php': [
-			"mut var_arr := map[string]i64{}",
-			"var_arr = {",
-			"for _, var_val_shadow in var_arr {",
-			"for var_key_shadow, var_val_shadow in var_arr {",
+		'09_foreach.php':                   [
+			'mut var_arr := map[string]i64{}',
+			'var_arr = {',
+			'for _, var_val_shadow in var_arr {',
+			'for var_key_shadow, var_val_shadow in var_arr {',
 		]
-		'10_loops.php': [
+		'10_loops.php':                     [
 			'for var_i < 3 {',
 			'mut var_j := i64(0)',
 			'var_j = 0',
-			'if (var_j < 5) == false { break',
-			'if var_j == 2 {',
+			'if_cond_1 := var_j < 5',
+			'if if_cond_1 == false { break',
+			'if_cond_2 := var_j == 2',
+			'if if_cond_2 {',
 			'continue',
-			'if var_j == 4 {',
+			'if_cond_3 := var_j == 4',
+			'if if_cond_3 {',
 			'break',
 		]
-		'11_oop.php': [
+		'11_oop.php':                       [
 			'struct Class_User {',
 			'name string',
 			'fn (mut this Class_User) construct(name string) ',
 			'fn (mut this Class_User) getname() string {',
 			'fn create_user(name string) &Class_User {',
-			"mut var_user := &Class_User(unsafe { nil })",
+			'mut var_user := &Class_User(unsafe { nil })',
 			"var_user = create_user('Alice')",
 			'rt.print_str(var_user.getname())',
 			"var_user.name = 'Bob'",
 		]
-		'12_dynamic.php': [
-			"rt.call_function('eval', [rt.new_string(\"echo 'eval works\\n';\")])",
+		'12_dynamic.php':                   [
+			'rt.call_function(\'eval\', [rt.new_string("echo \'eval works\\n\';")])',
 			"mut var_md5_res := ''",
 			"var_md5_res = md5.hexhash('hello')",
 			'rt.print_str(var_md5_res)',
 			'var_json_res = rt.json_encode(',
 			'rt.print_str(var_json_res)',
 		]
-		'13_closure.php': [
+		'13_closure.php':                   [
 			'closure_1_fn := fn [var_x] (this_ptr rt.PhpVal, args []rt.PhpVal) rt.PhpVal {',
 			'mut var_y := if args.len > 0 { args[0].clone() } else { rt.new_null() }',
 			'return rt.add(rt.new_int(var_x), var_y)',
@@ -112,24 +120,24 @@ fn test_transpiler_end_to_end() {
 			'var_fn = rt.new_closure(closure_2_fn)',
 			'rt.echo_val(rt.call_callable(var_fn, [rt.new_int(3)]))',
 		]
-		'14_include.php': [
+		'14_include.php':                   [
 			"mut var_path := ''",
 			"var_path = 'tests/fixtures/14_included.inc'",
 			"var_ret = rt.include_file(var_path, '1')",
-			"rt.echo_val(var_ret)",
+			'rt.echo_val(var_ret)',
 			"var_ret2 = rt.include_file(var_path, '2')",
 			"rt.print_str('once_done\\n')",
 		]
-		'15_constants.php': [
+		'15_constants.php':                 [
 			"const global_const_app_env = 'production'",
-			"const global_const_db_port = 3306",
+			'const global_const_db_port = 3306',
 			"rt.print_str('ENV: ' + global_const_app_env + '\\n')",
 			"rt.print_str('PORT: ' + global_const_db_port.str() + '\\n')",
-			"' + @DIR + '",
+			"rt.print_str('DIR: ' +",
 			"' + @FILE + '",
 			"' + @LINE.int().str() + '",
 		]
-		'16_oop_inheritance.php': [
+		'16_oop_inheritance.php':           [
 			'struct Class_Animal {',
 			'name rt.PhpVal',
 			'fn (mut this Class_Animal) construct(var_name rt.PhpVal) ',
@@ -140,20 +148,21 @@ fn test_transpiler_end_to_end() {
 			'fn (mut this Class_Dog) greet() rt.PhpVal {',
 			'this.Class_Animal.greet()',
 			'fn create_dog(name string, breed string) &Class_Dog {',
-			"mut var_dog := &Class_Dog(unsafe { nil })",
+			'mut var_dog := &Class_Dog(unsafe { nil })',
 			"var_dog = create_dog('Rex', 'Labrador')",
 		]
-		'17_boolean_logical.php': [
-			'if (log_true(',
-			'log_false(\'left_false\') && log_true(\'right_true\')',
-			'log_true(\'left_true\') || log_true(\'right_true\')',
+		'17_boolean_logical.php':           [
+			"rt.ternary_string((log_true('t1')) == false, 'yes', 'no')",
+			"rt.ternary_string((log_false('f1')) == false, 'yes', 'no')",
+			"log_false('left_false') && log_true('right_true')",
+			"log_true('left_true') || log_true('right_true')",
 		]
-		'18_ternary_coalesce.php': [
-			'if var_a > 5',
-			'if var_a != 0 { var_a } else {',
-			'if !var_b.is_null() { var_b } else { rt.new_int(100) }',
+		'18_ternary_coalesce.php':          [
+			"rt.ternary_string(var_a > 5, 'gt', 'lt')",
+			'rt.ternary(var_a != 0, rt.new_int(var_a), rt.new_int(15)).to_i64()',
+			'rt.coalesce(var_b, rt.new_int(100))',
 		]
-		'19_exceptions.php': [
+		'19_exceptions.php':                [
 			'struct Class_Exception {',
 			'message string',
 			'code    i64',
@@ -164,15 +173,15 @@ fn test_transpiler_end_to_end() {
 			'rt.throw_exception(',
 			'catch_label_1:',
 			'finally_label_1:',
-			'rt.instance_of(var_e_1, \'MyException\')',
-			'rt.instance_of(var_e_1, \'Exception\')',
+			"rt.instance_of(var_e_1, 'MyException')",
+			"rt.instance_of(var_e_1, 'Exception')",
 		]
-		'20_web_superglobals.php': [
-			'rt.get_superglobal(\'_GET\')',
-			'rt.get_superglobal(\'_SERVER\')',
+		'20_web_superglobals.php':          [
+			"rt.get_superglobal('_GET')",
+			"rt.get_superglobal('_SERVER')",
 			'.array_isset(',
 		]
-		'21_namespaces.php': [
+		'21_namespaces.php':                [
 			'Class_App_Utils_Helper',
 			'Class_App_Core_Application',
 			'create_app_utils_helper()',
@@ -180,41 +189,43 @@ fn test_transpiler_end_to_end() {
 			'Class_App_Utils_Helper.info(',
 			'Class_App_Core_Application.init(',
 		]
-		'22_string_interpolation.php': [
-			'var_name = \'Alice\'',
+		'22_string_interpolation.php':      [
+			"var_name = 'Alice'",
 			'var_age = 20',
-			'\'Hello \${var_name}, next year you will be \${var_age.str()} years old.\'',
+			"'Hello \${var_name}, next year you will be \${var_age.str()} years old.'",
 			'rt.print_str(var_msg',
 		]
-		'23_unset_empty.php': [
+		'23_unset_empty.php':               [
 			"var_a == ''",
-			"var_b == 0",
-			"rt.is_true(var_c) == false",
+			'var_b == 0',
+			'rt.is_true(var_c) == false',
 			"var_d == ''",
-			"rt.is_true(var_not_exist) == false",
+			'rt.is_true(var_not_exist) == false',
 			"var_arr.delete('key')",
 		]
-		'24_switch_case.php': [
+		'24_switch_case.php':               [
 			'match var_x {',
 			'1 {',
 			'2, 3 {',
-			'rt.print_str(\'default case\\n\')',
+			"rt.print_str('default case\\n')",
 		]
-		'25_match_expr.php': [
-			"var_y = match var_x {",
+		'25_match_expr.php':                [
+			'var_y = match var_x {',
 			"1 { rt.new_string('one') }",
 			"2, 3 { rt.new_string('two or three') }",
 			"else { rt.new_string('other') }",
 		]
-		'26_do_while.php': [
+		'26_do_while.php':                  [
 			'var_i = 0',
 			'for {',
 			"rt.print_str(var_i.str() + '\\n')",
 			'var_i += 1',
-			'if (var_i < 3) == false {',
+			'if_cond_',
+			'if if_cond_',
+			'== false {',
 			'break',
 		]
-		'27_increment_decrement.php': [
+		'27_increment_decrement.php':       [
 			'var_a = 5',
 			'var_a += 1',
 			'var_b = rt.new_int(tmp_inc_1)',
@@ -222,7 +233,7 @@ fn test_transpiler_end_to_end() {
 			'var_d = rt.new_int(var_a)',
 			'var_e = rt.new_int(var_a)',
 		]
-		'28_bitwise_ops.php': [
+		'28_bitwise_ops.php':               [
 			'var_c = var_a & var_b',
 			'var_d = var_a | var_b',
 			'var_e = var_a ^ var_b',
@@ -233,50 +244,51 @@ fn test_transpiler_end_to_end() {
 			"rt.print_str('bitwise and: ' + var_c.str() + '\\n')",
 			"rt.print_str('error suppress: ' + var_i.str() + '\\n')",
 		]
-		'29_class_constants.php': [
+		'29_class_constants.php':           [
 			'pub fn Class_User.role_admin() string {',
 			'pub fn Class_User.role_user() string {',
 			'return Class_User.role_admin()',
 			"rt.print_str(Class_User.role_admin() + '\\n')",
 			'var_u = create_user()',
 		]
-		'30_oop_interfaces.php': [
+		'30_oop_interfaces.php':            [
 			'interface Logger {',
 			'struct Class_FileLogger {',
 			'fn (mut this Class_FileLogger) log(msg string) rt.PhpVal {',
-			'if true {',
-			'rt.print_str(\'fl is Logger\\n\')',
-			'var_fl.log(\'hello\')',
+			'if_cond_1 := true',
+			'if if_cond_1 {',
+			"rt.print_str('fl is Logger\\n')",
+			"var_fl.log('hello')",
 		]
-		'31_oop_traits.php': [
+		'31_oop_traits.php':                [
 			'struct Class_User {',
 			'fn (mut this Class_User) sayhello(name string) rt.PhpVal {',
 			"var_u.sayhello('Alice')",
 		]
-		'32_builtin_inference.php': [
+		'32_builtin_inference.php':         [
 			'var_len = var_str.len',
 			'var_cnt = var_arr.len',
 			'var_upper = var_str.to_upper()',
 		]
-		'33_pure_arrays.php': [
+		'33_pure_arrays.php':               [
 			'mut var_list := rt.new_null()',
 			'var_list = rt.create_array([rt.ArrayItem{ key: none, val: 10 },',
 			'var_list.array_push(30)',
 			'rt.print_str(var_list.clone().array_count().str())',
 			'mut iter_1 := var_list.iterator()',
 			'mut var_item_shadow := item_1.val',
-			"mut var_map := map[string]string{}",
-			"var_map = {",
+			'mut var_map := map[string]string{}',
+			'var_map = {',
 			"rt.print_str(var_map['a'])",
-			"rt.print_str(var_map.len.str())",
-			"for var_k_shadow, var_v_shadow in var_map {",
+			'rt.print_str(var_map.len.str())',
+			'for var_k_shadow, var_v_shadow in var_map {',
 		]
-		'34_wp_error.php': [
+		'34_wp_error.php':                  [
 			'struct Class_WP_Error',
 			'fn (mut this Class_WP_Error) add(code string, message string, data string)',
 			'do_action',
 		]
-		'35_dynamic_all.php': [
+		'35_dynamic_all.php':               [
 			'rt.register_func',
 			'rt.register_class_factory',
 			'rt.create_object_dynamically',
@@ -287,37 +299,37 @@ fn test_transpiler_end_to_end() {
 			'dispatch_set_prop',
 		]
 		// 36: 闭包内联赋值不泄漏到外层作用域 (WordPress wp_extract_urls 修复)
-		'36_closure_inline_assign.php': [
+		'36_closure_inline_assign.php':     [
 			// 闭包内 $item = trim($item) 应在闭包体内
 			'mut var_item := if args.len > 0 { args[0].clone() } else { rt.new_null() }',
 			'var_item = rt.new_string(var_item.clone().to_string().trim_space())',
 			// 闭包内 $link = html_entity_decode($link) 应在闭包体内
 			'mut var_link := if args.len > 0 { args[0].clone() } else { rt.new_null() }',
-			'var_link = rt.call_function(\'html_entity_decode\'',
+			"var_link = rt.call_function('html_entity_decode'",
 			// 外层函数不应有 var_link 声明（关键：不泄漏）
 		]
 		// 37: IIFE 模式 — 静态方法链式调用 (WordPress register_block_type 修复)
-		'37_iife_new_method.php': [
+		'37_iife_new_method.php':           [
 			'struct Class_Registry',
 			// 静态调用直接生成，不创建 IIFE 闭包
 			'fn Class_Registry.get_instance() rt.PhpVal {',
 			// 链式调用通过 rt.call_method 实现
-			'rt.call_method(Class_Registry.get_instance(), \'register\'',
-			'rt.call_method(Class_Registry.get_instance(), \'unregister\'',
+			"rt.call_method(Class_Registry.get_instance(), 'register'",
+			"rt.call_method(Class_Registry.get_instance(), 'unregister'",
 		]
 		// 38: 长条件表达式 (WordPress 多文件 if 条件修复)
-		'38_long_conditions.php': [
+		'38_long_conditions.php':           [
 			'fn validate_and_process(var_block_type rt.PhpVal) rt.PhpVal {',
 			// && 条件正确生成
-			'&& rt.is_true(rt.call_function(\'file_exists\'',
+			"&& rt.is_true(rt.call_function('file_exists'",
 			// || 条件正确生成（由于 `!(rt.is_true(...))` 化简）
-			'|| (rt.is_true(rt.call_function(\'file_exists\'',
-			// elseif 正确生成
-			'} else if rt.is_true',
+			"|| (rt.is_true(rt.call_function('file_exists'",
+			// elseif 长条件会先提取为临时条件变量，避免 V fmt 拆行破坏语法
+			'} else if if_cond_',
 			'fn complex_condition(var_a rt.PhpVal, var_b rt.PhpVal, var_c rt.PhpVal) string {',
 		]
 		// 39: 静态属性访问 (通过 rt.get_static_prop / rt.set_static_prop / rt.init_static_prop)
-		'39_static_property.php': [
+		'39_static_property.php':           [
 			'struct Class_Database',
 			// 静态属性通过 rt.get_static_prop / rt.set_static_prop 访问
 			'fn get_connection() rt.PhpVal {',
@@ -326,35 +338,36 @@ fn test_transpiler_end_to_end() {
 			'fn init_static_database()',
 		]
 		// 40: 无 MethodInfo 回退情况下原生标量实参自动装箱
-		'40_mysql2date.php': [
+		'40_mysql2date.php':                [
 			'fn test_mysql2date(format string, var_var_date rt.PhpVal) rt.PhpVal {',
 			'return test_wp_date(rt.new_string(format), var_var_date.clone())',
 		]
 		// 41: 原生列表空字面量类型自适应及追加标量类型一致
-		'41_array_append.php': [
+		'41_array_append.php':              [
 			'mut var_arr := rt.new_null()',
 			'var_arr = rt.new_array()',
-			'var_arr.array_push(\'<option>\' + var_val.str() + \'</option>\')',
+			"var_arr.array_push('<option>' + var_val.str() + '</option>')",
 			'return var_arr.clone()',
 		]
 		// 42: 包装变量调用 strlen, trim 等内置函数的安全拆箱
-		'42_strlen_safety.php': [
+		'42_strlen_safety.php':             [
 			'mut var_val := var_val_arg',
-			'var_val = rt.new_string(\'hello\')',
-			'if var_val.str().len > 0 {',
+			"var_val = rt.new_string('hello')",
+			'if_cond_1 := var_val.str().len > 0',
+			'if if_cond_1 {',
 			'var_val = rt.new_string(var_val.str().trim_space())',
 			'return var_val',
 		]
 		// 43: 自定义类实例做局部变量时的空指针声明与原生方法直接调用
-		'43_object_predeclare.php': [
+		'43_object_predeclare.php':         [
 			'mut var_util := &Class_WP_List_Util(unsafe { nil })',
 			'var_util = create_wp_list_util()',
 			'return var_util.filter(var_args.clone())',
 		]
 		// 44: 返回 void 的自定义函数在动态注册适配器时的代码生成正确性
-		'44_void_func_register.php': [
+		'44_void_func_register.php':        [
 			'fn test_void_func(var_msg rt.PhpVal) rt.PhpVal {',
-			'rt.register_func(\'test_void_func\', fn (args []rt.PhpVal) rt.PhpVal {',
+			"rt.register_func('test_void_func', fn (args []rt.PhpVal) rt.PhpVal {",
 			'test_void_func(arg_0)',
 			'return rt.new_null()',
 		]
@@ -365,14 +378,14 @@ fn test_transpiler_end_to_end() {
 			'rt.include_file(',
 		]
 		// 53: ArrayAccess 接口原生转译与运行
-		'53_oop_arrayaccess.php': [
+		'53_oop_arrayaccess.php':           [
 			'.offsetset(',
 			'.offsetget(',
 			'.offsetexists(',
 			'.offsetunset(',
 		]
 		// 54: Iterator 接口原生转译与运行
-		'54_oop_iterator.php': [
+		'54_oop_iterator.php':              [
 			'.rewind()',
 			'.valid()',
 			'.current()',
@@ -380,19 +393,19 @@ fn test_transpiler_end_to_end() {
 			'for {',
 		]
 		// 55: 魔术方法 __get 与 __set 原生转译与运行
-		'55_oop_magic_properties.php': [
+		'55_oop_magic_properties.php':      [
 			'.magic_get(',
 			'.magic_set(',
 			'mut_this.magic_get(',
 			'this.magic_set(',
 		]
 		// 56: 内置 call_user_func 与 call_user_func_array 动态调用
-		'56_builtin_call_user_func.php': [
+		'56_builtin_call_user_func.php':    [
 			"rt.call_function('call_user_func'",
 			"rt.call_function('call_user_func_array'",
 		]
 		// 57: 面向对象核心内置函数原生与双轨支持
-		'57_builtin_class_functions.php': [
+		'57_builtin_class_functions.php':   [
 			"rt.register_class_metadata('ChildClass'",
 			"rt.call_function('get_class'",
 			"rt.call_function('is_a'",
@@ -432,7 +445,7 @@ fn test_transpiler_end_to_end() {
 		v_content := os.read_file(temp_v_file) or {
 			panic('Failed to read generated V file for ${file}: ${err}')
 		}
-		
+
 		snippets := expected_snippets[file] or { []string{} }
 		for snippet in snippets {
 			if !v_content.contains(snippet) {
@@ -453,16 +466,16 @@ fn test_transpiler_end_to_end() {
 		}
 		clean_v_file := os.join_path(os.temp_dir(), file.all_before_last('.') + '.v')
 		os.cp(temp_v_file, clean_v_file) or { panic(err) }
-		
-		mut v_path := '${os.join_path(pwd, "php2v/src")}:@vlib'
+
+		mut v_path := '${os.join_path(pwd, 'php2v/src')}:@vlib'
 		if !os.exists(os.join_path(pwd, 'php2v/src')) {
-			v_path = '${os.join_path(pwd, "src")}:@vlib'
+			v_path = '${os.join_path(pwd, 'src')}:@vlib'
 		}
 		v_comp_cmd := 'v -nocache -path "${v_path}" -shared -cc clang -cflags "-DZTS -undefined dynamic_lookup -I${rt_inc} ${php_inc}" -o "${temp_so_file}" "${clean_v_file}"'
 		comp_res := os.execute(v_comp_cmd)
-		
+
 		os.rm(clean_v_file) or {}
-		
+
 		// 清理临时 so 文件，保留 .v 源码文件供查看
 		os.rm(temp_so_file) or {}
 

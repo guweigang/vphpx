@@ -4,11 +4,11 @@ import containerx
 import viewx
 import vphp
 
-@[php_class: 'VSlim\\Controller']
+@[vphp.PhpExportClass(name: 'VSlim\\Controller')]
 @[heap]
 pub struct VSlimController {
 mut:
-	app_ref       vphp.PhpObject             = vphp.PhpObject.invalid()             @[php_ignore]
-	container_ref &containerx.VSlimContainer = unsafe { nil } @[php_ignore]
-	view_ref      &viewx.VSlimView           = unsafe { nil }           @[php_ignore]
+	app_ref       vphp.PhpObject             = vphp.PhpObject.invalid() @[vphp.PhpIgnoreField]
+	container_ref &containerx.VSlimContainer = unsafe { nil }           @[vphp.PhpIgnoreField]
+	view_ref      &viewx.VSlimView           = unsafe { nil }           @[vphp.PhpIgnoreField]
 }

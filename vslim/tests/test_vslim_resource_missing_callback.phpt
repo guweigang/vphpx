@@ -107,6 +107,21 @@ $app->resourceOpts('/users', MissingModelController::class, [
 echo $app->dispatch('GET', '/users/7')->body . PHP_EOL;
 $res = $app->dispatch('GET', '/users/42');
 echo $res->status . '|' . $res->body . PHP_EOL;
+
+[$ownerRef, $missingRef] = (static function (): array {
+    $owner = new VSlim\App();
+    $owner->container()->set(MissingModelController::class, new MissingModelController());
+    $missing = static fn () => 'missing:' . $owner->routeCount();
+    $owner->resourceOpts('/users', MissingModelController::class, ['only' => ['show'], 'missing' => $missing]);
+    if ($owner->dispatch('GET', '/users/42')->body !== 'missing:1') {
+        throw new RuntimeException('The resource fallback was lost during dispatch');
+    }
+    return [WeakReference::create($owner), WeakReference::create($missing)];
+})();
+gc_collect_cycles();
+if ($ownerRef->get() !== null || $missingRef->get() !== null) {
+    throw new RuntimeException('The resource registration or dispatch retained its missing callback');
+}
 ?>
 --EXPECT--
 show:7

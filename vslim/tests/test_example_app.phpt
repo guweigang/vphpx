@@ -6,23 +6,18 @@ if (!extension_loaded("vslim")) {
     print "skip";
     return;
 }
-if (!is_file(dirname(__DIR__) . '/examples/vendor/autoload.php')) {
-    print "skip vendor autoload missing";
+$vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd';
+if (!is_file($vhttpdRoot . '/examples/hello-app.php')) {
+    print "skip vhttpd hello-app fixture missing";
     return;
 }
 ?>
 --FILE--
 <?php
 $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd';
-putenv('VHTTPD_APP=' . $vhttpdRoot . '/examples/hello-app.php');
-define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-$autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
-if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
-require_once $autoload;
+$app = require $vhttpdRoot . '/examples/hello-app.php';
 
-$worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
-
-$hello = $worker->dispatchRequest([
+$hello = $app->dispatchEnvelopeWorker([
     'id' => 'hello',
     'method' => 'GET',
     'path' => '/hello/codex',
@@ -39,9 +34,9 @@ $hello = $worker->dispatchRequest([
     'server' => [],
     'uploaded_files' => [],
 ]);
-echo $hello['status'] . '|' . $hello['body'] . '|' . $hello['headers']['x-runtime'] . PHP_EOL;
+echo $hello->status . '|' . $hello->body . '|' . $hello->header('x-runtime') . PHP_EOL;
 
-$go = $worker->dispatchRequest([
+$go = $app->dispatchEnvelopeWorker([
     'id' => 'go',
     'method' => 'GET',
     'path' => '/go/nova',
@@ -58,9 +53,9 @@ $go = $worker->dispatchRequest([
     'server' => [],
     'uploaded_files' => [],
 ]);
-echo $go['status'] . '|' . $go['headers']['location'] . '|' . $go['headers']['x-runtime'] . PHP_EOL;
+echo $go->status . '|' . $go->header('location') . '|' . $go->header('x-runtime') . PHP_EOL;
 
-$meta = $worker->dispatchRequest([
+$meta = $app->dispatchEnvelopeWorker([
     'id' => 'meta',
     'method' => 'GET',
     'path' => '/api/meta',
@@ -77,7 +72,7 @@ $meta = $worker->dispatchRequest([
     'server' => [],
     'uploaded_files' => [],
 ]);
-echo $meta['status'] . '|' . $meta['body'] . '|' . $meta['headers']['x-runtime'] . PHP_EOL;
+echo $meta->status . '|' . $meta->body . '|' . $meta->header('x-runtime') . PHP_EOL;
 ?>
 --EXPECT--
 200|Hello, codex|vslim

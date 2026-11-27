@@ -23,11 +23,17 @@ return new class extends VSlim\Database\Seeder {
 PHP);
 
 $migrator = new VSlim\Database\Migrator();
-$migrator->setSeedsPath($dir);
+$migrator->setSeedsPath(path: $dir);
+$signature = new ReflectionMethod($migrator, 'seed');
+$name = $signature->getParameters()[0];
+if ($signature->getNumberOfRequiredParameters() !== 0 || $name->getName() !== 'name'
+    || $name->getDefaultValue() !== '' || (string) $name->getType() !== 'string') {
+    throw new RuntimeException('Unexpected seed signature');
+}
 
 echo json_encode($migrator->seedFiles(), JSON_UNESCAPED_SLASHES) . PHP_EOL;
 
-$seeder = $migrator->loadSeeder($dir . '/DemoUsersSeeder.php');
+$seeder = $migrator->loadSeeder(file: $dir . '/DemoUsersSeeder.php');
 echo get_class($seeder) . PHP_EOL;
 echo $seeder->name() . PHP_EOL;
 echo ($seeder->db() instanceof VSlim\Database\Manager ? 'manager' : 'no-manager') . PHP_EOL;

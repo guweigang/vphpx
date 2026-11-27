@@ -19,3 +19,7 @@ pub fn (s PhpReturnRepr) effective_v_type() string {
 	}
 	return s.v_type
 }
+
+pub fn (s PhpReturnRepr) declares_fallible_void() bool {
+	return s.effective_v_type() in ['!', '!void'] && s.php_type.trim_space().to_lower() == 'void'
+}

@@ -38,6 +38,7 @@ fn (mut app VSlimApp) sync_config_service_to_container() {
 		return
 	}
 	if app.config_ref == unsafe { nil } {
+		app.track_config_binding()
 		app.config_ref = cfgx.VSlimConfig.new_default()
 		app.configure_default_auth_settings(app.config_ref)
 	}
@@ -69,7 +70,8 @@ fn (mut app VSlimApp) sync_clock_service_to_container() {
 		old.release()
 		app.clock_ref = supportx.new_psr20_system_clock_ref()
 	}
-	mut clock_value := app.clock_ref.to_request_owned().take_value()
+	mut owned_clock := app.clock_ref.to_request_owned()
+	mut clock_value := owned_clock.take_value()
 	app.container_ref.set(supportx.service_clock, clock_value)
 	app.container_ref.set(supportx.service_psr_clock, clock_value)
 	clock_value.release()
@@ -88,14 +90,14 @@ fn (mut app VSlimApp) sync_event_services_to_container() {
 	if app.container_ref == unsafe { nil } {
 		return
 	}
-	provider := app.listener_provider()
-	app.container_ref.set_borrowed_object[eventx.VSlimPsr14ListenerProvider](eventx.service_listener_provider,
-		provider)
-	app.container_ref.set_borrowed_object[eventx.VSlimPsr14ListenerProvider](eventx.service_events_provider,
-		provider)
-	app.container_ref.set_borrowed_object[eventx.VSlimPsr14ListenerProvider](eventx.service_psr_listener_provider,
-		provider)
-	dispatcher := app.dispatcher()
+	mut dispatcher := app.dispatcher()
+	mut provider := dispatcher.provider_object()
+	defer {
+		provider.release()
+	}
+	app.container_ref.set_object(eventx.service_listener_provider, provider)
+	app.container_ref.set_object(eventx.service_events_provider, provider)
+	app.container_ref.set_object(eventx.service_psr_listener_provider, provider)
 	app.container_ref.set_borrowed_object[eventx.VSlimPsr14EventDispatcher](eventx.service_events,
 		dispatcher)
 	app.container_ref.set_borrowed_object[eventx.VSlimPsr14EventDispatcher](eventx.service_dispatcher,
@@ -123,11 +125,13 @@ fn (mut app VSlimApp) sync_http_client_service_to_container() {
 	if app.container_ref == unsafe { nil } {
 		return
 	}
-	client := app.http_client()
-	app.container_ref.set_borrowed_object[httpx.VSlimPsr18Client](httpx.service_http, client)
-	app.container_ref.set_borrowed_object[httpx.VSlimPsr18Client](httpx.service_http_client, client)
-	app.container_ref.set_borrowed_object[httpx.VSlimPsr18Client](httpx.service_psr_http_client,
-		client)
+	mut client := app.http_client()
+	defer {
+		client.release()
+	}
+	app.container_ref.set_object(httpx.service_http, client)
+	app.container_ref.set_object(httpx.service_http_client, client)
+	app.container_ref.set_object(httpx.service_psr_http_client, client)
 }
 
 fn (mut app VSlimApp) sync_database_service_to_container() {
@@ -169,7 +173,11 @@ fn (mut app VSlimApp) sync_controller_services_to_container() {
 }
 
 fn (mut app VSlimApp) configure_default_auth_settings(config &cfgx.VSlimConfig) {
-	app.auth_redirect_path = sessionx.auth_redirect_path_from_config(config, app.auth_redirect_to())
+	redirect := sessionx.auth_redirect_path_from_config(config, app.auth_redirect_to())
+	if app.auth_redirect_path != redirect {
+		app.track_config_binding()
+		app.auth_redirect_path = redirect
+	}
 }
 
 fn (mut app VSlimApp) sync_clock_dependent_services() {
@@ -186,18 +194,18 @@ fn (mut app VSlimApp) sync_clock_dependent_services() {
 	}
 }
 
-@[php_method: 'hasMcp']
+@[vphp.PhpExportMethod(name: 'hasMcp')]
 pub fn (app &VSlimApp) has_mcp() bool {
 	return app.mcp_ref != unsafe { nil }
 }
 
-@[php_method: 'setMcp']
+@[vphp.PhpExportMethod(name: 'setMcp')]
 pub fn (mut app VSlimApp) set_mcp(server &mcp.VSlimMcpApp) &VSlimApp {
 	app.mcp_ref = server
 	return app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) mcp() &mcp.VSlimMcpApp {
 	if app.mcp_ref == unsafe { nil } {
 		app.mcp_ref = mcp.VSlimMcpApp.new_default()
@@ -205,7 +213,7 @@ pub fn (mut app VSlimApp) mcp() &mcp.VSlimMcpApp {
 	return app.mcp_ref
 }
 
-@[php_method: 'handleMcpDispatch']
+@[vphp.PhpExportMethod(name: 'handleMcpDispatch')]
 pub fn (app &VSlimApp) handle_mcp_dispatch(frame vphp.PhpArray) vphp.PhpArray {
 	if app.mcp_ref == unsafe { nil } {
 		return vphp.PhpArray.new()
@@ -213,13 +221,16 @@ pub fn (app &VSlimApp) handle_mcp_dispatch(frame vphp.PhpArray) vphp.PhpArray {
 	return app.mcp_ref.handle_mcp_dispatch(frame)
 }
 
-@[php_method: 'hasLogger']
+@[vphp.PhpExportMethod(name: 'hasLogger')]
 pub fn (app &VSlimApp) has_logger() bool {
 	return app.logger_ref != unsafe { nil }
 }
 
-@[php_arg_type: 'clock=Psr\\Clock\\ClockInterface']
-@[php_method: 'setClock']
+@[vphp.PhpExportMethod(name: 'setClock')]
+pub fn (mut app VSlimApp) export_set_clock(clock supportx.PsrClock) &VSlimApp {
+	return app.set_clock(clock.to_object())
+}
+
 pub fn (mut app VSlimApp) set_clock(clock vphp.PhpObject) &VSlimApp {
 	if !supportx.psr20_clock_is_valid(clock) {
 		vphp.PhpException.raise_class('InvalidArgumentException',
@@ -227,15 +238,15 @@ pub fn (mut app VSlimApp) set_clock(clock vphp.PhpObject) &VSlimApp {
 		return app
 	}
 	mut old := app.clock_ref
-	old.release()
 	app.clock_ref = clock.retain()
+	old.release()
 	app.sync_clock_dependent_services()
 	app.sync_clock_service_to_container()
 	return app
 }
 
-@[php_return_type: 'Psr\\Clock\\ClockInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\Clock\\ClockInterface')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) clock() vphp.PhpObject {
 	if !supportx.psr20_clock_is_valid(app.clock_ref) {
 		mut old := app.clock_ref
@@ -246,7 +257,7 @@ pub fn (mut app VSlimApp) clock() vphp.PhpObject {
 	return app.clock_ref.to_request_owned()
 }
 
-@[php_method: 'setLogger']
+@[vphp.PhpExportMethod(name: 'setLogger')]
 pub fn (mut app VSlimApp) set_logger(log_writer &loggerx.VSlimLogger) &VSlimApp {
 	app.logger_ref = log_writer
 	if app.psr_logger_ref != unsafe { nil } {
@@ -256,7 +267,7 @@ pub fn (mut app VSlimApp) set_logger(log_writer &loggerx.VSlimLogger) &VSlimApp 
 	return app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) logger() &loggerx.VSlimLogger {
 	if app.logger_ref == unsafe { nil } {
 		app.logger_ref = loggerx.VSlimLogger.app_default(app.config_ref)
@@ -264,8 +275,8 @@ pub fn (mut app VSlimApp) logger() &loggerx.VSlimLogger {
 	return app.logger_ref
 }
 
-@[php_return_type: 'Psr\\Log\\LoggerInterface']
-@[php_method: 'psrLogger']
+@[vphp.PhpReturnType(php_type: 'Psr\\Log\\LoggerInterface')]
+@[vphp.PhpExportMethod(name: 'psrLogger')]
 pub fn (mut app VSlimApp) psr_logger() &loggerx.VSlimPsrLogger {
 	if app.psr_logger_ref == unsafe { nil } {
 		app.psr_logger_ref = loggerx.VSlimPsrLogger.from_logger(app.logger())
@@ -275,60 +286,59 @@ pub fn (mut app VSlimApp) psr_logger() &loggerx.VSlimPsrLogger {
 	return app.psr_logger_ref
 }
 
-@[php_arg_type: 'provider=Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'setListenerProvider']
-pub fn (mut app VSlimApp) set_listener_provider(provider &eventx.VSlimPsr14ListenerProvider) &VSlimApp {
-	app.listener_provider_ref = provider
-	if app.dispatcher_ref != unsafe { nil } {
-		app.dispatcher_ref.set_provider(provider)
-	}
+@[vphp.PhpExportMethod(name: 'setListenerProvider')]
+pub fn (mut app VSlimApp) export_set_listener_provider(provider eventx.PsrListenerProvider) &VSlimApp {
+	mut dispatcher := app.dispatcher()
+	dispatcher.export_set_provider(provider)
 	app.sync_event_services_to_container()
 	return app
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\ListenerProviderInterface']
-@[php_method: 'listenerProvider']
-pub fn (mut app VSlimApp) listener_provider() &eventx.VSlimPsr14ListenerProvider {
-	if app.listener_provider_ref == unsafe { nil } {
-		app.listener_provider_ref = eventx.VSlimPsr14ListenerProvider.new_default()
-	}
-	if app.dispatcher_ref != unsafe { nil } {
-		app.dispatcher_ref.set_provider(app.listener_provider_ref)
-	}
-	return app.listener_provider_ref
+pub fn (mut app VSlimApp) set_listener_provider(provider &eventx.VSlimPsr14ListenerProvider) &VSlimApp {
+	mut dispatcher := app.dispatcher()
+	dispatcher.set_provider(provider)
+	app.sync_event_services_to_container()
+	return app
 }
 
-@[php_arg_type: 'dispatcher=Psr\\EventDispatcher\\EventDispatcherInterface']
-@[php_method: 'setDispatcher']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\ListenerProviderInterface')]
+@[vphp.PhpExportMethod(name: 'listenerProvider')]
+pub fn (mut app VSlimApp) export_listener_provider() vphp.PhpObject {
+	mut dispatcher := app.dispatcher()
+	return dispatcher.provider_object()
+}
+
+pub fn (mut app VSlimApp) listener_provider() &eventx.VSlimPsr14ListenerProvider {
+	mut dispatcher := app.dispatcher()
+	return dispatcher.provider()
+}
+
+@[vphp.PhpArgType(v_name: 'dispatcher', php_type: 'Psr\\EventDispatcher\\EventDispatcherInterface')]
+@[vphp.PhpExportMethod(name: 'setDispatcher')]
 pub fn (mut app VSlimApp) set_dispatcher(dispatcher &eventx.VSlimPsr14EventDispatcher) &VSlimApp {
 	app.dispatcher_ref = dispatcher
-	unsafe {
-		mut writable := &eventx.VSlimPsr14EventDispatcher(dispatcher)
-		app.listener_provider_ref = writable.provider()
-	}
+	dispatcher.retain_for_owner(app)
 	app.sync_event_services_to_container()
 	return app
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\EventDispatcherInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\EventDispatcherInterface')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) dispatcher() &eventx.VSlimPsr14EventDispatcher {
 	if app.dispatcher_ref == unsafe { nil } {
-		app.dispatcher_ref = eventx.VSlimPsr14EventDispatcher.from_provider(app.listener_provider())
-	} else {
-		app.dispatcher_ref.set_provider(app.listener_provider())
+		app.dispatcher_ref = eventx.VSlimPsr14EventDispatcher.new_for_owner(app)
 	}
 	return app.dispatcher_ref
 }
 
-@[php_return_type: 'Psr\\EventDispatcher\\EventDispatcherInterface']
-@[php_method: 'events']
+@[vphp.PhpReturnType(php_type: 'Psr\\EventDispatcher\\EventDispatcherInterface')]
+@[vphp.PhpExportMethod(name: 'events')]
 pub fn (mut app VSlimApp) events() &eventx.VSlimPsr14EventDispatcher {
 	return app.dispatcher()
 }
 
-@[php_arg_type: 'cache=Psr\\SimpleCache\\CacheInterface']
-@[php_method: 'setCache']
+@[vphp.PhpArgType(v_name: 'cache', php_type: 'Psr\\SimpleCache\\CacheInterface')]
+@[vphp.PhpExportMethod(name: 'setCache')]
 pub fn (mut app VSlimApp) set_cache(cache &cachex.VSlimPsr16Cache) &VSlimApp {
 	mut clock := app.clock()
 	defer {
@@ -343,8 +353,8 @@ pub fn (mut app VSlimApp) set_cache(cache &cachex.VSlimPsr16Cache) &VSlimApp {
 	return app
 }
 
-@[php_return_type: 'Psr\\SimpleCache\\CacheInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\SimpleCache\\CacheInterface')]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) cache() &cachex.VSlimPsr16Cache {
 	if app.cache_ref == unsafe { nil } {
 		mut clock := app.clock()
@@ -357,8 +367,8 @@ pub fn (mut app VSlimApp) cache() &cachex.VSlimPsr16Cache {
 	return app.cache_ref
 }
 
-@[php_arg_type: 'pool=Psr\\Cache\\CacheItemPoolInterface']
-@[php_method: 'setCachePool']
+@[vphp.PhpArgType(v_name: 'pool', php_type: 'Psr\\Cache\\CacheItemPoolInterface')]
+@[vphp.PhpExportMethod(name: 'setCachePool')]
 pub fn (mut app VSlimApp) set_cache_pool(pool &cachex.VSlimPsr6CacheItemPool) &VSlimApp {
 	mut clock := app.clock()
 	defer {
@@ -373,8 +383,8 @@ pub fn (mut app VSlimApp) set_cache_pool(pool &cachex.VSlimPsr6CacheItemPool) &V
 	return app
 }
 
-@[php_return_type: 'Psr\\Cache\\CacheItemPoolInterface']
-@[php_method: 'cachePool']
+@[vphp.PhpReturnType(php_type: 'Psr\\Cache\\CacheItemPoolInterface')]
+@[vphp.PhpExportMethod(name: 'cachePool')]
 pub fn (mut app VSlimApp) cache_pool() &cachex.VSlimPsr6CacheItemPool {
 	if app.cache_pool_ref == unsafe { nil } {
 		mut clock := app.clock()
@@ -387,36 +397,47 @@ pub fn (mut app VSlimApp) cache_pool() &cachex.VSlimPsr6CacheItemPool {
 	return app.cache_pool_ref
 }
 
-@[php_arg_type: 'client=Psr\\Http\\Client\\ClientInterface']
-@[php_method: 'setHttpClient']
-pub fn (mut app VSlimApp) set_http_client(client &httpx.VSlimPsr18Client) &VSlimApp {
-	app.http_client_ref = client
+@[vphp.PhpExportMethod(name: 'setHttpClient')]
+pub fn (mut app VSlimApp) set_psr_http_client(client httpx.PsrHttpClient) &VSlimApp {
+	app.track_http_client()
+	app.replace_http_client(client.to_object())
 	app.sync_http_client_service_to_container()
 	return app
 }
 
-@[php_return_type: 'Psr\\Http\\Client\\ClientInterface']
-@[php_method: 'httpClient']
-pub fn (mut app VSlimApp) http_client() &httpx.VSlimPsr18Client {
-	if app.http_client_ref == unsafe { nil } {
-		app.http_client_ref = httpx.VSlimPsr18Client.from_config(app.config_ref)
-	}
-	return app.http_client_ref
+fn (mut app VSlimApp) replace_http_client(client vphp.PhpObject) {
+	mut old := app.http_client_ref
+	app.http_client_ref = if client.is_valid() { client.retain() } else { vphp.PhpObject.invalid() }
+	old.release()
 }
 
-@[php_method: 'hasDatabase']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Client\\ClientInterface')]
+@[vphp.PhpExportMethod(name: 'httpClient')]
+pub fn (mut app VSlimApp) http_client() vphp.PhpObject {
+	if !app.http_client_ref.is_valid() {
+		app.track_http_client()
+		mut object := httpx.VSlimPsr18Client.object_from_config(app.config_ref)
+		defer {
+			object.release()
+		}
+		app.replace_http_client(object)
+	}
+	return app.http_client_ref.to_request_owned()
+}
+
+@[vphp.PhpExportMethod(name: 'hasDatabase')]
 pub fn (app &VSlimApp) has_database() bool {
 	return app.database_ref != unsafe { nil }
 }
 
-@[php_method: 'setDatabase']
+@[vphp.PhpExportMethod(name: 'setDatabase')]
 pub fn (mut app VSlimApp) set_database(database &databasex.VSlimDatabaseManager) &VSlimApp {
 	app.database_ref = database
 	app.sync_database_service_to_container()
 	return app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) database() &databasex.VSlimDatabaseManager {
 	if app.database_ref == unsafe { nil } {
 		app.database_ref = databasex.VSlimDatabaseManager.from_config(app.config_ref)
@@ -424,12 +445,12 @@ pub fn (mut app VSlimApp) database() &databasex.VSlimDatabaseManager {
 	return app.database_ref
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) db() &databasex.VSlimDatabaseManager {
 	return app.database()
 }
 
-@[php_method: 'jobDispatcher']
+@[vphp.PhpExportMethod(name: 'jobDispatcher')]
 pub fn (mut app VSlimApp) job_dispatcher() &jobx.VSlimJobDispatcher {
 	if app.job_dispatcher_ref == unsafe { nil } {
 		app.job_dispatcher_ref = jobx.VSlimJobDispatcher.from_manager(app.database())
@@ -437,7 +458,7 @@ pub fn (mut app VSlimApp) job_dispatcher() &jobx.VSlimJobDispatcher {
 	return app.job_dispatcher_ref
 }
 
-@[php_method: 'jobWorker']
+@[vphp.PhpExportMethod(name: 'jobWorker')]
 pub fn (mut app VSlimApp) job_worker() &jobx.VSlimJobWorker {
 	if app.job_worker_ref == unsafe { nil } {
 		app.job_worker_ref = jobx.VSlimJobWorker.from_manager(app.database())
@@ -445,12 +466,12 @@ pub fn (mut app VSlimApp) job_worker() &jobx.VSlimJobWorker {
 	return app.job_worker_ref
 }
 
-@[php_method: 'hasMigrator']
+@[vphp.PhpExportMethod(name: 'hasMigrator')]
 pub fn (app &VSlimApp) has_migrator() bool {
 	return app.migrator_ref != unsafe { nil }
 }
 
-@[php_method: 'setMigrator']
+@[vphp.PhpExportMethod(name: 'setMigrator')]
 pub fn (mut app VSlimApp) set_migrator(migrator &databasex.VSlimDatabaseMigrator) &VSlimApp {
 	app.migrator_ref = migrator
 	app.migrator_ref.set_manager(app.database())
@@ -458,7 +479,7 @@ pub fn (mut app VSlimApp) set_migrator(migrator &databasex.VSlimDatabaseMigrator
 	return &app
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut app VSlimApp) migrator() &databasex.VSlimDatabaseMigrator {
 	if app.migrator_ref == unsafe { nil } {
 		app.migrator_ref = databasex.VSlimDatabaseMigrator.from_manager(app.database())

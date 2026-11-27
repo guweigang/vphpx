@@ -184,7 +184,7 @@ if (!class_exists("DemoAutoPing", false)) {
 if (!class_exists("DemoPageController", false)) {
     final class DemoPageController extends VSlim\Controller
     {
-        public function home(ServerRequestInterface $req): VSlim\VHttpd\Response
+        public function home(ServerRequestInterface $req): ResponseInterface
         {
             return $this->render("home.html", [
                 "title" => "VSlim MVC Demo",

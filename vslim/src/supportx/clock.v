@@ -5,26 +5,31 @@ import vphp
 pub const service_clock = 'clock'
 pub const service_psr_clock = 'Psr\\Clock\\ClockInterface'
 
-@[php_implements: 'Psr\\Clock\\ClockInterface']
-@[php_class: 'VSlim\\Psr20\\Clock']
+@[vphp.PhpExternalInterface(name: 'Psr\\Clock\\ClockInterface')]
+pub interface PsrClockContract {}
+
+pub type PsrClock = vphp.PhpInterface[PsrClockContract]
+
+@[vphp.PhpImplements(names: 'Psr\\Clock\\ClockInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr20\\Clock')]
 @[heap]
 pub struct VSlimPsr20Clock {}
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut clock VSlimPsr20Clock) construct() &VSlimPsr20Clock {
 	return &clock
 }
 
-@[php_return_type: 'DateTimeImmutable']
-@[php_method]
-pub fn (clock &VSlimPsr20Clock) now() vphp.PhpObject {
+@[vphp.PhpExportMethod(name: '')]
+pub fn (clock &VSlimPsr20Clock) now() vphp.PhpDateTimeImmutable {
 	_ = clock
-	now := vphp.PhpClass.named('DateTimeImmutable').construct() or {
-		vphp.PhpException.raise_class('RuntimeException',
-			'failed to create DateTimeImmutable instance', 0)
-		return vphp.PhpObject.invalid()
+	return vphp.PhpDateTimeImmutable.now() or {
+		if !vphp.has_exception() {
+			vphp.PhpException.raise_class('RuntimeException',
+				'failed to create DateTimeImmutable instance', 0)
+		}
+		vphp.PhpDateTimeImmutable.invalid()
 	}
-	return now.to_request_owned()
 }
 
 pub fn VSlimPsr20Clock.new_object() vphp.PhpObject {
@@ -53,21 +58,15 @@ pub fn psr20_clock_is_valid(clock vphp.PhpObject) bool {
 	return psr20_object_is_clock(clock)
 }
 
-pub fn psr20_clock_now_datetime_or_throw(clock vphp.PhpObject) !vphp.PhpObject {
+pub fn psr20_clock_now_datetime_or_throw(clock vphp.PhpObject) !vphp.PhpDateTimeImmutable {
 	if !psr20_clock_is_valid(clock) {
 		return error('clock must implement Psr\\Clock\\ClockInterface')
 	}
 	mut now := clock.call_method('now')
-	if !now.is_valid() || !now.is_object() || !now.is_instance_of('DateTimeImmutable') {
+	defer {
 		now.release()
-		return error('clock::now() must return DateTimeImmutable')
 	}
-	out := now.as_object() or {
-		now.release()
-		return error('clock::now() must return DateTimeImmutable')
-	}
-	now.release()
-	return out
+	return now.as_date_time_immutable() or { error('clock::now() must return DateTimeImmutable') }
 }
 
 pub fn psr20_clock_now_unix_or_throw(clock vphp.PhpObject) !i64 {
@@ -75,9 +74,7 @@ pub fn psr20_clock_now_unix_or_throw(clock vphp.PhpObject) !i64 {
 	defer {
 		now.release()
 	}
-	return now.with_method_result[vphp.PhpInt, i64]('getTimestamp', fn (ts vphp.PhpInt) i64 {
-		return ts.value()
-	})!
+	return now.unix_seconds()
 }
 
 pub fn psr20_clock_now_unix_milli_string_or_throw(clock vphp.PhpObject) !string {
@@ -85,15 +82,5 @@ pub fn psr20_clock_now_unix_milli_string_or_throw(clock vphp.PhpObject) !string 
 	defer {
 		now.release()
 	}
-	mut format_arg := vphp.PhpString.of('Uv')
-	defer {
-		format_arg.release()
-	}
-	formatted := now.with_method_result[vphp.PhpString, string]('format', fn (out vphp.PhpString) string {
-		return out.value().trim_space()
-	}, format_arg)!
-	if formatted != '' {
-		return formatted
-	}
-	return '${psr20_clock_now_unix_or_throw(clock)! * i64(1000)}'
+	return now.unix_milliseconds_string()
 }

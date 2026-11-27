@@ -142,6 +142,10 @@ $container->set('users.controller', new class {
     public function show(ServerRequestInterface $req): string {
         return 'ctrl:' . $req->getAttribute('id');
     }
+    public function &reference(ServerRequestInterface $req): array {
+        $response = ['status' => 203, 'body' => 'method'];
+        return $response;
+    }
 });
 $container->set('legacy.callable', function ($req) {
     return 'legacy:' . $req->getAttribute('id');
@@ -167,6 +171,20 @@ $app->get('/implicit-invoke/:id', 'invoke.controller');
 $app->get('/implicit-array/:id', ['invoke.controller']);
 $app->get('/bad-method/:id', ['users.controller', 'missing']);
 $app->get('/missing/:id', 'missing.handler');
+
+$returned = (new VSlim\Psr7\Response(201))->withBody(new VSlim\Psr7\Stream('reference'));
+$app->get('/reference', static function &() use (&$returned) { return $returned; });
+$app->get('/method-reference', ['users.controller', 'reference']);
+$one = $app->dispatch('GET', '/reference');
+$returned = ['status' => 202, 'body' => 'updated'];
+$two = $app->dispatch('GET', '/reference');
+$method = $app->handle(request: (new VSlim\Psr17\ServerRequestFactory())->createServerRequest('GET', '/method-reference'));
+$returned = null;
+if ($one->status !== 201 || $one->body !== 'reference' || $two->status !== 202 || $two->body !== 'updated'
+    || $method->getStatusCode() !== 203 || (string) $method->getBody() !== 'method'
+    || $app->dispatch('GET', '/reference')->status !== 404) {
+    throw new RuntimeException('A route closure returning by reference changed the response or null fallback');
+}
 
 echo $app->dispatch('GET', '/hello/7')->status . '|' . $app->dispatch('GET', '/hello/7')->body . PHP_EOL;
 echo $app->dispatch('GET', '/json/8')->status . '|' . $app->dispatch('GET', '/json/8')->body . PHP_EOL;

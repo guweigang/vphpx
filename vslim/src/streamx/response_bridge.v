@@ -6,7 +6,8 @@ import vphp
 pub fn is_worker_stream_response(value vphp.PhpValue) bool {
 	return value.is_object() && (value.is_instance_of('VSlim\\Stream\\Response')
 		|| value.is_instance_of('VPhp\\VSlim\\Stream\\Response')
-		|| value.is_instance_of('VPhp\\VHttpd\\PhpWorker\\StreamResponse'))
+		|| value.is_instance_of('VPhp\\VHttpd\\PhpWorker\\StreamResponse')
+		|| value.is_instance_of('VHttpd\\PhpWorker\\StreamResponse'))
 }
 
 pub fn propagate_request_trace_headers_to_value(req &httpx.VSlimRequest, value vphp.PhpValue) {

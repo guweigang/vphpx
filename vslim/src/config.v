@@ -13,7 +13,7 @@ const ext_config = vphp.ExtensionConfig{
 	description: 'Slim-inspired PHP extension powered by vphp'
 }
 
-@[php_globals]
+@[vphp.PhpGlobals]
 pub struct ExtGlobals {
 pub mut:
 	request_count int

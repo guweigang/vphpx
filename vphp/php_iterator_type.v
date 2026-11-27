@@ -62,8 +62,22 @@ pub fn (i PhpIterator) to_iterable() PhpIterable {
 	}
 }
 
+fn (i PhpIterator) borrowed_iterable() PhpIterable {
+	return PhpIterable{
+		value: i.object.value.borrowed()
+	}
+}
+
 pub fn (i PhpIterator) to_array() !PhpArray {
-	return i.to_iterable().to_array()
+	return i.borrowed_iterable().to_array()
+}
+
+pub fn (i PhpIterator) to_list() !PhpArray {
+	return i.borrowed_iterable().to_list()
+}
+
+pub fn (i PhpIterator) to_entries() !PhpArray {
+	return i.borrowed_iterable().to_entries()
 }
 
 pub fn (i PhpIterator) to_borrowed() PhpIterator {
@@ -137,17 +151,17 @@ pub fn (i PhpIterator) class_name() string {
 }
 
 pub fn (i PhpIterator) count() int {
-	return i.to_iterable().count()
+	return i.borrowed_iterable().count()
 }
 
 pub fn (i PhpIterator) fold[T](init T, cb ForeachWithCtxCb[T]) T {
-	return i.to_iterable().fold[T](init, cb)
+	return i.borrowed_iterable().fold[T](init, cb)
 }
 
 pub fn (i PhpIterator) key_strings() []string {
-	return i.to_iterable().key_strings()
+	return i.borrowed_iterable().key_strings()
 }
 
 pub fn (i PhpIterator) to_dyn_value() !DynValue {
-	return i.to_iterable().to_dyn_value()
+	return i.borrowed_iterable().to_dyn_value()
 }

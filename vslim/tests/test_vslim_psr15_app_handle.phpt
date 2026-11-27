@@ -138,13 +138,144 @@ namespace {
         ->withUri(new VSlim\Psr7\Uri('https://example.com/api/hello/world?trace_id=query-trace'))
         ->withAttribute('trace_id', 'attr-trace');
 
-    $response = $app->handle($request);
+    $response = $app->handle(request: $request);
 
     echo ($app instanceof RequestHandlerInterface ? 'handler' : 'no'), PHP_EOL;
     echo get_class($response), PHP_EOL;
     echo $response->getStatusCode(), PHP_EOL;
     echo $response->getHeaderLine('x-mw'), PHP_EOL;
     echo (string) $response->getBody(), PHP_EOL;
+
+    function testPipe(string $contents): array
+    {
+        $php = 'echo ' . var_export($contents, true) . ';';
+        $process = proc_open([PHP_BINARY, '-n', '-r', $php], [1 => ['pipe', 'w']], $pipes);
+        return [$process, (new VSlim\Psr17\StreamFactory())->createStreamFromResource($pipes[1])];
+    }
+
+    [$inputProcess, $input] = testPipe('request body');
+    [$outputProcess, $output] = testPipe('response body');
+    $streamApp = new VSlim\App();
+    $before = new class($input) implements MiddlewareInterface {
+        public function __construct(private object $body) {}
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+        {
+            if ($request->getBody() !== $this->body || $request->getAttribute('name') !== 'world') {
+                throw new RuntimeException('Before middleware lost the body or route parameters');
+            }
+            return $handler->handle($request->withAttribute('phase', 'before'));
+        }
+    };
+    $middle = new class($input, $output) implements MiddlewareInterface {
+        public function __construct(private object $input, private object $output) {}
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+        {
+            if ($request->getBody() !== $this->input || $request->getAttribute('phase') !== 'before') {
+                throw new RuntimeException('Standard middleware lost the forwarded request');
+            }
+            $response = $handler->handle($request->withAttribute('phase', 'middle'));
+            if ($response->getBody() !== $this->output) {
+                throw new RuntimeException('Next handler replaced the response stream');
+            }
+            return $response->withHeader('X-Middle', 'yes');
+        }
+    };
+    $after = new class($input, $output) implements MiddlewareInterface {
+        public function __construct(private object $input, private object $output) {}
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+        {
+            $response = $handler->handle($request);
+            if ($request->getBody() !== $this->input || $request->getAttribute('phase') !== 'middle'
+                || $response->getBody() !== $this->output) {
+                throw new RuntimeException('After middleware lost the forwarded streams or attributes');
+            }
+            return $response->withHeader('X-After', 'yes');
+        }
+    };
+    $streamApp->middleware(handler: $before, phase: VSlim\MiddlewarePhase::before);
+    $streamApp->middleware($middle);
+    $streamApp->middleware(handler: $after, phase: VSlim\MiddlewarePhase::after);
+    $streamApp->post('/stream/:name', static function (ServerRequestInterface $request) use ($input, $output): ResponseInterface {
+        $body = $request->getBody();
+        if ($body !== $input || $body->read(1) . $body->getContents() !== 'request body') {
+            throw new RuntimeException('PSR-15 dispatch consumed the input before the handler');
+        }
+        return (new VSlim\Psr7\Response(202))->withBody($output);
+    });
+    $incoming = (new VSlim\Psr7\ServerRequest())
+        ->withMethod('POST')->withUri(new VSlim\Psr7\Uri('/stream/world'))
+        ->withHeader('Content-Type', 'application/octet-stream')->withBody($input);
+    $final = $streamApp->handle($incoming);
+    if ($final->getBody() !== $output) {
+        throw new RuntimeException('Application replaced the final response stream');
+    }
+    echo implode('|', [$final->getStatusCode(), $final->getHeaderLine('X-Middle'),
+        $final->getHeaderLine('X-After'), $final->getBody()->getContents()]), PHP_EOL;
+    $input->close();
+    $output->close();
+    proc_close($inputProcess);
+    proc_close($outputProcess);
+
+    $validationApp = new VSlim\App();
+    $validationApp->delete('/validated', static function (ServerRequestInterface $request): ResponseInterface {
+        return (new VSlim\Psr7\Response())->withHeader('X-Replay', $request->getBody()->getContents());
+    });
+    [$formProcess, $form] = testPipe('_method=DELETE&answer=42');
+    $formRequest = (new VSlim\Psr7\ServerRequest())
+        ->withMethod('POST')->withUri(new VSlim\Psr7\Uri('/validated'))
+        ->withHeader('Content-Type', 'application/x-www-form-urlencoded')->withBody($form);
+    $validated = $validationApp->handle($formRequest);
+    echo $validated->getStatusCode() . '|' . $validated->getHeaderLine('X-Replay'), PHP_EOL;
+    $form->close();
+    proc_close($formProcess);
+
+    [$jsonProcess, $json] = testPipe('{unclosed');
+    $invalid = $formRequest->withMethod('DELETE')->withHeader('Content-Type', 'application/json')->withBody($json);
+    echo $validationApp->handle($invalid)->getStatusCode(), PHP_EOL;
+    $json->close();
+    proc_close($jsonProcess);
+
+    $seekable = (new VSlim\Psr17\StreamFactory())->createStream('{"key":"value"}');
+    $seekable->seek(4);
+    $validationApp->post('/cursor', static function (ServerRequestInterface $request) use ($seekable): ResponseInterface {
+        if ($request->getBody() !== $seekable || $seekable->tell() !== 4) {
+            throw new RuntimeException('Validation moved or replaced the seekable input stream');
+        }
+        return new VSlim\Psr7\Response(201);
+    });
+    $cursorRequest = $invalid->withMethod('POST')->withUri(new VSlim\Psr7\Uri('/cursor'))->withBody($seekable);
+    echo $validationApp->handle($cursorRequest)->getStatusCode(), PHP_EOL;
+
+    $previousLimit = getenv('VSLIM_MAX_BODY_BYTES');
+    putenv('VSLIM_MAX_BODY_BYTES=4');
+    [$limitProcess, $large] = testPipe('12345');
+    $limited = $formRequest->withMethod('DELETE')
+        ->withHeader('Content-Type', 'application/octet-stream')->withBody($large);
+    echo $validationApp->handle($limited)->getStatusCode(), PHP_EOL;
+    $large->close();
+    proc_close($limitProcess);
+    putenv($previousLimit === false ? 'VSLIM_MAX_BODY_BYTES' : 'VSLIM_MAX_BODY_BYTES=' . $previousLimit);
+
+    [$echoProcess, $echoBody] = testPipe('forwarded bytes');
+    $echoApp = new VSlim\App();
+    $echoApp->middleware(new class($echoBody) implements MiddlewareInterface {
+        public function __construct(private object $body) {}
+        public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+        {
+            return $handler->handle($request->withBody($this->body));
+        }
+    });
+    $echoApp->post('/echo', static fn (ServerRequestInterface $request): ResponseInterface =>
+        (new VSlim\Psr7\Response())->withBody($request->getBody()));
+    $echo = $echoApp->dispatchEnvelopeWorker([
+        'method' => 'POST', 'path' => '/echo', 'headers' => ['x-request-id' => 'echo-rid'],
+    ]);
+    if (!$echo instanceof VSlim\Stream\Response || $echo->header('x-request-id') !== 'echo-rid') {
+        throw new RuntimeException('The worker lost the echoed stream or request metadata');
+    }
+    echo implode('', iterator_to_array($echo->chunks(), false)), PHP_EOL;
+    $echoBody->close();
+    proc_close($echoProcess);
 }
 ?>
 --EXPECT--
@@ -153,3 +284,9 @@ VSlim\Psr7\Response
 207
 global-group
 hello|world|global-group|attr-trace
+202|yes|yes|response body
+200|_method=DELETE&answer=42
+400
+201
+413
+forwarded bytes

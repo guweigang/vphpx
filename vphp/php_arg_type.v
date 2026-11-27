@@ -1,12 +1,14 @@
 module vphp
 
-import vphp.zend as _
+import vphp.zend
 
 pub struct PhpArgMeta {
 pub:
-	index      int
-	name       string
-	attributes []PhpAttribute
+	index             int
+	name              string
+	attributes        []PhpAttribute
+	use_php_default   bool
+	is_named_variadic bool
 }
 
 pub struct PhpArg {
@@ -51,6 +53,9 @@ pub fn PhpArg.from_meta_zval(meta PhpArgMeta, z ZVal) PhpArg {
 }
 
 pub fn (meta PhpArgMeta) with_attribute_target(target PhpAttributeTarget) PhpArgMeta {
+	if meta.attributes.len == 0 {
+		return meta
+	}
 	mut attrs := []PhpAttribute{cap: meta.attributes.len}
 	for attr in meta.attributes {
 		if attr.target == .unknown {
@@ -60,8 +65,7 @@ pub fn (meta PhpArgMeta) with_attribute_target(target PhpAttributeTarget) PhpArg
 		}
 	}
 	return PhpArgMeta{
-		index:      meta.index
-		name:       meta.name
+		...meta
 		attributes: attrs
 	}
 }
@@ -78,6 +82,16 @@ pub fn (arg PhpArg) name() string {
 		return meta.name
 	}
 	return ''
+}
+
+// variadic_name is present for a named tail argument, including an empty key.
+pub fn (arg PhpArg) variadic_name() ?string {
+	if meta := arg.meta {
+		if meta.is_named_variadic {
+			return meta.name
+		}
+	}
+	return none
 }
 
 pub fn (arg PhpArg) attributes() []PhpAttribute {
@@ -181,8 +195,56 @@ pub fn (arg PhpArg) iterable() ?PhpIterable {
 	return PhpIterable.from_zval(arg.zval())
 }
 
+pub fn (arg PhpArg) generator() ?PhpGenerator {
+	return PhpGenerator.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) fiber() ?PhpFiber {
+	return PhpFiber.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) date_interval() ?PhpDateInterval {
+	return PhpDateInterval.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) date_time_interface() ?PhpDateTimeInterface {
+	return PhpDateTimeInterface.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) date_time_immutable() ?PhpDateTimeImmutable {
+	return PhpDateTimeImmutable.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) json_serializable() ?PhpJsonSerializable {
+	return PhpJsonSerializable.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) stringable() ?PhpStringable {
+	return PhpStringable.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) countable() ?PhpCountable {
+	return PhpCountable.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) array_access() ?PhpArrayAccess {
+	return PhpArrayAccess.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) weak_map() ?PhpWeakMap {
+	return PhpWeakMap.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) weak_reference() ?PhpWeakReference {
+	return PhpWeakReference.from_zval(arg.zval())
+}
+
 pub fn (arg PhpArg) iterator() ?PhpIterator {
 	return PhpIterator.from_zval(arg.zval())
+}
+
+pub fn (arg PhpArg) iterator_aggregate() ?PhpIteratorAggregate {
+	return PhpIteratorAggregate.from_zval(arg.zval())
 }
 
 pub fn (arg PhpArg) throwable() ?PhpThrowable {
@@ -240,19 +302,29 @@ pub fn (arg PhpArg) to_v_ptr[T]() !voidptr {
 	}
 	ce := cached_class_entry(v_name)
 	if ce == unsafe { nil } // SAFETY: nil literal in unsafe context
-	  {
+
+	{
 		return error('no class entry found for ${v_name}')
 	}
 	zend_obj := ZendObject.from_zval(val)
-	if !C.vphp_object_is_instance_of(zend_obj.raw_ptr(), ce) {
+	if !zend.object_is_instance_of(zend_obj.raw_ptr(), ce) {
 		return error('type mismatch: object is not an instance of ${v_name}')
 	}
 	ptr := zend_obj.bound_v_ptr()
 	if ptr == unsafe { nil } // SAFETY: nil literal in unsafe context
-	  {
+
+	{
 		return error('object not bound to V pointer')
 	}
 	return ptr
+}
+
+// bound_v_object reads the existing V instance behind a PHP argument.
+pub fn (arg PhpArg) bound_v_object[T]() !&T {
+	ptr := arg.to_v_ptr[T]() or {
+		return error('Argument #${arg.index() + 1} must be an object bound to ${typeof[T]().name}: ${err.msg()}')
+	}
+	return unsafe { &T(ptr) }
 }
 
 pub fn (arg PhpArg) raw_obj() voidptr {
@@ -321,4 +393,18 @@ pub fn (args PhpArgs) as_variadic_v[T](start_index int) []T {
 		res << args.items[i].as_v[T]()
 	}
 	return res
+}
+
+pub fn (args PhpArgs) variadic_references(start_index int) ![]PhpReference {
+	if start_index < 0 || start_index >= args.items.len {
+		return []PhpReference{}
+	}
+	mut references := []PhpReference{cap: args.items.len - start_index}
+	for i := start_index; i < args.items.len; i++ {
+		reference := args.items[i].reference() or {
+			return error('argument ${i + 1} must be passed by reference')
+		}
+		references << reference
+	}
+	return references
 }

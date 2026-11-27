@@ -131,31 +131,31 @@ pub fn vslim_request_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimRequest(ptr)
-        out.add_property_string('method', obj.method)
-        out.add_property_string('rawPath', obj.raw_path)
-        out.add_property_string('body', obj.body)
-        out.add_property_string('scheme', obj.scheme)
-        out.add_property_string('host', obj.host)
-        out.add_property_string('port', obj.port)
-        out.add_property_string('protocolVersion', obj.protocol_version)
-        out.add_property_string('remoteAddr', obj.remote_addr)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'method', obj.method)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'rawPath', obj.raw_path)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'body', obj.body)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'scheme', obj.scheme)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'host', obj.host)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'port', obj.port)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'protocolVersion', obj.protocol_version)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'remoteAddr', obj.remote_addr)
     }
 }
 @[export: 'vphp_wrap_vslim_request_construct']
-pub fn vphp_wrap_vslim_request_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_request_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'method', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'rawPath', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'body', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'method' },
+        vphp.PhpArgMeta{ index: 1, name: 'rawPath' },
+        vphp.PhpArgMeta{ index: 2, name: 'body' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'method').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'rawPath').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'body').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
     res := recv.construct(arg_0, arg_1, arg_2)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimRequest](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_request_str']
 pub fn vphp_wrap_vslim_request_str(ptr voidptr, ctx vphp.Context)  {
@@ -171,12 +171,11 @@ pub fn vphp_wrap_vslim_request_set_query(ptr voidptr, ctx vphp.Context) voidptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_query(arg_0)
     return voidptr(res)
@@ -187,9 +186,9 @@ pub fn vphp_wrap_vslim_request_set_method(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'method', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'method' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'method').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_method(arg_0)
     return voidptr(res)
 }
@@ -199,9 +198,9 @@ pub fn vphp_wrap_vslim_request_set_target(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'rawPath', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'rawPath' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'rawPath').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_target(arg_0)
     return voidptr(res)
 }
@@ -227,9 +226,9 @@ pub fn vphp_wrap_vslim_request_set_body(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'body', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'body' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'body').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_body(arg_0)
     return voidptr(res)
 }
@@ -239,9 +238,9 @@ pub fn vphp_wrap_vslim_request_set_scheme(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'scheme', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'scheme' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'scheme').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_scheme(arg_0)
     return voidptr(res)
 }
@@ -251,9 +250,9 @@ pub fn vphp_wrap_vslim_request_set_host(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'host', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'host' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'host').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_host(arg_0)
     return voidptr(res)
 }
@@ -263,9 +262,9 @@ pub fn vphp_wrap_vslim_request_set_port(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'port', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'port' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'port').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_port(arg_0)
     return voidptr(res)
 }
@@ -275,9 +274,9 @@ pub fn vphp_wrap_vslim_request_set_protocol_version(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'protocolVersion', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'protocolVersion' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'protocolVersion').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_protocol_version(arg_0)
     return voidptr(res)
 }
@@ -287,9 +286,9 @@ pub fn vphp_wrap_vslim_request_set_remote_addr(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'remoteAddr', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'remoteAddr' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'remoteAddr').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_remote_addr(arg_0)
     return voidptr(res)
 }
@@ -299,12 +298,11 @@ pub fn vphp_wrap_vslim_request_set_headers(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'headers', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'headers' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'headers').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_headers(arg_0)
     return voidptr(res)
@@ -315,12 +313,11 @@ pub fn vphp_wrap_vslim_request_set_cookies(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'cookies', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'cookies' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'cookies').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_cookies(arg_0)
     return voidptr(res)
@@ -331,12 +328,11 @@ pub fn vphp_wrap_vslim_request_set_attributes(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'attributes', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'attributes' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'attributes').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_attributes(arg_0)
     return voidptr(res)
@@ -347,12 +343,11 @@ pub fn vphp_wrap_vslim_request_set_server(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'server', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'server' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'server').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_server(arg_0)
     return voidptr(res)
@@ -363,12 +358,11 @@ pub fn vphp_wrap_vslim_request_set_uploaded_files(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'uploadedFiles', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'uploadedFiles' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'uploadedFiles').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_uploaded_files(arg_0)
     return voidptr(res)
@@ -379,12 +373,11 @@ pub fn vphp_wrap_vslim_request_set_params(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'params').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.set_params(arg_0)
     return voidptr(res)
@@ -395,9 +388,9 @@ pub fn vphp_wrap_vslim_request_query(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.query(arg_0)
     ctx.return().v[string](res)
 }
@@ -415,9 +408,9 @@ pub fn vphp_wrap_vslim_request_has_query(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_query(arg_0)
     ctx.return().v[bool](res)
 }
@@ -427,9 +420,9 @@ pub fn vphp_wrap_vslim_request_input(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.input(arg_0)
     ctx.return().v[string](res)
 }
@@ -438,12 +431,14 @@ pub fn vphp_wrap_vslim_request_input_or(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { php_args.at_named_or_index(1, 'defaultValue').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.input_or(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -453,9 +448,9 @@ pub fn vphp_wrap_vslim_request_has_input(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_input(arg_0)
     ctx.return().v[bool](res)
 }
@@ -553,9 +548,9 @@ pub fn vphp_wrap_vslim_request_header(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.header(arg_0)
     ctx.return().v[string](res)
 }
@@ -573,9 +568,9 @@ pub fn vphp_wrap_vslim_request_has_header(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
@@ -609,9 +604,9 @@ pub fn vphp_wrap_vslim_request_cookie(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.cookie(arg_0)
     ctx.return().v[string](res)
 }
@@ -629,9 +624,9 @@ pub fn vphp_wrap_vslim_request_has_cookie(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_cookie(arg_0)
     ctx.return().v[bool](res)
 }
@@ -641,9 +636,9 @@ pub fn vphp_wrap_vslim_request_param(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.param(arg_0)
     ctx.return().v[string](res)
 }
@@ -661,9 +656,9 @@ pub fn vphp_wrap_vslim_request_has_param(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_param(arg_0)
     ctx.return().v[bool](res)
 }
@@ -673,9 +668,9 @@ pub fn vphp_wrap_vslim_request_attribute(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.attribute(arg_0)
     ctx.return().v[string](res)
 }
@@ -693,9 +688,9 @@ pub fn vphp_wrap_vslim_request_has_attribute(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_attribute(arg_0)
     ctx.return().v[bool](res)
 }
@@ -705,9 +700,9 @@ pub fn vphp_wrap_vslim_request_server_value(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.server_value(arg_0)
     ctx.return().v[string](res)
 }
@@ -725,9 +720,9 @@ pub fn vphp_wrap_vslim_request_has_server(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_server(arg_0)
     ctx.return().v[bool](res)
 }
@@ -813,13 +808,13 @@ pub fn vphp_wrap_vslim_request_uploaded_files_all(ptr voidptr, ctx vphp.Context)
 }
 @[export: 'vslim_request_handlers']
 pub fn vslim_request_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_request_get_prop),
-        write_handler: voidptr(vslim_request_set_prop),
-        sync_handler: voidptr(vslim_request_sync_props),
-        new_raw: voidptr(vslim_request_new_raw),
-        cleanup_raw: voidptr(vslim_request_cleanup_raw),
-        free_raw: voidptr(vslim_request_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_request_get_prop,
+        write_handler: vslim_request_set_prop,
+        sync_handler: vslim_request_sync_props,
+        new_raw: vslim_request_new_raw,
+        cleanup_raw: vslim_request_cleanup_raw,
+        free_raw: vslim_request_free_raw
     )
 }
 pub fn VSlimRequest.php_class_entry() vphp.ZendClassEntry {
@@ -916,22 +911,24 @@ pub fn vslim_psr7_stream_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7Stream(ptr)
-        out.add_property_string('content', obj.content)
-        out.add_property_long('position', i64(obj.position))
-        out.add_property_bool('detached', obj.detached)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'content', obj.content)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'position', obj.position)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'detached', obj.detached)
     }
 }
 @[export: 'vphp_wrap_vslim_psr7_stream_construct']
-pub fn vphp_wrap_vslim_psr7_stream_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr7_stream_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'defaultContent', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := if php_args.has_named_or_index(0, 'defaultContent') { php_args.at_named_or_index(0, 'defaultContent').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'defaultContent', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.construct(arg_0)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr7Stream](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr7_stream_str']
 pub fn vphp_wrap_vslim_psr7_stream_str(ptr voidptr, ctx vphp.Context)  {
@@ -954,14 +951,14 @@ pub fn vphp_wrap_vslim_psr7_stream_detach(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.detach()
-    ctx.return().v[vphp.PhpNull](res)
+    ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vphp_wrap_vslim_psr7_stream_get_size']
 pub fn vphp_wrap_vslim_psr7_stream_get_size(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    ctx.return().from_option[int](fn [recv] () ?int {
+    ctx.return().from_option[i64](fn [recv] () ?i64 {
         return recv.get_size()
     })
 }
@@ -971,7 +968,7 @@ pub fn vphp_wrap_vslim_psr7_stream_tell(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.tell()
-    ctx.return().v[int](res)
+    ctx.return().v[i64](res)
 }
 @[export: 'vphp_wrap_vslim_psr7_stream_eof']
 pub fn vphp_wrap_vslim_psr7_stream_eof(ptr voidptr, ctx vphp.Context)  {
@@ -994,12 +991,14 @@ pub fn vphp_wrap_vslim_psr7_stream_seek(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Stream(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'offset', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultWhence', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'offset').value
-    arg_1 := php_args.at_named_or_index(1, 'defaultWhence').value
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'offset' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultWhence', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
     recv.seek(arg_0, arg_1)
 }
 @[export: 'vphp_wrap_vslim_psr7_stream_rewind']
@@ -1023,9 +1022,9 @@ pub fn vphp_wrap_vslim_psr7_stream_write(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'chunk', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'chunk' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'chunk').value
+    arg_0 := php_args.at(0).value
     res := recv.write(arg_0)
     ctx.return().v[int](res)
 }
@@ -1043,9 +1042,9 @@ pub fn vphp_wrap_vslim_psr7_stream_read(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'length', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'length' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'length').value
+    arg_0 := php_args.at(0).value
     res := recv.read(arg_0)
     ctx.return().v[string](res)
 }
@@ -1063,21 +1062,21 @@ pub fn vphp_wrap_vslim_psr7_stream_get_metadata(ptr voidptr, ctx vphp.Context)  
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'defaultKey', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'defaultKey' },
     ])
-    arg_0 := if php_args.has_named_or_index(0, 'defaultKey') { ?vphp.PhpValue(php_args.at_named_or_index(0, 'defaultKey').value) } else { none }
+    arg_0 := if php_args.has(0) { ?vphp.PhpValue(php_args.at(0).value) } else { none }
     res := recv.get_metadata(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vslim_psr7_stream_handlers']
 pub fn vslim_psr7_stream_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr7_stream_get_prop),
-        write_handler: voidptr(vslim_psr7_stream_set_prop),
-        sync_handler: voidptr(vslim_psr7_stream_sync_props),
-        new_raw: voidptr(vslim_psr7_stream_new_raw),
-        cleanup_raw: voidptr(vslim_psr7_stream_cleanup_raw),
-        free_raw: voidptr(vslim_psr7_stream_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr7_stream_get_prop,
+        write_handler: vslim_psr7_stream_set_prop,
+        sync_handler: vslim_psr7_stream_sync_props,
+        new_raw: vslim_psr7_stream_new_raw,
+        cleanup_raw: vslim_psr7_stream_cleanup_raw,
+        free_raw: vslim_psr7_stream_free_raw
     )
 }
 pub fn VSlimPsr7Stream.php_class_entry() vphp.ZendClassEntry {
@@ -1162,28 +1161,28 @@ pub fn vslim_psr7_uploaded_file_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7UploadedFile(ptr)
-        out.add_property_bool('moved', obj.moved)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'moved', obj.moved)
     }
 }
 @[export: 'vphp_wrap_vslim_psr7_uploaded_file_construct']
-pub fn vphp_wrap_vslim_psr7_uploaded_file_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr7_uploaded_file_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'defaultStream', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultSize', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'defaultError', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'defaultClientFilename', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'defaultClientMediaType', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'defaultStream' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultSize' },
+        vphp.PhpArgMeta{ index: 2, name: 'defaultError' },
+        vphp.PhpArgMeta{ index: 3, name: 'defaultClientFilename' },
+        vphp.PhpArgMeta{ index: 4, name: 'defaultClientMediaType' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'defaultStream').value
-    arg_1 := if php_args.has_named_or_index(1, 'defaultSize') { php_args.at_named_or_index(1, 'defaultSize').as_v_opt[int]() } else { none }
-    arg_2 := php_args.at_named_or_index(2, 'defaultError').as_v[int]()
-    arg_3 := if php_args.has_named_or_index(3, 'defaultClientFilename') { php_args.at_named_or_index(3, 'defaultClientFilename').as_v_opt[string]() } else { none }
-    arg_4 := if php_args.has_named_or_index(4, 'defaultClientMediaType') { php_args.at_named_or_index(4, 'defaultClientMediaType').as_v_opt[string]() } else { none }
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).as_v_opt[int]()
+    arg_2 := php_args.at(2).as_v[int]()
+    arg_3 := php_args.at(3).as_v_opt[string]()
+    arg_4 := php_args.at(4).as_v_opt[string]()
     res := recv.construct(arg_0, arg_1, arg_2, arg_3, arg_4)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr7UploadedFile](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr7_uploaded_file_get_stream']
 pub fn vphp_wrap_vslim_psr7_uploaded_file_get_stream(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1199,9 +1198,9 @@ pub fn vphp_wrap_vslim_psr7_uploaded_file_move_to(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'targetPath', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'targetPath' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'targetPath').value
+    arg_0 := php_args.at(0).value
     recv.move_to(arg_0)
 }
 @[export: 'vphp_wrap_vslim_psr7_uploaded_file_get_size']
@@ -1209,7 +1208,7 @@ pub fn vphp_wrap_vslim_psr7_uploaded_file_get_size(ptr voidptr, ctx vphp.Context
     mut recv := unsafe { &VSlimPsr7UploadedFile(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    ctx.return().from_option[int](fn [recv] () ?int {
+    ctx.return().from_option[i64](fn [recv] () ?i64 {
         return recv.get_size()
     })
 }
@@ -1249,13 +1248,13 @@ pub fn vphp_wrap_vslim_psr7_uploaded_file_str(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_psr7_uploaded_file_handlers']
 pub fn vslim_psr7_uploaded_file_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr7_uploaded_file_get_prop),
-        write_handler: voidptr(vslim_psr7_uploaded_file_set_prop),
-        sync_handler: voidptr(vslim_psr7_uploaded_file_sync_props),
-        new_raw: voidptr(vslim_psr7_uploaded_file_new_raw),
-        cleanup_raw: voidptr(vslim_psr7_uploaded_file_cleanup_raw),
-        free_raw: voidptr(vslim_psr7_uploaded_file_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr7_uploaded_file_get_prop,
+        write_handler: vslim_psr7_uploaded_file_set_prop,
+        sync_handler: vslim_psr7_uploaded_file_sync_props,
+        new_raw: vslim_psr7_uploaded_file_new_raw,
+        cleanup_raw: vslim_psr7_uploaded_file_cleanup_raw,
+        free_raw: vslim_psr7_uploaded_file_free_raw
     )
 }
 pub fn VSlimPsr7UploadedFile.php_class_entry() vphp.ZendClassEntry {
@@ -1311,6 +1310,14 @@ pub fn vslim_psr7_response_cleanup_raw(ptr voidptr) {
         obj.cleanup()
     }
 }
+@[export: 'vslim_psr7_response_clone_into_raw']
+pub fn vslim_psr7_response_clone_into_raw(source voidptr, target voidptr) {
+    unsafe {
+        src := &VSlimPsr7Response(source)
+        mut dst := &VSlimPsr7Response(target)
+        src.clone_into(mut dst)
+    }
+}
 @[export: 'vslim_psr7_response_get_prop']
 pub fn vslim_psr7_response_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
@@ -1340,22 +1347,24 @@ pub fn vslim_psr7_response_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7Response(ptr)
-        out.add_property_long('status', i64(obj.status))
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'status', obj.status)
     }
 }
 @[export: 'vphp_wrap_vslim_psr7_response_construct']
-pub fn vphp_wrap_vslim_psr7_response_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr7_response_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'defaultStatus', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultReasonPhrase', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := if php_args.has_named_or_index(0, 'defaultStatus') { php_args.at_named_or_index(0, 'defaultStatus').as_v[int]() } else { 200 }
-    arg_1 := if php_args.has_named_or_index(1, 'defaultReasonPhrase') { php_args.at_named_or_index(1, 'defaultReasonPhrase').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'defaultStatus', use_php_default: true },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultReasonPhrase', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[int]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.construct(arg_0, arg_1)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr7Response](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr7_response_get_protocol_version']
 pub fn vphp_wrap_vslim_psr7_response_get_protocol_version(ptr voidptr, ctx vphp.Context)  {
@@ -1371,9 +1380,9 @@ pub fn vphp_wrap_vslim_psr7_response_with_protocol_version(ptr voidptr, ctx vphp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'version', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'version' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'version').value
+    arg_0 := php_args.at(0).value
     res := recv.with_protocol_version(arg_0)
     return voidptr(res)
 }
@@ -1391,9 +1400,9 @@ pub fn vphp_wrap_vslim_psr7_response_has_header(ptr voidptr, ctx vphp.Context)  
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
@@ -1403,9 +1412,9 @@ pub fn vphp_wrap_vslim_psr7_response_get_header(ptr voidptr, ctx vphp.Context)  
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.get_header(arg_0)
     ctx.return().v[[]string](res)
 }
@@ -1415,9 +1424,9 @@ pub fn vphp_wrap_vslim_psr7_response_get_header_line(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.get_header_line(arg_0)
     ctx.return().v[string](res)
 }
@@ -1427,11 +1436,11 @@ pub fn vphp_wrap_vslim_psr7_response_with_header(ptr voidptr, ctx vphp.Context) 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
-    arg_1 := php_args.at_named_or_index(1, 'value').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
     res := recv.with_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -1441,11 +1450,11 @@ pub fn vphp_wrap_vslim_psr7_response_with_added_header(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
-    arg_1 := php_args.at_named_or_index(1, 'value').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
     res := recv.with_added_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -1455,19 +1464,19 @@ pub fn vphp_wrap_vslim_psr7_response_without_header(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.without_header(arg_0)
     return voidptr(res)
 }
 @[export: 'vphp_wrap_vslim_psr7_response_get_body']
-pub fn vphp_wrap_vslim_psr7_response_get_body(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr7_response_get_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_body()
-    return voidptr(res)
+    ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vphp_wrap_vslim_psr7_response_with_body']
 pub fn vphp_wrap_vslim_psr7_response_with_body(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1475,9 +1484,12 @@ pub fn vphp_wrap_vslim_psr7_response_with_body(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'body', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'body' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'body').value
+    arg_0 := php_args.at(0).zval().to_v[PsrStream]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
+    }
     res := recv.with_body(arg_0)
     return voidptr(res)
 }
@@ -1494,12 +1506,14 @@ pub fn vphp_wrap_vslim_psr7_response_with_status(ptr voidptr, ctx vphp.Context) 
     mut recv := unsafe { &VSlimPsr7Response(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'code', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultReasonPhrase', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'code').value
-    arg_1 := php_args.at_named_or_index(1, 'defaultReasonPhrase').value
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'code' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultReasonPhrase', use_php_default: true },
+    ]) or {
+        return unsafe { nil }
+    }
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
     res := recv.with_status(arg_0, arg_1)
     return voidptr(res)
 }
@@ -1517,23 +1531,23 @@ pub fn vphp_wrap_vslim_psr7_response_set_cookie_full(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'path', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'domain', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'maxAge', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'secure', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 6, name: 'httpOnly', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 7, name: 'sameSite', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
+        vphp.PhpArgMeta{ index: 2, name: 'path' },
+        vphp.PhpArgMeta{ index: 3, name: 'domain' },
+        vphp.PhpArgMeta{ index: 4, name: 'maxAge' },
+        vphp.PhpArgMeta{ index: 5, name: 'secure' },
+        vphp.PhpArgMeta{ index: 6, name: 'httpOnly' },
+        vphp.PhpArgMeta{ index: 7, name: 'sameSite' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'path').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'domain').as_v[string]()
-    arg_4 := php_args.at_named_or_index(4, 'maxAge').as_v[int]()
-    arg_5 := php_args.at_named_or_index(5, 'secure').as_v[bool]()
-    arg_6 := php_args.at_named_or_index(6, 'httpOnly').as_v[bool]()
-    arg_7 := php_args.at_named_or_index(7, 'sameSite').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).as_v[string]()
+    arg_4 := php_args.at(4).as_v[int]()
+    arg_5 := php_args.at(5).as_v[bool]()
+    arg_6 := php_args.at(6).as_v[bool]()
+    arg_7 := php_args.at(7).as_v[string]()
     res := recv.set_cookie_full(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     return voidptr(res)
 }
@@ -1543,9 +1557,9 @@ pub fn vphp_wrap_vslim_psr7_response_delete_cookie(ptr voidptr, ctx vphp.Context
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.delete_cookie(arg_0)
     return voidptr(res)
 }
@@ -1559,14 +1573,21 @@ pub fn vphp_wrap_vslim_psr7_response_str(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_psr7_response_handlers']
 pub fn vslim_psr7_response_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr7_response_get_prop),
-        write_handler: voidptr(vslim_psr7_response_set_prop),
-        sync_handler: voidptr(vslim_psr7_response_sync_props),
-        new_raw: voidptr(vslim_psr7_response_new_raw),
-        cleanup_raw: voidptr(vslim_psr7_response_cleanup_raw),
-        free_raw: voidptr(vslim_psr7_response_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr7_response_get_prop,
+        write_handler: vslim_psr7_response_set_prop,
+        sync_handler: vslim_psr7_response_sync_props,
+        new_raw: vslim_psr7_response_new_raw,
+        cleanup_raw: vslim_psr7_response_cleanup_raw,
+        free_raw: vslim_psr7_response_free_raw,
+        init_php_state: vslim_psr7_response_init_php_state
     )
+}
+fn vslim_psr7_response_init_php_state(ptr voidptr) {
+    unsafe {
+        mut obj := &VSlimPsr7Response(ptr)
+        obj.init_php_state()
+    }
 }
 pub fn VSlimPsr7Response.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr7__response_ce)
@@ -1615,6 +1636,14 @@ pub fn vslim_psr7_uri_free_raw(ptr voidptr) {
 pub fn vslim_psr7_uri_cleanup_raw(ptr voidptr) {
     if ptr == 0 {
         return
+    }
+}
+@[export: 'vslim_psr7_uri_clone_into_raw']
+pub fn vslim_psr7_uri_clone_into_raw(source voidptr, target voidptr) {
+    unsafe {
+        src := &VSlimPsr7Uri(source)
+        mut dst := &VSlimPsr7Uri(target)
+        src.clone_into(mut dst)
     }
 }
 @[export: 'vslim_psr7_uri_get_prop']
@@ -1702,27 +1731,51 @@ pub fn vslim_psr7_uri_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7Uri(ptr)
-        out.add_property_string('scheme', obj.scheme)
-        out.add_property_string('user', obj.user)
-        out.add_property_string('password', obj.password)
-        out.add_property_string('host', obj.host)
-        out.add_property_long('port', i64(obj.port))
-        out.add_property_string('path', obj.path)
-        out.add_property_string('query', obj.query)
-        out.add_property_string('fragment', obj.fragment)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'scheme', obj.scheme)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'user', obj.user)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'password', obj.password)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'host', obj.host)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'port', obj.port)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'path', obj.path)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'query', obj.query)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'fragment', obj.fragment)
     }
 }
 @[export: 'vphp_wrap_vslim_psr7_uri_construct']
-pub fn vphp_wrap_vslim_psr7_uri_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr7_uri_construct(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimPsr7Uri(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'defaultUri', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
+    res := recv.construct(arg_0)
+    ctx.return().return_v_object[VSlimPsr7Uri](res, .borrowed)
+}
+@[export: 'vphp_wrap_vslim_psr7_uri_serialize_state']
+pub fn vphp_wrap_vslim_psr7_uri_serialize_state(ptr voidptr, ctx vphp.Context)  {
+    mut recv := unsafe { &VSlimPsr7Uri(ptr) }
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := recv.serialize_state()
+    ctx.return().v[vphp.PhpArray](res)
+}
+@[export: 'vphp_wrap_vslim_psr7_uri_unserialize_state']
+pub fn vphp_wrap_vslim_psr7_uri_unserialize_state(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'defaultUri', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'data' },
     ])
-    arg_0 := if php_args.has_named_or_index(0, 'defaultUri') { php_args.at_named_or_index(0, 'defaultUri').as_v[string]() } else { '' }
-    res := recv.construct(arg_0)
-    return voidptr(res)
+    arg_0 := php_args.at(0).array() or {
+        vphp.throw_exception('argument 0 must be array', 0)
+        return
+    }
+    recv.unserialize_state(arg_0)
 }
 @[export: 'vphp_wrap_vslim_psr7_uri_str']
 pub fn vphp_wrap_vslim_psr7_uri_str(ptr voidptr, ctx vphp.Context)  {
@@ -1803,24 +1856,29 @@ pub fn vphp_wrap_vslim_psr7_uri_with_scheme(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'scheme', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'scheme' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'scheme').value
+    arg_0 := php_args.at(0).value
     res := recv.with_scheme(arg_0)
     return voidptr(res)
 }
-@[export: 'vphp_wrap_vslim_psr7_uri_with_user_info']
-pub fn vphp_wrap_vslim_psr7_uri_with_user_info(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr7_uri_with_user_info_options']
+pub fn vphp_wrap_vslim_psr7_uri_with_user_info_options(ptr voidptr, ctx vphp.Context) voidptr {
     mut recv := unsafe { &VSlimPsr7Uri(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'user', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultPassword', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'user').value
-    arg_1 := php_args.at_named_or_index(1, 'defaultPassword').value
-    res := recv.with_user_info(arg_0, arg_1)
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'user' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultPassword', attributes: [vphp.PhpAttribute.named('SensitiveParameter').for_parameter()], use_php_default: true },
+    ]) or {
+        return unsafe { nil }
+    }
+    arg_0 := php_args.at(0).value
+    arg_1_params_default_password := php_args.at(1).value
+    arg_1_params := httpx.UriUserInfoOptions{
+        default_password: arg_1_params_default_password
+    }
+    res := recv.with_user_info_options(arg_0, arg_1_params)
     return voidptr(res)
 }
 @[export: 'vphp_wrap_vslim_psr7_uri_with_host']
@@ -1829,9 +1887,9 @@ pub fn vphp_wrap_vslim_psr7_uri_with_host(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'host', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'host' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'host').value
+    arg_0 := php_args.at(0).value
     res := recv.with_host(arg_0)
     return voidptr(res)
 }
@@ -1841,9 +1899,9 @@ pub fn vphp_wrap_vslim_psr7_uri_with_port(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'port', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'port' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'port').value
+    arg_0 := php_args.at(0).value
     res := recv.with_port(arg_0)
     return voidptr(res)
 }
@@ -1853,9 +1911,9 @@ pub fn vphp_wrap_vslim_psr7_uri_with_path(ptr voidptr, ctx vphp.Context) voidptr
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').value
+    arg_0 := php_args.at(0).value
     res := recv.with_path(arg_0)
     return voidptr(res)
 }
@@ -1865,9 +1923,9 @@ pub fn vphp_wrap_vslim_psr7_uri_with_query(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').value
+    arg_0 := php_args.at(0).value
     res := recv.with_query(arg_0)
     return voidptr(res)
 }
@@ -1877,21 +1935,21 @@ pub fn vphp_wrap_vslim_psr7_uri_with_fragment(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'fragment', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'fragment' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'fragment').value
+    arg_0 := php_args.at(0).value
     res := recv.with_fragment(arg_0)
     return voidptr(res)
 }
 @[export: 'vslim_psr7_uri_handlers']
 pub fn vslim_psr7_uri_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr7_uri_get_prop),
-        write_handler: voidptr(vslim_psr7_uri_set_prop),
-        sync_handler: voidptr(vslim_psr7_uri_sync_props),
-        new_raw: voidptr(vslim_psr7_uri_new_raw),
-        cleanup_raw: voidptr(vslim_psr7_uri_cleanup_raw),
-        free_raw: voidptr(vslim_psr7_uri_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr7_uri_get_prop,
+        write_handler: vslim_psr7_uri_set_prop,
+        sync_handler: vslim_psr7_uri_sync_props,
+        new_raw: vslim_psr7_uri_new_raw,
+        cleanup_raw: vslim_psr7_uri_cleanup_raw,
+        free_raw: vslim_psr7_uri_free_raw
     )
 }
 pub fn VSlimPsr7Uri.php_class_entry() vphp.ZendClassEntry {
@@ -1947,6 +2005,14 @@ pub fn vslim_psr7_request_cleanup_raw(ptr voidptr) {
         obj.cleanup()
     }
 }
+@[export: 'vslim_psr7_request_clone_into_raw']
+pub fn vslim_psr7_request_clone_into_raw(source voidptr, target voidptr) {
+    unsafe {
+        src := &VSlimPsr7Request(source)
+        mut dst := &VSlimPsr7Request(target)
+        src.clone_into(mut dst)
+    }
+}
 @[export: 'vslim_psr7_request_get_prop']
 pub fn vslim_psr7_request_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
@@ -1976,16 +2042,16 @@ pub fn vslim_psr7_request_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7Request(ptr)
-        out.add_property_string('method', obj.method)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'method', obj.method)
     }
 }
 @[export: 'vphp_wrap_vslim_psr7_request_construct']
-pub fn vphp_wrap_vslim_psr7_request_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr7_request_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr7Request](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr7_request_get_protocol_version']
 pub fn vphp_wrap_vslim_psr7_request_get_protocol_version(ptr voidptr, ctx vphp.Context)  {
@@ -2001,9 +2067,9 @@ pub fn vphp_wrap_vslim_psr7_request_with_protocol_version(ptr voidptr, ctx vphp.
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'version', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'version' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'version').value
+    arg_0 := php_args.at(0).value
     res := recv.with_protocol_version(arg_0)
     return voidptr(res)
 }
@@ -2021,9 +2087,9 @@ pub fn vphp_wrap_vslim_psr7_request_has_header(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
@@ -2033,9 +2099,9 @@ pub fn vphp_wrap_vslim_psr7_request_get_header(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.get_header(arg_0)
     ctx.return().v[[]string](res)
 }
@@ -2045,9 +2111,9 @@ pub fn vphp_wrap_vslim_psr7_request_get_header_line(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.get_header_line(arg_0)
     ctx.return().v[string](res)
 }
@@ -2057,11 +2123,11 @@ pub fn vphp_wrap_vslim_psr7_request_with_header(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
-    arg_1 := php_args.at_named_or_index(1, 'value').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
     res := recv.with_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2071,11 +2137,11 @@ pub fn vphp_wrap_vslim_psr7_request_with_added_header(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
-    arg_1 := php_args.at_named_or_index(1, 'value').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
     res := recv.with_added_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2085,19 +2151,19 @@ pub fn vphp_wrap_vslim_psr7_request_without_header(ptr voidptr, ctx vphp.Context
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.without_header(arg_0)
     return voidptr(res)
 }
 @[export: 'vphp_wrap_vslim_psr7_request_get_body']
-pub fn vphp_wrap_vslim_psr7_request_get_body(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr7_request_get_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_body()
-    return voidptr(res)
+    ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vphp_wrap_vslim_psr7_request_with_body']
 pub fn vphp_wrap_vslim_psr7_request_with_body(ptr voidptr, ctx vphp.Context) voidptr {
@@ -2105,9 +2171,12 @@ pub fn vphp_wrap_vslim_psr7_request_with_body(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'body', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'body' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'body').value
+    arg_0 := php_args.at(0).zval().to_v[PsrStream]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
+    }
     res := recv.with_body(arg_0)
     return voidptr(res)
 }
@@ -2125,9 +2194,9 @@ pub fn vphp_wrap_vslim_psr7_request_with_request_target(ptr voidptr, ctx vphp.Co
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestTarget', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestTarget' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestTarget').value
+    arg_0 := php_args.at(0).value
     res := recv.with_request_target(arg_0)
     return voidptr(res)
 }
@@ -2145,9 +2214,9 @@ pub fn vphp_wrap_vslim_psr7_request_with_method(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'method', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'method' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'method').value
+    arg_0 := php_args.at(0).value
     res := recv.with_method(arg_0)
     return voidptr(res)
 }
@@ -2164,12 +2233,17 @@ pub fn vphp_wrap_vslim_psr7_request_with_uri(ptr voidptr, ctx vphp.Context) void
     mut recv := unsafe { &VSlimPsr7Request(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'uri', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'preserveHost', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'uri').value
-    arg_1 := if php_args.has_named_or_index(1, 'preserveHost') { php_args.at_named_or_index(1, 'preserveHost').as_v[bool]() } else { false }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'uri' },
+        vphp.PhpArgMeta{ index: 1, name: 'preserveHost', use_php_default: true },
+    ]) or {
+        return unsafe { nil }
+    }
+    arg_0 := php_args.at(0).zval().to_v[PsrUri]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
+    }
+    arg_1 := php_args.at(1).as_v[bool]()
     res := recv.with_uri(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2183,14 +2257,21 @@ pub fn vphp_wrap_vslim_psr7_request_str(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_psr7_request_handlers']
 pub fn vslim_psr7_request_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr7_request_get_prop),
-        write_handler: voidptr(vslim_psr7_request_set_prop),
-        sync_handler: voidptr(vslim_psr7_request_sync_props),
-        new_raw: voidptr(vslim_psr7_request_new_raw),
-        cleanup_raw: voidptr(vslim_psr7_request_cleanup_raw),
-        free_raw: voidptr(vslim_psr7_request_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr7_request_get_prop,
+        write_handler: vslim_psr7_request_set_prop,
+        sync_handler: vslim_psr7_request_sync_props,
+        new_raw: vslim_psr7_request_new_raw,
+        cleanup_raw: vslim_psr7_request_cleanup_raw,
+        free_raw: vslim_psr7_request_free_raw,
+        init_php_state: vslim_psr7_request_init_php_state
     )
+}
+fn vslim_psr7_request_init_php_state(ptr voidptr) {
+    unsafe {
+        mut obj := &VSlimPsr7Request(ptr)
+        obj.init_php_state()
+    }
 }
 pub fn VSlimPsr7Request.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr7__request_ce)
@@ -2246,6 +2327,14 @@ pub fn vslim_psr7_server_request_cleanup_raw(ptr voidptr) {
         obj.free()
     }
 }
+@[export: 'vslim_psr7_server_request_clone_into_raw']
+pub fn vslim_psr7_server_request_clone_into_raw(source voidptr, target voidptr) {
+    unsafe {
+        src := &VSlimPsr7ServerRequest(source)
+        mut dst := &VSlimPsr7ServerRequest(target)
+        src.clone_into(mut dst)
+    }
+}
 @[export: 'vslim_psr7_server_request_get_prop']
 pub fn vslim_psr7_server_request_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
     ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
@@ -2275,16 +2364,16 @@ pub fn vslim_psr7_server_request_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr7ServerRequest(ptr)
-        out.add_property_string('method', obj.method)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'method', obj.method)
     }
 }
 @[export: 'vphp_wrap_vslim_psr7_server_request_construct']
-pub fn vphp_wrap_vslim_psr7_server_request_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr7_server_request_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr7ServerRequest](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr7_server_request_get_protocol_version']
 pub fn vphp_wrap_vslim_psr7_server_request_get_protocol_version(ptr voidptr, ctx vphp.Context)  {
@@ -2300,9 +2389,9 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_protocol_version(ptr voidptr, ct
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'version', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'version' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'version').value
+    arg_0 := php_args.at(0).value
     res := recv.with_protocol_version(arg_0)
     return voidptr(res)
 }
@@ -2320,9 +2409,9 @@ pub fn vphp_wrap_vslim_psr7_server_request_has_header(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
@@ -2332,9 +2421,9 @@ pub fn vphp_wrap_vslim_psr7_server_request_get_header(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.get_header(arg_0)
     ctx.return().v[[]string](res)
 }
@@ -2344,9 +2433,9 @@ pub fn vphp_wrap_vslim_psr7_server_request_get_header_line(ptr voidptr, ctx vphp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.get_header_line(arg_0)
     ctx.return().v[string](res)
 }
@@ -2356,11 +2445,11 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_header(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
-    arg_1 := php_args.at_named_or_index(1, 'value').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
     res := recv.with_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2370,11 +2459,11 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_added_header(ptr voidptr, ctx vp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
-    arg_1 := php_args.at_named_or_index(1, 'value').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
     res := recv.with_added_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2384,19 +2473,19 @@ pub fn vphp_wrap_vslim_psr7_server_request_without_header(ptr voidptr, ctx vphp.
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.without_header(arg_0)
     return voidptr(res)
 }
 @[export: 'vphp_wrap_vslim_psr7_server_request_get_body']
-pub fn vphp_wrap_vslim_psr7_server_request_get_body(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr7_server_request_get_body(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.get_body()
-    return voidptr(res)
+    ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vphp_wrap_vslim_psr7_server_request_with_body']
 pub fn vphp_wrap_vslim_psr7_server_request_with_body(ptr voidptr, ctx vphp.Context) voidptr {
@@ -2404,9 +2493,12 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_body(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'body', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'body' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'body').value
+    arg_0 := php_args.at(0).zval().to_v[PsrStream]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
+    }
     res := recv.with_body(arg_0)
     return voidptr(res)
 }
@@ -2424,9 +2516,9 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_request_target(ptr voidptr, ctx 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestTarget', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestTarget' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestTarget').value
+    arg_0 := php_args.at(0).value
     res := recv.with_request_target(arg_0)
     return voidptr(res)
 }
@@ -2444,9 +2536,9 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_method(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'method', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'method' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'method').value
+    arg_0 := php_args.at(0).value
     res := recv.with_method(arg_0)
     return voidptr(res)
 }
@@ -2463,12 +2555,17 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_uri(ptr voidptr, ctx vphp.Contex
     mut recv := unsafe { &VSlimPsr7ServerRequest(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'uri', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'preserveHost', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'uri').value
-    arg_1 := if php_args.has_named_or_index(1, 'preserveHost') { php_args.at_named_or_index(1, 'preserveHost').as_v[bool]() } else { false }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'uri' },
+        vphp.PhpArgMeta{ index: 1, name: 'preserveHost', use_php_default: true },
+    ]) or {
+        return unsafe { nil }
+    }
+    arg_0 := php_args.at(0).zval().to_v[PsrUri]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
+    }
+    arg_1 := php_args.at(1).as_v[bool]()
     res := recv.with_uri(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2494,12 +2591,11 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_cookie_params(ptr voidptr, ctx v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'cookies', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'cookies' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'cookies').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.with_cookie_params(arg_0)
     return voidptr(res)
@@ -2518,12 +2614,11 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_query_params(ptr voidptr, ctx vp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.with_query_params(arg_0)
     return voidptr(res)
@@ -2542,12 +2637,11 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_uploaded_files(ptr voidptr, ctx 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'uploadedFiles', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'uploadedFiles' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'uploadedFiles').array() or {
+    arg_0 := php_args.at(0).array() or {
         vphp.throw_exception('argument 0 must be array', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return unsafe { nil }
     }
     res := recv.with_uploaded_files(arg_0)
     return voidptr(res)
@@ -2566,9 +2660,9 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_parsed_body(ptr voidptr, ctx vph
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'parsedBody', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'parsedBody' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'parsedBody').value
+    arg_0 := php_args.at(0).value
     res := recv.with_parsed_body(arg_0)
     return voidptr(res)
 }
@@ -2586,11 +2680,11 @@ pub fn vphp_wrap_vslim_psr7_server_request_get_attribute(ptr voidptr, ctx vphp.C
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
-    arg_1 := if php_args.has_named_or_index(1, 'defaultValue') { ?vphp.PhpValue(php_args.at_named_or_index(1, 'defaultValue').value) } else { none }
+    arg_0 := php_args.at(0).value
+    arg_1 := if php_args.has(1) { ?vphp.PhpValue(php_args.at(1).value) } else { none }
     res := recv.get_attribute(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -2600,11 +2694,11 @@ pub fn vphp_wrap_vslim_psr7_server_request_with_attribute(ptr voidptr, ctx vphp.
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
-    arg_1 := php_args.at_named_or_index(1, 'value').value
+    arg_0 := php_args.at(0).value
+    arg_1 := php_args.at(1).value
     res := recv.with_attribute(arg_0, arg_1)
     return voidptr(res)
 }
@@ -2614,9 +2708,9 @@ pub fn vphp_wrap_vslim_psr7_server_request_without_attribute(ptr voidptr, ctx vp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').value
+    arg_0 := php_args.at(0).value
     res := recv.without_attribute(arg_0)
     return voidptr(res)
 }
@@ -2630,14 +2724,21 @@ pub fn vphp_wrap_vslim_psr7_server_request_str(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_psr7_server_request_handlers']
 pub fn vslim_psr7_server_request_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr7_server_request_get_prop),
-        write_handler: voidptr(vslim_psr7_server_request_set_prop),
-        sync_handler: voidptr(vslim_psr7_server_request_sync_props),
-        new_raw: voidptr(vslim_psr7_server_request_new_raw),
-        cleanup_raw: voidptr(vslim_psr7_server_request_cleanup_raw),
-        free_raw: voidptr(vslim_psr7_server_request_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr7_server_request_get_prop,
+        write_handler: vslim_psr7_server_request_set_prop,
+        sync_handler: vslim_psr7_server_request_sync_props,
+        new_raw: vslim_psr7_server_request_new_raw,
+        cleanup_raw: vslim_psr7_server_request_cleanup_raw,
+        free_raw: vslim_psr7_server_request_free_raw,
+        init_php_state: vslim_psr7_server_request_init_php_state
     )
+}
+fn vslim_psr7_server_request_init_php_state(ptr voidptr) {
+    unsafe {
+        mut obj := &VSlimPsr7ServerRequest(ptr)
+        obj.init_php_state()
+    }
 }
 pub fn VSlimPsr7ServerRequest.php_class_entry() vphp.ZendClassEntry {
     return vphp.ZendClassEntry.from_ptr(C.vslim__psr7__serverrequest_ce)
@@ -2708,12 +2809,12 @@ pub fn vslim_psr17_response_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_psr17_response_factory_construct']
-pub fn vphp_wrap_vslim_psr17_response_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr17_response_factory_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr17ResponseFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr17ResponseFactory](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr17_response_factory_create_response']
 pub fn vphp_wrap_vslim_psr17_response_factory_create_response(ptr voidptr, ctx vphp.Context) voidptr {
@@ -2721,11 +2822,11 @@ pub fn vphp_wrap_vslim_psr17_response_factory_create_response(ptr voidptr, ctx v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'reasonPhrase', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'status' },
+        vphp.PhpArgMeta{ index: 1, name: 'reasonPhrase' },
     ])
-    arg_0_params_status := if php_args.has_named_or_index(0, 'status') { php_args.at_named_or_index(0, 'status').as_v[int]() } else { 200 }
-    arg_0_params_reason_phrase := if php_args.has_named_or_index(1, 'reasonPhrase') { php_args.at_named_or_index(1, 'reasonPhrase').as_v[string]() } else { '' }
+    arg_0_params_status := if php_args.has(0) { php_args.at(0).as_v[int]() } else { 200 }
+    arg_0_params_reason_phrase := if php_args.has(1) { php_args.at(1).as_v[string]() } else { '' }
     arg_0_params := httpx.VSlimPsr17CreateResponseParams{
         status: arg_0_params_status
         reason_phrase: arg_0_params_reason_phrase
@@ -2735,13 +2836,13 @@ pub fn vphp_wrap_vslim_psr17_response_factory_create_response(ptr voidptr, ctx v
 }
 @[export: 'vslim_psr17_response_factory_handlers']
 pub fn vslim_psr17_response_factory_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr17_response_factory_get_prop),
-        write_handler: voidptr(vslim_psr17_response_factory_set_prop),
-        sync_handler: voidptr(vslim_psr17_response_factory_sync_props),
-        new_raw: voidptr(vslim_psr17_response_factory_new_raw),
-        cleanup_raw: voidptr(vslim_psr17_response_factory_cleanup_raw),
-        free_raw: voidptr(vslim_psr17_response_factory_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr17_response_factory_get_prop,
+        write_handler: vslim_psr17_response_factory_set_prop,
+        sync_handler: vslim_psr17_response_factory_sync_props,
+        new_raw: vslim_psr17_response_factory_new_raw,
+        cleanup_raw: vslim_psr17_response_factory_cleanup_raw,
+        free_raw: vslim_psr17_response_factory_free_raw
     )
 }
 pub fn VSlimPsr17ResponseFactory.php_class_entry() vphp.ZendClassEntry {
@@ -2813,12 +2914,12 @@ pub fn vslim_psr17_request_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_psr17_request_factory_construct']
-pub fn vphp_wrap_vslim_psr17_request_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr17_request_factory_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr17RequestFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr17RequestFactory](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr17_request_factory_create_request']
 pub fn vphp_wrap_vslim_psr17_request_factory_create_request(ptr voidptr, ctx vphp.Context) voidptr {
@@ -2826,23 +2927,23 @@ pub fn vphp_wrap_vslim_psr17_request_factory_create_request(ptr voidptr, ctx vph
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'method', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'uri', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'method' },
+        vphp.PhpArgMeta{ index: 1, name: 'uri' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'method').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'uri').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.create_request(arg_0, arg_1)
     return voidptr(res)
 }
 @[export: 'vslim_psr17_request_factory_handlers']
 pub fn vslim_psr17_request_factory_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr17_request_factory_get_prop),
-        write_handler: voidptr(vslim_psr17_request_factory_set_prop),
-        sync_handler: voidptr(vslim_psr17_request_factory_sync_props),
-        new_raw: voidptr(vslim_psr17_request_factory_new_raw),
-        cleanup_raw: voidptr(vslim_psr17_request_factory_cleanup_raw),
-        free_raw: voidptr(vslim_psr17_request_factory_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr17_request_factory_get_prop,
+        write_handler: vslim_psr17_request_factory_set_prop,
+        sync_handler: vslim_psr17_request_factory_sync_props,
+        new_raw: vslim_psr17_request_factory_new_raw,
+        cleanup_raw: vslim_psr17_request_factory_cleanup_raw,
+        free_raw: vslim_psr17_request_factory_free_raw
     )
 }
 pub fn VSlimPsr17RequestFactory.php_class_entry() vphp.ZendClassEntry {
@@ -2914,12 +3015,12 @@ pub fn vslim_psr17_stream_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_psr17_stream_factory_construct']
-pub fn vphp_wrap_vslim_psr17_stream_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr17_stream_factory_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr17StreamFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr17StreamFactory](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr17_stream_factory_create_stream']
 pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream(ptr voidptr, ctx vphp.Context) voidptr {
@@ -2927,9 +3028,9 @@ pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream(ptr voidptr, ctx vphp.
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'content', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'content' },
     ])
-    arg_0_params_content := if php_args.has_named_or_index(0, 'content') { php_args.at_named_or_index(0, 'content').as_v[string]() } else { '' }
+    arg_0_params_content := if php_args.has(0) { php_args.at(0).as_v[string]() } else { '' }
     arg_0_params := httpx.VSlimPsr17CreateStreamParams{
         content: arg_0_params_content
     }
@@ -2937,47 +3038,46 @@ pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream(ptr voidptr, ctx vphp.
     return voidptr(res)
 }
 @[export: 'vphp_wrap_vslim_psr17_stream_factory_create_stream_from_file']
-pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream_from_file(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream_from_file(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr17StreamFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'filename', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'mode', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'filename' },
+        vphp.PhpArgMeta{ index: 1, name: 'mode' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'filename').as_v[string]()
-    arg_1_params_mode := if php_args.has_named_or_index(1, 'mode') { php_args.at_named_or_index(1, 'mode').as_v[string]() } else { 'r' }
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1_params_mode := if php_args.has(1) { php_args.at(1).as_v[string]() } else { 'r' }
     arg_1_params := httpx.VSlimPsr17CreateStreamFromFileParams{
         mode: arg_1_params_mode
     }
     res := recv.create_stream_from_file(arg_0, arg_1_params)
-    return voidptr(res)
+    ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vphp_wrap_vslim_psr17_stream_factory_create_stream_from_resource']
-pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream_from_resource(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr17_stream_factory_create_stream_from_resource(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr17StreamFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'resource', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'resource' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'resource').resource() or {
+    arg_0 := php_args.at(0).resource() or {
         vphp.throw_exception('argument 0 must be resource', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+        return
     }
     res := recv.create_stream_from_resource(arg_0)
-    return voidptr(res)
+    ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vslim_psr17_stream_factory_handlers']
 pub fn vslim_psr17_stream_factory_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr17_stream_factory_get_prop),
-        write_handler: voidptr(vslim_psr17_stream_factory_set_prop),
-        sync_handler: voidptr(vslim_psr17_stream_factory_sync_props),
-        new_raw: voidptr(vslim_psr17_stream_factory_new_raw),
-        cleanup_raw: voidptr(vslim_psr17_stream_factory_cleanup_raw),
-        free_raw: voidptr(vslim_psr17_stream_factory_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr17_stream_factory_get_prop,
+        write_handler: vslim_psr17_stream_factory_set_prop,
+        sync_handler: vslim_psr17_stream_factory_sync_props,
+        new_raw: vslim_psr17_stream_factory_new_raw,
+        cleanup_raw: vslim_psr17_stream_factory_cleanup_raw,
+        free_raw: vslim_psr17_stream_factory_free_raw
     )
 }
 pub fn VSlimPsr17StreamFactory.php_class_entry() vphp.ZendClassEntry {
@@ -3049,34 +3149,35 @@ pub fn vslim_psr17_uploaded_file_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_psr17_uploaded_file_factory_construct']
-pub fn vphp_wrap_vslim_psr17_uploaded_file_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr17_uploaded_file_factory_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr17UploadedFileFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr17UploadedFileFactory](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr17_uploaded_file_factory_create_uploaded_file']
-pub fn vphp_wrap_vslim_psr17_uploaded_file_factory_create_uploaded_file(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr17_uploaded_file_factory_create_uploaded_file(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr17UploadedFileFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'stream', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'size', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'error', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'clientFilename', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'clientMediaType', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := php_args.at_named_or_index(0, 'stream').object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'stream' },
+        vphp.PhpArgMeta{ index: 1, name: 'size' },
+        vphp.PhpArgMeta{ index: 2, name: 'error', use_php_default: true },
+        vphp.PhpArgMeta{ index: 3, name: 'clientFilename' },
+        vphp.PhpArgMeta{ index: 4, name: 'clientMediaType' },
+    ]) or {
+        return
     }
-    arg_1_params_size := if php_args.has_named_or_index(1, 'size') { php_args.at_named_or_index(1, 'size').as_v_opt[int]() } else { none }
-    arg_1_params_error := if php_args.has_named_or_index(2, 'error') { php_args.at_named_or_index(2, 'error').as_v[int]() } else { 0 }
-    arg_1_params_client_filename := if php_args.has_named_or_index(3, 'clientFilename') { php_args.at_named_or_index(3, 'clientFilename').as_v_opt[string]() } else { none }
-    arg_1_params_client_media_type := if php_args.has_named_or_index(4, 'clientMediaType') { php_args.at_named_or_index(4, 'clientMediaType').as_v_opt[string]() } else { none }
+    arg_0 := php_args.at(0).zval().to_v[PsrStream]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return
+    }
+    arg_1_params_size := if php_args.has(1) { php_args.at(1).as_v_opt[int]() } else { none }
+    arg_1_params_error := php_args.at(2).as_v[int]()
+    arg_1_params_client_filename := if php_args.has(3) { php_args.at(3).as_v_opt[string]() } else { none }
+    arg_1_params_client_media_type := if php_args.has(4) { php_args.at(4).as_v_opt[string]() } else { none }
     arg_1_params := httpx.VSlimPsr17CreateUploadedFileParams{
         size: arg_1_params_size
         error: arg_1_params_error
@@ -3084,17 +3185,17 @@ pub fn vphp_wrap_vslim_psr17_uploaded_file_factory_create_uploaded_file(ptr void
         client_media_type: arg_1_params_client_media_type
     }
     res := recv.create_uploaded_file(arg_0, arg_1_params)
-    return voidptr(res)
+    ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vslim_psr17_uploaded_file_factory_handlers']
 pub fn vslim_psr17_uploaded_file_factory_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr17_uploaded_file_factory_get_prop),
-        write_handler: voidptr(vslim_psr17_uploaded_file_factory_set_prop),
-        sync_handler: voidptr(vslim_psr17_uploaded_file_factory_sync_props),
-        new_raw: voidptr(vslim_psr17_uploaded_file_factory_new_raw),
-        cleanup_raw: voidptr(vslim_psr17_uploaded_file_factory_cleanup_raw),
-        free_raw: voidptr(vslim_psr17_uploaded_file_factory_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr17_uploaded_file_factory_get_prop,
+        write_handler: vslim_psr17_uploaded_file_factory_set_prop,
+        sync_handler: vslim_psr17_uploaded_file_factory_sync_props,
+        new_raw: vslim_psr17_uploaded_file_factory_new_raw,
+        cleanup_raw: vslim_psr17_uploaded_file_factory_cleanup_raw,
+        free_raw: vslim_psr17_uploaded_file_factory_free_raw
     )
 }
 pub fn VSlimPsr17UploadedFileFactory.php_class_entry() vphp.ZendClassEntry {
@@ -3166,12 +3267,12 @@ pub fn vslim_psr17_uri_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_psr17_uri_factory_construct']
-pub fn vphp_wrap_vslim_psr17_uri_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr17_uri_factory_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr17UriFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr17UriFactory](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr17_uri_factory_create_uri']
 pub fn vphp_wrap_vslim_psr17_uri_factory_create_uri(ptr voidptr, ctx vphp.Context) voidptr {
@@ -3179,9 +3280,9 @@ pub fn vphp_wrap_vslim_psr17_uri_factory_create_uri(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'uri', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'uri' },
     ])
-    arg_0_params_uri := if php_args.has_named_or_index(0, 'uri') { php_args.at_named_or_index(0, 'uri').as_v[string]() } else { '' }
+    arg_0_params_uri := if php_args.has(0) { php_args.at(0).as_v[string]() } else { '' }
     arg_0_params := httpx.VSlimPsr17CreateUriParams{
         uri: arg_0_params_uri
     }
@@ -3190,13 +3291,13 @@ pub fn vphp_wrap_vslim_psr17_uri_factory_create_uri(ptr voidptr, ctx vphp.Contex
 }
 @[export: 'vslim_psr17_uri_factory_handlers']
 pub fn vslim_psr17_uri_factory_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr17_uri_factory_get_prop),
-        write_handler: voidptr(vslim_psr17_uri_factory_set_prop),
-        sync_handler: voidptr(vslim_psr17_uri_factory_sync_props),
-        new_raw: voidptr(vslim_psr17_uri_factory_new_raw),
-        cleanup_raw: voidptr(vslim_psr17_uri_factory_cleanup_raw),
-        free_raw: voidptr(vslim_psr17_uri_factory_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr17_uri_factory_get_prop,
+        write_handler: vslim_psr17_uri_factory_set_prop,
+        sync_handler: vslim_psr17_uri_factory_sync_props,
+        new_raw: vslim_psr17_uri_factory_new_raw,
+        cleanup_raw: vslim_psr17_uri_factory_cleanup_raw,
+        free_raw: vslim_psr17_uri_factory_free_raw
     )
 }
 pub fn VSlimPsr17UriFactory.php_class_entry() vphp.ZendClassEntry {
@@ -3268,12 +3369,12 @@ pub fn vslim_psr17_server_request_factory_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_psr17_server_request_factory_construct']
-pub fn vphp_wrap_vslim_psr17_server_request_factory_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr17_server_request_factory_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr17ServerRequestFactory(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr17ServerRequestFactory](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr17_server_request_factory_create_server_request']
 pub fn vphp_wrap_vslim_psr17_server_request_factory_create_server_request(ptr voidptr, ctx vphp.Context) voidptr {
@@ -3281,17 +3382,16 @@ pub fn vphp_wrap_vslim_psr17_server_request_factory_create_server_request(ptr vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'method', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'uri', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'serverParams', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'method' },
+        vphp.PhpArgMeta{ index: 1, name: 'uri' },
+        vphp.PhpArgMeta{ index: 2, name: 'serverParams' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'method').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'uri').value
-    arg_2_params_server_params := if php_args.has_named_or_index(2, 'serverParams') {
-        php_args.at_named_or_index(2, 'serverParams').array() or {
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
+    arg_2_params_server_params := if php_args.has(2) {
+        php_args.at(2).array() or {
             vphp.throw_exception('argument 2 must be array', 0)
-            return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+            return unsafe { nil }
         }
     } else {
         vphp.PhpArray.empty()
@@ -3304,13 +3404,13 @@ pub fn vphp_wrap_vslim_psr17_server_request_factory_create_server_request(ptr vo
 }
 @[export: 'vslim_psr17_server_request_factory_handlers']
 pub fn vslim_psr17_server_request_factory_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr17_server_request_factory_get_prop),
-        write_handler: voidptr(vslim_psr17_server_request_factory_set_prop),
-        sync_handler: voidptr(vslim_psr17_server_request_factory_sync_props),
-        new_raw: voidptr(vslim_psr17_server_request_factory_new_raw),
-        cleanup_raw: voidptr(vslim_psr17_server_request_factory_cleanup_raw),
-        free_raw: voidptr(vslim_psr17_server_request_factory_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr17_server_request_factory_get_prop,
+        write_handler: vslim_psr17_server_request_factory_set_prop,
+        sync_handler: vslim_psr17_server_request_factory_sync_props,
+        new_raw: vslim_psr17_server_request_factory_new_raw,
+        cleanup_raw: vslim_psr17_server_request_factory_cleanup_raw,
+        free_raw: vslim_psr17_server_request_factory_free_raw
     )
 }
 pub fn VSlimPsr17ServerRequestFactory.php_class_entry() vphp.ZendClassEntry {
@@ -3362,14 +3462,14 @@ pub fn vslim_psr18_client_exception_cleanup_raw(ptr voidptr) {
         return
     }
 }
-fn vslim_psr18_client_exception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18ClientException {
-    mut recv := VSlimPsr18ClientException{}
-    if !php_obj.is_valid() {
-        return recv
+pub fn vslim_psr18_client_exception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18ClientException {
+    return VSlimPsr18ClientException{
     }
+}
+pub fn vslim_psr18_client_exception_snapshot(recv VSlimPsr18ClientException) VSlimPsr18ClientException {
     return recv
 }
-fn vslim_psr18_client_exception_sync_to_php(php_obj vphp.ZendObject, recv VSlimPsr18ClientException) {
+pub fn vslim_psr18_client_exception_sync_to_php(php_obj vphp.ZendObject, original VSlimPsr18ClientException, recv VSlimPsr18ClientException) {
     if !php_obj.is_valid() {
         return
     }
@@ -3395,13 +3495,13 @@ pub fn vslim_psr18_client_exception_sync_props(ptr voidptr, zv &C.zval) {
 }
 @[export: 'vslim_psr18_client_exception_handlers']
 pub fn vslim_psr18_client_exception_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr18_client_exception_get_prop),
-        write_handler: voidptr(vslim_psr18_client_exception_set_prop),
-        sync_handler: voidptr(vslim_psr18_client_exception_sync_props),
-        new_raw: voidptr(vslim_psr18_client_exception_new_raw),
-        cleanup_raw: voidptr(vslim_psr18_client_exception_cleanup_raw),
-        free_raw: voidptr(vslim_psr18_client_exception_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr18_client_exception_get_prop,
+        write_handler: vslim_psr18_client_exception_set_prop,
+        sync_handler: vslim_psr18_client_exception_sync_props,
+        new_raw: vslim_psr18_client_exception_new_raw,
+        cleanup_raw: vslim_psr18_client_exception_cleanup_raw,
+        free_raw: vslim_psr18_client_exception_free_raw
     )
 }
 pub fn VSlimPsr18ClientException.php_class_entry() vphp.ZendClassEntry {
@@ -3453,72 +3553,102 @@ pub fn vslim_psr18_request_exception_cleanup_raw(ptr voidptr) {
         return
     }
 }
-fn vslim_psr18_request_exception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18RequestException {
-    mut recv := VSlimPsr18RequestException{}
-    if !php_obj.is_valid() {
-        return recv
-    }
-    return recv
+@[export: 'vslim_psr18_request_exception_init_inherited_fields']
+pub fn vslim_psr18_request_exception_init_inherited_fields(obj voidptr, owner voidptr) {
+    mut scope := vphp.PhpScope.once()
+    defer { scope.close() }
+    php_obj := vphp.ZendObject.from_ptr(obj)
+    defaults := VSlimPsr18RequestException{}
+    php_obj.init_inherited_field(owner, 'requestRef', defaults.request_ref)
 }
-fn vslim_psr18_request_exception_sync_to_php(php_obj vphp.ZendObject, recv VSlimPsr18RequestException) {
+pub fn vslim_psr18_request_exception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18RequestException {
+    return VSlimPsr18RequestException{
+        request_ref: php_obj.inherited_value('requestRef')
+    }
+}
+pub fn vslim_psr18_request_exception_snapshot(recv VSlimPsr18RequestException) VSlimPsr18RequestException {
+    return VSlimPsr18RequestException{
+        ...recv
+        request_ref: vphp.snapshot_inherited_value(recv.request_ref)
+    }
+}
+pub fn vslim_psr18_request_exception_sync_to_php(php_obj vphp.ZendObject, original VSlimPsr18RequestException, recv VSlimPsr18RequestException) {
     if !php_obj.is_valid() {
         return
     }
+    php_obj.sync_inherited_value('requestRef', original.request_ref, recv.request_ref)
 }
 @[export: 'vslim_psr18_request_exception_get_prop']
 pub fn vslim_psr18_request_exception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
-    _ = ptr
-    _ = name_ptr
-    _ = name_len
-    _ = rv
+    ret := vphp.PhpObjectPropertyHandler.return_from_ptr(rv)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        obj := &VSlimPsr18RequestException(ptr)
+        if name == 'requestRef' {
+            vphp.PhpObjectPropertyHandler.return_value(ret, obj.request_ref)
+            return
+        }
+    }
 }
 @[export: 'vslim_psr18_request_exception_set_prop']
 pub fn vslim_psr18_request_exception_set_prop(ptr voidptr, name_ptr &char, name_len int, value &C.zval) {
-    _ = ptr
-    _ = name_ptr
-    _ = name_len
-    _ = value
+    arg := vphp.PhpObjectPropertyHandler.value_from_ptr(value)
+    unsafe {
+        name := vphp.PhpObjectPropertyHandler.name_from_ptr(name_ptr, name_len)
+        mut obj := &VSlimPsr18RequestException(ptr)
+        if name == 'requestRef' {
+            mut previous := obj.request_ref
+            obj.request_ref = vphp.PhpValue.from_zval(arg).retain()
+            previous.release()
+            return
+        }
+    }
 }
 @[export: 'vslim_psr18_request_exception_sync_props']
 pub fn vslim_psr18_request_exception_sync_props(ptr voidptr, zv &C.zval) {
-    _ = ptr
-    _ = zv
+    out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
+    unsafe {
+        obj := &VSlimPsr18RequestException(ptr)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'requestRef', obj.request_ref)
+    }
 }
 @[export: 'vphp_wrap_vslim_psr18_request_exception_attach_request']
 pub fn vphp_wrap_vslim_psr18_request_exception_attach_request(ptr voidptr, ctx vphp.Context)  {
-    this_obj := vphp.ZendObject.from_ptr(ptr)
-    mut recv := vslim_psr18_request_exception_load_from_php(this_obj)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
+    this_obj := vphp.ZendObject.from_ptr(ptr)
+    mut recv := vslim_psr18_request_exception_load_from_php(this_obj)
+    original_recv := vslim_psr18_request_exception_snapshot(recv)
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
+    arg_0 := php_args.at(0).zval().to_v[PsrRequest]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
         return
     }
     recv.attach_request(arg_0)
-    vslim_psr18_request_exception_sync_to_php(this_obj, recv)
+    vslim_psr18_request_exception_sync_to_php(this_obj, original_recv, recv)
 }
 @[export: 'vphp_wrap_vslim_psr18_request_exception_get_request']
 pub fn vphp_wrap_vslim_psr18_request_exception_get_request(ptr voidptr, ctx vphp.Context)  {
-    this_obj := vphp.ZendObject.from_ptr(ptr)
-    mut recv := vslim_psr18_request_exception_load_from_php(this_obj)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
+    this_obj := vphp.ZendObject.from_ptr(ptr)
+    mut recv := vslim_psr18_request_exception_load_from_php(this_obj)
+    original_recv := vslim_psr18_request_exception_snapshot(recv)
     res := recv.get_request()
-    vslim_psr18_request_exception_sync_to_php(this_obj, recv)
+    vslim_psr18_request_exception_sync_to_php(this_obj, original_recv, recv)
     ctx.return().v[vphp.PhpObject](res)
 }
 @[export: 'vslim_psr18_request_exception_handlers']
 pub fn vslim_psr18_request_exception_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr18_request_exception_get_prop),
-        write_handler: voidptr(vslim_psr18_request_exception_set_prop),
-        sync_handler: voidptr(vslim_psr18_request_exception_sync_props),
-        new_raw: voidptr(vslim_psr18_request_exception_new_raw),
-        cleanup_raw: voidptr(vslim_psr18_request_exception_cleanup_raw),
-        free_raw: voidptr(vslim_psr18_request_exception_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr18_request_exception_get_prop,
+        write_handler: vslim_psr18_request_exception_set_prop,
+        sync_handler: vslim_psr18_request_exception_sync_props,
+        new_raw: vslim_psr18_request_exception_new_raw,
+        cleanup_raw: vslim_psr18_request_exception_cleanup_raw,
+        free_raw: vslim_psr18_request_exception_free_raw
     )
 }
 pub fn VSlimPsr18RequestException.php_class_entry() vphp.ZendClassEntry {
@@ -3570,17 +3700,22 @@ pub fn vslim_psr18_network_exception_cleanup_raw(ptr voidptr) {
         return
     }
 }
-fn vslim_psr18_network_exception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18NetworkException {
-    mut recv := VSlimPsr18NetworkException{}
-    if !php_obj.is_valid() {
-        return recv
+pub fn vslim_psr18_network_exception_load_from_php(php_obj vphp.ZendObject) VSlimPsr18NetworkException {
+    return VSlimPsr18NetworkException{
+        VSlimPsr18RequestException: vslim_psr18_request_exception_load_from_php(php_obj)
     }
-    return recv
 }
-fn vslim_psr18_network_exception_sync_to_php(php_obj vphp.ZendObject, recv VSlimPsr18NetworkException) {
+pub fn vslim_psr18_network_exception_snapshot(recv VSlimPsr18NetworkException) VSlimPsr18NetworkException {
+    return VSlimPsr18NetworkException{
+        ...recv
+        VSlimPsr18RequestException: vslim_psr18_request_exception_snapshot(recv.VSlimPsr18RequestException)
+    }
+}
+pub fn vslim_psr18_network_exception_sync_to_php(php_obj vphp.ZendObject, original VSlimPsr18NetworkException, recv VSlimPsr18NetworkException) {
     if !php_obj.is_valid() {
         return
     }
+    vslim_psr18_request_exception_sync_to_php(php_obj, original.VSlimPsr18RequestException, recv.VSlimPsr18RequestException)
 }
 @[export: 'vslim_psr18_network_exception_get_prop']
 pub fn vslim_psr18_network_exception_get_prop(ptr voidptr, name_ptr &char, name_len int, rv &C.zval) {
@@ -3603,39 +3738,41 @@ pub fn vslim_psr18_network_exception_sync_props(ptr voidptr, zv &C.zval) {
 }
 @[export: 'vphp_wrap_vslim_psr18_network_exception_attach_request']
 pub fn vphp_wrap_vslim_psr18_network_exception_attach_request(ptr voidptr, ctx vphp.Context)  {
-    this_obj := vphp.ZendObject.from_ptr(ptr)
-    mut recv := vslim_psr18_network_exception_load_from_php(this_obj)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
+    this_obj := vphp.ZendObject.from_ptr(ptr)
+    mut recv := vslim_psr18_network_exception_load_from_php(this_obj)
+    original_recv := vslim_psr18_network_exception_snapshot(recv)
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
+    arg_0 := php_args.at(0).zval().to_v[PsrRequest]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
         return
     }
     recv.attach_request(arg_0)
-    vslim_psr18_network_exception_sync_to_php(this_obj, recv)
+    vslim_psr18_network_exception_sync_to_php(this_obj, original_recv, recv)
 }
 @[export: 'vphp_wrap_vslim_psr18_network_exception_get_request']
 pub fn vphp_wrap_vslim_psr18_network_exception_get_request(ptr voidptr, ctx vphp.Context)  {
-    this_obj := vphp.ZendObject.from_ptr(ptr)
-    mut recv := vslim_psr18_network_exception_load_from_php(this_obj)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
+    this_obj := vphp.ZendObject.from_ptr(ptr)
+    mut recv := vslim_psr18_network_exception_load_from_php(this_obj)
+    original_recv := vslim_psr18_network_exception_snapshot(recv)
     res := recv.get_request()
-    vslim_psr18_network_exception_sync_to_php(this_obj, recv)
+    vslim_psr18_network_exception_sync_to_php(this_obj, original_recv, recv)
     ctx.return().v[vphp.PhpObject](res)
 }
 @[export: 'vslim_psr18_network_exception_handlers']
 pub fn vslim_psr18_network_exception_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr18_network_exception_get_prop),
-        write_handler: voidptr(vslim_psr18_network_exception_set_prop),
-        sync_handler: voidptr(vslim_psr18_network_exception_sync_props),
-        new_raw: voidptr(vslim_psr18_network_exception_new_raw),
-        cleanup_raw: voidptr(vslim_psr18_network_exception_cleanup_raw),
-        free_raw: voidptr(vslim_psr18_network_exception_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr18_network_exception_get_prop,
+        write_handler: vslim_psr18_network_exception_set_prop,
+        sync_handler: vslim_psr18_network_exception_sync_props,
+        new_raw: vslim_psr18_network_exception_new_raw,
+        cleanup_raw: vslim_psr18_network_exception_cleanup_raw,
+        free_raw: vslim_psr18_network_exception_free_raw
     )
 }
 pub fn VSlimPsr18NetworkException.php_class_entry() vphp.ZendClassEntry {
@@ -3716,16 +3853,16 @@ pub fn vslim_psr18_client_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimPsr18Client(ptr)
-        out.add_property_long('timeoutSeconds', i64(obj.timeout_seconds))
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'timeoutSeconds', obj.timeout_seconds)
     }
 }
 @[export: 'vphp_wrap_vslim_psr18_client_construct']
-pub fn vphp_wrap_vslim_psr18_client_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_psr18_client_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr18Client(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimPsr18Client](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_psr18_client_timeout']
 pub fn vphp_wrap_vslim_psr18_client_timeout(ptr voidptr, ctx vphp.Context) voidptr {
@@ -3733,9 +3870,9 @@ pub fn vphp_wrap_vslim_psr18_client_timeout(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'seconds', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'seconds' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'seconds').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.timeout(arg_0)
     return voidptr(res)
 }
@@ -3744,15 +3881,15 @@ pub fn vphp_wrap_vslim_psr18_client_ignore_warning(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'errNo', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'errStr', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'errFile', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'errLine', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'errNo' },
+        vphp.PhpArgMeta{ index: 1, name: 'errStr' },
+        vphp.PhpArgMeta{ index: 2, name: 'errFile' },
+        vphp.PhpArgMeta{ index: 3, name: 'errLine' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'errNo').as_v[int]()
-    arg_1 := php_args.at_named_or_index(1, 'errStr').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'errFile').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'errLine').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).as_v[int]()
     res := VSlimPsr18Client.ignore_warning(arg_0, arg_1, arg_2, arg_3)
     ctx.return().v[bool](res)
 }
@@ -3764,31 +3901,31 @@ pub fn vphp_wrap_vslim_psr18_client_timeout_seconds_value(ptr voidptr, ctx vphp.
     res := recv.timeout_seconds_value()
     ctx.return().v[int](res)
 }
-@[export: 'vphp_wrap_vslim_psr18_client_send_request']
-pub fn vphp_wrap_vslim_psr18_client_send_request(ptr voidptr, ctx vphp.Context) voidptr {
+@[export: 'vphp_wrap_vslim_psr18_client_export_send_request']
+pub fn vphp_wrap_vslim_psr18_client_export_send_request(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimPsr18Client(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').object() or {
-        vphp.throw_exception('argument 0 must be object', 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).zval().to_v[PsrRequest]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return
     }
-    res := recv.send_request(arg_0)
-    return voidptr(res)
+    ctx.return().from_result_object[VSlimPsr7Response](fn [arg_0, recv] () !&VSlimPsr7Response {
+        return recv.export_send_request(arg_0)!
+    }, .owned_request)
 }
 @[export: 'vslim_psr18_client_handlers']
 pub fn vslim_psr18_client_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr18_client_get_prop),
-        write_handler: voidptr(vslim_psr18_client_set_prop),
-        sync_handler: voidptr(vslim_psr18_client_sync_props),
-        new_raw: voidptr(vslim_psr18_client_new_raw),
-        cleanup_raw: voidptr(vslim_psr18_client_cleanup_raw),
-        free_raw: voidptr(vslim_psr18_client_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr18_client_get_prop,
+        write_handler: vslim_psr18_client_set_prop,
+        sync_handler: vslim_psr18_client_sync_props,
+        new_raw: vslim_psr18_client_new_raw,
+        cleanup_raw: vslim_psr18_client_cleanup_raw,
+        free_raw: vslim_psr18_client_free_raw
     )
 }
 pub fn VSlimPsr18Client.php_class_entry() vphp.ZendClassEntry {
@@ -3864,9 +4001,12 @@ pub fn vphp_wrap_vslim_psr7_adapter_to_vslim_response(ctx vphp.Context) voidptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'response', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'response' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'response').value
+    arg_0 := php_args.at(0).zval().to_v[PsrResponse]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
+    }
     res := VSlimPsr7Adapter.to_vslim_response(arg_0)
     return voidptr(res)
 }
@@ -3875,9 +4015,9 @@ pub fn vphp_wrap_vslim_psr7_adapter_to_vslim_request(ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').value
+    arg_0 := php_args.at(0).value
     res := VSlimPsr7Adapter.to_vslim_request(arg_0)
     return voidptr(res)
 }
@@ -3886,21 +4026,21 @@ pub fn vphp_wrap_vslim_psr7_adapter_to_worker_envelope(ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'request', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'request' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'request').value
+    arg_0 := php_args.at(0).value
     res := VSlimPsr7Adapter.to_worker_envelope(arg_0)
     ctx.return().v[vphp.PhpArray](res)
 }
 @[export: 'vslim_psr7_adapter_handlers']
 pub fn vslim_psr7_adapter_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_psr7_adapter_get_prop),
-        write_handler: voidptr(vslim_psr7_adapter_set_prop),
-        sync_handler: voidptr(vslim_psr7_adapter_sync_props),
-        new_raw: voidptr(vslim_psr7_adapter_new_raw),
-        cleanup_raw: voidptr(vslim_psr7_adapter_cleanup_raw),
-        free_raw: voidptr(vslim_psr7_adapter_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_psr7_adapter_get_prop,
+        write_handler: vslim_psr7_adapter_set_prop,
+        sync_handler: vslim_psr7_adapter_sync_props,
+        new_raw: vslim_psr7_adapter_new_raw,
+        cleanup_raw: vslim_psr7_adapter_cleanup_raw,
+        free_raw: vslim_psr7_adapter_free_raw
     )
 }
 pub fn VSlimPsr7Adapter.php_class_entry() vphp.ZendClassEntry {
@@ -4001,26 +4141,26 @@ pub fn vslim_response_sync_props(ptr voidptr, zv &C.zval) {
     out := vphp.PhpObjectPropertyHandler.value_from_ptr(zv)
     unsafe {
         obj := &VSlimResponse(ptr)
-        out.add_property_long('status', i64(obj.status))
-        out.add_property_string('body', obj.body)
-        out.add_property_string('contentType', obj.content_type)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'status', obj.status)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'body', obj.body)
+        vphp.PhpObjectPropertyHandler.sync_property(out, 'contentType', obj.content_type)
     }
 }
 @[export: 'vphp_wrap_vslim_response_construct']
-pub fn vphp_wrap_vslim_response_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_response_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimResponse(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'status', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'body', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'contentType', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'status' },
+        vphp.PhpArgMeta{ index: 1, name: 'body' },
+        vphp.PhpArgMeta{ index: 2, name: 'contentType' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'status').as_v[int]()
-    arg_1 := php_args.at_named_or_index(1, 'body').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'contentType').as_v[string]()
+    arg_0 := php_args.at(0).as_v[int]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
     res := recv.construct(arg_0, arg_1, arg_2)
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimResponse](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_response_header']
 pub fn vphp_wrap_vslim_response_header(ptr voidptr, ctx vphp.Context)  {
@@ -4028,9 +4168,9 @@ pub fn vphp_wrap_vslim_response_header(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.header(arg_0)
     ctx.return().v[string](res)
 }
@@ -4048,9 +4188,9 @@ pub fn vphp_wrap_vslim_response_has_header(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.has_header(arg_0)
     ctx.return().v[bool](res)
 }
@@ -4060,11 +4200,11 @@ pub fn vphp_wrap_vslim_response_set_header(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.set_header(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4074,9 +4214,9 @@ pub fn vphp_wrap_vslim_response_with_request_id(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'requestId', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'requestId' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'requestId').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.with_request_id(arg_0)
     return voidptr(res)
 }
@@ -4086,9 +4226,9 @@ pub fn vphp_wrap_vslim_response_with_trace_id(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'traceId', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'traceId' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'traceId').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.with_trace_id(arg_0)
     return voidptr(res)
 }
@@ -4098,9 +4238,9 @@ pub fn vphp_wrap_vslim_response_set_content_type(ptr voidptr, ctx vphp.Context) 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'contentType', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'contentType' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'contentType').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_content_type(arg_0)
     return voidptr(res)
 }
@@ -4118,11 +4258,11 @@ pub fn vphp_wrap_vslim_response_set_cookie(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.set_cookie(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4132,13 +4272,13 @@ pub fn vphp_wrap_vslim_response_set_cookie_opts(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
+        vphp.PhpArgMeta{ index: 2, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
     res := recv.set_cookie_opts(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -4148,23 +4288,23 @@ pub fn vphp_wrap_vslim_response_set_cookie_full(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'path', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 3, name: 'domain', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 4, name: 'maxAge', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 5, name: 'secure', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 6, name: 'httpOnly', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 7, name: 'sameSite', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
+        vphp.PhpArgMeta{ index: 2, name: 'path' },
+        vphp.PhpArgMeta{ index: 3, name: 'domain' },
+        vphp.PhpArgMeta{ index: 4, name: 'maxAge' },
+        vphp.PhpArgMeta{ index: 5, name: 'secure' },
+        vphp.PhpArgMeta{ index: 6, name: 'httpOnly' },
+        vphp.PhpArgMeta{ index: 7, name: 'sameSite' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'path').as_v[string]()
-    arg_3 := php_args.at_named_or_index(3, 'domain').as_v[string]()
-    arg_4 := php_args.at_named_or_index(4, 'maxAge').as_v[int]()
-    arg_5 := php_args.at_named_or_index(5, 'secure').as_v[bool]()
-    arg_6 := php_args.at_named_or_index(6, 'httpOnly').as_v[bool]()
-    arg_7 := php_args.at_named_or_index(7, 'sameSite').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).as_v[string]()
+    arg_3 := php_args.at(3).as_v[string]()
+    arg_4 := php_args.at(4).as_v[int]()
+    arg_5 := php_args.at(5).as_v[bool]()
+    arg_6 := php_args.at(6).as_v[bool]()
+    arg_7 := php_args.at(7).as_v[string]()
     res := recv.set_cookie_full(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7)
     return voidptr(res)
 }
@@ -4174,9 +4314,9 @@ pub fn vphp_wrap_vslim_response_delete_cookie(ptr voidptr, ctx vphp.Context) voi
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.delete_cookie(arg_0)
     return voidptr(res)
 }
@@ -4186,9 +4326,9 @@ pub fn vphp_wrap_vslim_response_set_status(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'status').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.set_status(arg_0)
     return voidptr(res)
 }
@@ -4198,9 +4338,9 @@ pub fn vphp_wrap_vslim_response_with_status(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'status').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.with_status(arg_0)
     return voidptr(res)
 }
@@ -4210,9 +4350,9 @@ pub fn vphp_wrap_vslim_response_text(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'body', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'body' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'body').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.text(arg_0)
     return voidptr(res)
 }
@@ -4222,9 +4362,9 @@ pub fn vphp_wrap_vslim_response_json(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'body', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'body' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'body').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.json(arg_0)
     return voidptr(res)
 }
@@ -4234,9 +4374,9 @@ pub fn vphp_wrap_vslim_response_html(ptr voidptr, ctx vphp.Context) voidptr {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'body', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'body' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'body').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.html(arg_0)
     return voidptr(res)
 }
@@ -4246,9 +4386,9 @@ pub fn vphp_wrap_vslim_response_redirect(ptr voidptr, ctx vphp.Context) voidptr 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'location', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'location' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'location').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.redirect(arg_0)
     return voidptr(res)
 }
@@ -4258,11 +4398,11 @@ pub fn vphp_wrap_vslim_response_redirect_with_status(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'location', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'status', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'location' },
+        vphp.PhpArgMeta{ index: 1, name: 'status' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'location').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'status').as_v[int]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[int]()
     res := recv.redirect_with_status(arg_0, arg_1)
     return voidptr(res)
 }
@@ -4292,13 +4432,13 @@ pub fn vphp_wrap_vslim_response_content_length(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_response_handlers']
 pub fn vslim_response_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_response_get_prop),
-        write_handler: voidptr(vslim_response_set_prop),
-        sync_handler: voidptr(vslim_response_sync_props),
-        new_raw: voidptr(vslim_response_new_raw),
-        cleanup_raw: voidptr(vslim_response_cleanup_raw),
-        free_raw: voidptr(vslim_response_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_response_get_prop,
+        write_handler: vslim_response_set_prop,
+        sync_handler: vslim_response_sync_props,
+        new_raw: vslim_response_new_raw,
+        cleanup_raw: vslim_response_cleanup_raw,
+        free_raw: vslim_response_free_raw
     )
 }
 pub fn VSlimResponse.php_class_entry() vphp.ZendClassEntry {

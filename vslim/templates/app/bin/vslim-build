@@ -1,0 +1,374 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+main($_SERVER['argv'] ?? []);
+
+function main(array $argv): void
+{
+    $options = parse_options($argv);
+    if (isset($options['help'])) {
+        echo "Usage: bin/vslim build [--output=PATH] [--target=OS-ARCH] [--runtime=image|embedded]\n\n";
+        echo "Builds a deterministic VSlim application image and runtime manifest.\n";
+        echo "The image is an input for the forthcoming static embedded runtime; it is not yet a standalone executable.\n";
+        echo "Use --allow-missing-vendor only for builder tests; such an image may not run independently.\n";
+        exit(0);
+    }
+
+    $root = realpath((string) ($options['root'] ?? dirname(__DIR__))) ?: '';
+    if ($root === '' || !is_file($root . '/composer.json') || !is_file($root . '/public/index.php')) {
+        fail('Not a VSlim application root: ' . ($root !== '' ? $root : '(unresolved)'));
+    }
+    if (!isset($options['allow-missing-vendor']) && !is_file($root . '/vendor/autoload.php')) {
+        fail('Production dependencies are missing; run composer install --no-dev before building.');
+    }
+    if (!class_exists('ZipArchive')) {
+        fail('ZipArchive is required to build a VSlim application image.');
+    }
+
+    $composer = json_decode((string) file_get_contents($root . '/composer.json'), true, flags: JSON_THROW_ON_ERROR);
+    $name = normalize_name((string) ($composer['name'] ?? basename($root)));
+    $target = normalize_target((string) ($options['target'] ?? default_target()));
+    $runtime = (string) ($options['runtime'] ?? 'image');
+    if (!in_array($runtime, ['image', 'embedded'], true)) {
+        fail('Unsupported runtime; expected image or embedded.');
+    }
+    $linkMode = (string) ($options['link-mode'] ?? 'auto');
+    if ($runtime === 'embedded' && !in_array($linkMode, ['auto', 'shared', 'mostly-static'], true)) {
+        fail('Unsupported --link-mode; expected auto, shared, or mostly-static. Fully static linking needs static VSlim module registration and is not implemented yet.');
+    }
+    $defaultBase = 'dist/' . $name . '-' . $target;
+    $output = absolute_path($root, (string) ($options['output'] ?? ($defaultBase . ($runtime === 'image' ? '.vslim-app' : ''))));
+    $imageOutput = $runtime === 'image' ? $output : $output . '.vslim-app';
+    $manifestPath = preg_replace('/\.vslim-app$/', '', $imageOutput) . '.manifest.json';
+    ensure_dir(dirname($imageOutput));
+
+    $files = collect_files($root, dirname($output));
+    $extensions = collect_extensions($composer, $root . '/composer.lock');
+    $manifest = [
+        'format' => 'vslim-app-image-v1',
+        'name' => $name,
+        'target' => $target,
+        'entry' => 'public/index.php',
+        'server_config' => is_file($root . '/vslim.yaml') ? 'vslim.yaml' : null,
+        'php' => [
+            'constraint' => (string) (($composer['require']['php'] ?? '*')),
+            'extensions' => $extensions,
+        ],
+        'files' => count($files),
+    ];
+
+    $zip = new ZipArchive();
+    if ($zip->open($imageOutput, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        fail('Unable to create application image: ' . $imageOutput);
+    }
+    $manifestJson = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+    $zip->addFromString('.vslim/manifest.json', $manifestJson);
+    if (method_exists($zip, 'setMtimeName')) {
+        $zip->setMtimeName('.vslim/manifest.json', 0);
+    }
+    foreach ($files as $relative => $absolute) {
+        $zip->addFile($absolute, $relative);
+        if (method_exists($zip, 'setMtimeName')) {
+            $zip->setMtimeName($relative, 0);
+        }
+    }
+    if (!$zip->close()) {
+        fail('Unable to finalize application image: ' . $imageOutput);
+    }
+    file_put_contents($manifestPath, $manifestJson);
+
+    echo "Created application image: {$imageOutput}\n";
+    echo "Created runtime manifest: {$manifestPath}\n";
+    echo "Required PHP extensions: " . ($extensions !== [] ? implode(', ', $extensions) : '(none)') . "\n";
+    if ($runtime === 'embedded') {
+        link_embedded_runtime($root, $imageOutput, $output, $target, $extensions, $options);
+    } else {
+        echo "Next stage: link this image with a static VSlim runtime for {$target}.\n";
+    }
+}
+
+function parse_options(array $argv): array
+{
+    $options = [];
+    foreach (array_slice($argv, 1) as $arg) {
+        if ($arg === '--help' || $arg === '-h') {
+            $options['help'] = '1';
+            continue;
+        }
+        if (!str_starts_with($arg, '--')) {
+            fail('Unexpected argument: ' . $arg);
+        }
+        [$key, $value] = array_pad(explode('=', substr($arg, 2), 2), 2, '1');
+        if (!in_array($key, ['root', 'output', 'target', 'runtime', 'link-mode', 'cc', 'server-root', 'extension', 'embed-prefix', 'allow-missing-vendor'], true)) {
+            fail('Unknown build option: --' . $key);
+        }
+        $options[$key] = $value;
+    }
+    return $options;
+}
+
+function link_embedded_runtime(string $root, string $image, string $output, string $target, array $applicationExtensions, array $options): void
+{
+    $requestedLinkMode = (string) ($options['link-mode'] ?? 'auto');
+    $defaultServerRoot = realpath(dirname(__DIR__, 3) . '/server') ?: '';
+    $serverRoot = realpath((string) ($options['server-root'] ?? getenv('VSLIM_SERVER_ROOT') ?: $defaultServerRoot)) ?: '';
+    if ($serverRoot === '' || !is_file($serverRoot . '/build.v')) {
+        fail('VSlim server source not found; set --server-root or VSLIM_SERVER_ROOT.');
+    }
+    $profilePath = $serverRoot . '/runtime/' . $target . '.json';
+    if (!is_file($profilePath)) {
+        fail('VSlim runtime profile not found for target ' . $target . ': ' . $profilePath);
+    }
+    $profile = json_decode((string) file_get_contents($profilePath), true, flags: JSON_THROW_ON_ERROR);
+    if (($profile['target'] ?? null) !== $target) {
+        fail('Runtime profile target mismatch: ' . $profilePath);
+    }
+    $requiredExtensions = array_values(array_unique(array_merge(
+        (array) ($profile['php']['extensions'] ?? []),
+        $applicationExtensions
+    )));
+    sort($requiredExtensions, SORT_STRING);
+    $extension = realpath((string) ($options['extension'] ?? getenv('VSLIM_APP_EXTENSION') ?: ($serverRoot . '/vslim-server-extension.so'))) ?: '';
+    if ($extension === '' || !is_file($extension)) {
+        fail('Matching ZTS VSlim extension not found; set --extension or build server-extension first.');
+    }
+    $embedPrefix = (string) ($options['embed-prefix'] ?? getenv('VPHP_EMBED_PREFIX') ?: '/usr/local/php-embed');
+    $resolvedLinkMode = resolve_link_mode($embedPrefix, $requestedLinkMode);
+
+    $previous = [];
+    foreach ([
+        'VPHP_EMBED_PREFIX' => $embedPrefix,
+        'VSLIM_APP_IMAGE' => $image,
+        'VSLIM_APP_EXTENSION' => $extension,
+        'VSLIM_APP_OUTPUT' => $output,
+        'VSLIM_RUNTIME_LINK' => $requestedLinkMode,
+        'VSLIM_RUNTIME_CC' => (string) ($options['cc'] ?? getenv('VSLIM_RUNTIME_CC') ?: getenv('CC') ?: 'clang'),
+    ] as $name => $value) {
+        $previous[$name] = getenv($name);
+        putenv($name . '=' . $value);
+    }
+    $command = 'v run ' . escapeshellarg($serverRoot . '/build.v') . ' app';
+    passthru($command, $status);
+    foreach ($previous as $name => $value) {
+        putenv($value === false ? $name : ($name . '=' . $value));
+    }
+    if ($status !== 0 || !is_file($output)) {
+        fail('Unable to link the embedded VSlim application runtime.');
+    }
+    @chmod($output, 0755);
+    $runtimeManifest = build_runtime_manifest($output, $embedPrefix, $resolvedLinkMode, $profile, $requiredExtensions);
+    if ($resolvedLinkMode === 'mostly-static') {
+        foreach ($runtimeManifest['dependencies'] as $dependency) {
+            if (str_contains(strtolower($dependency), 'libphp')) {
+                fail('Mostly-static verification failed: the executable still depends on ' . $dependency);
+            }
+        }
+    }
+    file_put_contents($output . '.runtime.json', json_encode($runtimeManifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+    echo "Created application executable: {$output}\n";
+    echo "Created runtime audit: {$output}.runtime.json\n";
+    if ($resolvedLinkMode === 'shared') {
+        echo "Runtime note: this preview still requires the matching libphp shared library.\n";
+    }
+}
+
+function resolve_link_mode(string $prefix, string $requested): string
+{
+    $sharedName = PHP_OS_FAMILY === 'Darwin' ? 'libphp.dylib' : 'libphp.so';
+    $shared = $prefix . '/lib/' . $sharedName;
+    $static = $prefix . '/lib/libphp.a';
+    $resolved = $requested === 'auto' ? (is_file($static) ? 'mostly-static' : 'shared') : $requested;
+    $required = $resolved === 'shared' ? $shared : $static;
+    if (!is_file($required)) {
+        fail("{$resolved} PHP embed library not found: {$required}");
+    }
+    return $resolved;
+}
+
+function build_runtime_manifest(string $binary, string $prefix, string $linkMode, array $profile, array $requiredExtensions): array
+{
+    $phpConfig = $prefix . '/bin/php-config';
+    $phpVersion = is_executable($phpConfig) ? trim((string) shell_exec(escapeshellarg($phpConfig) . ' --version')) : null;
+    $profileVersion = (string) ($profile['php']['version'] ?? '');
+    if ($phpVersion !== null && $profileVersion !== '' && !version_matches_profile($phpVersion, $profileVersion)) {
+        fail("PHP SDK version {$phpVersion} does not match runtime profile {$profileVersion}.");
+    }
+    $extensionValidation = inspect_runtime_extensions($prefix, $requiredExtensions);
+    if ($extensionValidation['missing'] !== []) {
+        fail('PHP SDK is missing runtime profile extensions: ' . implode(', ', $extensionValidation['missing']));
+    }
+    $dependencies = inspect_binary_dependencies($binary);
+    return [
+        'format' => 'vslim-runtime-audit-v1',
+        'target' => $profile['target'] ?? null,
+        'profile_status' => $profile['status'] ?? null,
+        'link_mode' => $linkMode,
+        'php_version' => $phpVersion,
+        'zts' => true,
+        'required_extensions' => $requiredExtensions,
+        'extension_validation' => $extensionValidation,
+        'binary_sha256' => hash_file('sha256', $binary),
+        'dependencies' => $dependencies,
+        'libphp_embedded' => $linkMode === 'mostly-static',
+        'distribution_profile' => $linkMode === 'mostly-static' ? 'portable-glibc' : 'host-linked',
+        'self_contained' => false,
+    ];
+}
+
+function version_matches_profile(string $actual, string $profile): bool
+{
+    $expectedParts = explode('.', $profile);
+    $actualParts = explode('.', $actual);
+    return array_slice($actualParts, 0, count($expectedParts)) === $expectedParts;
+}
+
+function inspect_runtime_extensions(string $prefix, array $required): array
+{
+    $php = $prefix . '/bin/php';
+    if (!is_executable($php)) {
+        return ['status' => 'not-checked-no-cli', 'available' => [], 'missing' => []];
+    }
+    $command = escapeshellarg($php) . ' -n -r ' . escapeshellarg('echo json_encode(get_loaded_extensions());');
+    $json = shell_exec($command);
+    $available = is_string($json) ? json_decode($json, true) : null;
+    if (!is_array($available)) {
+        return ['status' => 'not-checked-cli-failed', 'available' => [], 'missing' => []];
+    }
+    $available = array_map('strtolower', $available);
+    $missing = array_values(array_diff(array_map('strtolower', $required), $available));
+    return ['status' => 'checked', 'available' => $available, 'missing' => $missing];
+}
+
+function inspect_binary_dependencies(string $binary): array
+{
+    if (PHP_OS_FAMILY === 'Darwin') {
+        exec('otool -L ' . escapeshellarg($binary), $lines, $status);
+        if ($status !== 0) {
+            return [];
+        }
+        return array_values(array_map(
+            static fn(string $line): string => preg_replace('/\s+\(compatibility.*$/', '', trim($line)),
+            array_slice($lines, 1)
+        ));
+    }
+    if (PHP_OS_FAMILY === 'Linux') {
+        exec('ldd ' . escapeshellarg($binary) . ' 2>&1', $lines, $status);
+        $output = implode("\n", $lines);
+        if (str_contains($output, 'not a dynamic executable') || str_contains($output, 'statically linked')) {
+            return [];
+        }
+        return array_values(array_filter(array_map('trim', $lines)));
+    }
+    return [];
+}
+
+function collect_files(string $root, string $outputDir): array
+{
+    $files = [];
+    $outputDir = realpath($outputDir) ?: $outputDir;
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveCallbackFilterIterator(
+            new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
+            static function (SplFileInfo $file) use ($root, $outputDir): bool {
+                $path = $file->getPathname();
+                $relative = str_replace('\\', '/', substr($path, strlen($root) + 1));
+                $first = explode('/', $relative, 2)[0];
+                if (in_array($first, ['.git', '.idea', '.vscode', 'node_modules', 'dist', 'tests'], true)) {
+                    return false;
+                }
+                if ($file->isDir() && str_starts_with($path . DIRECTORY_SEPARATOR, $outputDir . DIRECTORY_SEPARATOR)) {
+                    return false;
+                }
+                return !in_array($relative, ['.env', '.DS_Store', 'bin/vslim-build'], true);
+            }
+        ),
+        RecursiveIteratorIterator::LEAVES_ONLY
+    );
+    foreach ($iterator as $file) {
+        if (!$file->isFile() || $file->isLink()) {
+            continue;
+        }
+        $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
+        $files[$relative] = $file->getPathname();
+    }
+    ksort($files, SORT_STRING);
+    return $files;
+}
+
+function collect_extensions(array $composer, string $lockPath): array
+{
+    $extensions = [];
+    collect_extension_requirements((array) ($composer['require'] ?? []), $extensions);
+    if (is_file($lockPath)) {
+        $lock = json_decode((string) file_get_contents($lockPath), true, flags: JSON_THROW_ON_ERROR);
+        foreach ((array) ($lock['packages'] ?? []) as $package) {
+            collect_extension_requirements((array) ($package['require'] ?? []), $extensions);
+        }
+    }
+    $extensions = array_keys($extensions);
+    sort($extensions, SORT_STRING);
+    return $extensions;
+}
+
+function collect_extension_requirements(array $requirements, array &$extensions): void
+{
+    foreach (array_keys($requirements) as $requirement) {
+        if (str_starts_with(strtolower((string) $requirement), 'ext-')) {
+            $extensions[substr(strtolower((string) $requirement), 4)] = true;
+        }
+    }
+}
+
+function normalize_name(string $name): string
+{
+    $name = strtolower((string) preg_replace('/^.*\//', '', trim($name)));
+    $name = trim((string) preg_replace('/[^a-z0-9._-]+/', '-', $name), '-');
+    return $name !== '' ? $name : 'vslim-app';
+}
+
+function normalize_target(string $target): string
+{
+    $target = strtolower(trim($target));
+    $target = str_replace(['x86_64', 'aarch64'], ['amd64', 'arm64'], $target);
+    if (!preg_match('/^[a-z0-9]+-[a-z0-9]+$/', $target)) {
+        fail('Invalid target; expected OS-ARCH, for example linux-amd64.');
+    }
+    return $target;
+}
+
+function default_target(): string
+{
+    $os = match (PHP_OS_FAMILY) {
+        'Darwin' => 'macos',
+        'Windows' => 'windows',
+        default => strtolower(PHP_OS_FAMILY),
+    };
+    $arch = match (strtolower(php_uname('m'))) {
+        'x86_64', 'x64' => 'amd64',
+        'aarch64' => 'arm64',
+        default => strtolower(php_uname('m')),
+    };
+    return $os . '-' . $arch;
+}
+
+function absolute_path(string $root, string $path): string
+{
+    if (str_starts_with($path, DIRECTORY_SEPARATOR) || preg_match('/^[A-Za-z]:[\\\\\/]/', $path)) {
+        return $path;
+    }
+    return $root . DIRECTORY_SEPARATOR . $path;
+}
+
+function ensure_dir(string $path): void
+{
+    if (!is_dir($path) && !mkdir($path, 0777, true) && !is_dir($path)) {
+        fail('Unable to create directory: ' . $path);
+    }
+}
+
+function fail(string $message): never
+{
+    fwrite(STDERR, $message . "\n");
+    exit(1);
+}

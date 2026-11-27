@@ -11,7 +11,7 @@ $db = (new VSlim\Database\Manager())->setConfig(
 $select = $db->table('users')
     ->select(['id', 'name'])
     ->where('status', 'active')
-    ->whereOp('age', '>=', 18)
+    ->whereOp(value: 18, op: '>=', column: 'age')
     ->orderBy('id', 'desc')
     ->limit(10)
     ->offset(20);

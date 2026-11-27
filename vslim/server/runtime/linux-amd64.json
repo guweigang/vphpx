@@ -1,0 +1,25 @@
+{
+  "format": "vslim-runtime-profile-v1",
+  "target": "linux-amd64",
+  "status": "planned-ci-target",
+  "php": {
+    "version": "8.5",
+    "zts": true,
+    "sapi": "embed",
+    "library": "libphp.a",
+    "extensions": [
+      "json",
+      "mbstring"
+    ]
+  },
+  "link_mode": "mostly-static",
+  "libc": {
+    "family": "glibc",
+    "minimum": "2.17"
+  },
+  "module_loading": {
+    "vslim": "dynamic-extracted",
+    "fully_static_supported": false
+  },
+  "application_extension_requirements": "composer.json/composer.lock ext-*"
+}

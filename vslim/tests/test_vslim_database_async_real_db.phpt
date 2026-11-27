@@ -49,7 +49,7 @@ $cfg = (new VSlim\Database\Config())
     ->setDatabase((string) getenv('VSLIM_DB_NAME'));
 
 $db = (new VSlim\Database\Manager())->setConfig($cfg);
-$pending = $db->queryAsync('SELECT 1 AS ok');
+$pending = $db->queryAsync(query: 'SELECT 1 AS ok');
 $rows = $pending->wait();
 
 echo ($pending instanceof VSlim\Database\PendingResult ? "pending-ok\n" : "pending-bad\n");
@@ -58,6 +58,57 @@ echo $pending->affectedRows() . PHP_EOL;
 echo $pending->lastInsertId() . PHP_EOL;
 echo $pending->lastError() === '' ? "no-error\n" : "has-error\n";
 echo $rows[0]['ok'] . PHP_EOL;
+
+$holder = (new VSlim\Database\Manager())->setConfig($cfg);
+$lock = 'vslim-async-' . bin2hex(random_bytes(8));
+$abandonedLock = $lock . '-abandoned';
+if (!$holder->beginTransaction()) {
+    throw new RuntimeException('Could not reserve the lock holder connection');
+}
+try {
+    if ((string) $holder->query("SELECT GET_LOCK('$lock', 0) AS acquired")[0]['acquired'] !== '1') {
+        throw new RuntimeException('Could not take the test lock');
+    }
+    $waitingQuery = $db->queryAsync("SELECT GET_LOCK('$lock', 4) AS acquired");
+    $first = VSlim\Task::spawn(static fn () => $waitingQuery->wait(), []);
+    $second = VSlim\Task::spawn(static fn () => $waitingQuery->wait(), []);
+    $third = VSlim\Task::spawn(static fn () => $waitingQuery->wait(), []);
+    $reason = new DomainException('Stop waiting for the database');
+    $release = VSlim\Task::spawn(static function () use ($first, $reason, $holder, $lock): void {
+        VSlim\Task::sleep(0);
+        if (!$first->cancel($reason)
+            || (string) $holder->query("SELECT RELEASE_LOCK('$lock') AS released")[0]['released'] !== '1') {
+            throw new RuntimeException('Could not cancel the waiter or release the test lock');
+        }
+    }, []);
+    try {
+        VSlim\Task::waitAll([$first, $second, $third, $release]);
+        throw new LogicException('The cancelled database waiter returned normally');
+    } catch (DomainException $error) {
+        if ($error !== $reason) {
+            throw $error;
+        }
+    }
+    $result = $second->wait();
+    if ((string) $result[0]['acquired'] !== '1' || $third->wait() !== $result
+        || $waitingQuery->wait() !== $result || !$waitingQuery->resolved()) {
+        throw new RuntimeException('The database wait blocked its lock releaser or lost a shared result');
+    }
+
+    if ((string) $holder->query("SELECT GET_LOCK('$abandonedLock', 0) AS acquired")[0]['acquired'] !== '1') {
+        throw new RuntimeException('Could not take the lock for the abandoned query');
+    }
+    $abandoned = $db->queryAsync("SELECT GET_LOCK('$abandonedLock', 4) AS acquired");
+    $started = hrtime(true);
+    unset($abandoned);
+    if (hrtime(true) - $started >= 3_000_000_000) {
+        throw new RuntimeException('Dropping a pending query blocked the request thread');
+    }
+} finally {
+    $holder->query("SELECT RELEASE_LOCK('$abandonedLock')");
+    $holder->query("SELECT RELEASE_LOCK('$lock')");
+    $holder->rollBack();
+}
 
 try {
     $db->query('SELECT definitely_invalid FROM');

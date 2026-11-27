@@ -14,3 +14,7 @@ pub fn (handle Handle) arg_ptr(index int) voidptr {
 pub fn (handle Handle) arg_handle(index int) zval.Handle {
 	return zval.Handle.from_ptr(handle.arg_ptr(index))
 }
+
+pub fn (handle Handle) read_arg_default(index int, result zval.Handle) bool {
+	return zend.execute_read_arg_default(handle.raw_ptr(), index, result.raw_ptr())
+}

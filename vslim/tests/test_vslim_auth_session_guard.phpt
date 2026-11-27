@@ -17,9 +17,15 @@ session_key = "auth.uid"
 TOML);
 
 $request = new VSlim\VHttpd\Request('GET', '/', '');
-$guard = $app->auth($request);
+$guard = $app->auth(request: $request);
 echo ($guard->guest() ? 'guest_yes' : 'guest_no') . PHP_EOL;
-$guard->login('42');
+$login = new ReflectionMethod($guard, 'login');
+$userId = $login->getParameters()[0];
+if ($userId->getName() !== 'userId' || (string) $userId->getType() !== 'string'
+    || (string) $login->getReturnType() !== VSlim\Auth\SessionGuard::class
+    || $guard->login(userId: '42') !== $guard) {
+    throw new RuntimeException('Unexpected login signature or guard identity');
+}
 
 $response = new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 $guard->store()->commit($response);
@@ -32,7 +38,9 @@ $guard2 = $app->auth($request2);
 echo ($guard2->check() ? 'auth_yes' : 'auth_no') . PHP_EOL;
 echo $guard2->id() . PHP_EOL;
 
-$guard2->logout();
+if ($guard2->logout() !== $guard2) {
+    throw new RuntimeException('Logout returned a different guard');
+}
 $response2 = new VSlim\VHttpd\Response(200, 'ok', 'text/plain; charset=utf-8');
 $guard2->store()->commit($response2);
 $cookieValue2 = explode(';', $response2->cookieHeader(), 2)[0];

@@ -4,21 +4,11 @@ VHTTPD worker dispatches directly through a VSlim\App bootstrap
 <?php if (!extension_loaded("vslim")) print "skip"; ?>
 --FILE--
 <?php
-putenv('VHTTPD_APP=' . __DIR__ . '/fixtures/vslim_builder_app_fixture.php');
-define('VSLIM_HTTPD_WORKER_NOAUTO', true);
-$autoload = dirname(__DIR__) . '/examples/vendor/autoload.php';
-if (!is_file($autoload)) {
-    $autoload = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
-}
-if (!is_file($autoload)) {
-    $autoload = dirname(__DIR__) . '/vendor/autoload.php';
-}
-if (!is_file($autoload)) { echo "autoload_missing\n"; exit; }
-require_once $autoload;
+declare(strict_types=1);
 
-$worker = new \VHttpd\PhpWorker\Server('/tmp/vslim_worker_test.sock');
-
-$res = $worker->dispatchRequest([
+require_once __DIR__ . '/worker_wire_fixture.php';
+$worker = new WorkerWireFixture(__DIR__ . '/fixtures/vslim_builder_app_fixture.php', '\VSlim\Worker\Adapter::app');
+$res = $worker->request([
     'id' => 'req-a',
     'method' => 'GET',
     'path' => '/hello/codex',
@@ -36,9 +26,9 @@ $res = $worker->dispatchRequest([
     'uploaded_files' => [],
 ]);
 echo $res['id'] . PHP_EOL;
-echo $res['status'] . '|' . $res['content_type'] . '|' . $res['headers']['x-app'] . '|' . $res['body'] . PHP_EOL;
+echo $res['status'] . '|' . $res['headers']['content-type'] . '|' . $res['headers']['x-app'] . '|' . $res['body'] . PHP_EOL;
 
-$res = $worker->dispatchRequest([
+$res = $worker->request([
     'id' => 'req-b',
     'method' => 'POST',
     'path' => '/submit?trace_id=worker-app',
@@ -56,7 +46,7 @@ $res = $worker->dispatchRequest([
     'uploaded_files' => [],
 ]);
 echo $res['id'] . PHP_EOL;
-echo $res['status'] . '|' . $res['content_type'] . '|' . $res['headers']['x-app'] . '|' . $res['body'] . PHP_EOL;
+echo $res['status'] . '|' . $res['headers']['content-type'] . '|' . $res['headers']['x-app'] . '|' . $res['body'] . PHP_EOL;
 ?>
 --EXPECT--
 req-a

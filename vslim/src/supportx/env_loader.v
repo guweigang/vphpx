@@ -3,16 +3,16 @@ module supportx
 import os
 import vphp
 
-@[php_class: 'VSlim\\EnvLoader']
+@[vphp.PhpExportClass(name: 'VSlim\\EnvLoader')]
 @[heap]
 pub struct VSlimEnvLoader {}
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimEnvLoader.bootstrap(root string) map[string]string {
 	return VSlimEnvLoader.load(os.join_path_single(root, '.env'))
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimEnvLoader.load(path string) map[string]string {
 	if path.trim_space() == '' || !os.is_file(path) {
 		return map[string]string{}

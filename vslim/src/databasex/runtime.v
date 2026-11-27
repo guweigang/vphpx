@@ -31,7 +31,7 @@ const mysql_client_err_malformed_packet = 2027
 const mysql_client_err_server_lost_extended = 2055
 const mysql_client_err_auth_plugin_err = 2061
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut db VSlimDatabaseManager) connect() bool {
 	db.construct()
 	if db.config_ref.transport() == 'vhttpd_upstream' {
@@ -191,7 +191,7 @@ fn database_rows_with_column_names(rows []mysql.Row, column_names []string) []ma
 }
 
 fn database_exec_meta_value(affected_rows u64) vphp.PhpValue {
-	return database_result_value_from_dyn(vphp.DynValue.of_map({
+	return database_result_value_from_dyn(vphp.DynValue.array_from_map({
 		'affected_rows': vphp.DynValue.of_int(i64(affected_rows))
 	}))
 }
@@ -209,7 +209,7 @@ pub fn database_params_value(params []string) vphp.PhpValue {
 	for item in params {
 		values << vphp.DynValue.of_string(item)
 	}
-	return database_result_value_from_dyn(vphp.DynValue.of_list(values))
+	return database_result_value_from_dyn(vphp.DynValue.array_from_list(values))
 }
 
 fn (subject PhpValueSubject) database_param() string {
@@ -503,9 +503,11 @@ fn (job VSlimDatabaseAsyncJob) run_async() VSlimAsyncResult {
 		password: job.config.password
 		dbname:   job.config.database
 	}
-	mut conn := mysql.connect(config) or { return VSlimAsyncResult{
-		error: err.msg()
-	} }
+	mut conn := mysql.connect(config) or {
+		return VSlimAsyncResult{
+			error: err.msg()
+		}
+	}
 	defer {
 		conn.close() or {}
 	}
@@ -577,73 +579,48 @@ fn (mut db VSlimDatabaseManager) async_guard(label string) !VSlimDatabaseAsyncJo
 
 fn (job VSlimDatabaseAsyncJob) pending_result() &VSlimDatabasePendingResult {
 	mut pending := &VSlimDatabasePendingResult{}
-	pending.async_ref = (VSlimAsyncJob{
-		kind:     if job.kind == .execute { .database_execute } else { .database_query }
-		database: job
-	}).spawn()
-	pending.active = true
+	pending.async_ref = vphp.spawn_php_native_task[VSlimDatabaseAsyncJob, VSlimAsyncResult](job,
+		fn (work VSlimDatabaseAsyncJob) VSlimAsyncResult {
+			return work.run_async()
+		})
 	pending.kind = job.kind
 	return pending
 }
 
-fn (mut pending VSlimDatabasePendingResult) cache_result(result VSlimAsyncResult, kind VSlimDatabaseAsyncKind) vphp.PhpValue {
-	if pending.result_box.is_valid() {
-		mut old := pending.result_box
-		old.release()
-	}
+fn (mut pending VSlimDatabasePendingResult) cache_result(result VSlimAsyncResult) {
 	pending.affected_rows = result.affected_rows
 	pending.last_insert_id = result.last_insert_id
 	pending.last_error = result.error
 	if result.ok {
-		mut result_value := result.to_database_value(kind)
+		mut result_value := result.to_database_value(pending.kind)
 		pending.result_box = result_value.retain()
 		result_value.release()
 	} else {
 		pending.result_box = vphp.PhpValue.null().retain()
 	}
 	pending.resolved = true
-	pending.active = false
-	mut owned := pending.result_box.owned()
-	defer {
-		owned.release()
-	}
-	return owned.owned()
 }
 
-fn (mut pending VSlimDatabasePendingResult) wait_result() VSlimAsyncResult {
-	if pending.async_ref == unsafe { nil } {
-		return VSlimAsyncResult{
-			error: 'database async handle is missing'
+fn (mut pending VSlimDatabasePendingResult) wait_value() !vphp.PhpValue {
+	if !pending.resolved {
+		if pending.async_ref == unsafe { nil } {
+			pending.cache_result(VSlimAsyncResult{ error: 'database async handle is missing' })
+		} else {
+			result := pending.async_ref.wait()!
+			// A peer waiting on the same query may already have boxed it.
+			if !pending.resolved {
+				pending.cache_result(result)
+			}
 		}
 	}
-	result := pending.async_ref.wait()
-	pending.async_ref.release()
-	pending.async_ref = unsafe { nil }
-	return result
-}
 
-fn (mut pending VSlimDatabasePendingResult) wait_value(kind VSlimDatabaseAsyncKind, label string) vphp.PhpValue {
-	if pending.resolved {
-		if pending.last_error != '' {
-			vphp.PhpException.raise_class('RuntimeException',
-				'database async ${label} failed: ${pending.last_error}', 0)
-			return vphp.PhpValue.null()
-		}
-		mut owned := pending.result_box.owned()
-		defer {
-			owned.release()
-		}
-		return owned.owned()
-	}
-	result := pending.wait_result()
-	mut response := pending.cache_result(result, kind)
 	if pending.last_error != '' {
-		response.release()
-		vphp.PhpException.raise_class('RuntimeException',
-			'database async ${label} failed: ${pending.last_error}', 0)
-		return vphp.PhpValue.null()
+		label := if pending.kind == .execute { 'execute' } else { 'query' }
+		message := 'database async ${label} failed: ${pending.last_error}'
+		vphp.PhpException.raise_class('RuntimeException', message, 0)
+		return error(message)
 	}
-	return response
+	return pending.result_box.owned()
 }
 
 fn (subject PhpValueSubject) database_params() []string {
@@ -706,7 +683,7 @@ fn (mut db VSlimDatabaseManager) finish_mysql_tx_conn(reusable bool) {
 	db.mysql_tx_active = false
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut db VSlimDatabaseManager) disconnect() &VSlimDatabaseManager {
 	if db.upstream_tx_active {
 		db.database_upstream_rollback() or {}
@@ -731,7 +708,7 @@ pub fn (mut db VSlimDatabaseManager) disconnect() &VSlimDatabaseManager {
 	return &db
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut db VSlimDatabaseManager) ping() bool {
 	if db.database_uses_upstream() {
 		ok := db.database_upstream_ping() or {
@@ -760,7 +737,7 @@ pub fn (mut db VSlimDatabaseManager) ping() bool {
 	return ok
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut db VSlimDatabaseManager) execute(query string) vphp.PhpValue {
 	if db.database_uses_upstream() {
 		result := db.database_upstream_execute_value(query, []string{}) or {
@@ -800,7 +777,7 @@ pub fn (mut db VSlimDatabaseManager) execute(query string) vphp.PhpValue {
 	return database_exec_meta_value(affected)
 }
 
-@[php_method: 'executeAsync']
+@[vphp.PhpExportMethod(name: 'executeAsync')]
 pub fn (mut db VSlimDatabaseManager) execute_async(query string) &VSlimDatabasePendingResult {
 	mut job := db.async_guard('execute') or {
 		db.last_error = err.msg()
@@ -814,7 +791,7 @@ pub fn (mut db VSlimDatabaseManager) execute_async(query string) &VSlimDatabaseP
 	return job.pending_result()
 }
 
-@[php_method: 'executeParams']
+@[vphp.PhpExportMethod(name: 'executeParams')]
 pub fn (mut db VSlimDatabaseManager) execute_params(query string, params vphp.PhpValue) vphp.PhpValue {
 	values := value_subject(params).database_params()
 	if db.database_uses_upstream() {
@@ -855,7 +832,7 @@ pub fn (mut db VSlimDatabaseManager) execute_params(query string, params vphp.Ph
 	return database_exec_meta_value(affected)
 }
 
-@[php_method: 'executeParamsAsync']
+@[vphp.PhpExportMethod(name: 'executeParamsAsync')]
 pub fn (mut db VSlimDatabaseManager) execute_params_async(query string, params vphp.PhpValue) &VSlimDatabasePendingResult {
 	mut job := db.async_guard('execute') or {
 		db.last_error = err.msg()
@@ -869,7 +846,7 @@ pub fn (mut db VSlimDatabaseManager) execute_params_async(query string, params v
 	return job.pending_result()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut db VSlimDatabaseManager) query(query string) vphp.PhpValue {
 	if db.database_uses_upstream() {
 		rows := db.database_upstream_query_value(query, []string{}) or {
@@ -907,7 +884,7 @@ pub fn (mut db VSlimDatabaseManager) query(query string) vphp.PhpValue {
 	return database_rows_to_value(rows)
 }
 
-@[php_method: 'queryAsync']
+@[vphp.PhpExportMethod(name: 'queryAsync')]
 pub fn (mut db VSlimDatabaseManager) query_async(query string) &VSlimDatabasePendingResult {
 	mut job := db.async_guard('query') or {
 		db.last_error = err.msg()
@@ -921,7 +898,7 @@ pub fn (mut db VSlimDatabaseManager) query_async(query string) &VSlimDatabasePen
 	return job.pending_result()
 }
 
-@[php_method: 'queryParams']
+@[vphp.PhpExportMethod(name: 'queryParams')]
 pub fn (mut db VSlimDatabaseManager) query_params(query string, params vphp.PhpValue) vphp.PhpValue {
 	values := value_subject(params).database_params()
 	if db.database_uses_upstream() {
@@ -958,7 +935,7 @@ pub fn (mut db VSlimDatabaseManager) query_params(query string, params vphp.PhpV
 	return database_rows_to_value(rows)
 }
 
-@[php_method: 'queryParamsAsync']
+@[vphp.PhpExportMethod(name: 'queryParamsAsync')]
 pub fn (mut db VSlimDatabaseManager) query_params_async(query string, params vphp.PhpValue) &VSlimDatabasePendingResult {
 	mut job := db.async_guard('query') or {
 		db.last_error = err.msg()
@@ -972,7 +949,7 @@ pub fn (mut db VSlimDatabaseManager) query_params_async(query string, params vph
 	return job.pending_result()
 }
 
-@[php_method: 'queryOne']
+@[vphp.PhpExportMethod(name: 'queryOne')]
 pub fn (mut db VSlimDatabaseManager) query_one(query string) vphp.PhpValue {
 	rows := db.query(query)
 	if !rows.is_array() || rows.count() == 0 {
@@ -981,7 +958,7 @@ pub fn (mut db VSlimDatabaseManager) query_one(query string) vphp.PhpValue {
 	return rows.index_value(0)
 }
 
-@[php_method: 'queryOneParams']
+@[vphp.PhpExportMethod(name: 'queryOneParams')]
 pub fn (mut db VSlimDatabaseManager) query_one_params(query string, params vphp.PhpValue) vphp.PhpValue {
 	rows := db.query_params(query, params)
 	if !rows.is_array() || rows.count() == 0 {
@@ -990,7 +967,7 @@ pub fn (mut db VSlimDatabaseManager) query_one_params(query string, params vphp.
 	return rows.index_value(0)
 }
 
-@[php_method: 'beginTransaction']
+@[vphp.PhpExportMethod(name: 'beginTransaction')]
 pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
 	if db.database_uses_upstream() {
 		ok := db.database_upstream_begin_transaction() or {
@@ -1056,7 +1033,7 @@ pub fn (mut db VSlimDatabaseManager) begin_transaction() bool {
 	return true
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut db VSlimDatabaseManager) commit() bool {
 	if db.database_uses_upstream() {
 		ok := db.database_upstream_commit() or {
@@ -1090,7 +1067,7 @@ pub fn (mut db VSlimDatabaseManager) commit() bool {
 	return true
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut db VSlimDatabaseManager) rollback() bool {
 	if db.database_uses_upstream() {
 		ok := db.database_upstream_rollback() or {
@@ -1126,39 +1103,35 @@ pub fn (mut db VSlimDatabaseManager) rollback() bool {
 	return true
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (pending &VSlimDatabasePendingResult) resolved() bool {
 	return pending.resolved
 }
 
-@[php_method: 'lastError']
+@[vphp.PhpExportMethod(name: 'lastError')]
 pub fn (pending &VSlimDatabasePendingResult) last_error_message() string {
 	return pending.last_error
 }
 
-@[php_method: 'affectedRows']
+@[vphp.PhpExportMethod(name: 'affectedRows')]
 pub fn (pending &VSlimDatabasePendingResult) affected_rows_value() int {
 	return int(pending.affected_rows)
 }
 
-@[php_method: 'lastInsertId']
+@[vphp.PhpExportMethod(name: 'lastInsertId')]
 pub fn (pending &VSlimDatabasePendingResult) last_insert_id_value() i64 {
 	return pending.last_insert_id
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut pending VSlimDatabasePendingResult) wait() vphp.PhpValue {
-	label := if pending.kind == .execute { 'execute' } else { 'query' }
-	return pending.wait_value(pending.kind, label)
+	return pending.wait_value() or { vphp.PhpValue.null() }
 }
 
 pub fn (mut pending VSlimDatabasePendingResult) cleanup() {
-	if pending.active {
-		result := pending.wait_result()
-		_ = pending.cache_result(result, pending.kind)
-	}
 	if pending.async_ref != unsafe { nil } {
 		pending.async_ref.release()
 		pending.async_ref = unsafe { nil }
 	}
+	pending.result_box.release()
 }

@@ -1,0 +1,35 @@
+{
+  "format": "vslim-runtime-profile-v1",
+  "target": "macos-arm64",
+  "status": "verified-host-linked",
+  "verified_at": "2026-09-13",
+  "php": {
+    "version": "8.5.7",
+    "zts": true,
+    "sapi": "embed",
+    "library": "libphp.dylib",
+    "extensions": [
+      "json",
+      "mbstring"
+    ]
+  },
+  "link_mode": "shared",
+  "architecture": "arm64",
+  "module_loading": {
+    "vslim": "dynamic-extracted",
+    "fully_static_supported": false
+  },
+  "application_extension_requirements": "composer.json/composer.lock ext-*",
+  "distribution": {
+    "profile": "host-linked",
+    "self_contained": false,
+    "required_runtime": "matching @rpath/libphp.dylib"
+  },
+  "verification": {
+    "application_image_embedded": true,
+    "vslim_extension_embedded": true,
+    "fresh_cache_boot": true,
+    "health_route": true,
+    "module_route": true
+  }
+}

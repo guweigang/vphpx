@@ -2,10 +2,9 @@ module php_types
 
 pub struct PhpDefaultSpec {
 pub:
-	v_key                 string
-	v_expr                string
-	php_expr              string
-	uses_v_literal_in_php bool
+	v_key    string
+	v_expr   string
+	php_expr string
 }
 
 pub fn PhpDefaultSpec.from_v_type(v_type string) PhpDefaultSpec {
@@ -21,34 +20,30 @@ pub fn PhpDefaultSpec.from_v_type(v_type string) PhpDefaultSpec {
 	match normalized {
 		'string' {
 			return PhpDefaultSpec{
-				v_key:                 normalized
-				v_expr:                "''"
-				php_expr:              "''"
-				uses_v_literal_in_php: true
+				v_key:    normalized
+				v_expr:   "''"
+				php_expr: "''"
 			}
 		}
 		'bool' {
 			return PhpDefaultSpec{
-				v_key:                 normalized
-				v_expr:                'false'
-				php_expr:              'false'
-				uses_v_literal_in_php: true
+				v_key:    normalized
+				v_expr:   'false'
+				php_expr: 'false'
 			}
 		}
 		'int', 'i8', 'i16', 'i32', 'i64', 'isize', 'u8', 'u16', 'u32', 'u64', 'usize' {
 			return PhpDefaultSpec{
-				v_key:                 normalized
-				v_expr:                '0'
-				php_expr:              '0'
-				uses_v_literal_in_php: true
+				v_key:    normalized
+				v_expr:   '0'
+				php_expr: '0'
 			}
 		}
 		'f32', 'f64' {
 			return PhpDefaultSpec{
-				v_key:                 normalized
-				v_expr:                '0.0'
-				php_expr:              '0'
-				uses_v_literal_in_php: true
+				v_key:    normalized
+				v_expr:   '0.0'
+				php_expr: '0.0'
 			}
 		}
 		'PhpNull' {
@@ -108,11 +103,4 @@ pub fn PhpDefaultSpec.from_v_type(v_type string) PhpDefaultSpec {
 		v_expr:   '${clean}{}'
 		php_expr: 'null'
 	}
-}
-
-pub fn (spec PhpDefaultSpec) php_expr_for_v_default(v_default string) string {
-	if spec.uses_v_literal_in_php {
-		return v_default
-	}
-	return spec.php_expr
 }

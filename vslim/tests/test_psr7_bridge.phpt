@@ -1,7 +1,5 @@
 --TEST--
-VHTTPD PSR-7 bridge builds a request when a PSR-17 style factory is available
---SKIPIF--
-<?php if (!extension_loaded("vslim")) print "skip"; ?>
+VSlim worker PSR-7 bridge builds a request when a PSR-17 style factory is available
 --FILE--
 <?php
 namespace Nyholm\Psr7\Factory {
@@ -73,9 +71,9 @@ namespace {
         }
     }
 
-    require_once __DIR__ . '/php_worker_package_bootstrap.php';
+    require_once dirname(__DIR__) . '/templates/app/bootstrap/worker.php';
 
-    $req = VHttpd\Psr7Adapter::buildServerRequest([
+    $req = VSlim\Worker\Adapter::request([
         'method' => 'POST',
         'path' => '/users/9?trace_id=psr',
         'body' => '{"name":"Codex"}',
@@ -90,7 +88,7 @@ namespace {
         'attributes' => ['route' => 'users.show'],
         'server' => ['REQUEST_TIME_FLOAT' => '1.23'],
         'uploaded_files' => [],
-    ]);
+    ], new Nyholm\Psr7\Factory\Psr17Factory(), new Nyholm\Psr7\Factory\Psr17Factory());
 
     echo get_class($req) . PHP_EOL;
     echo $req->method . '|' . $req->uri . '|' . $req->protocolVersion . PHP_EOL;
@@ -99,7 +97,7 @@ namespace {
     echo $req->cookies['sid'] . '|' . $req->query['trace_id'] . '|' . $req->attributes['route'] . PHP_EOL;
     echo $req->server['HTTP_HOST'] . '|' . $req->server['REMOTE_ADDR'] . '|' . $req->server['SERVER_PROTOCOL'] . PHP_EOL;
 
-    $req2 = VHttpd\Psr7Adapter::buildServerRequest([
+    $req2 = VSlim\Worker\Adapter::request([
         'method' => 'GET',
         'path' => '/hello/world?trace_id=array-shape',
         'scheme' => 'http',
@@ -113,7 +111,7 @@ namespace {
         'attributes' => ['source' => 'worker-shape'],
         'server' => ['REQUEST_TIME_FLOAT' => '2.34'],
         'uploaded_files' => [],
-    ]);
+    ], new Nyholm\Psr7\Factory\Psr17Factory(), new Nyholm\Psr7\Factory\Psr17Factory());
     echo $req2->method . '|' . $req2->uri . '|' . $req2->headers['x-request-id'] . PHP_EOL;
     echo $req2->cookies['sid'] . '|' . $req2->query['trace_id'] . '|' . $req2->attributes['source'] . '|' . $req2->server['REMOTE_ADDR'] . PHP_EOL;
 }

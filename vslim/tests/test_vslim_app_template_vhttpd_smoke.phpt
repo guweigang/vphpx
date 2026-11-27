@@ -3,8 +3,9 @@ VSlim app template can serve requests through vhttpd and php-worker
 --SKIPIF--
 <?php
 if (!extension_loaded("vslim")) print "skip";
+if (!function_exists('proc_open')) print 'skip proc_open unavailable';
 if (getenv("CODEX_SANDBOX_NETWORK_DISABLED") === "1") print "skip";
-if (!is_file((getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/vhttpd')) print "skip";
+if (!is_file(getenv('VHTTPD_BIN') ?: (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/vhttpd')) print "skip";
 $probe = sys_get_temp_dir() . '/vhttpd_unix_probe_' . getmypid() . '.sock';
 @unlink($probe);
 $errno = 0;
@@ -22,6 +23,7 @@ if (is_file($probe)) {
 ?>
 --FILE--
 <?php
+require_once __DIR__ . '/vhttpd_process_fixture.php';
 function free_port(): int {
     $server = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
     if (!is_resource($server)) {
@@ -63,7 +65,7 @@ function response_header(array $headers, string $name): string {
 $root = dirname(__DIR__);
 $repoRoot = dirname($root);
 $vhttpdRoot = getenv('VHTTPD_ROOT') ?: (dirname($repoRoot) . '/vhttpd');
-$bin = $vhttpdRoot . '/vhttpd';
+$bin = getenv('VHTTPD_BIN') ?: $vhttpdRoot . '/vhttpd';
 $templateRoot = $root . '/templates/app';
 $workerPhp = $vhttpdRoot . '/php/package/bin/vphp-worker';
 
@@ -125,13 +127,7 @@ socket = "{$socket}"
 TOML;
 file_put_contents($configPath, $toml);
 
-$cmd = sprintf(
-    '%s --config %s >> %s 2>&1 &',
-    escapeshellarg($bin),
-    escapeshellarg($configPath),
-    escapeshellarg($stdoutLog),
-);
-exec($cmd);
+$process = launch_vhttpd($bin, $configPath, $stdoutLog);
 
 $base = 'http://127.0.0.1:' . $port;
 $ready = false;
@@ -173,15 +169,7 @@ $missingHeaders = last_response_headers();
 echo response_status_code($missingHeaders) . '|'
     . trim((string) $missingBody) . "\n";
 
-$pid = is_file($pidFile) ? (int) trim((string) file_get_contents($pidFile)) : 0;
-if ($pid > 0) {
-    exec(sprintf('kill %d >/dev/null 2>&1', $pid));
-    usleep(200_000);
-    exec(sprintf('kill -0 %d >/dev/null 2>&1', $pid), $noop, $alive);
-    echo $alive === 0 ? "still_running\n" : "stopped\n";
-} else {
-    echo "stopped\n";
-}
+echo stop_vhttpd($process) ? "stopped\n" : "still_running\n";
 ?>
 --EXPECT--
 ready

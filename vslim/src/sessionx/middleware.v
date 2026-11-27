@@ -3,6 +3,7 @@ module sessionx
 import configx
 import containerx
 import httpx
+import middlewarex
 import vphp
 
 pub fn VSlimSessionStartMiddleware.from_container(container &containerx.VSlimContainer) &VSlimSessionStartMiddleware {
@@ -85,7 +86,7 @@ fn resolve_auth_user_from_provider(provider vphp.PhpValue, user_id string) vphp.
 		return vphp.PhpValue.null()
 	}
 	if !provider.is_valid() {
-		return vphp.PhpString.of(normalized_id).take_value()
+		return vphp.PhpValue.string(normalized_id)
 	}
 	mut normalized_id_arg := vphp.PhpString.of(normalized_id)
 	defer {
@@ -102,7 +103,7 @@ fn resolve_auth_user_from_provider(provider vphp.PhpValue, user_id string) vphp.
 			return provider_obj.call_method('resolve', normalized_id_arg)
 		}
 	}
-	return vphp.PhpString.of(normalized_id).take_value()
+	return vphp.PhpValue.string(normalized_id)
 }
 
 fn auth_user(container &containerx.VSlimContainer, request vphp.PhpObject) vphp.PhpValue {
@@ -166,20 +167,21 @@ fn psr7_auth_guest_redirect(redirect_path string) &httpx.VSlimPsr7Response {
 	return httpx.VSlimPsr7Response.from_vslim_response(redirect)
 }
 
-@[php_borrowed_return; php_method]
+@[vphp.PhpBorrowedReturn]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut middleware VSlimSessionStartMiddleware) construct() &VSlimSessionStartMiddleware {
 	return &middleware
 }
 
-@[php_method: 'setContainer']
-@[php_borrowed_return]
+@[vphp.PhpExportMethod(name: 'setContainer')]
+@[vphp.PhpBorrowedReturn]
 pub fn (mut middleware VSlimSessionStartMiddleware) set_container(container &containerx.VSlimContainer) &VSlimSessionStartMiddleware {
 	middleware.container_ref = container
 	return &middleware
 }
 
-@[php_method: 'setApp']
-@[php_borrowed_return]
+@[vphp.PhpExportMethod(name: 'setApp')]
+@[vphp.PhpBorrowedReturn]
 pub fn (mut middleware VSlimSessionStartMiddleware) set_app(app vphp.PhpValue) &VSlimSessionStartMiddleware {
 	if app_obj := app.as_object() {
 		mut result := app_obj.call_method('container')
@@ -193,18 +195,15 @@ pub fn (mut middleware VSlimSessionStartMiddleware) set_app(app vphp.PhpValue) &
 	return &middleware
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method]
-pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &httpx.VSlimPsr7Response {
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: '')]
+pub fn (middleware &VSlimSessionStartMiddleware) process(request httpx.PsrServerRequest, handler middlewarex.PsrRequestHandler) &httpx.VSlimPsr7Response {
 	container := middleware_container_or_error(middleware.container_ref, 'Session middleware') or {
 		return httpx.VSlimPsr7Response.text(500, err.msg())
 	}
-	if !request.is_valid() {
-		return httpx.VSlimPsr7Response.text(500, 'Session middleware request is not an object')
-	}
-	mut session := session_for_request(container, request)
-	mut result := handler.call_method('handle', request)
+	request_object := request.to_object()
+	mut session := session_for_request(container, request_object)
+	mut result := handler.to_object().call_method('handle', request_object)
 	defer {
 		result.release()
 	}
@@ -212,21 +211,22 @@ pub fn (middleware &VSlimSessionStartMiddleware) process(request vphp.PhpObject,
 	return session.commit_psr_response(response)
 }
 
-@[php_borrowed_return; php_method]
+@[vphp.PhpBorrowedReturn]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut middleware VSlimAuthRequireMiddleware) construct() &VSlimAuthRequireMiddleware {
 	middleware.redirect_path = ''
 	return &middleware
 }
 
-@[php_method: 'setContainer']
-@[php_borrowed_return]
+@[vphp.PhpExportMethod(name: 'setContainer')]
+@[vphp.PhpBorrowedReturn]
 pub fn (mut middleware VSlimAuthRequireMiddleware) set_container(container &containerx.VSlimContainer) &VSlimAuthRequireMiddleware {
 	middleware.container_ref = container
 	return &middleware
 }
 
-@[php_method: 'setApp']
-@[php_borrowed_return]
+@[vphp.PhpExportMethod(name: 'setApp')]
+@[vphp.PhpBorrowedReturn]
 pub fn (mut middleware VSlimAuthRequireMiddleware) set_app(app vphp.PhpValue) &VSlimAuthRequireMiddleware {
 	if app_obj := app.as_object() {
 		mut result := app_obj.call_method('container')
@@ -240,29 +240,26 @@ pub fn (mut middleware VSlimAuthRequireMiddleware) set_app(app vphp.PhpValue) &V
 	return &middleware
 }
 
-@[php_arg_name: 'path=redirectPath']
-@[php_method: 'setRedirectTo']
+@[vphp.PhpArgName(v_name: 'path', php_name: 'redirectPath')]
+@[vphp.PhpExportMethod(name: 'setRedirectTo')]
 pub fn (mut middleware VSlimAuthRequireMiddleware) set_redirect_path(path string) &VSlimAuthRequireMiddleware {
 	middleware.redirect_path = path.trim_space()
 	return &middleware
 }
 
-@[php_method: 'redirectTo']
+@[vphp.PhpExportMethod(name: 'redirectTo')]
 pub fn (middleware &VSlimAuthRequireMiddleware) redirect_path_value() string {
 	return middleware.redirect_path.trim_space()
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method]
-pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &httpx.VSlimPsr7Response {
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: '')]
+pub fn (middleware &VSlimAuthRequireMiddleware) process(request httpx.PsrServerRequest, handler middlewarex.PsrRequestHandler) &httpx.VSlimPsr7Response {
 	container := middleware_container_or_error(middleware.container_ref, 'Auth middleware') or {
 		return httpx.VSlimPsr7Response.text(500, err.msg())
 	}
-	if !request.is_valid() {
-		return httpx.VSlimPsr7Response.text(500, 'Auth middleware request is not an object')
-	}
-	mut guard := auth_for_request(container, request)
+	request_object := request.to_object()
+	mut guard := auth_for_request(container, request_object)
 	if !guard.check() {
 		return psr7_auth_unauthorized_response(auth_redirect_to(container, middleware.redirect_path))
 	}
@@ -271,11 +268,11 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.PhpObject, 
 	defer {
 		user_id_arg.release()
 	}
-	mut next_request := request.with_attribute('auth.user_id', user_id_arg)
+	mut next_request := request_object.with_attribute('auth.user_id', user_id_arg)
 	defer {
 		next_request.release()
 	}
-	mut user := auth_user(container, request)
+	mut user := auth_user(container, request_object)
 	defer {
 		user.release()
 	}
@@ -284,28 +281,29 @@ pub fn (middleware &VSlimAuthRequireMiddleware) process(request vphp.PhpObject, 
 		next_request.release()
 		next_request = enriched
 	}
-	mut result := handler.call_method('handle', next_request)
+	mut result := handler.to_object().call_method('handle', next_request)
 	defer {
 		result.release()
 	}
 	return httpx.VSlimPsr7Response.from_value(result)
 }
 
-@[php_borrowed_return; php_method]
+@[vphp.PhpBorrowedReturn]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut middleware VSlimAuthGuestMiddleware) construct() &VSlimAuthGuestMiddleware {
 	middleware.redirect_path = ''
 	return &middleware
 }
 
-@[php_method: 'setContainer']
-@[php_borrowed_return]
+@[vphp.PhpExportMethod(name: 'setContainer')]
+@[vphp.PhpBorrowedReturn]
 pub fn (mut middleware VSlimAuthGuestMiddleware) set_container(container &containerx.VSlimContainer) &VSlimAuthGuestMiddleware {
 	middleware.container_ref = container
 	return &middleware
 }
 
-@[php_method: 'setApp']
-@[php_borrowed_return]
+@[vphp.PhpExportMethod(name: 'setApp')]
+@[vphp.PhpBorrowedReturn]
 pub fn (mut middleware VSlimAuthGuestMiddleware) set_app(app vphp.PhpValue) &VSlimAuthGuestMiddleware {
 	if app_obj := app.as_object() {
 		mut result := app_obj.call_method('container')
@@ -319,40 +317,38 @@ pub fn (mut middleware VSlimAuthGuestMiddleware) set_app(app vphp.PhpValue) &VSl
 	return &middleware
 }
 
-@[php_arg_name: 'path=redirectPath']
-@[php_method: 'setRedirectTo']
+@[vphp.PhpArgName(v_name: 'path', php_name: 'redirectPath')]
+@[vphp.PhpExportMethod(name: 'setRedirectTo')]
 pub fn (mut middleware VSlimAuthGuestMiddleware) set_redirect_path(path string) &VSlimAuthGuestMiddleware {
 	middleware.redirect_path = path.trim_space()
 	return &middleware
 }
 
-@[php_method: 'redirectTo']
+@[vphp.PhpExportMethod(name: 'redirectTo')]
 pub fn (middleware &VSlimAuthGuestMiddleware) redirect_path_value() string {
 	return middleware.redirect_path.trim_space()
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method]
-pub fn (middleware &VSlimAuthGuestMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &httpx.VSlimPsr7Response {
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: '')]
+pub fn (middleware &VSlimAuthGuestMiddleware) process(request httpx.PsrServerRequest, handler middlewarex.PsrRequestHandler) &httpx.VSlimPsr7Response {
 	container := middleware_container_or_error(middleware.container_ref, 'Guest middleware') or {
 		return httpx.VSlimPsr7Response.text(500, err.msg())
 	}
-	if !request.is_valid() {
-		return httpx.VSlimPsr7Response.text(500, 'Guest middleware request is not an object')
-	}
-	mut guard := auth_for_request(container, request)
+	request_object := request.to_object()
+	mut guard := auth_for_request(container, request_object)
 	if !guard.guest() {
 		return psr7_auth_guest_redirect(auth_redirect_to(container, middleware.redirect_path))
 	}
-	mut result := handler.call_method('handle', request)
+	mut result := handler.to_object().call_method('handle', request_object)
 	defer {
 		result.release()
 	}
 	return httpx.VSlimPsr7Response.from_value(result)
 }
 
-@[php_borrowed_return; php_method]
+@[vphp.PhpBorrowedReturn]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) construct() &VSlimAuthRequireAbilityMiddleware {
 	middleware.ability = ''
 	middleware.status = 403
@@ -360,15 +356,15 @@ pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) construct() &VSlimAuth
 	return &middleware
 }
 
-@[php_method: 'setContainer']
-@[php_borrowed_return]
+@[vphp.PhpExportMethod(name: 'setContainer')]
+@[vphp.PhpBorrowedReturn]
 pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_container(container &containerx.VSlimContainer) &VSlimAuthRequireAbilityMiddleware {
 	middleware.container_ref = container
 	return &middleware
 }
 
-@[php_method: 'setApp']
-@[php_borrowed_return]
+@[vphp.PhpExportMethod(name: 'setApp')]
+@[vphp.PhpBorrowedReturn]
 pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_app(app vphp.PhpValue) &VSlimAuthRequireAbilityMiddleware {
 	if app_obj := app.as_object() {
 		mut result := app_obj.call_method('container')
@@ -382,18 +378,18 @@ pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_app(app vphp.PhpVa
 	return &middleware
 }
 
-@[php_method: 'setAbility']
+@[vphp.PhpExportMethod(name: 'setAbility')]
 pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_ability(ability string) &VSlimAuthRequireAbilityMiddleware {
 	middleware.ability = ability.trim_space()
 	return &middleware
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (middleware &VSlimAuthRequireAbilityMiddleware) ability() string {
 	return middleware.ability.trim_space()
 }
 
-@[php_method: 'setStatus']
+@[vphp.PhpExportMethod(name: 'setStatus')]
 pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_status(status int) &VSlimAuthRequireAbilityMiddleware {
 	if status > 0 {
 		middleware.status = status
@@ -401,7 +397,7 @@ pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_status(status int)
 	return &middleware
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (middleware &VSlimAuthRequireAbilityMiddleware) status() int {
 	if middleware.status <= 0 {
 		return 403
@@ -409,13 +405,13 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) status() int {
 	return middleware.status
 }
 
-@[php_method: 'setMessage']
+@[vphp.PhpExportMethod(name: 'setMessage')]
 pub fn (mut middleware VSlimAuthRequireAbilityMiddleware) set_message(message string) &VSlimAuthRequireAbilityMiddleware {
 	middleware.message = message.trim_space()
 	return &middleware
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (middleware &VSlimAuthRequireAbilityMiddleware) message() string {
 	if middleware.message.trim_space() == '' {
 		return 'Forbidden'
@@ -423,23 +419,20 @@ pub fn (middleware &VSlimAuthRequireAbilityMiddleware) message() string {
 	return middleware.message.trim_space()
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface,handler=Psr\\Http\\Server\\RequestHandlerInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method]
-pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request vphp.PhpObject, handler vphp.PhpObject) &httpx.VSlimPsr7Response {
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: '')]
+pub fn (middleware &VSlimAuthRequireAbilityMiddleware) process(request httpx.PsrServerRequest, handler middlewarex.PsrRequestHandler) &httpx.VSlimPsr7Response {
 	container := middleware_container_or_error(middleware.container_ref, 'Ability middleware') or {
 		return httpx.VSlimPsr7Response.text(500, err.msg())
 	}
 	if middleware.ability() == '' {
 		return httpx.VSlimPsr7Response.text(500, 'Ability middleware ability is not configured')
 	}
-	if !request.is_valid() {
-		return httpx.VSlimPsr7Response.text(500, 'Ability middleware request is not an object')
-	}
-	if !can(container, middleware.ability(), request) {
+	request_object := request.to_object()
+	if !can(container, middleware.ability(), request_object) {
 		return httpx.VSlimPsr7Response.text(middleware.status(), middleware.message())
 	}
-	mut result := handler.call_method('handle', request)
+	mut result := handler.to_object().call_method('handle', request_object)
 	defer {
 		result.release()
 	}

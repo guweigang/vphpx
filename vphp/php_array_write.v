@@ -9,13 +9,39 @@ pub fn (a PhpArray) assoc_zval(key string, value ZVal) {
 	a.to_zval().add_assoc_zval(key, value)
 }
 
+pub fn (a PhpArray) index_zval(index i64, value ZVal) {
+	a.to_zval().add_index_zval(index, value)
+}
+
+// remove returns true if the PHP key existed, even when its value was null.
+// Numeric strings follow PHP's key conversion rules.
+pub fn (a PhpArray) remove(key string) bool {
+	return a.to_zval().remove_array_key(key)
+}
+
+// remove_index deletes a PHP integer key without reindexing the array.
+pub fn (a PhpArray) remove_index(index i64) bool {
+	return a.to_zval().remove_array_index(index)
+}
+
 pub fn (a PhpArray) set(key string, value PhpArgInput) {
 	a.assoc(key, value)
 }
 
 pub fn (a PhpArray) set_value(key string, value PhpValue) {
-	mut owned := value.owned()
-	a.assoc_zval(key, owned.take_zval())
+	value.value.with_request_zval(fn [a, key] (raw ZVal) bool {
+		a.assoc_zval(key, raw)
+		return true
+	})
+}
+
+// set_callable copies a PHP callable into the array and releases any temporary
+// request handle needed to materialize a retained callable.
+pub fn (a PhpArray) set_callable(key string, callable PhpCallable) {
+	callable.callable.with_request_zval(fn [a, key] (raw ZVal) bool {
+		a.assoc_zval(key, raw)
+		return true
+	})
 }
 
 pub fn (a PhpArray) set_zval(key string, value ZVal) {
@@ -61,8 +87,10 @@ pub fn (a PhpArray) push(value PhpArgInput) {
 }
 
 pub fn (a PhpArray) push_value(value PhpValue) {
-	mut owned := value.owned()
-	a.next_zval(owned.take_zval())
+	value.value.with_request_zval(fn [a] (raw ZVal) bool {
+		a.next_zval(raw)
+		return true
+	})
 }
 
 pub fn (a PhpArray) push_zval(value ZVal) {

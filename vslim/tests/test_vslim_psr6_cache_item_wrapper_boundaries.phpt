@@ -66,6 +66,36 @@ namespace {
     echo ($pool->getItem('alpha')->get() === 'B' ? 'deferred-visible' : 'deferred-hidden') . PHP_EOL;
     $pool->commit();
     echo ($pool->getItem('alpha')->get() === 'B' ? 'commit-visible' : 'commit-hidden') . PHP_EOL;
+
+    $pool->setNamespace('isolated');
+    $bound = 'staged';
+    $object = new stdClass();
+    $input = ['left' => &$bound, 'right' => &$bound, 'object' => $object];
+    $input['loop'] = &$input;
+    $staged = $pool->getItem('references')->set($input);
+    $bound = 'outside';
+    $itemRead = $staged->get();
+    $itemRead['left'] = 'item-copy';
+    if ($itemRead['right'] !== 'item-copy' || $itemRead['loop']['left'] !== 'item-copy'
+        || $itemRead['object'] !== $object || $staged->get()['left'] !== 'staged'
+        || $bound !== 'outside') {
+        throw new RuntimeException('Cache item failed to isolate array references');
+    }
+    if (!$pool->saveDeferred($staged)) {
+        throw new RuntimeException('Could not stage a reference graph');
+    }
+    $staged->set(['left' => 'replacement']);
+    $pending = $pool->getItems(['references'])['references']->get();
+    $pending['right'] = 'pending-copy';
+    if ($pending['left'] !== 'pending-copy' || $pool->getItem('references')->get()['left'] !== 'staged'
+        || !$pool->commit() || $pool->getItem('references')->get()['left'] !== 'staged') {
+        throw new RuntimeException('Deferred commit lost isolation or the staged value');
+    }
+    if (!$pool->saveDeferred($pool->getItem('references')->set('superseded'))
+        || !$pool->save($staged) || $pool->getItem('references')->get() !== ['left' => 'replacement']
+        || !$pool->commit() || $pool->getItem('references')->get() !== ['left' => 'replacement']) {
+        throw new RuntimeException('A deferred namespaced value overwrote a later direct save');
+    }
 }
 ?>
 --EXPECT--

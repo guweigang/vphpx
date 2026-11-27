@@ -22,7 +22,7 @@ namespace {
     $alias2 = $probe->borrowedProviderAlias();
     $guard1 = $probe->borrowedProviderFromGuard();
     $guard2 = $probe->borrowedProviderFromGuard();
-    $ifExpr1 = $probe->borrowedProviderFromIfExpr(true);
+    $ifExpr1 = $probe->borrowedProviderFromIfExpr(useAlias: true);
     $ifExpr2 = $probe->borrowedProviderFromIfExpr(true);
     $ifExpr3 = $probe->borrowedProviderFromIfExpr(false);
     $ifAlias1 = $probe->borrowedProviderFromIfExprAlias(true);

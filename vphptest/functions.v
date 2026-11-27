@@ -795,6 +795,30 @@ fn v_php_params_struct_api(params VPhpParamsStructDemo) string {
 	return 'params=${params.status}:${params.reason_phrase}:${params.secure}:${params.ratio}'
 }
 
+__global computed_params_calls int
+
+fn next_computed_params_value() int {
+	computed_params_calls++
+	return computed_params_calls
+}
+
+fn next_computed_params_label() ?string {
+	return 'auto-${next_computed_params_value()}'
+}
+
+@[params]
+pub struct VPhpComputedParamsDemo {
+	sequence int     = next_computed_params_value()
+	label    ?string = next_computed_params_label()
+	enabled  bool    = true
+}
+
+@[php_function]
+fn v_php_computed_params(prefix string, params VPhpComputedParamsDemo) string {
+	label := params.label or { 'null' }
+	return '${prefix}:${params.sequence}:${label}:${params.enabled}'
+}
+
 @[php_arg_default(count: '7', label: '"fallback"')]
 @[php_arg_optional(count: true, label: true)]
 @[php_function]
@@ -831,13 +855,11 @@ fn v_php_semantic_params_struct_api(params VPhpSemanticParamsStructDemo) string 
 @[php_function]
 fn v_php_args_api(ctx vphp.Context) string {
 	args := ctx.args_with_meta([
+		vphp.PhpArgMeta{ index: 1, name: 'second' },
 		vphp.PhpArgMeta{ index: 0, name: 'first' },
-		vphp.PhpArgMeta{
-			index: 1
-			name:  'second'
-		},
+		vphp.PhpArgMeta{ index: 0, name: 'duplicate' },
 	])
-	first := args.at(0)
+	first := args.at_named_or_index(1, 'first')
 	second := args.named('second') or { return 'missing-second' }
 	missing := args.at(2)
 	return 'args=${args.len()}:${first.index()}:${first.name()}:${first.as_v[string]()}|${second.index()}:${second.name()}:${second.as_v[int]()}|missing=${args.has(2)}:${missing.value.is_null()}'
@@ -1043,6 +1065,35 @@ fn v_php_reference_api(raw vphp.ZVal) string {
 	ref.set(vphp.ZVal.new_string('changed-from-v'))
 	after := ref.deref().to_string()
 	return 'reference=true:${before}:${after}'
+}
+
+@[php_function]
+@[php_arg_type: 'cursor=int']
+fn v_step_reference(step int, cursor vphp.PhpReference) {
+	cursor.set(vphp.ZVal.new_int(cursor.deref().to_i64() + i64(step)))
+}
+
+@[php_function]
+fn v_optional_reference(cursor ?vphp.PhpReference, label ?string) string {
+	if reference := cursor {
+		reference.set(vphp.ZVal.new_string(label or { 'updated' }))
+		return 'present'
+	}
+	return 'omitted'
+}
+
+@[php_function]
+fn v_step_references(step int, cursors ...vphp.PhpReference) int {
+	for cursor in cursors {
+		cursor.set(vphp.ZVal.new_int(cursor.deref().to_i64() + i64(step)))
+	}
+	return cursors.len
+}
+
+@[php_function]
+fn v_replace_reference(target vphp.PhpReference, replacement vphp.ZVal) {
+	target.set(replacement)
+	target.set_value(target.deref())
 }
 
 @[php_function]

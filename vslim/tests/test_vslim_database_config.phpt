@@ -33,15 +33,32 @@ echo ($dbAlias === $db ? 'same' : 'diff') . PHP_EOL;
 echo $db->affectedRows() . PHP_EOL;
 echo $db->lastInsertId() . PHP_EOL;
 
+foreach (['setTimeoutMs' => ['timeoutMs', 'int'], 'setUpstreamSocket' => ['socketPath', 'string']] as $method => [$name, $type]) {
+    $signature = new ReflectionMethod(VSlim\Database\Config::class, $method);
+    $parameter = $signature->getParameters()[0];
+    if ($signature->getNumberOfRequiredParameters() !== 1 || $parameter->getName() !== $name
+        || (string) $parameter->getType() !== $type || (string) $signature->getReturnType() !== VSlim\Database\Config::class) {
+        throw new RuntimeException("Unexpected database config signature for $method");
+    }
+}
+$defaults = new VSlim\Database\Config();
+if ($defaults->timeoutMs() !== 1000 || $defaults->setTimeoutMs(timeoutMs: 0)->timeoutMs() !== 1000
+    || $defaults->setUpstreamSocket(socketPath: ' /tmp/db.sock ')->upstreamSocket() !== '/tmp/db.sock') {
+    throw new RuntimeException('Unexpected database config defaults or normalization');
+}
 $bad = (new VSlim\Database\Manager())
-    ->setConfig((new VSlim\Database\Config())->setDriver('sqlite'));
+    ->setConfig(config: $defaults->setDriver(driver: 'sqlite'));
+$customApp = (new VSlim\App())->setDatabase(database: $bad);
+if (!$customApp->hasDatabase() || $customApp->db() !== $bad || $customApp->container()->get('database') !== $bad) {
+    throw new RuntimeException('Expected a shared database manager');
+}
 
 foreach (['query', 'execute', 'queryParams', 'executeParams', 'beginTransaction'] as $method) {
     try {
         if ($method === 'beginTransaction') {
             $bad->$method();
         } elseif (str_ends_with($method, 'Params')) {
-            $bad->$method('select ?', ['1']);
+            $bad->$method(params: ['1'], query: 'select ?');
         } else {
             $bad->$method('select 1');
         }

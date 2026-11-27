@@ -1,11 +1,20 @@
 #include "v_bridge.h"
 #include "bridge/compat.h"
 
+#include <Zend/zend_ast.h>
 #include <Zend/zend_closures.h>
 #include <Zend/zend_exceptions.h>
 #include <Zend/zend_inheritance.h>
 #include <Zend/zend_interfaces.h>
+#include <Zend/zend_observer.h>
+#include <Zend/zend_smart_str.h>
+#include <Zend/zend_stack.h>
+#if PHP_VERSION_ID >= 80400
+#include <Zend/zend_lazy_objects.h>
+#endif
 #include <php.h>
+#include <ext/spl/spl_iterators.h>
+#include <ext/standard/file.h>
 #include <stdbool.h>
 #ifdef PHP_WIN32
 #include <windows.h>
@@ -39,7 +48,14 @@ typedef struct {
   zval **items;
   int len;
   int cap;
+  int drain_depth;
 } vphp_autorelease_pool_t;
+
+typedef struct vphp_fiber_autorelease_pool {
+  zend_fiber_context *fiber;
+  vphp_autorelease_pool_t pool;
+  struct vphp_fiber_autorelease_pool *next;
+} vphp_fiber_autorelease_pool;
 
 typedef struct {
   zval **items;
@@ -55,14 +71,14 @@ static void vphp_prepare_auto_interfaces_for_class(zend_class_entry *class_ce,
                                                    int autoload);
 static zend_class_entry *vphp_autoload_class(zend_string *name);
 static void vphp_apply_auto_interface_bindings_for_class(zend_class_entry *ce);
-static bool vphp_object_matches_unresolved_named_type(zend_class_entry *class_ce,
-                                                      zend_string *expected_name);
+static bool vphp_class_has_auto_interface_binding(zend_class_entry *class_ce,
+                                                   zend_string *expected_name);
 static zend_string *vphp_normalize_literal_type_name(const char *literal_name);
 static bool vphp_value_matches_type(zend_execute_data *execute_data,
                                     zend_type type, zval *value,
                                     bool is_return_type);
 static bool vphp_value_matches_mask(uint32_t mask, zval *value, bool strict,
-                                    bool is_return_type);
+                                    bool is_return_type, bool can_coerce);
 static bool vphp_value_matches_named_type(zend_execute_data *execute_data,
                                           zend_type type, zval *value,
                                           bool is_return_type);
@@ -104,6 +120,9 @@ HashTable *vphp_get_properties(zend_object *object);
 static zend_object_handlers *vphp_clone_inherited_handlers(
     const zend_object_handlers *original_handlers);
 static const zend_object_handlers *vphp_original_handlers_for(zend_object *obj);
+static bool vphp_uses_standard_property_storage(zend_object *object);
+static void vphp_track_instance_receiver(zend_execute_data *execute_data);
+static void vphp_finish_reference_scope(zend_execute_data *execute_data);
 static const zend_object_handlers *vphp_unwrap_inherited_handlers(
     const zend_object_handlers *handlers);
 static const zend_object_handlers *vphp_fallback_handlers(
@@ -135,7 +154,8 @@ zend_object_handlers vphp_obj_handlers;
 static vphp_auto_iface_binding_t *vphp_auto_iface_bindings = NULL;
 static uint32_t vphp_auto_iface_bindings_len = 0;
 static uint32_t vphp_auto_iface_bindings_cap = 0;
-ZEND_TLS vphp_autorelease_pool_t vphp_autorelease_pool = {NULL, 0, 0};
+ZEND_TLS vphp_autorelease_pool_t vphp_autorelease_pool = {0};
+ZEND_TLS vphp_fiber_autorelease_pool *vphp_fiber_autorelease_pools = NULL;
 ZEND_TLS vphp_owned_pool_t vphp_owned_pool = {NULL, 0, 0};
 ZEND_TLS uint32_t vphp_last_class_table_count = 0;
 ZEND_TLS int vphp_runtime_binding_applying = 0;
@@ -146,9 +166,15 @@ ZEND_TLS uint32_t vphp_pending_auto_iface_bindings_len = 0;
 ZEND_TLS uint32_t vphp_pending_auto_iface_bindings_cap = 0;
 ZEND_TLS int vphp_runtime_autoloading = 0;
 
+static void vphp_mark_omitted_computed_defaults(zend_execute_data *execute_data);
+
 #include "bridge/debug.inc.c"
+#include "bridge/static_request.inc.c"
+#include "bridge/fiber_gc.inc.c"
 #include "bridge/runtime.inc.c"
+#include "bridge/task_poll.inc.c"
 #include "bridge/call.inc.c"
+#include "bridge/generator.inc.c"
 #include "bridge/values.inc.c"
 #include "bridge/object.inc.c"
 

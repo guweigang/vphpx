@@ -108,17 +108,16 @@ Current mapping:
 - `pub fn` -> PHP `public`
 - non-`pub fn` -> PHP `protected`
 
-## `@[php_attr: 'AttributeName(...)']`
+## PHP attributes
 
-Use `@[php_attr: '...']` on `@[php_class]` to attach PHP 8 class attributes to
-the exported internal class.
+Use `vphp.PhpClassAttribute` to attach a PHP attribute to an exported class.
+The legacy `@[php_attr: 'AttributeName(...)']` form also works for classes.
 
 Example:
 
 ```v
-@[heap]
-@[php_class]
-@[php_attr: 'PhpDispatchable("worker")']
+@[vphp.PhpExportClass(name: 'DispatchableSample')]
+@[vphp.PhpClassAttribute(name: 'PhpDispatchable', args: '"worker", options: ["format" => \\DateTimeInterface::ATOM]')]
 struct DispatchableSample {
 pub mut:
 	name string
@@ -132,22 +131,25 @@ $ref = new ReflectionClass(DispatchableSample::class);
 $attrs = $ref->getAttributes(PhpDispatchable::class);
 ```
 
-Current scope:
+Attribute arguments accept positional and named values, including scalars,
+`null`, arrays, class constants and enum cases. Give explicit class names
+as fully qualified PHP names. Class members can also use `self::` and
+`parent::` where PHP provides the corresponding scope.
 
-- class-level attributes only
-- positional scalar arguments only
-- supported argument shapes:
-  - strings
-  - ints
-  - floats
-  - bools
-  - `null`
+PHP resolves class constants and enum cases when Reflection reads the
+arguments or instantiates the attribute. `vphp stub` preserves class constant
+references in the generated source, so application dependencies can be loaded
+later when the arguments are read.
 
-Current limitations:
+## Parameter default expressions in stubs
 
-- no method/property/class-constant attribute export yet
-- no named arguments yet
-- no constant-expression arguments yet
+`vphp stub` preserves explicit PHP parameter defaults with constant references
+or object construction. It uses PHP's tokenizer to retain global name
+resolution when rendering defaults inside a namespace. The stub commands load
+a shared tokenizer from the selected interpreter's extension directory when
+needed. Stub generation uses
+the compiler's declaration metadata so external dependencies can be loaded
+later, when PHP evaluates the default.
 
 ## Class Constants via `@[php_const: shadow_const]`
 
@@ -517,7 +519,8 @@ Current parent support:
 
 - supported: a parent class exported by the same vphp extension
 - supported: a PHP internal class such as `Exception`
-- not supported: a userland PHP class loaded through Composer/autoload
+- for a PHP parent loaded through Composer, declare `PhpUserlandSubclass` on a
+  native VPHP trait and load the generated PHP file after the autoloader
 
 Compile-time guard:
 

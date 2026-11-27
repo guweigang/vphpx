@@ -1,5 +1,7 @@
 module main
 
+import vphp
+
 @[php_interface]
 interface ContentContract {
 	save() bool
@@ -10,7 +12,7 @@ interface ContentContract {
 interface NamedContract {}
 
 @[php_interface: 'Demo\\Contracts\\AliasContract']
-@[php_extends: 'Demo\\Contracts\\NamedContract']
+@[vphp.PhpExtendsInterfaces(names: 'Demo\\Contracts\\NamedContract')]
 interface AliasContract {
 	ping() string
 }
@@ -30,8 +32,8 @@ pub fn (mut b AliasBase) construct(label string) &AliasBase {
 
 @[heap]
 @[php_class]
-@[php_extends: 'AliasBase']
-@[php_implements: 'Demo\\Contracts\\AliasContract, RuntimeContracts\\Greeter']
+@[vphp.PhpExtends(name: 'AliasBase')]
+@[vphp.PhpImplements(names: 'Demo\\Contracts\\AliasContract, RuntimeContracts\\Greeter')]
 struct AliasWorker implements ContentContract {
 	AliasBase
 pub mut:

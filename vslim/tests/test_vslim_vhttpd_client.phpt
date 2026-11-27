@@ -65,6 +65,7 @@ if (!is_resource($server)) {
     fwrite(STDERR, "bind_failed:$errstr:$errno\n");
     exit(2);
 }
+touch($socketPath . '.ready');
 
 $readExactly = static function ($conn, int $len): ?string {
     $buf = '';
@@ -129,6 +130,8 @@ file_put_contents($serverScript, $serverPhp);
 
 $startServer = static function () use ($serverScript, $sock, $stdoutLog, $stderrLog) {
     @unlink($sock);
+    $ready = $sock . '.ready';
+    @unlink($ready);
     $cmd = sprintf(
         'php %s %s',
         escapeshellarg($serverScript),
@@ -150,12 +153,15 @@ $startServer = static function () use ($serverScript, $sock, $stdoutLog, $stderr
     }
     $deadline = microtime(true) + 3.0;
     while (microtime(true) < $deadline) {
-        clearstatcache(true, $sock);
-        if (file_exists($sock)) {
+        clearstatcache(true, $ready);
+        if (is_file($ready)) {
+            unlink($ready);
             return $proc;
         }
         usleep(20000);
     }
+    proc_terminate($proc);
+    proc_close($proc);
     throw new RuntimeException('socket_not_ready');
 };
 
@@ -167,9 +173,17 @@ $stopServer = static function ($proc) {
     proc_close($proc);
 };
 
+$client = new VSlim\VHttpd\Client(connectTimeoutSeconds: 2.0, socketPath: $sock);
+$signature = new ReflectionMethod($client, 'requestFrames');
+[$payload, $frames] = $signature->getParameters();
+if ($signature->getNumberOfRequiredParameters() !== 1 || $payload->getName() !== 'payload'
+    || $frames->getName() !== 'frames' || (string) $frames->getType() !== '?array'
+    || $frames->getDefaultValue() !== [] || (string) $signature->getReturnType() !== 'array') {
+    throw new RuntimeException('Unexpected requestFrames signature');
+}
+
 $proc = $startServer();
-$client = new VSlim\VHttpd\Client($sock, 2.0);
-$res = $client->request([
+$res = $client->request(payload: [
     'mode' => 'db',
     'op' => 'ping',
     'payload' => ['a' => '1'],
@@ -179,12 +193,24 @@ $stopServer($proc);
 
 $proc = $startServer();
 $res = $client->requestFrames(
-    ['mode' => 'db', 'op' => 'query'],
-    ['chunk-1', 'chunk-2'],
+    frames: ['chunk-1', 'chunk-2'],
+    payload: ['mode' => 'db', 'op' => 'query'],
 );
 echo $res['request']['mode'] . '|' . $res['request']['op'] . '|' . implode(',', $res['frames']) . '|' . $res['frame_count'] . PHP_EOL;
 $stopServer($proc);
+
+foreach (['omitted' => [], 'null' => ['frames' => null]] as $label => $arguments) {
+    $proc = $startServer();
+    try {
+        $res = $client->requestFrames(...($arguments + ['payload' => ['mode' => 'db', 'op' => 'ping']]));
+        echo $label, '|', $res['frame_count'], PHP_EOL;
+    } finally {
+        $stopServer($proc);
+    }
+}
 ?>
 --EXPECT--
 ok|db|ping|0
 db|query|chunk-1,chunk-2|2
+omitted|0
+null|0

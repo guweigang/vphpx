@@ -3,7 +3,7 @@ module middlewarex
 import httpx
 import vphp
 
-pub fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, request vphp.PhpObject) &httpx.VSlimPsr7Response {
+pub fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, request vphp.PhpObject) &httpx.VSlimPsr7Response {
 	return match state.mode {
 		.middleware_chain {
 			if state.chain_ref == unsafe { nil } {
@@ -42,11 +42,12 @@ pub fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, req
 				defer {
 					raw.release()
 				}
-				psr, psr_ok := httpx.VSlimPsr7Response.from_route_result(raw)
+				options := chain.request_ctx.response_import
+				psr, psr_ok := httpx.VSlimPsr7Response.from_route_result(raw, options)
 				if psr_ok {
 					psr
 				} else {
-					httpx.VSlimPsr7Response.from_value(raw)
+					httpx.VSlimPsr7Response.from_value(raw, options)
 				}
 			}
 		}
@@ -56,18 +57,14 @@ pub fn dispatch_psr15_next_handler(mut state Psr15NextHandlerState, key u64, req
 			} else {
 				res := state.fixed_response_ref
 				res.clone_with(res.get_protocol_version(), httpx.clone_header_values(res.headers),
-					httpx.clone_header_names(res.header_names), res.body_or_empty(),
+					httpx.clone_header_names(res.header_names), res.body_ref,
 					res.get_status_code(), res.get_reason_phrase())
 			}
 		}
 		.continue_marker {
-			mut normalized := httpx.normalize_psr15_server_request_object(request,
+			state.forwarded_request.release()
+			state.forwarded_request = httpx.normalize_psr15_server_request_object(request,
 				map[string]string{})
-			if snapshot := snapshot_phase_forwarded_request(normalized) {
-				store_forwarded_request_snapshot(key, snapshot)
-			}
-			normalized.release()
-			state.has_forwarded_request = true
 			phase_continue_response()
 		}
 	}

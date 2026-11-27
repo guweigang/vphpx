@@ -11,6 +11,9 @@ print_r(VPhp\Task::list());
 $t = VPhp\Task::spawn("AnalyzeTask", "SH600519", 100);
 $res = VPhp\Task::wait($t);
 print_r($res);
+if (VPhp\Task::wait($t) !== $res) {
+    throw new RuntimeException('Waiting again changed the native task result');
+}
 --EXPECT--
 Array
 (
@@ -18,7 +21,6 @@ Array
 )
 Array
 (
-    [0] => 1
-    [1] => 2
+    [0] => SH600519
+    [1] => 100
 )
-V: 正在处理 SH600519, count: 100

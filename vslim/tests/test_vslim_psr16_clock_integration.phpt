@@ -38,6 +38,7 @@ namespace {
     final class MutableClock implements Psr\Clock\ClockInterface
     {
         private DateTimeImmutable $now;
+        public int $reads = 0;
 
         public function __construct(string $time)
         {
@@ -46,6 +47,7 @@ namespace {
 
         public function now(): DateTimeImmutable
         {
+            ++$this->reads;
             return $this->now;
         }
 
@@ -60,6 +62,9 @@ namespace {
 
     var_dump($cache->setClock($clock) === $cache);
     var_dump($cache->clock() === $clock);
+    if ($cache->setClock(clock: $clock) !== $cache || $cache->clock() !== $clock) {
+        throw new RuntimeException('PSR-16 cache did not retain the clock through a named call');
+    }
 
     var_dump($cache->set('alpha', 'A', 10));
     var_dump($cache->has('alpha'));
@@ -73,6 +78,21 @@ namespace {
     var_dump($cache->has('beta'));
     $clock->advance('PT6S');
     var_dump($cache->get('beta', 'expired'));
+
+    $clock = new MutableClock('2024-03-30 12:00:00 Europe/Paris');
+    $cache->setClock($clock);
+    $reads = $clock->reads;
+    if (!$cache->set('dst', 'day', new DateInterval('P1D')) || $clock->reads !== $reads + 1) {
+        throw new RuntimeException('The interval must use a single clock snapshot');
+    }
+    $clock->advance('PT22H59M59S');
+    if ($cache->get('dst') !== 'day') {
+        throw new RuntimeException('The interval expired before the DST boundary');
+    }
+    $clock->advance('PT1S');
+    if ($cache->has('dst')) {
+        throw new RuntimeException('The spring DST calendar day lasted longer than 23 elapsed hours');
+    }
 }
 ?>
 --EXPECT--

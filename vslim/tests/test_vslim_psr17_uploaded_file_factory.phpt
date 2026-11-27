@@ -101,6 +101,19 @@ namespace {
         echo "errored-move-runtime\n";
     }
 
+    $source = $target . '.source';
+    file_put_contents($source, 'native-upload');
+    $stream = $streamFactory->createStreamFromFile($source);
+    $weak = WeakReference::create($stream);
+    $native = $factory->createUploadedFile($stream);
+    var_dump($native->getStream() === $stream);
+    unset($stream);
+    gc_collect_cycles();
+    var_dump($weak->get() !== null, $native->getSize());
+    $native->moveTo($target);
+    echo file_get_contents($target) . PHP_EOL;
+    var_dump($weak->get() === null);
+    unlink($source);
     @unlink($target);
 }
 ?>
@@ -115,3 +128,8 @@ stream-runtime
 move-runtime
 7|media-null
 errored-move-runtime
+bool(true)
+bool(true)
+int(13)
+native-upload
+bool(true)

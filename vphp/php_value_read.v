@@ -13,24 +13,21 @@ pub fn (v PhpValue) value(key string) !PhpValue {
 }
 
 pub fn (v PhpValue) property_exists(name string) bool {
-	if obj := v.as_object() {
+	return v.with_object[bool](fn [name] (obj PhpObject) bool {
 		return obj.property_exists(name)
-	}
-	return false
+	}) or { false }
 }
 
 pub fn (v PhpValue) prop_value(name string) PhpValue {
-	if obj := v.as_object() {
+	return v.with_object[PhpValue](fn [name] (obj PhpObject) PhpValue {
 		return obj.prop_value(name)
-	}
-	return PhpValue.null()
+	}) or { PhpValue.null() }
 }
 
 pub fn (v PhpValue) call_method(method string, args ...PhpArgInput) PhpValue {
-	if obj := v.as_object() {
+	return v.with_object[PhpValue](fn [method, args] (obj PhpObject) PhpValue {
 		return obj.call_method(method, ...args)
-	}
-	return PhpValue.null()
+	}) or { PhpValue.null() }
 }
 
 pub fn (v PhpValue) [] (key string) PhpValue {

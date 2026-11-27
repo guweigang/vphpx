@@ -418,6 +418,10 @@ name := php_obj.prop_v[string]('name')!
 | `z.method_exists(name)` | 判断类/对象方法是否存在 |
 | `z.property_exists(name)` | 判断类/对象属性是否存在 |
 
+`PhpObject.prop_value()` 和实例属性的借用、持久读取都调用对象当前的 Zend 属性处理器。
+它们能读取 V 字段，也能调用 PHP 属性钩子、`__get()` 或内置类的属性处理器。
+使用 Zend 存储的继承字段由生成的 V 接收器按字段存储读取。
+
 属性写入会遵守 PHP 运行时规则：
 
 - readonly 属性不能写
@@ -697,6 +701,10 @@ for idx := 0; idx < keys.array_count(); idx++ {
 	println('${key.type_name()}:${key.to_string()}=${val.to_string()}')
 }
 ```
+
+`get_key()` 支持 PHP 整数键的完整范围，包括负数。字符串键按 PHP 的规则匹配，
+例如 `'42'` 匹配整数键 `42`，而 `'042'` 保持字符串键。值为 `null` 的键
+仍能成功读取，缺失键返回错误。
 
 经验规则：
 

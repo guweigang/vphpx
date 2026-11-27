@@ -124,6 +124,40 @@ pub fn (v PhpValue) owned() PhpValue {
 	return v.to_request_owned()
 }
 
+// to_request_scoped keeps a copy until the active PHP scope closes.
+pub fn (v PhpValue) to_request_scoped() PhpValue {
+	mut copy := v.to_request_owned()
+	return copy.move_to_request_scope()
+}
+
+// move_to_request_scope transfers an owned value into the active PHP scope.
+pub fn (mut v PhpValue) move_to_request_scope() PhpValue {
+	z := v.take_zval()
+	v.release()
+	RequestScope.autorelease_add_handle(z.handle())
+	return PhpValue.from_zval(z)
+}
+
+// take_zval_by_value consumes this handle and copies through a top-level PHP reference.
+fn (mut v PhpValue) take_zval_by_value() ZVal {
+	if reference := PhpReference.from_zval(v.to_zval()) {
+		mut value := reference.deref()
+		z := value.take_zval()
+		v.release()
+		return z
+	}
+	z := v.take_zval()
+	v.release()
+	return z
+}
+
+// move_to_request_scope_by_value consumes this handle and copies through a top-level PHP reference.
+pub fn (mut v PhpValue) move_to_request_scope_by_value() PhpValue {
+	z := v.take_zval_by_value()
+	RequestScope.autorelease_add_handle(z.handle())
+	return PhpValue.from_zval(z)
+}
+
 pub fn (v PhpValue) to_request_owned_zbox() RequestOwnedZBox {
 	return v.value.to_request_owned_zbox()
 }

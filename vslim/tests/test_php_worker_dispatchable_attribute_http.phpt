@@ -1,19 +1,16 @@
 --TEST--
-php-worker accepts custom HTTP dispatchables marked with VHttpd Dispatchable
+php-worker accepts a custom object method exposed as an HTTP callable
 --FILE--
 <?php
 declare(strict_types=1);
 
-require_once (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
+require_once __DIR__ . '/worker_wire_fixture.php';
 
-$fixture = sys_get_temp_dir() . '/vhttpd_dispatchable_http_fixture.php';
+$fixture = tempnam(sys_get_temp_dir(), 'vslim-http-');
 file_put_contents($fixture, <<<'PHP'
 <?php
 declare(strict_types=1);
 
-use VHttpd\Attribute\Dispatchable;
-
-#[Dispatchable('http')]
 final class DispatchableHttpFixture
 {
     public function dispatchEnvelopeWorker(array $envelope): array
@@ -29,11 +26,11 @@ final class DispatchableHttpFixture
     }
 }
 
-return new DispatchableHttpFixture();
+return (new DispatchableHttpFixture())->dispatchEnvelopeWorker(...);
 PHP);
 
-$server = new VHttpd\PhpWorker\Server('/tmp/vhttpd_dispatchable_http.sock', $fixture);
-$res = $server->dispatchRequest([
+$server = new WorkerWireFixture($fixture);
+$res = $server->request([
     'id' => 'req-http-dispatchable',
     'method' => 'GET',
     'path' => '/attr-http',

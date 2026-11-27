@@ -1,0 +1,4 @@
+/.build.*
+/build_vslim_app_*.v
+/vslim-server
+/vslim-server-extension.so

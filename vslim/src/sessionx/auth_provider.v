@@ -20,7 +20,7 @@ pub fn resolve_auth_user(resolver vphp.PhpValue, user_id string) vphp.PhpValue {
 		return vphp.PhpValue.null()
 	}
 	if !resolver.is_valid() {
-		return vphp.PhpString.of(normalized_id).take_value()
+		return vphp.PhpValue.string(normalized_id)
 	}
 	mut normalized_id_arg := vphp.PhpString.of(normalized_id)
 	defer {
@@ -38,7 +38,7 @@ pub fn resolve_auth_user(resolver vphp.PhpValue, user_id string) vphp.PhpValue {
 	{
 		return result
 	}
-	return vphp.PhpString.of(normalized_id).take_value()
+	return vphp.PhpValue.string(normalized_id)
 }
 
 fn resolve_auth_user_from_object(provider vphp.PhpObject, normalized_id_arg vphp.PhpString, normalized_id string) vphp.PhpValue {
@@ -48,5 +48,5 @@ fn resolve_auth_user_from_object(provider vphp.PhpObject, normalized_id_arg vphp
 	if provider.method_exists('resolve') {
 		return provider.call_method('resolve', normalized_id_arg)
 	}
-	return vphp.PhpString.of(normalized_id).take_value()
+	return vphp.PhpValue.string(normalized_id)
 }

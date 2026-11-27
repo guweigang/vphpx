@@ -2,28 +2,28 @@ module liveviewx
 
 import vphp
 
-@[php_class: 'VSlim\\Live\\Form']
+@[vphp.PhpExportClass(name: 'VSlim\\Live\\Form')]
 @[heap]
 pub struct VSlimLiveForm {
 pub mut:
 	name             string
-	socket_ref       &VSlimLiveSocket = unsafe { nil } @[php_ignore]
+	socket_ref       &VSlimLiveSocket = unsafe { nil } @[vphp.PhpIgnoreField]
 	fields           []string
-	last_error_count int @[php_prop: lastErrorCount]
+	last_error_count int @[vphp.PhpProperty(name: 'lastErrorCount')]
 	validated        bool
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (form &VSlimLiveForm) name() string {
 	return form.name
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (form &VSlimLiveForm) available() bool {
 	return !isnil(form.socket_ref)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut form VSlimLiveForm) fill(values vphp.PhpArray) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
@@ -36,7 +36,7 @@ pub fn (mut form VSlimLiveForm) fill(values vphp.PhpArray) &VSlimLiveForm {
 	return &form
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut form VSlimLiveForm) reset(values vphp.PhpArray) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
@@ -51,7 +51,7 @@ pub fn (mut form VSlimLiveForm) reset(values vphp.PhpArray) &VSlimLiveForm {
 	return &form
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut form VSlimLiveForm) validate(validator vphp.PhpValue) &VSlimLiveForm {
 	form.validated = true
 	form.last_error_count = 0
@@ -82,7 +82,7 @@ pub fn (mut form VSlimLiveForm) validate(validator vphp.PhpValue) &VSlimLiveForm
 	return &form
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut form VSlimLiveForm) errors(values vphp.PhpArray) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
@@ -96,7 +96,7 @@ pub fn (mut form VSlimLiveForm) errors(values vphp.PhpArray) &VSlimLiveForm {
 	return &form
 }
 
-@[php_method: 'clearErrors']
+@[vphp.PhpExportMethod(name: 'clearErrors')]
 pub fn (mut form VSlimLiveForm) clear_errors() &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
@@ -109,7 +109,7 @@ pub fn (mut form VSlimLiveForm) clear_errors() &VSlimLiveForm {
 	return &form
 }
 
-@[php_method: 'clearError']
+@[vphp.PhpExportMethod(name: 'clearError')]
 pub fn (mut form VSlimLiveForm) clear_error(field string) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
@@ -121,7 +121,7 @@ pub fn (mut form VSlimLiveForm) clear_error(field string) &VSlimLiveForm {
 	return &form
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut form VSlimLiveForm) forget(field string) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
@@ -133,7 +133,7 @@ pub fn (mut form VSlimLiveForm) forget(field string) &VSlimLiveForm {
 	return &form
 }
 
-@[php_method: 'forgetMany']
+@[vphp.PhpExportMethod(name: 'forgetMany')]
 pub fn (mut form VSlimLiveForm) forget_many(fields vphp.PhpArray) &VSlimLiveForm {
 	if isnil(form.socket_ref) {
 		return &form
@@ -145,7 +145,7 @@ pub fn (mut form VSlimLiveForm) forget_many(fields vphp.PhpArray) &VSlimLiveForm
 	return &form
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (form &VSlimLiveForm) input(field string) string {
 	if isnil(form.socket_ref) {
 		return ''
@@ -153,13 +153,13 @@ pub fn (form &VSlimLiveForm) input(field string) string {
 	return form.socket_ref.input(field)
 }
 
-@[php_method: 'inputOr']
+@[vphp.PhpExportMethod(name: 'inputOr')]
 pub fn (form &VSlimLiveForm) input_or(field string, fallback string) string {
 	value := form.input(field)
 	return if value == '' { fallback } else { value }
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (form &VSlimLiveForm) error(field string) string {
 	if isnil(form.socket_ref) {
 		return ''
@@ -167,27 +167,27 @@ pub fn (form &VSlimLiveForm) error(field string) string {
 	return form.socket_ref.error(field)
 }
 
-@[php_method: 'hasError']
+@[vphp.PhpExportMethod(name: 'hasError')]
 pub fn (form &VSlimLiveForm) has_error(field string) bool {
 	return !isnil(form.socket_ref) && form.socket_ref.has_error(field)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (form &VSlimLiveForm) valid() bool {
 	return form.validated && form.last_error_count == 0
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (form &VSlimLiveForm) invalid() bool {
 	return form.last_error_count > 0
 }
 
-@[php_method: 'errorCount']
+@[vphp.PhpExportMethod(name: 'errorCount')]
 pub fn (form &VSlimLiveForm) error_count() int {
 	return form.last_error_count
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (form &VSlimLiveForm) data() vphp.PhpArray {
 	mut out := vphp.PhpArray.new()
 	if isnil(form.socket_ref) {

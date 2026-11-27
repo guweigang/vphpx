@@ -1,5 +1,7 @@
 module vphp
 
+import vphp.zval
+
 pub struct PhpArray {
 mut:
 	value PhpValueZBox
@@ -114,6 +116,18 @@ pub fn (a PhpArray) to_request_owned() PhpArray {
 
 pub fn (a PhpArray) owned() PhpArray {
 	return a.to_request_owned()
+}
+
+// snapshot copies the array and its PHP reference groups. Objects keep their identity.
+pub fn (a PhpArray) snapshot() PhpArray {
+	return a.with_array(fn (source PhpArray) PhpArray {
+		if !source.is_valid() {
+			return PhpArray.new()
+		}
+		owned := RequestOwnedZBox.new_null()
+		zval.array_snapshot(source.to_zval().handle(), owned.to_zval().handle())
+		return PhpArray.from_request_owned_zbox(owned) or { PhpArray.new() }
+	})
 }
 
 pub fn (a PhpArray) to_request_owned_zbox() RequestOwnedZBox {

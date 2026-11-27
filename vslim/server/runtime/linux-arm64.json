@@ -1,0 +1,49 @@
+{
+  "format": "vslim-runtime-profile-v1",
+  "target": "linux-arm64",
+  "status": "experimental-sdk-verified",
+  "php": {
+    "version": "8.5.10",
+    "zts": true,
+    "sapi": "embed",
+    "library": "libphp.a",
+    "extensions": [
+      "json",
+      "mbstring"
+    ]
+  },
+  "link_mode": "mostly-static",
+  "libc": {
+    "family": "glibc",
+    "minimum": "2.17"
+  },
+  "architecture": "arm64",
+  "module_loading": {
+    "vslim": "dynamic-extracted",
+    "fully_static_supported": false,
+    "current_host_dependencies": [
+      "libcjson",
+      "libmysqlclient"
+    ]
+  },
+  "application_extension_requirements": "composer.json/composer.lock ext-*",
+  "verification": {
+    "host": "OrbStack Ubuntu",
+    "host_architecture": "aarch64",
+    "host_glibc": "2.43",
+    "runtime_builder": "static-php-cli 2.8.5",
+    "runtime_compiler": "zig 0.16.0 (native-native-gnu.2.17)",
+    "extension_compiler": "gcc 15.2.0",
+    "environment_checked": true,
+    "runtime_built": true,
+    "runtime_zts_checked": true,
+    "runtime_extensions_checked": [
+      "json",
+      "mbstring"
+    ],
+    "vslim_extension_built": true,
+    "vslim_extension_load_checked": true,
+    "single_executable_built": false,
+    "clean_guest_smoke": false
+  }
+}

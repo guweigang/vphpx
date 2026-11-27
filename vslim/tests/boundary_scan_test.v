@@ -9,11 +9,11 @@ fn vslim_root() string {
 fn vslim_src_files() []string {
 	mut files := os.walk_ext(os.join_path(vslim_root(), 'src'), '.v')
 	files.sort()
-	return files.filter(!it.ends_with('/vphp_bridge.v'))
+	return files.filter(os.file_name(it) != 'vphp_bridge.v')
 }
 
 fn service_id_source_files() []string {
-	return vslim_src_files().filter(it.ends_with('/service_ids.v'))
+	return vslim_src_files().filter(os.file_name(it) == 'service_ids.v')
 }
 
 fn vslim_module_files(module_name string) []string {
@@ -33,22 +33,26 @@ fn repo_split_portable_text_files() []string {
 	files << os.join_path(vslim_root(), 'Makefile')
 	files << os.join_path(vslim_root(), 'templates/app/Makefile')
 	files.sort()
-	return files.filter(os.exists(it) && !it.contains('/vendor/') && !it.contains('/dist/')
-		&& !it.ends_with('/composer.lock'))
+	return files.filter(os.exists(it))
 }
 
 fn collect_repo_split_portable_text_files(dir string, mut files []string) {
 	names := os.ls(dir) or { return }
 	for name in names {
-		path := os.join_path(dir, name)
-		if path.contains('/vendor/') || path.contains('/dist/') || path.contains('/.git/') {
+		if name in ['vendor', 'dist', '.git'] {
 			continue
 		}
+		path := os.join_path(dir, name)
 		if os.is_dir(path) {
 			collect_repo_split_portable_text_files(path, mut files)
 			continue
 		}
 		if !os.is_file(path) {
+			continue
+		}
+		if (path.ends_with('.php') || path.ends_with('.sh')) && name.starts_with('test_')
+			&& os.is_file(os.join_path(dir, name.all_before_last('.') + '.phpt')) {
+			// run-tests.php may leave a PHP script and shell reproducer beside a PHPT.
 			continue
 		}
 		if path.ends_with('.md') || path.ends_with('.phpt') || path.ends_with('.php')
@@ -121,11 +125,10 @@ fn test_vslim_domain_identifiers_do_not_reintroduce_php_prefixes() {
 }
 
 fn test_repo_split_text_files_do_not_use_machine_local_source_paths() {
-	local_source_prefix := '/' + os.join_path('Users', 'guweigang', 'Source')
+	local_source_prefix := ['', 'Users', 'guweigang', 'Source'].join('/')
 	banned := [
-		os.join_path(local_source_prefix, 'vphpx'),
-		os.join_path(local_source_prefix, 'vhttpd'),
-		'file://' + os.join_path(local_source_prefix, 'vphpx'),
+		local_source_prefix + '/vphpx',
+		local_source_prefix + '/vhttpd',
 	]
 	for file in repo_split_portable_text_files() {
 		if !os.exists(file) {
@@ -364,8 +367,8 @@ fn test_appx_uses_theme_default_service_constructors() {
 		panic('failed to read configx/config.v: ${err}')
 	}
 	assert config_source.contains('pub fn VSlimConfig.new_default'), 'config default construction should be owned by configx'
-	logger_source := os.read_file(os.join_path(vslim_root(), 'src', 'logger', 'logger.v')) or {
-		panic('failed to read logger/logger.v: ${err}')
+	logger_source := os.read_file(os.join_path(vslim_root(), 'src', 'loggerx', 'logger.v')) or {
+		panic('failed to read loggerx/logger.v: ${err}')
 	}
 	assert logger_source.contains('pub fn VSlimLogger.app_default'), 'app logger default construction should be owned by logger'
 	assert logger_source.contains('pub fn VSlimPsrLogger.from_logger'), 'PSR logger construction should be owned by logger'
@@ -388,8 +391,8 @@ fn test_appx_uses_theme_default_service_constructors() {
 	database_source := os.read_file(os.join_path(vslim_root(), 'src', 'databasex', 'config.v')) or {
 		panic('failed to read databasex/config.v: ${err}')
 	}
-	job_source := os.read_file(os.join_path(vslim_root(), 'src', 'job', 'runtime.v')) or {
-		panic('failed to read job/runtime.v: ${err}')
+	job_source := os.read_file(os.join_path(vslim_root(), 'src', 'jobx', 'runtime.v')) or {
+		panic('failed to read jobx/runtime.v: ${err}')
 	}
 	migration_source := os.read_file(os.join_path(vslim_root(), 'src', 'databasex', 'migration.v')) or {
 		panic('failed to read databasex/migration.v: ${err}')
@@ -412,8 +415,8 @@ fn test_appx_uses_theme_default_service_constructors() {
 }
 
 fn test_job_worker_delegates_userland_job_dispatch() {
-	source := os.read_file(os.join_path(vslim_root(), 'src', 'job', 'runtime.v')) or {
-		panic('failed to read job/runtime.v: ${err}')
+	source := os.read_file(os.join_path(vslim_root(), 'src', 'jobx', 'runtime.v')) or {
+		panic('failed to read jobx/runtime.v: ${err}')
 	}
 	perform_body :=
 		source.all_after('fn (mut worker VSlimJobWorker) perform').all_before('fn dispatch_job_class')
@@ -493,8 +496,8 @@ fn test_appx_does_not_reown_websocket_handler_dispatch() {
 			assert !source.contains(pattern), '${file} should delegate WebSocket handler conventions to websocket module, not ${pattern}'
 		}
 	}
-	source := os.read_file(os.join_path(vslim_root(), 'src', 'websocket', 'dispatch.v')) or {
-		panic('failed to read websocket/dispatch.v: ${err}')
+	source := os.read_file(os.join_path(vslim_root(), 'src', 'websocketx', 'dispatch.v')) or {
+		panic('failed to read websocketx/dispatch.v: ${err}')
 	}
 	assert source.contains('pub fn dispatch_service_handler'), 'WebSocket service handler dispatch should be owned by websocket module'
 }
@@ -587,7 +590,7 @@ fn test_liveview_protocol_helpers_are_owned_by_liveviewx() {
 
 fn test_liveview_view_and_component_do_not_depend_on_vslim_app() {
 	target_files := [
-		os.join_path(vslim_root(), 'src', 'liveviewx', 'types_live.v'),
+		os.join_path(vslim_root(), 'src', 'liveviewx', 'types.v'),
 		os.join_path(vslim_root(), 'src', 'liveviewx', 'liveview.v'),
 		os.join_path(vslim_root(), 'src', 'liveviewx', 'host.v'),
 	]
@@ -808,8 +811,10 @@ fn test_appx_does_not_reown_route_url_lookup() {
 	routex_source := os.read_file(os.join_path(vslim_root(), 'src', 'routex', 'url_lookup.v')) or {
 		panic('failed to read routex/url_lookup.v: ${err}')
 	}
-	assert routex_source.contains('pub fn url_for('), 'route URL lookup should be owned by routex'
-	assert routex_source.contains('pub fn url_for_abs('), 'absolute route URL lookup should be owned by routex'
+	assert source.contains('app.route_index.index_for_name('), 'appx should resolve named routes with the route index'
+	assert source.contains('.url_abs('), 'appx should delegate absolute URL generation for indexed routes'
+	assert routex_source.contains('pub fn (route VSlimRoute) url('), 'relative route URL generation should be owned by routex'
+	assert routex_source.contains('pub fn (route VSlimRoute) url_abs('), 'absolute route URL generation should be owned by routex'
 	http_source := os.read_file(os.join_path(vslim_root(), 'src', 'httpx', 'response.v')) or {
 		panic('failed to read httpx/response.v: ${err}')
 	}
@@ -848,8 +853,8 @@ fn test_websocket_route_state_is_owned_by_websocket_module() {
 	] {
 		assert !source.contains(pattern), 'appx websocket route runtime should delegate connection route state to websocket, not ${pattern}'
 	}
-	websocket_source := os.read_file(os.join_path(vslim_root(), 'src', 'websocket', 'route_state.v')) or {
-		panic('failed to read websocket/route_state.v: ${err}')
+	websocket_source := os.read_file(os.join_path(vslim_root(), 'src', 'websocketx', 'route_state.v')) or {
+		panic('failed to read websocketx/route_state.v: ${err}')
 	}
 	assert websocket_source.contains('pub struct WebSocketRouteFrame'), 'websocket route frame state should be owned by websocket'
 	assert websocket_source.contains('pub fn select_route_frame'), 'websocket route selection should be owned by websocket'
@@ -886,8 +891,8 @@ fn test_terminal_meta_uses_static_constructors() {
 		assert !source.contains('fn vslim_response_fixed_terminal_meta('), '${file} should use MiddlewareTerminalMeta static constructors, not a free terminal helper'
 		assert !source.contains('vslim_response_fixed_terminal_meta('), '${file} should call MiddlewareTerminalMeta.fixed_response'
 	}
-	source := os.read_file(os.join_path(vslim_root(), 'src', 'appx', 'terminal.v')) or {
-		panic('failed to read appx/terminal.v: ${err}')
+	source := os.read_file(os.join_path(vslim_root(), 'src', 'middlewarex', 'pipeline_types.v')) or {
+		panic('failed to read middlewarex/pipeline_types.v: ${err}')
 	}
 	assert source.contains('fn MiddlewareTerminalMeta.fixed_response'), 'fixed terminal response construction should be a MiddlewareTerminalMeta static constructor'
 }
@@ -995,36 +1000,20 @@ fn test_middleware_types_are_owned_by_middlewarex() {
 	assert phase_source.contains('pub struct PhaseMiddlewareDispatchResult'), 'phase middleware result should be owned by middlewarex'
 }
 
-fn test_forwarded_request_snapshots_are_owned_by_middlewarex() {
-	assert !os.exists(os.join_path(vslim_root(), 'src', 'appx', 'psr_bridge.v')), 'forwarded request bridge helpers should live in middlewarex, not appx'
-	for file in vslim_module_files('appx') {
-		source := os.read_file(file) or { panic('failed to read ${file}: ${err}') }
-		for pattern in [
-			'struct PhaseForwardedServerRequestSnapshot',
-			'forwarded_requests map[',
-			'fn snapshot_phase_forwarded_request(',
-			'fn store_forwarded_request_snapshot(',
-			'fn take_forwarded_request_snapshot(',
-			'fn request_with_forwarded_snapshot(',
-			'fn continued_phase_request_value(',
-			'fn forwarded_request_key(',
-		] {
-			assert !source.contains(pattern), '${file} should delegate forwarded request snapshot ownership to middlewarex, not ${pattern}'
+fn test_forwarded_requests_are_owned_by_middlewarex() {
+	assert !os.exists(os.join_path(vslim_root(), 'src', 'appx', 'psr_bridge.v')), 'forwarded request state belongs to middlewarex'
+	for mod in ['appx', 'middlewarex'] {
+		for file in vslim_module_files(mod) {
+			source := os.read_file(file) or { panic('failed to read ${file}: ${err}') }
+			assert !source.contains('struct PhaseForwardedServerRequestSnapshot'), 'forwarded requests should preserve the original stream object'
+			assert !source.contains('forwarded_requests map['), 'forwarded requests should be scoped to their invocation'
 		}
 	}
-	source := os.read_file(os.join_path(vslim_root(), 'src', 'middlewarex', 'forwarded_request.v')) or {
-		panic('failed to read middlewarex/forwarded_request.v: ${err}')
-	}
-	for pattern in [
-		'pub struct PhaseForwardedServerRequestSnapshot',
-		'pub fn snapshot_phase_forwarded_request(',
-		'pub fn store_forwarded_request_snapshot(',
-		'pub fn take_forwarded_request_snapshot(',
-		'pub fn request_with_forwarded_snapshot(',
-		'pub fn continued_phase_request_value(',
-		'pub fn forwarded_request_key(',
-	] {
-		assert source.contains(pattern), 'middlewarex should own forwarded request snapshot API: ${pattern}'
+	for filename in ['middleware_chain.v', 'types.v'] {
+		source := os.read_file(os.join_path(vslim_root(), 'src', 'middlewarex', filename)) or {
+			panic('failed to read middlewarex/${filename}: ${err}')
+		}
+		assert source.contains('forwarded_request') && source.contains('vphp.PhpObject.invalid()'), 'middlewarex/${filename} should own its forwarded request'
 	}
 }
 
@@ -1180,6 +1169,8 @@ fn test_appx_does_not_reown_support_lifecycle_reflection() {
 			'fn log_bootstrap_class_visibility(',
 			'fn (subject PhpValueSubject)',
 			'value_subject(',
+			'.method_required_params(',
+			'.with_method_result[',
 		] {
 			assert !source.contains(pattern), '${file} should delegate provider/module lifecycle reflection to supportx, not ${pattern}'
 		}
@@ -1188,8 +1179,8 @@ fn test_appx_does_not_reown_support_lifecycle_reflection() {
 		panic('failed to read supportx/lifecycle.v: ${err}')
 	}
 	assert source.contains('pub fn input_value'), 'support lifecycle input normalization should be owned by supportx'
-	assert source.contains('pub fn call_lifecycle'), 'support lifecycle calls should be owned by supportx'
-	assert source.contains('pub fn call_value_method'), 'support lifecycle value-returning calls should be owned by supportx'
+	assert source.contains('pub fn call_lifecycle_if_present('), 'support lifecycle calls should be owned by supportx'
+	assert source.contains('pub fn module_provider_input('), 'supportx should call the module providers callback'
 }
 
 fn test_bootstrap_spec_and_conventions_are_owned_by_supportx() {

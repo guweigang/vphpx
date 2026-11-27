@@ -91,6 +91,83 @@ PHP);
 });
 
 $probe = new VSlim\Dev\PhpSignatureProbe();
+$factory = new class implements VSlim\Stream\ResponseFactory {
+    public static function text(mixed $chunks): VSlim\Stream\Response { return VSlim\Stream\Response::text($chunks); }
+    public static function sse(mixed $events): VSlim\Stream\Response { return VSlim\Stream\Response::sse($events); }
+};
+$interfaceMethod = new ReflectionMethod($probe, 'echoStreamFactory');
+if ((string) $interfaceMethod->getParameters()[0]->getType() !== '?VSlim\Stream\ResponseFactory'
+    || (string) $interfaceMethod->getReturnType() !== '?VSlim\Stream\ResponseFactory'
+    || $probe->echoStreamFactory(value: $factory) !== $factory || $probe->echoStreamFactory() !== null) {
+    throw new RuntimeException('The wrapped PHP interface lost its type, object identity or null default');
+}
+$factoryCallback = $probe->makeStreamFactoryCallback();
+$factoryCallbackInfo = new ReflectionFunction($factoryCallback);
+if ((string) $factoryCallbackInfo->getParameters()[0]->getType() !== '?VSlim\Stream\ResponseFactory'
+    || (string) $factoryCallbackInfo->getReturnType() !== '?VSlim\Stream\ResponseFactory'
+    || $factoryCallback(value: $factory) !== $factory || $factoryCallback() !== null) {
+    throw new RuntimeException('A factory callback lost its interface signature or object identity');
+}
+try {
+    $probe->echoStreamFactory(value: new stdClass());
+    throw new RuntimeException('The wrapped interface accepted an unrelated class');
+} catch (TypeError $error) {
+    if (!str_contains($error->getMessage(), 'VSlim\Stream\ResponseFactory')) {
+        throw $error;
+    }
+}
+$responseCallback = $probe->makePsrResponseCallback();
+$callbackMetadata = new ReflectionFunction($responseCallback);
+$callbackType = $callbackMetadata->getReturnType();
+$responseParam = $callbackMetadata->getParameters()[1];
+$response = $responseCallback();
+if ((string) $callbackType !== '?' . VSlim\Psr7\Response::class
+    || (string) $responseParam->getType() !== '?' . VSlim\Psr7\Response::class
+    || $responseParam->getName() !== 'response' || $responseParam->getDefaultValue() !== null
+    || !$response instanceof VSlim\Psr7\Response || $response->getStatusCode() !== 202
+    || $responseCallback(response: $response, enabled: true) !== $response
+    || $responseCallback(enabled: false) !== null) {
+    throw new RuntimeException('The V response callback lost its return type or value');
+}
+$selectResponse = $probe->makePsrResponseSelector();
+$selectorParams = (new ReflectionFunction($selectResponse))->getParameters();
+if (!$selectorParams[0]->isVariadic()
+    || (string) $selectorParams[0]->getType() !== '?' . VSlim\Psr7\Response::class
+    || $selectResponse() !== null || $selectResponse(null, $response, new VSlim\Psr7\Response()) !== $response) {
+    throw new RuntimeException('The V response selector lost the variadic type, null, or object identity');
+}
+$statusCallback = $probe->makeResponseStatusCallback();
+if ((string) (new ReflectionFunction($statusCallback))->getReturnType() !== '?int'
+    || $statusCallback() !== 202 || $statusCallback(response: new VSlim\Psr7\Response(201)) !== 201
+    || $statusCallback(enabled: false) !== null) {
+    throw new RuntimeException('The status callback lost its integer or nullable return type');
+}
+$fixedStatus = $probe->makeFixedStatusCallback();
+$fixedMetadata = new ReflectionFunction($fixedStatus);
+[$responseArg, $adjustmentArg] = $fixedMetadata->getParameters();
+if ($fixedMetadata->getNumberOfRequiredParameters() !== 1
+    || $responseArg->getName() !== 'response' || (string) $responseArg->getType() !== VSlim\Psr7\Response::class
+    || $adjustmentArg->getName() !== 'adjustment' || (string) $adjustmentArg->getType() !== '?int'
+    || $adjustmentArg->getDefaultValue() !== null
+    || $fixedStatus(response: $response) !== 202 || $fixedStatus(adjustment: 1, response: $response) !== 203) {
+    throw new RuntimeException('The fixed-parameter status callback lost its signature or arguments');
+}
+$adjustStatus = $probe->makeAdjustedStatusCallback();
+$offsets = (new ReflectionFunction($adjustStatus))->getParameters()[1];
+if (!$offsets->isVariadic() || $offsets->getName() !== 'offsets' || (string) $offsets->getType() !== 'int'
+    || $adjustStatus(response: $response) !== 202 || $adjustStatus($response, 2, -1) !== 203
+    || $adjustStatus($response, '2', -1) !== 203) {
+    throw new RuntimeException('The response callback lost its variadic offsets');
+}
+$adjustStatusStrictly = eval('declare(strict_types=1); return static fn (Closure $call, ...$args) => $call(...$args);');
+try {
+    $adjustStatusStrictly($adjustStatus, $response, 2.5);
+    throw new RuntimeException('The response callback accepted a float in strict mode');
+} catch (TypeError $error) {
+    if (!str_contains($error->getMessage(), 'Argument #2') || !str_contains($error->getMessage(), 'int')) {
+        throw $error;
+    }
+}
 
 $describeType = static function (?ReflectionType $type): ?string {
     if ($type === null) {
@@ -110,7 +187,92 @@ $describeType = static function (?ReflectionType $type): ?string {
     return get_class($type);
 };
 
+$selection = new ReflectionMethod($probe, 'selectLastPsrRequest');
+[$fallbackArg, $alternativesArg] = $selection->getParameters();
+$requestType = Psr\Http\Message\RequestInterface::class;
+$initial = new VSlim\Psr7\Request();
+$firstAlternative = new VSlim\Psr7\Request();
+$lastAlternative = new VSlim\Psr7\Request();
+if ($selection->getNumberOfRequiredParameters() !== 1 || !$alternativesArg->isVariadic()
+    || $fallbackArg->getName() !== 'fallback' || $alternativesArg->getName() !== 'alternatives'
+    || (string) $fallbackArg->getType() !== $requestType || (string) $alternativesArg->getType() !== $requestType
+    || (string) $selection->getReturnType() !== $requestType
+    || $probe->selectLastPsrRequest(fallback: $initial) !== $initial
+    || $probe->selectLastPsrRequest($initial, $firstAlternative, $lastAlternative) !== $lastAlternative) {
+    throw new RuntimeException('The variadic PSR request method lost its signature or request identity');
+}
+try {
+    $probe->selectLastPsrRequest($initial, $firstAlternative, $response);
+    throw new RuntimeException('The variadic PSR request method accepted a response');
+} catch (TypeError $error) {
+    if (!str_contains($error->getMessage(), 'Argument #3') || !str_contains($error->getMessage(), $requestType)) {
+        throw $error;
+    }
+}
+
+$namedRequests = new ReflectionMethod($probe, 'namedPsrRequests');
+[$requestsArg] = $namedRequests->getParameters();
+if (!$requestsArg->isVariadic() || $requestsArg->getName() !== 'requests' || (string) $requestsArg->getType() !== $requestType
+    || $probe->namedPsrRequests() !== []
+    || $probe->namedPsrRequests($initial, first: $firstAlternative, last: $lastAlternative)
+        !== [$initial, 'first' => $firstAlternative, 'last' => $lastAlternative]) {
+    throw new RuntimeException('The PSR variadic method changed keys or request identity');
+}
+try {
+    $probe->namedPsrRequests($initial, wrong: $response);
+    throw new RuntimeException('The PSR variadic method accepted a response in a named argument');
+} catch (TypeError $error) {
+    if (!str_contains($error->getMessage(), 'Argument #2') || !str_contains($error->getMessage(), $requestType)) {
+        throw $error;
+    }
+}
+
 $alwaysTrue = new ReflectionMethod(VSlim\Dev\PhpSignatureProbe::class, 'alwaysTrue');
+$collectRequests = $probe->makeNamedRequestCollector();
+$collectMetadata = new ReflectionFunction($collectRequests);
+$collectParameter = $collectMetadata->getParameters()[0];
+if (!$collectMetadata->isVariadic() || !$collectParameter->isVariadic()
+    || $collectParameter->getName() !== 'requests' || (string) $collectParameter->getType() !== 'mixed'
+    || $collectRequests() !== []
+    || $collectRequests($initial, last: $lastAlternative, missing: null)
+        !== [$initial, 'last' => $lastAlternative, 'missing' => null]) {
+    throw new RuntimeException('The VSlim named variadic closure lost its keys or request identity');
+}
+if ($probe->forwardCallbackArguments(
+    static fn (string $label = 'default', ?Psr\Http\Message\RequestInterface $request = null) => [$label, $request],
+    request: $lastAlternative
+) !== ['default', $lastAlternative]) {
+    throw new RuntimeException('VSlim callback forwarding lost a named request or the callback default');
+}
+$failedRequest = new DomainException('recover PSR request');
+$recoveredRequest = $probe->recoverCallback(
+    callback: static fn () => throw $failedRequest,
+    recover: static function (Throwable $error) use ($failedRequest, $lastAlternative) {
+        if ($error !== $failedRequest) {
+            throw new RuntimeException('VSlim recovery received a different exception');
+        }
+        return $lastAlternative;
+    },
+);
+if ($recoveredRequest !== $lastAlternative) {
+    throw new RuntimeException('VSlim recovery lost the fallback request identity');
+}
+$throwableSignature = new ReflectionMethod($probe, 'echoThrowable');
+$throwableArgument = $throwableSignature->getParameters()[0];
+if ((string) $throwableSignature->getReturnType() !== '?Throwable'
+    || (string) $throwableArgument->getType() !== '?Throwable' || $throwableArgument->getDefaultValue() !== null
+    || $probe->echoThrowable() !== null || $probe->echoThrowable(value: $failedRequest) !== $failedRequest) {
+    throw new RuntimeException('VSlim lost the native nullable Throwable signature');
+}
+try {
+    $probe->echoThrowable(value: new stdClass());
+    throw new RuntimeException('VSlim accepted a non-Throwable object');
+} catch (TypeError $error) {
+    if (!str_contains($error->getMessage(), 'Throwable')) {
+        throw $error;
+    }
+}
+
 $alwaysFalse = new ReflectionMethod(VSlim\Dev\PhpSignatureProbe::class, 'alwaysFalse');
 $alwaysNull = new ReflectionMethod(VSlim\Dev\PhpSignatureProbe::class, 'alwaysNull');
 $alwaysThrow = new ReflectionMethod(VSlim\Dev\PhpSignatureProbe::class, 'alwaysThrow');
@@ -153,15 +315,15 @@ var_dump($createResponse->getNumberOfRequiredParameters());
 var_dump($probe->alwaysTrue());
 var_dump($probe->alwaysFalse());
 var_dump($probe->alwaysNull());
-var_dump($probe->acceptTrue(true));
-var_dump($probe->acceptFalse(false));
-var_dump($probe->acceptNull(null));
-var_dump($probe->acceptCallable(static fn (): string => 'ok'));
+var_dump($probe->acceptTrue(flag: true));
+var_dump($probe->acceptFalse(flag: false));
+var_dump($probe->acceptNull(value: null));
+var_dump($probe->acceptCallable(cb: static fn (): string => 'ok'));
 var_dump($probe->makePsrResponse() instanceof VSlim\Psr7\Response);
 var_dump(VSlim\Dev\PhpSignatureProbe::makeStaticPsrResponse() instanceof VSlim\Psr7\Response);
-var_dump($probe->acceptPsrRequest(new VSlim\Psr7\Request()));
-var_dump($probe->acceptDateTimeInterface(new DateTimeImmutable('2024-01-01T00:00:00+00:00')));
-var_dump($probe->acceptDateTimeInterface(null));
+var_dump($probe->acceptPsrRequest(request: new VSlim\Psr7\Request()));
+var_dump($probe->acceptDateTimeInterface(expiration: new DateTimeImmutable('2024-01-01T00:00:00+00:00')));
+var_dump($probe->acceptDateTimeInterface(expiration: null));
 var_dump($probe->optionalTail('head'));
 var_dump($probe->optionalTail('head', 'tail'));
 try {

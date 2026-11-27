@@ -16,15 +16,14 @@ fn uniq_lines(lines []string) []string {
 	return out
 }
 
-fn is_internal_parent_scalar_field(v_type string) bool {
-	return v_type in ['string', 'int', 'i64', 'bool', 'f64']
-}
-
-fn is_internal_parent_zval_field(v_type string) bool {
-	return v_type == 'vphp.ZVal' || v_type == 'ZVal'
+fn is_inherited_php_value(v_type string) bool {
+	return v_type in ['PhpValue', 'vphp.PhpValue']
 }
 
 fn (g VGenerator) gen_class_startup(r &repr.PhpClassRepr) []string {
+	if r.min_php_version > 0 {
+		return []
+	}
 	mut out := []string{}
 	for iface in r.auto_interface_bindings {
 		out << "    vphp.register_auto_interface_binding('${r.php_name}', '${iface}')"

@@ -1,4 +1,5 @@
 .tmp/
+.vslim-phpt-*
 dist/
 examples/.runtime/
 examples/laravel/vendor/

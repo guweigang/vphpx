@@ -2,46 +2,50 @@ module httpx
 
 import vphp
 
-@[php_implements: 'Psr\\Http\\Message\\StreamInterface']
-@[php_class: 'VSlim\\Psr7\\Stream']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\StreamInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr7\\Stream')]
 @[heap]
 pub struct VSlimPsr7Stream {
 pub mut:
-	content  string
-	position int
-	detached bool
-	metadata map[string]string
+	content       string
+	position      int
+	detached      bool
+	metadata      map[string]string
+	native_backed bool @[vphp.PhpIgnoreField]
 }
 
-@[php_implements: 'Psr\\Http\\Message\\UploadedFileInterface']
-@[php_class: 'VSlim\\Psr7\\UploadedFile']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\UploadedFileInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr7\\UploadedFile')]
 @[heap]
 pub struct VSlimPsr7UploadedFile {
 pub mut:
-	stream_ref        &VSlimPsr7Stream = unsafe { nil } @[php_ignore]
-	size_hint         int              = -1              @[php_ignore]
-	error_code        int              @[php_ignore]
-	client_filename   string           @[php_ignore]
-	client_media_type string           @[php_ignore]
+	stream_ref        &VSlimPsr7Stream = unsafe { nil } @[vphp.PhpIgnoreField]
+	size_hint         i64              = -1             @[vphp.PhpIgnoreField]
+	error_code        int    @[vphp.PhpIgnoreField]
+	client_filename   string @[vphp.PhpIgnoreField]
+	client_media_type string @[vphp.PhpIgnoreField]
 	moved             bool
-	target_path       string @[php_ignore]
+	target_path       string @[vphp.PhpIgnoreField]
 }
 
-@[php_implements: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_class: 'VSlim\\Psr7\\Response']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr7\\Response')]
+@[vphp.PhpObjectCopy(cloneable: true, serializable: false)]
 @[heap]
 pub struct VSlimPsr7Response {
 pub mut:
 	status           int = 200
-	reason_phrase    string              @[php_ignore]
-	protocol_version string = '1.1'              @[php_ignore]
-	headers          map[string][]string @[php_ignore]
-	header_names     map[string]string   @[php_ignore]
-	body_ref         &VSlimPsr7Stream = unsafe { nil }    @[php_ignore]
+	reason_phrase    string                            @[vphp.PhpIgnoreField]
+	protocol_version string = '1.1'                    @[vphp.PhpIgnoreField]
+	headers          map[string][]string               @[vphp.PhpIgnoreField]
+	header_names     map[string]string                 @[vphp.PhpIgnoreField]
+	body_ref         &VSlimPsr7Stream = unsafe { nil } @[vphp.PhpIgnoreField]
+	body_pending     vphp.PhpValue                     @[vphp.PhpIgnoreField]
 }
 
-@[php_implements: 'Psr\\Http\\Message\\UriInterface']
-@[php_class: 'VSlim\\Psr7\\Uri']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\UriInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr7\\Uri')]
+@[vphp.PhpObjectCopy(cloneable: true, serializable: true)]
 @[heap]
 pub struct VSlimPsr7Uri {
 pub mut:
@@ -55,97 +59,105 @@ pub mut:
 	fragment string
 }
 
-@[php_implements: 'Psr\\Http\\Message\\RequestInterface']
-@[php_class: 'VSlim\\Psr7\\Request']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\RequestInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr7\\Request')]
+@[vphp.PhpObjectCopy(cloneable: true, serializable: false)]
 @[heap]
 pub struct VSlimPsr7Request {
 pub mut:
 	method           string = 'GET'
-	request_target   string              @[php_ignore]
-	protocol_version string = '1.1'              @[php_ignore]
-	headers          map[string][]string @[php_ignore]
-	header_names     map[string]string   @[php_ignore]
-	body_ref         &VSlimPsr7Stream = unsafe { nil }    @[php_ignore]
-	uri_ref          &VSlimPsr7Uri    = unsafe { nil }       @[php_ignore]
+	request_target   string                            @[vphp.PhpIgnoreField]
+	protocol_version string = '1.1'                    @[vphp.PhpIgnoreField]
+	headers          map[string][]string               @[vphp.PhpIgnoreField]
+	header_names     map[string]string                 @[vphp.PhpIgnoreField]
+	body_ref         &VSlimPsr7Stream = unsafe { nil } @[vphp.PhpIgnoreField]
+	body_pending     vphp.PhpValue                     @[vphp.PhpIgnoreField]
+	uri_ref          &VSlimPsr7Uri = unsafe { nil }    @[vphp.PhpIgnoreField]
 }
 
-@[php_implements: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_class: 'VSlim\\Psr7\\ServerRequest']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr7\\ServerRequest')]
+@[vphp.PhpObjectCopy(cloneable: true, serializable: false)]
 @[heap]
 pub struct VSlimPsr7ServerRequest {
 pub mut:
 	method             string = 'GET'
-	request_target     string              @[php_ignore]
-	protocol_version   string = '1.1'              @[php_ignore]
-	headers            map[string][]string @[php_ignore]
-	header_names       map[string]string   @[php_ignore]
-	body_ref           &VSlimPsr7Stream = unsafe { nil }    @[php_ignore]
-	uri_ref            &VSlimPsr7Uri    = unsafe { nil }       @[php_ignore]
-	server_params_ref  vphp.PhpArray       @[php_ignore]
-	cookie_params_ref  vphp.PhpArray       @[php_ignore]
-	query_params_ref   vphp.PhpArray       @[php_ignore]
-	uploaded_files_ref vphp.PhpArray       @[php_ignore]
-	parsed_body_ref    vphp.PhpValue       @[php_ignore]
-	attributes_ref     vphp.PhpValue       @[php_ignore]
+	request_target     string                            @[vphp.PhpIgnoreField]
+	protocol_version   string = '1.1'                    @[vphp.PhpIgnoreField]
+	headers            map[string][]string               @[vphp.PhpIgnoreField]
+	header_names       map[string]string                 @[vphp.PhpIgnoreField]
+	body_ref           &VSlimPsr7Stream = unsafe { nil } @[vphp.PhpIgnoreField]
+	body_pending       vphp.PhpValue                     @[vphp.PhpIgnoreField]
+	uri_ref            &VSlimPsr7Uri = unsafe { nil }    @[vphp.PhpIgnoreField]
+	server_params_ref  vphp.PhpArray                     @[vphp.PhpIgnoreField]
+	cookie_params_ref  vphp.PhpArray                     @[vphp.PhpIgnoreField]
+	query_params_ref   vphp.PhpArray                     @[vphp.PhpIgnoreField]
+	uploaded_files_ref vphp.PhpArray                     @[vphp.PhpIgnoreField]
+	parsed_body_ref    vphp.PhpValue                     @[vphp.PhpIgnoreField]
+	attributes_ref     vphp.PhpValue                     @[vphp.PhpIgnoreField]
 }
 
-@[php_implements: 'Psr\\Http\\Message\\ResponseFactoryInterface']
-@[php_class: 'VSlim\\Psr17\\ResponseFactory']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\ResponseFactoryInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr17\\ResponseFactory')]
 @[heap]
 pub struct VSlimPsr17ResponseFactory {}
 
-@[php_implements: 'Psr\\Http\\Message\\RequestFactoryInterface']
-@[php_class: 'VSlim\\Psr17\\RequestFactory']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\RequestFactoryInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr17\\RequestFactory')]
 @[heap]
 pub struct VSlimPsr17RequestFactory {}
 
-@[php_implements: 'Psr\\Http\\Message\\StreamFactoryInterface']
-@[php_class: 'VSlim\\Psr17\\StreamFactory']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\StreamFactoryInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr17\\StreamFactory')]
 @[heap]
 pub struct VSlimPsr17StreamFactory {}
 
-@[php_implements: 'Psr\\Http\\Message\\UploadedFileFactoryInterface']
-@[php_class: 'VSlim\\Psr17\\UploadedFileFactory']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\UploadedFileFactoryInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr17\\UploadedFileFactory')]
 @[heap]
 pub struct VSlimPsr17UploadedFileFactory {}
 
-@[php_implements: 'Psr\\Http\\Message\\UriFactoryInterface']
-@[php_class: 'VSlim\\Psr17\\UriFactory']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\UriFactoryInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr17\\UriFactory')]
 @[heap]
 pub struct VSlimPsr17UriFactory {}
 
-@[php_implements: 'Psr\\Http\\Message\\ServerRequestFactoryInterface']
-@[php_class: 'VSlim\\Psr17\\ServerRequestFactory']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Message\\ServerRequestFactoryInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr17\\ServerRequestFactory')]
 @[heap]
 pub struct VSlimPsr17ServerRequestFactory {}
 
-@[php_implements: 'Psr\\Http\\Client\\ClientExceptionInterface']
-@[php_class: 'VSlim\\Psr18\\ClientException']
-@[php_extends: 'Exception']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Client\\ClientExceptionInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr18\\ClientException')]
+@[vphp.PhpExtends('Exception')]
 @[heap]
 pub struct VSlimPsr18ClientException {}
 
-@[php_implements: 'Psr\\Http\\Client\\RequestExceptionInterface']
-@[php_class: 'VSlim\\Psr18\\RequestException']
-@[php_extends: 'VSlim\\Psr18\\ClientException']
-@[php_prop: 'requestRef']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Client\\RequestExceptionInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr18\\RequestException')]
+@[vphp.PhpExtends('VSlim\\Psr18\\ClientException')]
 @[heap]
-pub struct VSlimPsr18RequestException {}
+pub struct VSlimPsr18RequestException {
+pub mut:
+	request_ref vphp.PhpValue @[vphp.PhpProperty(name: 'requestRef')]
+}
 
-@[php_implements: 'Psr\\Http\\Client\\NetworkExceptionInterface']
-@[php_extends: 'VSlim\\Psr18\\RequestException']
-@[php_class: 'VSlim\\Psr18\\NetworkException']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Client\\NetworkExceptionInterface')]
+@[vphp.PhpExtends('VSlim\\Psr18\\RequestException')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr18\\NetworkException')]
 @[heap]
-pub struct VSlimPsr18NetworkException {}
+pub struct VSlimPsr18NetworkException {
+	VSlimPsr18RequestException
+}
 
-@[php_implements: 'Psr\\Http\\Client\\ClientInterface']
-@[php_class: 'VSlim\\Psr18\\Client']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Client\\ClientInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr18\\Client')]
 @[heap]
 pub struct VSlimPsr18Client {
 pub mut:
-	timeout_seconds int = 30 @[php_prop: timeoutSeconds]
+	timeout_seconds int = 30 @[vphp.PhpProperty(name: 'timeoutSeconds')]
 }
 
-@[php_class: 'VSlim\\Psr7Adapter']
+@[vphp.PhpExportClass(name: 'VSlim\\Psr7Adapter')]
 @[heap]
 pub struct VSlimPsr7Adapter {}

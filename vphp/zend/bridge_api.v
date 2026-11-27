@@ -18,14 +18,34 @@ module zend
 
 // ===== 1. 执行上下文 & 参数 =====
 pub fn C.vphp_get_num_args(ex &C.zend_execute_data) u32
+pub fn C.vphp_check_closure_scalar_argument(ex &C.zend_execute_data, index u32) bool
+pub fn C.vphp_read_named_variadic_args(ex &C.zend_execute_data, ctx voidptr, append voidptr) bool
 pub fn C.vphp_get_arg_ptr(ex &C.zend_execute_data, index u32) &C.zval
+pub fn C.vphp_read_arg_default(ex &C.zend_execute_data, index u32, result &C.zval) bool
 pub fn C.vphp_has_exception() bool
 pub fn C.vphp_exception_message(buffer &char, buffer_len int) int
 pub fn C.vphp_clear_exception()
+pub fn C.vphp_take_exception(result &C.zval) bool
+pub fn C.vphp_append_exception(primary &C.zval, previous &C.zval)
 pub fn C.vphp_get_active_ce(ex &C.zend_execute_data) voidptr
+pub fn C.vphp_get_called_ce(ex &C.zend_execute_data) voidptr
 pub fn C.vphp_get_this_object(ex &C.zend_execute_data) voidptr
 pub fn C.vphp_get_current_this_object() voidptr
+pub fn C.vphp_current_hook_backing_reference() &C.zval
+pub fn C.vphp_current_hook_storage_reference(name &char, len usize) &C.zval
+pub fn C.vphp_current_property_reference(name &char, len usize) &C.zval
+pub fn C.vphp_current_static_property_reference(name &char, len usize) &C.zval
+pub fn C.vphp_new_plain_object_tracker() voidptr
+pub fn C.vphp_capture_plain_object(tracker voidptr, root &C.zval) voidptr
+pub fn C.vphp_restore_plain_objects(handle voidptr)
+pub fn C.vphp_release_plain_object_state(handle voidptr)
 pub fn C.vphp_get_active_globals() voidptr
+pub fn C.vphp_find_request_static_state(key &char, key_len usize) voidptr
+pub fn C.vphp_store_request_static_state(key &char, key_len usize, value voidptr, release fn (voidptr))
+pub fn C.vphp_begin_static_sync(ce voidptr, from_php fn (voidptr), to_php fn (voidptr)) voidptr
+pub fn C.vphp_end_static_sync(scope voidptr)
+pub fn C.vphp_current_static_sync_class(from_php fn (voidptr)) voidptr
+pub fn C.vphp_static_shadow_owner(ce voidptr, base &char, base_len usize, fields &char, fields_len usize) voidptr
 
 // ===== 2. 框架与异常 =====
 pub fn C.vphp_init_registry()
@@ -52,6 +72,7 @@ pub fn C.vphp_get_bool(z &C.zval) bool
 pub fn C.vphp_get_strval(z &C.zval) &char
 pub fn C.vphp_get_strlen(z &C.zval) int
 pub fn C.vphp_get_string_ptr(z &C.zval, len &int) &char
+pub fn C.vphp_cast_string(input &C.zval, output &C.zval) bool
 pub fn C.VPHP_Z_STRVAL(v &C.zval) &char
 pub fn C.VPHP_Z_STRLEN(v &C.zval) int
 
@@ -65,6 +86,13 @@ pub fn C.vphp_new_zval() &C.zval
 pub fn C.vphp_new_persistent_zval() &C.zval
 pub fn C.vphp_new_str(s &char) &C.zval
 pub fn C.vphp_new_strl(s &char, len int) &C.zval
+pub fn C.vphp_new_stream_context(options &C.zval, result &C.zval) bool
+pub fn C.vphp_open_stream(path &char, path_len usize, mode &char, mode_len usize, context &C.zval, report_errors bool, result &C.zval) bool
+pub fn C.vphp_is_stream_resource(value &C.zval) bool
+pub fn C.vphp_stream_wrapper_data(value &C.zval, result &C.zval) bool
+pub fn C.vphp_stream_read_checked(value &C.zval, length i64, result &C.zval) bool
+pub fn C.vphp_stream_read_complete_line(value &C.zval, max_bytes usize, result &C.zval) bool
+pub fn C.vphp_stream_read_line_fragment(value &C.zval, max_bytes usize, result &C.zval) bool
 pub fn C.vphp_release_zval(z &C.zval)
 pub fn C.vphp_release_persistent_zval(z &C.zval)
 pub fn C.vphp_autorelease_mark() int
@@ -82,19 +110,29 @@ pub fn C.vphp_convert_to_string(z &C.zval)
 // ===== 6. 数组操作 =====
 pub fn C.vphp_array_init(z &C.zval)
 pub fn C.vphp_array_count(z &C.zval) int
+pub fn C.vphp_array_next_index(z &C.zval) i64
+pub fn C.vphp_array_restore_next_index(z &C.zval, index i64)
+pub fn C.vphp_array_snapshot(source &C.zval, target &C.zval)
 pub fn C.vphp_return_array_start(res &C.zval)
-pub fn C.vphp_array_get_index(z &C.zval, index u32) &C.zval
+pub fn C.vphp_array_get_index(z &C.zval, index i64) &C.zval
+pub fn C.vphp_iterable_collect(input &C.zval, output &C.zval, shape int)
+pub fn C.vphp_iterable_count(input &C.zval) i64
 pub fn C.vphp_array_get_key(z &C.zval, key &char, len int) &C.zval
+pub fn C.vphp_array_find_string_key(z &C.zval, key &char, len usize) &C.zval
+pub fn C.vphp_array_find_key(z &C.zval, key &C.zval) &C.zval
+pub fn C.vphp_array_remove_key(z &C.zval, key &char, key_len usize) bool
+pub fn C.vphp_array_remove_index(z &C.zval, index i64) bool
 pub fn C.vphp_array_push_string(z &C.zval, val &char)
 pub fn C.vphp_array_push_stringl(z &C.zval, val &char, len int)
 pub fn C.vphp_array_push_double(z &C.zval, val f64)
 pub fn C.vphp_array_push_long(z &C.zval, val i64)
 pub fn C.vphp_array_add_next_zval(main_array &C.zval, sub_item &C.zval)
-pub fn C.vphp_array_add_assoc_string(z &C.zval, key &char, val &char)
-pub fn C.vphp_array_add_assoc_double(res &C.zval, key &char, val f64)
-pub fn C.vphp_array_add_assoc_long(res &C.zval, key &char, val i64)
-pub fn C.vphp_array_add_assoc_bool(res &C.zval, key &char, val int)
-pub fn C.vphp_array_add_assoc_zval(z &C.zval, key &char, val &C.zval)
+pub fn C.vphp_array_add_assoc_string(z &C.zval, key &char, key_len usize, val &char, val_len usize)
+pub fn C.vphp_array_add_assoc_double(res &C.zval, key &char, key_len usize, val f64)
+pub fn C.vphp_array_add_assoc_long(res &C.zval, key &char, key_len usize, val i64)
+pub fn C.vphp_array_add_assoc_bool(res &C.zval, key &char, key_len usize, val int)
+pub fn C.vphp_array_add_assoc_zval_len(z &C.zval, key &char, len usize, val &C.zval)
+pub fn C.vphp_array_add_index_zval(z &C.zval, index i64, val &C.zval)
 pub fn C.vphp_superglobal_set_env_string(key &char, val &char)
 pub fn C.vphp_superglobal_get_env() &C.zval
 pub fn C.vphp_superglobal_set_server_string(key &char, val &char)
@@ -113,9 +151,13 @@ pub fn C.vphp_get_obj_from_zval(zv &C.zval) &C.zend_object
 pub fn C.vphp_object_addref(obj &C.zend_object)
 pub fn C.vphp_object_release(obj &C.zend_object)
 pub fn C.vphp_get_v_ptr_from_zval(zv &C.zval) voidptr
+pub fn C.vphp_bound_object_pointer(obj &C.zend_object) voidptr
 pub fn C.vphp_zval_foreach(zv &C.zval, cb voidptr, ctx voidptr)
 pub fn C.vphp_read_property_compat(obj &C.zend_object, name &char, name_len int, rv &C.zval) &C.zval
+pub fn C.vphp_read_inherited_property(obj &C.zend_object, name &char, name_len int, rv &C.zval) &C.zval
 pub fn C.vphp_write_property_compat(obj &C.zend_object, name &char, name_len int, value &C.zval)
+pub fn C.vphp_write_inherited_property(obj &C.zend_object, name &char, name_len int, value &C.zval)
+pub fn C.vphp_skip_bound_property_projection(obj &C.zend_object, name &char, name_len int) bool
 pub fn C.vphp_has_property_compat(obj &C.zend_object, name &char, name_len int) int
 pub fn C.vphp_isset_property_compat(obj &C.zend_object, name &char, name_len int) int
 pub fn C.vphp_unset_property_compat(obj &C.zend_object, name &char, name_len int)
@@ -160,6 +202,8 @@ pub fn C.vphp_call_static_method(class_name &char, class_name_len int, method &c
 pub fn C.vphp_call_method(obj &C.zval, method &char, len int, retval &C.zval, p_count int, params &&C.zval) int
 pub fn C.vphp_is_callable(callable &C.zval) int
 pub fn C.vphp_call_callable(callable &C.zval, retval &C.zval, p_count int, params &&C.zval) int
+pub fn C.vphp_call_callable_args(callable &C.zval, retval &C.zval, args &C.zval) int
+pub fn C.vphp_new_instance_args(name &char, name_len int, retval &C.zval, args &C.zval) int
 pub fn C.vphp_new_instance(class_name &char, len int, retval &C.zval, p_count int, params &&C.zval) int
 pub fn C.vphp_include_file(filename &char, filename_len int, retval &C.zval, once int) int
 pub fn C.vphp_get_object_class_name(zv &C.zval, len &int) &char
@@ -169,7 +213,10 @@ pub fn C.vphp_bind_class_interface(class_name &char, class_name_len int, iface_n
 pub fn C.vphp_register_auto_interface_binding(class_name &char, class_name_len int, iface_name &char, iface_name_len int)
 pub fn C.vphp_create_closure_FULL_AUTO_V2(z &C.zval, thunk voidptr, bridge voidptr)
 pub fn C.vphp_create_closure_with_arity(z &C.zval, thunk voidptr, bridge voidptr, num_args int, required_args int)
-pub fn C.vphp_create_variadic_closure(z &C.zval, thunk voidptr, bridge voidptr)
+pub fn C.vphp_create_closure_with_arginfo(z &C.zval, thunk voidptr, bridge ClosureBridge, num_args int, required_args int, arginfo voidptr)
+pub fn C.vphp_create_closure_with_attributes(z &C.zval, thunk voidptr, bridge ClosureBridge, num_args int, required_args int, arginfo voidptr, attributes voidptr)
+pub fn C.vphp_create_named_variadic_closure(z &C.zval, thunk voidptr, bridge ClosureBridge, num_args int, required_args int, arginfo voidptr)
+pub fn C.vphp_create_variadic_closure(z &C.zval, thunk voidptr, bridge ClosureBridge)
 
 // ===== 9. 资源系统 =====
 pub fn C.vphp_init_resource_system(module_number int)
@@ -177,6 +224,11 @@ pub fn C.vphp_make_res(ret &C.zval, ptr voidptr, label &char)
 pub fn C.vphp_fetch_res(z &C.zval) voidptr
 
 // ===== 10. 静态属性 =====
+pub fn C.vphp_read_static_property_value(ce voidptr, name &char, name_len usize) voidptr
+pub fn C.vphp_write_static_property_value(ce voidptr, name &char, name_len usize, val voidptr)
+pub fn C.vphp_init_inherited_field(obj voidptr, owner voidptr, name &char, name_len int, val voidptr)
+pub fn C.vphp_copy_inherited_value(target voidptr, source voidptr)
+pub fn C.vphp_inherited_value_unchanged(before voidptr, after voidptr) bool
 pub fn C.vphp_update_static_property_long(ce voidptr, name &char, name_len int, val i64)
 pub fn C.vphp_update_static_property_string(ce voidptr, name &char, name_len int, val &char, val_len int)
 pub fn C.vphp_update_static_property_bool(ce voidptr, name &char, name_len int, val int)

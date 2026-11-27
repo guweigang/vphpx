@@ -65,7 +65,7 @@ fn (h &VSlimTestingHarness) app_object() ?vphp.PhpObject {
 }
 
 fn (h &VSlimTestingHarness) has_app_object() bool {
-	app := h.app_object() or { return false }
+	mut app := h.app_object() or { return false }
 	app.release()
 	return true
 }
@@ -218,7 +218,7 @@ fn testing_psr7_json_server_request(method string, uri string, payload vphp.PhpV
 		req.attributes_ref)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut h VSlimTestingHarness) construct() &VSlimTestingHarness {
 	h.container_ref = containerx.VSlimContainer.new()
 	h.cookies = map[string]string{}
@@ -232,7 +232,7 @@ pub fn VSlimTestingHarness.from_container(container &containerx.VSlimContainer) 
 	}
 }
 
-@[php_method: 'setApp']
+@[vphp.PhpExportMethod(name: 'setApp')]
 pub fn (mut h VSlimTestingHarness) set_app(app vphp.PhpObject) &VSlimTestingHarness {
 	if !app.is_valid() {
 		return h
@@ -255,12 +255,12 @@ pub fn (mut h VSlimTestingHarness) set_app(app vphp.PhpObject) &VSlimTestingHarn
 	return h
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (h &VSlimTestingHarness) app() vphp.PhpObject {
 	return h.app_object() or { vphp.PhpObject.invalid() }
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut h VSlimTestingHarness) container() &containerx.VSlimContainer {
 	if h.container_ref == unsafe { nil } {
 		h.container_ref = containerx.VSlimContainer.new()
@@ -268,23 +268,23 @@ pub fn (mut h VSlimTestingHarness) container() &containerx.VSlimContainer {
 	return h.container_ref
 }
 
-@[php_method: 'withService']
+@[vphp.PhpExportMethod(name: 'withService')]
 pub fn (mut h VSlimTestingHarness) with_service(id string, value vphp.PhpValue) &VSlimTestingHarness {
 	mut container := h.container()
 	container.set(id, value)
 	return h
 }
 
-@[php_method: 'withFactory']
+@[vphp.PhpExportMethod(name: 'withFactory')]
 pub fn (mut h VSlimTestingHarness) with_factory(id string, callable vphp.PhpCallable) &VSlimTestingHarness {
 	mut container := h.container()
 	container.factory(id, callable)
 	return h
 }
 
-@[php_method: 'withConfig']
+@[vphp.PhpExportMethod(name: 'withConfig')]
 pub fn (mut h VSlimTestingHarness) with_config(path string) &VSlimTestingHarness {
-	app := h.app_object() or {
+	mut app := h.app_object() or {
 		vphp.PhpException.raise_class('RuntimeException', 'testing harness app is not configured', 0)
 		return h
 	}
@@ -300,9 +300,9 @@ pub fn (mut h VSlimTestingHarness) with_config(path string) &VSlimTestingHarness
 	return h
 }
 
-@[php_method: 'withConfigText']
+@[vphp.PhpExportMethod(name: 'withConfigText')]
 pub fn (mut h VSlimTestingHarness) with_config_text(text string) &VSlimTestingHarness {
-	app := h.app_object() or {
+	mut app := h.app_object() or {
 		vphp.PhpException.raise_class('RuntimeException', 'testing harness app is not configured', 0)
 		return h
 	}
@@ -318,7 +318,7 @@ pub fn (mut h VSlimTestingHarness) with_config_text(text string) &VSlimTestingHa
 	return h
 }
 
-@[php_method: 'withCookie']
+@[vphp.PhpExportMethod(name: 'withCookie')]
 pub fn (mut h VSlimTestingHarness) with_cookie(name string, value string) &VSlimTestingHarness {
 	key := name.trim_space()
 	if key == '' {
@@ -328,7 +328,7 @@ pub fn (mut h VSlimTestingHarness) with_cookie(name string, value string) &VSlim
 	return h
 }
 
-@[php_method: 'withoutCookie']
+@[vphp.PhpExportMethod(name: 'withoutCookie')]
 pub fn (mut h VSlimTestingHarness) without_cookie(name string) &VSlimTestingHarness {
 	key := name.trim_space()
 	if key == '' {
@@ -338,18 +338,18 @@ pub fn (mut h VSlimTestingHarness) without_cookie(name string) &VSlimTestingHarn
 	return h
 }
 
-@[php_method: 'clearCookies']
+@[vphp.PhpExportMethod(name: 'clearCookies')]
 pub fn (mut h VSlimTestingHarness) clear_cookies() &VSlimTestingHarness {
 	h.cookies = map[string]string{}
 	return h
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (h &VSlimTestingHarness) cookies() map[string]string {
 	return httpx.snapshot_string_map(h.cookies)
 }
 
-@[php_method: 'withSession']
+@[vphp.PhpExportMethod(name: 'withSession')]
 pub fn (mut h VSlimTestingHarness) with_session(values vphp.PhpValue) &VSlimTestingHarness {
 	if h.container_ref == unsafe { nil } {
 		vphp.PhpException.raise_class('RuntimeException', 'testing harness app is not configured',
@@ -362,8 +362,8 @@ pub fn (mut h VSlimTestingHarness) with_session(values vphp.PhpValue) &VSlimTest
 	return h
 }
 
-@[php_arg_name: 'user_id=userId']
-@[php_method: 'actingAs']
+@[vphp.PhpArgName(v_name: 'user_id', php_name: 'userId')]
+@[vphp.PhpExportMethod(name: 'actingAs')]
 pub fn (mut h VSlimTestingHarness) acting_as(user_id string) &VSlimTestingHarness {
 	if h.container_ref == unsafe { nil } {
 		vphp.PhpException.raise_class('RuntimeException', 'testing harness app is not configured',
@@ -380,27 +380,29 @@ pub fn (mut h VSlimTestingHarness) acting_as(user_id string) &VSlimTestingHarnes
 	return h
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_arg_default: 'body=""']
-@[php_arg_optional: 'body']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpStringParam('body', php_name: 'body', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (h &VSlimTestingHarness) request(method string, uri string, body string) &httpx.VSlimPsr7ServerRequest {
 	return psr7_server_request_with_testing_cookies(testing_psr7_server_request(method, uri, body),
 		h.cookies)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ServerRequestInterface']
-@[php_method: 'jsonRequest']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]
+@[vphp.PhpExportMethod(name: 'jsonRequest')]
 pub fn (h &VSlimTestingHarness) json_request(method string, uri string, payload vphp.PhpValue) &httpx.VSlimPsr7ServerRequest {
 	return psr7_server_request_with_testing_cookies(testing_psr7_json_server_request(method, uri,
 		payload), h.cookies)
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method]
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'handle')]
+pub fn (h &VSlimTestingHarness) export_handle(request httpx.PsrServerRequest) &httpx.VSlimPsr7Response {
+	return h.handle(request.to_object())
+}
+
 pub fn (h &VSlimTestingHarness) handle(request vphp.PhpObject) &httpx.VSlimPsr7Response {
-	app := h.app_object() or {
+	mut app := h.app_object() or {
 		return httpx.VSlimPsr7Response.text(500, 'testing harness app is not configured')
 	}
 	defer {
@@ -422,10 +424,9 @@ pub fn (h &VSlimTestingHarness) handle(request vphp.PhpObject) &httpx.VSlimPsr7R
 	return response
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'handleRequest']
-@[php_arg_default: 'body=""']
-@[php_arg_optional: 'body']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'handleRequest')]
+@[vphp.PhpStringParam('body', php_name: 'body', default_value: '', optional: true)]
 pub fn (h &VSlimTestingHarness) handle_request(method string, uri string, body string) &httpx.VSlimPsr7Response {
 	if !h.has_app_object() {
 		return httpx.VSlimPsr7Response.text(500, 'testing harness app is not configured')
@@ -441,8 +442,8 @@ pub fn (h &VSlimTestingHarness) handle_request(method string, uri string, body s
 	return h.handle(request)
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'handleJson']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'handleJson')]
 pub fn (h &VSlimTestingHarness) handle_json(method string, uri string, payload vphp.PhpValue) &httpx.VSlimPsr7Response {
 	if !h.has_app_object() {
 		return httpx.VSlimPsr7Response.text(500, 'testing harness app is not configured')
@@ -458,7 +459,7 @@ pub fn (h &VSlimTestingHarness) handle_json(method string, uri string, payload v
 	return h.handle(request)
 }
 
-@[php_method: 'dispatchJson']
+@[vphp.PhpExportMethod(name: 'dispatchJson')]
 pub fn (h &VSlimTestingHarness) dispatch_json(method string, uri string, payload vphp.PhpValue) &httpx.VSlimResponse {
 	response := h.handle_json(method, uri, payload).to_vslim_response().boxed_snapshot()
 	unsafe {
@@ -472,27 +473,27 @@ pub fn (h &VSlimTestingHarness) dispatch_json(method string, uri string, payload
 	return response
 }
 
-@[php_method: 'responseStatus']
+@[vphp.PhpExportMethod(name: 'responseStatus')]
 pub fn (h &VSlimTestingHarness) response_status(response vphp.PhpValue) int {
 	return testing_response_status(response)
 }
 
-@[php_method: 'responseHeader']
+@[vphp.PhpExportMethod(name: 'responseHeader')]
 pub fn (h &VSlimTestingHarness) response_header(response vphp.PhpValue, name string) string {
 	return testing_response_header(response, name)
 }
 
-@[php_method: 'responseBody']
+@[vphp.PhpExportMethod(name: 'responseBody')]
 pub fn (h &VSlimTestingHarness) response_body(response vphp.PhpValue) string {
 	return testing_response_body(response)
 }
 
-@[php_method: 'responseJson']
+@[vphp.PhpExportMethod(name: 'responseJson')]
 pub fn (h &VSlimTestingHarness) response_json(response vphp.PhpValue) vphp.PhpValue {
 	return vphp.PhpJson.decode_assoc_value(testing_response_body(response))
 }
 
-@[php_method: 'assertStatus']
+@[vphp.PhpExportMethod(name: 'assertStatus')]
 pub fn (h &VSlimTestingHarness) assert_status(response vphp.PhpValue, expected int) &VSlimTestingHarness {
 	actual := testing_response_status(response)
 	if actual != expected {
@@ -502,7 +503,7 @@ pub fn (h &VSlimTestingHarness) assert_status(response vphp.PhpValue, expected i
 	return h
 }
 
-@[php_method: 'assertHeader']
+@[vphp.PhpExportMethod(name: 'assertHeader')]
 pub fn (h &VSlimTestingHarness) assert_header(response vphp.PhpValue, name string, expected string) &VSlimTestingHarness {
 	actual := testing_response_header(response, name)
 	if actual != expected {
@@ -512,7 +513,7 @@ pub fn (h &VSlimTestingHarness) assert_header(response vphp.PhpValue, name strin
 	return h
 }
 
-@[php_method: 'assertBodyContains']
+@[vphp.PhpExportMethod(name: 'assertBodyContains')]
 pub fn (h &VSlimTestingHarness) assert_body_contains(response vphp.PhpValue, needle string) &VSlimTestingHarness {
 	body := testing_response_body(response)
 	if !body.contains(needle) {
@@ -522,9 +523,8 @@ pub fn (h &VSlimTestingHarness) assert_body_contains(response vphp.PhpValue, nee
 	return h
 }
 
-@[php_arg_default: 'body=""']
-@[php_arg_optional: 'body']
-@[php_method]
+@[vphp.PhpStringParam('body', php_name: 'body', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (h &VSlimTestingHarness) dispatch(method string, uri string, body string) &httpx.VSlimResponse {
 	if !h.has_app_object() {
 		return httpx.VSlimResponse.text(500, 'testing harness app is not configured').boxed_snapshot()
@@ -541,60 +541,56 @@ pub fn (h &VSlimTestingHarness) dispatch(method string, uri string, body string)
 	return response
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (h &VSlimTestingHarness) get(uri string) &httpx.VSlimResponse {
 	return h.dispatch('GET', uri, '')
 }
 
-@[php_method: 'getJson']
+@[vphp.PhpExportMethod(name: 'getJson')]
 pub fn (h &VSlimTestingHarness) get_json(uri string) &httpx.VSlimResponse {
 	return h.dispatch_json('GET', uri, vphp.PhpValue.null())
 }
 
-@[php_arg_default: 'body=""']
-@[php_arg_optional: 'body']
-@[php_method]
+@[vphp.PhpStringParam('body', php_name: 'body', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (h &VSlimTestingHarness) post(uri string, body string) &httpx.VSlimResponse {
 	return h.dispatch('POST', uri, body)
 }
 
-@[php_method: 'postJson']
+@[vphp.PhpExportMethod(name: 'postJson')]
 pub fn (h &VSlimTestingHarness) post_json(uri string, payload vphp.PhpValue) &httpx.VSlimResponse {
 	return h.dispatch_json('POST', uri, payload)
 }
 
-@[php_arg_default: 'body=""']
-@[php_arg_optional: 'body']
-@[php_method]
+@[vphp.PhpStringParam('body', php_name: 'body', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (h &VSlimTestingHarness) put(uri string, body string) &httpx.VSlimResponse {
 	return h.dispatch('PUT', uri, body)
 }
 
-@[php_method: 'putJson']
+@[vphp.PhpExportMethod(name: 'putJson')]
 pub fn (h &VSlimTestingHarness) put_json(uri string, payload vphp.PhpValue) &httpx.VSlimResponse {
 	return h.dispatch_json('PUT', uri, payload)
 }
 
-@[php_arg_default: 'body=""']
-@[php_arg_optional: 'body']
-@[php_method]
+@[vphp.PhpStringParam('body', php_name: 'body', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (h &VSlimTestingHarness) patch(uri string, body string) &httpx.VSlimResponse {
 	return h.dispatch('PATCH', uri, body)
 }
 
-@[php_method: 'patchJson']
+@[vphp.PhpExportMethod(name: 'patchJson')]
 pub fn (h &VSlimTestingHarness) patch_json(uri string, payload vphp.PhpValue) &httpx.VSlimResponse {
 	return h.dispatch_json('PATCH', uri, payload)
 }
 
-@[php_arg_default: 'body=""']
-@[php_arg_optional: 'body']
-@[php_method]
+@[vphp.PhpStringParam('body', php_name: 'body', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (h &VSlimTestingHarness) delete(uri string, body string) &httpx.VSlimResponse {
 	return h.dispatch('DELETE', uri, body)
 }
 
-@[php_method: 'deleteJson']
+@[vphp.PhpExportMethod(name: 'deleteJson')]
 pub fn (h &VSlimTestingHarness) delete_json(uri string, payload vphp.PhpValue) &httpx.VSlimResponse {
 	return h.dispatch_json('DELETE', uri, payload)
 }

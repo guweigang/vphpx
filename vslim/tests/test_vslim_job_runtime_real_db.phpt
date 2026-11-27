@@ -58,6 +58,22 @@ final class VSlimJobRuntimePhptFailingJob
     }
 }
 
+final class VSlimJobRuntimePhptFailingConstructor
+{
+    public static int $constructed = 0;
+    public static int $handled = 0;
+    public static int $destroyed = 0;
+
+    public function __construct()
+    {
+        ++self::$constructed;
+        throw new RuntimeException('planned constructor failure');
+    }
+
+    public function handle(array $payload): void { ++self::$handled; }
+    public function __destruct() { ++self::$destroyed; }
+}
+
 $cfg = (new VSlim\Database\Config())
     ->setDriver('mysql')
     ->setHost((string) getenv('VSLIM_DB_HOST'))
@@ -74,15 +90,28 @@ $path = sys_get_temp_dir() . '/vslim_job_runtime_' . getmypid() . '.out';
 $db->executeParams('DELETE FROM vslim_failed_jobs WHERE queue = ?', [$queue]);
 $db->executeParams('DELETE FROM vslim_jobs WHERE queue = ?', [$queue]);
 
-$dispatcher = (new VSlim\Job\Dispatcher())->setManager($db);
-$jobId = $dispatcher->dispatch(VSlimJobRuntimePhptJob::class, [
+$app = (new VSlim\App())->setDatabase(database: $db);
+$dispatcher = $app->jobDispatcher();
+$worker = $app->jobWorker();
+if ($dispatcher->manager() !== $db || $app->jobDispatcher() !== $dispatcher || $app->jobWorker() !== $worker) {
+    throw new RuntimeException('Unexpected app job services');
+}
+$run = new ReflectionMethod($worker, 'run');
+$params = [];
+foreach ($run->getParameters() as $parameter) {
+    $params[$parameter->getName()] = (string) $parameter->getType();
+}
+if ($run->getNumberOfRequiredParameters() !== 4 || (string) $run->getReturnType() !== 'int'
+    || $params !== ['queue' => 'string', 'maxJobs' => 'int', 'sleepMs' => 'int', 'stopWhenEmpty' => 'bool']) {
+    throw new RuntimeException('Unexpected job worker run signature');
+}
+$jobId = $dispatcher->dispatch(maxAttempts: 2, delaySeconds: 0, queue: $queue, payload: [
     'message' => 'queued-ok',
     'path' => $path,
-], $queue, 0, 2);
+], jobClass: VSlimJobRuntimePhptJob::class);
 
-$worker = (new VSlim\Job\Worker())
-    ->setManager($db)
-    ->setWorkerId('phpt-worker')
+$worker
+    ->setWorkerId(workerId: 'phpt-worker')
     ->setRetryDelaySeconds(0);
 
 $ran = $worker->runOnce($queue);
@@ -108,7 +137,7 @@ $secondId = $dispatcher->dispatch(VSlimJobRuntimePhptJob::class, [
     'message' => 'loop-b',
     'path' => $path,
 ], $queue, 0, 2);
-$loopRan = $worker->run($queue, 10, 0, true);
+$loopRan = $worker->run(stopWhenEmpty: true, sleepMs: 0, maxJobs: 10, queue: $queue);
 $loopRows = $db->queryParams('SELECT status FROM vslim_jobs WHERE id IN (?, ?) ORDER BY id ASC', [(string) $firstId, (string) $secondId]);
 
 echo "loop-ran={$loopRan}\n";
@@ -155,6 +184,31 @@ echo "failed-status=" . ($failedRow['status'] ?? '') . PHP_EOL;
 echo "failed-attempts=" . ($failedRow['attempts'] ?? '') . PHP_EOL;
 echo "failed-error=" . ($failedRow['last_error'] ?? '') . PHP_EOL;
 echo "dead-error=" . ($deadRow['error_message'] ?? '') . PHP_EOL;
+
+$ctorId = $dispatcher->dispatch(VSlimJobRuntimePhptFailingConstructor::class, [], $queue, 0, 2);
+foreach ([1 => 'pending', 2 => 'failed'] as $attempts => $status) {
+    $ran = $worker->runOnce($queue);
+    $rows = $db->queryParams(
+        'SELECT status, attempts, reserved_by IS NULL AS reserved_is_null, last_error FROM vslim_jobs WHERE id = ?',
+        [(string) $ctorId],
+    );
+    $row = $rows[0] ?? [];
+    if ($ran !== 1 || ($row['status'] ?? null) !== $status || (int) ($row['attempts'] ?? 0) !== $attempts
+        || (int) ($row['reserved_is_null'] ?? 0) !== 1 || ($row['last_error'] ?? null) !== 'planned constructor failure') {
+        throw new RuntimeException('Failed construction left the job in the wrong state');
+    }
+}
+$ctorErrors = $db->queryParams('SELECT error_message FROM vslim_failed_jobs WHERE job_id = ?', [(string) $ctorId]);
+if (array_column($ctorErrors, 'error_message') !== ['planned constructor failure']
+    || VSlimJobRuntimePhptFailingConstructor::$constructed !== 2
+    || VSlimJobRuntimePhptFailingConstructor::$handled !== 0
+    || VSlimJobRuntimePhptFailingConstructor::$destroyed !== 0) {
+    throw new RuntimeException('The worker used a failed instance or lost the constructor exception');
+}
+$dispatcher->dispatch(VSlimJobRuntimePhptJob::class, ['message' => 'after-ctor', 'path' => $path], $queue, 0, 1);
+if ($worker->runOnce($queue) !== 1 || trim((string) file_get_contents($path)) !== 'stale-recovered' . PHP_EOL . 'after-ctor') {
+    throw new RuntimeException('The worker could not run a later job after constructor failure');
+}
 
 $db->executeParams('DELETE FROM vslim_failed_jobs WHERE queue = ?', [$queue]);
 $db->executeParams('DELETE FROM vslim_jobs WHERE queue = ?', [$queue]);

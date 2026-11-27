@@ -1,7 +1,5 @@
 --TEST--
-VHTTPD PSR-7 bridge builds a request with Laminas Diactoros factories
---SKIPIF--
-<?php if (!extension_loaded("vslim")) print "skip"; ?>
+VSlim worker PSR-7 bridge builds a request with Laminas Diactoros factories
 --FILE--
 <?php
 namespace Laminas\Diactoros {
@@ -76,17 +74,9 @@ namespace {
         }
     }
 
-    $autoload = (getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd') . '/php/package/vendor/autoload.php';
-    if (!is_file($autoload)) {
-        $autoload = dirname(__DIR__) . '/vendor/autoload.php';
-    }
-    if (!is_file($autoload)) {
-        echo "autoload_missing\n";
-        exit;
-    }
-    require_once $autoload;
+    require_once dirname(__DIR__) . '/templates/app/bootstrap/worker.php';
 
-    $req = VHttpd\Psr7Adapter::buildServerRequest([
+    $req = VSlim\Worker\Adapter::request([
         'method' => 'PUT',
         'path' => '/items/8?trace_id=laminas',
         'body' => '{"name":"Laminas"}',
@@ -101,7 +91,7 @@ namespace {
         'attributes' => ['route' => 'items.update'],
         'server' => ['REQUEST_TIME_FLOAT' => '1.23'],
         'uploaded_files' => [],
-    ]);
+    ], new Laminas\Diactoros\RequestFactory(), new Laminas\Diactoros\StreamFactory());
 
     echo get_class($req) . PHP_EOL;
     echo $req->method . '|' . $req->uri . '|' . $req->protocolVersion . PHP_EOL;

@@ -3,18 +3,18 @@ module validationx
 import strconv
 import vphp
 
-@[php_class: 'VSlim\\Validate\\Validator']
+@[vphp.PhpExportClass(name: 'VSlim\\Validate\\Validator')]
 @[heap]
 pub struct VSlimValidator {
 mut:
-	input_data     map[string]vphp.DynValue @[php_prop: inputData]
-	rule_map       map[string][]string      @[php_prop: ruleMap]
-	error_map      map[string][]string      @[php_prop: errorMap]
-	validated_data map[string]vphp.DynValue @[php_prop: validatedData]
-	validation_ran bool                     @[php_prop: validationRan]
+	input_data     map[string]vphp.DynValue @[vphp.PhpProperty(name: 'inputData')]
+	rule_map       map[string][]string      @[vphp.PhpProperty(name: 'ruleMap')]
+	error_map      map[string][]string      @[vphp.PhpProperty(name: 'errorMap')]
+	validated_data map[string]vphp.DynValue @[vphp.PhpProperty(name: 'validatedData')]
+	validation_ran bool                     @[vphp.PhpProperty(name: 'validationRan')]
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn VSlimValidator.make(data vphp.PhpValue, rules vphp.PhpArray) &VSlimValidator {
 	mut validator := &VSlimValidator{}
 	validator.construct()
@@ -23,7 +23,7 @@ pub fn VSlimValidator.make(data vphp.PhpValue, rules vphp.PhpArray) &VSlimValida
 	return validator
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) construct() &VSlimValidator {
 	validator.input_data = map[string]vphp.DynValue{}
 	validator.rule_map = map[string][]string{}
@@ -33,7 +33,7 @@ pub fn (mut validator VSlimValidator) construct() &VSlimValidator {
 	return &validator
 }
 
-@[php_method: 'setData']
+@[vphp.PhpExportMethod(name: 'setData')]
 pub fn (mut validator VSlimValidator) set_data(data vphp.PhpValue) &VSlimValidator {
 	validator.input_data = validator_extract_input(data)
 	validator.validation_ran = false
@@ -42,7 +42,7 @@ pub fn (mut validator VSlimValidator) set_data(data vphp.PhpValue) &VSlimValidat
 	return &validator
 }
 
-@[php_method: 'setRules']
+@[vphp.PhpExportMethod(name: 'setRules')]
 pub fn (mut validator VSlimValidator) set_rules(rules vphp.PhpArray) &VSlimValidator {
 	validator.rule_map = validator_extract_rules(rules)
 	validator.validation_ran = false
@@ -51,7 +51,7 @@ pub fn (mut validator VSlimValidator) set_rules(rules vphp.PhpArray) &VSlimValid
 	return &validator
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) validate() &VSlimValidator {
 	validator.error_map = map[string][]string{}
 	validator.validated_data = map[string]vphp.DynValue{}
@@ -103,31 +103,31 @@ pub fn (mut validator VSlimValidator) validate() &VSlimValidator {
 	return &validator
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) passes() bool {
 	validator.ensure_validated()
 	return validator.error_map.len == 0
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) fails() bool {
 	validator.ensure_validated()
 	return validator.error_map.len > 0
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) errors() vphp.PhpValue {
 	validator.ensure_validated()
 	return validator_errors_value(validator.error_map)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) validated() vphp.PhpValue {
 	validator.ensure_validated()
 	return validator_dyn_map_value(validator.validated_data)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut validator VSlimValidator) data() vphp.PhpValue {
 	return validator_dyn_map_value(validator.input_data)
 }
@@ -146,7 +146,7 @@ fn validator_extract_input(data vphp.PhpValue) map[string]vphp.DynValue {
 	if data.is_array() {
 		return validator_map_from_value(data)
 	}
-	if request := data.as_object() {
+	if mut request := data.as_object() {
 		defer {
 			request.release()
 		}
@@ -193,10 +193,13 @@ fn validator_map_from_value(value vphp.PhpValue) map[string]vphp.DynValue {
 }
 
 fn validator_map_from_dyn(value vphp.DynValue) map[string]vphp.DynValue {
-	if value.type == .map_ {
-		return value.map.clone()
+	return match value.type {
+		.array_ {
+			if value.array == unsafe { nil } { map[string]vphp.DynValue{} } else { value.array.to_map() }
+		}
+		.map_ { value.map.clone() }
+		else { map[string]vphp.DynValue{} }
 	}
-	return map[string]vphp.DynValue{}
 }
 
 fn validator_extract_rules(rules vphp.PhpArray) map[string][]string {
@@ -215,7 +218,7 @@ fn validator_rule_list(value vphp.PhpValue) []string {
 	if value.is_string() {
 		return validator_split_rule_list(value.to_string())
 	}
-	if arr := value.as_array() {
+	if mut arr := value.as_array() {
 		defer {
 			arr.release()
 		}
@@ -304,6 +307,7 @@ fn validator_is_empty(value vphp.DynValue) bool {
 	return match value.type {
 		.null_ { true }
 		.string_ { value.string_value().trim_space() == '' }
+		.array_ { value.array == unsafe { nil } || value.array.count() == 0 }
 		.list_ { value.list.len == 0 }
 		.map_ { value.map.len == 0 }
 		else { false }
@@ -415,6 +419,7 @@ fn validator_numeric_value(value vphp.DynValue) ?f64 {
 fn validator_length_value(value vphp.DynValue) ?f64 {
 	return match value.type {
 		.string_ { f64(value.string_value().len) }
+		.array_ { if value.array == unsafe { nil } { f64(0) } else { f64(value.array.count()) } }
 		.list_ { f64(value.list.len) }
 		.map_ { f64(value.map.len) }
 		else { none }
@@ -458,6 +463,9 @@ fn validator_string_value(value vphp.DynValue) string {
 		.string_ {
 			value.string_value()
 		}
+		.array_ {
+			'[array]'
+		}
 		.list_ {
 			'[list]'
 		}
@@ -477,7 +485,7 @@ fn validator_string_value(value vphp.DynValue) string {
 }
 
 fn validator_dyn_map_value(values map[string]vphp.DynValue) vphp.PhpValue {
-	return vphp.DynValue.of_map(values).to_value() or { vphp.PhpValue.null() }
+	return vphp.DynValue.array_from_map(values).to_value() or { vphp.PhpValue.null() }
 }
 
 fn validator_errors_value(errors map[string][]string) vphp.PhpValue {
@@ -487,7 +495,7 @@ fn validator_errors_value(errors map[string][]string) vphp.PhpValue {
 		for value in values {
 			items << vphp.DynValue.of_string(value)
 		}
-		out[key] = vphp.DynValue.of_list(items)
+		out[key] = vphp.DynValue.array_from_list(items)
 	}
 	return validator_dyn_map_value(out)
 }

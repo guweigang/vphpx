@@ -53,12 +53,12 @@ pub fn vslim_database_config_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_config_construct']
-pub fn vphp_wrap_vslim_database_config_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_config_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseConfig(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseConfig](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_config_set_driver']
 pub fn vphp_wrap_vslim_database_config_set_driver(ptr voidptr, ctx vphp.Context) voidptr {
@@ -66,9 +66,9 @@ pub fn vphp_wrap_vslim_database_config_set_driver(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'driver', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'driver' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'driver').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_driver(arg_0)
     return voidptr(res)
 }
@@ -86,9 +86,9 @@ pub fn vphp_wrap_vslim_database_config_set_transport(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'transport', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'transport' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'transport').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_transport(arg_0)
     return voidptr(res)
 }
@@ -106,9 +106,9 @@ pub fn vphp_wrap_vslim_database_config_set_host(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'host', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'host' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'host').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_host(arg_0)
     return voidptr(res)
 }
@@ -126,9 +126,9 @@ pub fn vphp_wrap_vslim_database_config_set_port(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'port', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'port' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'port').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.set_port(arg_0)
     return voidptr(res)
 }
@@ -146,9 +146,9 @@ pub fn vphp_wrap_vslim_database_config_set_username(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'username', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'username' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'username').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_username(arg_0)
     return voidptr(res)
 }
@@ -166,9 +166,9 @@ pub fn vphp_wrap_vslim_database_config_set_password(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'password', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'password', attributes: [vphp.PhpAttribute.named('SensitiveParameter').for_parameter()] },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'password').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_password(arg_0)
     return voidptr(res)
 }
@@ -186,9 +186,9 @@ pub fn vphp_wrap_vslim_database_config_set_database(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_database(arg_0)
     return voidptr(res)
 }
@@ -206,9 +206,9 @@ pub fn vphp_wrap_vslim_database_config_set_pool_size(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'size', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'size' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'size').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.set_pool_size(arg_0)
     return voidptr(res)
 }
@@ -226,9 +226,9 @@ pub fn vphp_wrap_vslim_database_config_set_pool_name(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_pool_name(arg_0)
     return voidptr(res)
 }
@@ -246,9 +246,9 @@ pub fn vphp_wrap_vslim_database_config_set_timeout_ms(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'timeoutMs', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'timeoutMs' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'timeoutMs').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.set_timeout_ms(arg_0)
     return voidptr(res)
 }
@@ -266,9 +266,9 @@ pub fn vphp_wrap_vslim_database_config_set_upstream_socket(ptr voidptr, ctx vphp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'socketPath', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'socketPath' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'socketPath').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_upstream_socket(arg_0)
     return voidptr(res)
 }
@@ -290,13 +290,13 @@ pub fn vphp_wrap_vslim_database_config_to_json(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_database_config_handlers']
 pub fn vslim_database_config_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_config_get_prop),
-        write_handler: voidptr(vslim_database_config_set_prop),
-        sync_handler: voidptr(vslim_database_config_sync_props),
-        new_raw: voidptr(vslim_database_config_new_raw),
-        cleanup_raw: voidptr(vslim_database_config_cleanup_raw),
-        free_raw: voidptr(vslim_database_config_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_config_get_prop,
+        write_handler: vslim_database_config_set_prop,
+        sync_handler: vslim_database_config_sync_props,
+        new_raw: vslim_database_config_new_raw,
+        cleanup_raw: vslim_database_config_cleanup_raw,
+        free_raw: vslim_database_config_free_raw
     )
 }
 pub fn VSlimDatabaseConfig.php_class_entry() vphp.ZendClassEntry {
@@ -401,9 +401,9 @@ pub fn vphp_wrap_vslim_database_manager_execute(ptr voidptr, ctx vphp.Context)  
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.execute(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -413,9 +413,9 @@ pub fn vphp_wrap_vslim_database_manager_execute_async(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.execute_async(arg_0)
     return voidptr(res)
 }
@@ -425,11 +425,11 @@ pub fn vphp_wrap_vslim_database_manager_execute_params(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.execute_params(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -439,11 +439,11 @@ pub fn vphp_wrap_vslim_database_manager_execute_params_async(ptr voidptr, ctx vp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.execute_params_async(arg_0, arg_1)
     return voidptr(res)
 }
@@ -453,9 +453,9 @@ pub fn vphp_wrap_vslim_database_manager_query(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.query(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -465,9 +465,9 @@ pub fn vphp_wrap_vslim_database_manager_query_async(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.query_async(arg_0)
     return voidptr(res)
 }
@@ -477,11 +477,11 @@ pub fn vphp_wrap_vslim_database_manager_query_params(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.query_params(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -491,11 +491,11 @@ pub fn vphp_wrap_vslim_database_manager_query_params_async(ptr voidptr, ctx vphp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.query_params_async(arg_0, arg_1)
     return voidptr(res)
 }
@@ -505,9 +505,9 @@ pub fn vphp_wrap_vslim_database_manager_query_one(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.query_one(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -517,11 +517,11 @@ pub fn vphp_wrap_vslim_database_manager_query_one_params(ptr voidptr, ctx vphp.C
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'query', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'query' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'query').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.query_one_params(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -550,12 +550,12 @@ pub fn vphp_wrap_vslim_database_manager_rollback(ptr voidptr, ctx vphp.Context) 
     ctx.return().v[bool](res)
 }
 @[export: 'vphp_wrap_vslim_database_manager_construct']
-pub fn vphp_wrap_vslim_database_manager_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_manager_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseManager(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseManager](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_manager_set_config']
 pub fn vphp_wrap_vslim_database_manager_set_config(ptr voidptr, ctx vphp.Context) voidptr {
@@ -563,14 +563,12 @@ pub fn vphp_wrap_vslim_database_manager_set_config(ptr voidptr, ctx vphp.Context
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'config', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'config' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'config').to_v_ptr[databasex.VSlimDatabaseConfig]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseConfig, got ' + php_args.at_named_or_index(0, 'config').zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseConfig]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseConfig(arg_0_ptr) }
     res := recv.set_config(arg_0)
     return voidptr(res)
 }
@@ -652,21 +650,21 @@ pub fn vphp_wrap_vslim_database_manager_table_query(ptr voidptr, ctx vphp.Contex
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.table_query(arg_0)
     return voidptr(res)
 }
 @[export: 'vslim_database_manager_handlers']
 pub fn vslim_database_manager_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_manager_get_prop),
-        write_handler: voidptr(vslim_database_manager_set_prop),
-        sync_handler: voidptr(vslim_database_manager_sync_props),
-        new_raw: voidptr(vslim_database_manager_new_raw),
-        cleanup_raw: voidptr(vslim_database_manager_cleanup_raw),
-        free_raw: voidptr(vslim_database_manager_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_manager_get_prop,
+        write_handler: vslim_database_manager_set_prop,
+        sync_handler: vslim_database_manager_sync_props,
+        new_raw: vslim_database_manager_new_raw,
+        cleanup_raw: vslim_database_manager_cleanup_raw,
+        free_raw: vslim_database_manager_free_raw
     )
 }
 pub fn VSlimDatabaseManager.php_class_entry() vphp.ZendClassEntry {
@@ -783,13 +781,13 @@ pub fn vphp_wrap_vslim_database_pending_result_wait(ptr voidptr, ctx vphp.Contex
 }
 @[export: 'vslim_database_pending_result_handlers']
 pub fn vslim_database_pending_result_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_pending_result_get_prop),
-        write_handler: voidptr(vslim_database_pending_result_set_prop),
-        sync_handler: voidptr(vslim_database_pending_result_sync_props),
-        new_raw: voidptr(vslim_database_pending_result_new_raw),
-        cleanup_raw: voidptr(vslim_database_pending_result_cleanup_raw),
-        free_raw: voidptr(vslim_database_pending_result_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_pending_result_get_prop,
+        write_handler: vslim_database_pending_result_set_prop,
+        sync_handler: vslim_database_pending_result_sync_props,
+        new_raw: vslim_database_pending_result_new_raw,
+        cleanup_raw: vslim_database_pending_result_cleanup_raw,
+        free_raw: vslim_database_pending_result_free_raw
     )
 }
 pub fn VSlimDatabasePendingResult.php_class_entry() vphp.ZendClassEntry {
@@ -861,12 +859,12 @@ pub fn vslim_database_query_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_query_construct']
-pub fn vphp_wrap_vslim_database_query_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_query_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseQuery(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseQuery](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_query_set_manager']
 pub fn vphp_wrap_vslim_database_query_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -874,14 +872,12 @@ pub fn vphp_wrap_vslim_database_query_set_manager(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -907,9 +903,9 @@ pub fn vphp_wrap_vslim_database_query_table(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.table(arg_0)
     return voidptr(res)
 }
@@ -919,9 +915,9 @@ pub fn vphp_wrap_vslim_database_query_select(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'columns', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'columns' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'columns').value
+    arg_0 := php_args.at(0).value
     res := recv.@select(arg_0)
     return voidptr(res)
 }
@@ -931,11 +927,11 @@ pub fn vphp_wrap_vslim_database_query_where_eq(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'column', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'column' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'column').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.where_eq(arg_0, arg_1)
     return voidptr(res)
 }
@@ -945,13 +941,13 @@ pub fn vphp_wrap_vslim_database_query_where_op(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'column', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'op', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 2, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'column' },
+        vphp.PhpArgMeta{ index: 1, name: 'op' },
+        vphp.PhpArgMeta{ index: 2, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'column').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'op').as_v[string]()
-    arg_2 := php_args.at_named_or_index(2, 'value').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
+    arg_2 := php_args.at(2).value
     res := recv.where_op(arg_0, arg_1, arg_2)
     return voidptr(res)
 }
@@ -961,11 +957,11 @@ pub fn vphp_wrap_vslim_database_query_order_by(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'column', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'direction', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'column' },
+        vphp.PhpArgMeta{ index: 1, name: 'direction' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'column').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'direction').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.order_by(arg_0, arg_1)
     return voidptr(res)
 }
@@ -975,9 +971,9 @@ pub fn vphp_wrap_vslim_database_query_limit(ptr voidptr, ctx vphp.Context) voidp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'limit', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'limit' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'limit').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.limit(arg_0)
     return voidptr(res)
 }
@@ -987,9 +983,9 @@ pub fn vphp_wrap_vslim_database_query_offset(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'offset', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'offset' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'offset').as_v[int]()
+    arg_0 := php_args.at(0).as_v[int]()
     res := recv.offset(arg_0)
     return voidptr(res)
 }
@@ -999,9 +995,9 @@ pub fn vphp_wrap_vslim_database_query_insert(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'values', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'values' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'values').value
+    arg_0 := php_args.at(0).value
     res := recv.insert(arg_0)
     return voidptr(res)
 }
@@ -1011,9 +1007,9 @@ pub fn vphp_wrap_vslim_database_query_update(ptr voidptr, ctx vphp.Context) void
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'values', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'values' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'values').value
+    arg_0 := php_args.at(0).value
     res := recv.update(arg_0)
     return voidptr(res)
 }
@@ -1075,13 +1071,13 @@ pub fn vphp_wrap_vslim_database_query_insert_get_id(ptr voidptr, ctx vphp.Contex
 }
 @[export: 'vslim_database_query_handlers']
 pub fn vslim_database_query_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_query_get_prop),
-        write_handler: voidptr(vslim_database_query_set_prop),
-        sync_handler: voidptr(vslim_database_query_sync_props),
-        new_raw: voidptr(vslim_database_query_new_raw),
-        cleanup_raw: voidptr(vslim_database_query_cleanup_raw),
-        free_raw: voidptr(vslim_database_query_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_query_get_prop,
+        write_handler: vslim_database_query_set_prop,
+        sync_handler: vslim_database_query_sync_props,
+        new_raw: vslim_database_query_new_raw,
+        cleanup_raw: vslim_database_query_cleanup_raw,
+        free_raw: vslim_database_query_free_raw
     )
 }
 pub fn VSlimDatabaseQuery.php_class_entry() vphp.ZendClassEntry {
@@ -1153,12 +1149,12 @@ pub fn vslim_database_model_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_model_construct']
-pub fn vphp_wrap_vslim_database_model_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_model_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseModel(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseModel](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_model_set_manager']
 pub fn vphp_wrap_vslim_database_model_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1166,14 +1162,12 @@ pub fn vphp_wrap_vslim_database_model_set_manager(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1191,9 +1185,9 @@ pub fn vphp_wrap_vslim_database_model_set_table(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_table(arg_0)
     return voidptr(res)
 }
@@ -1211,9 +1205,9 @@ pub fn vphp_wrap_vslim_database_model_set_primary_key(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_primary_key(arg_0)
     return voidptr(res)
 }
@@ -1231,9 +1225,9 @@ pub fn vphp_wrap_vslim_database_model_fill(ptr voidptr, ctx vphp.Context) voidpt
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'values', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'values' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'values').value
+    arg_0 := php_args.at(0).value
     res := recv.fill(arg_0)
     return voidptr(res)
 }
@@ -1251,11 +1245,11 @@ pub fn vphp_wrap_vslim_database_model_get(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'defaultValue', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'defaultValue' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'defaultValue').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.get(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -1265,11 +1259,11 @@ pub fn vphp_wrap_vslim_database_model_set_attr(ptr voidptr, ctx vphp.Context) vo
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'key', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'value', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'key' },
+        vphp.PhpArgMeta{ index: 1, name: 'value' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'key').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'value').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.set_attr(arg_0, arg_1)
     return voidptr(res)
 }
@@ -1303,9 +1297,9 @@ pub fn vphp_wrap_vslim_database_model_find_query(ptr voidptr, ctx vphp.Context) 
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').value
+    arg_0 := php_args.at(0).value
     res := recv.find_query(arg_0)
     return voidptr(res)
 }
@@ -1339,9 +1333,9 @@ pub fn vphp_wrap_vslim_database_model_find(ptr voidptr, ctx vphp.Context)  {
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'id', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'id' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'id').value
+    arg_0 := php_args.at(0).value
     res := recv.find(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -1363,13 +1357,13 @@ pub fn vphp_wrap_vslim_database_model_delete_model(ptr voidptr, ctx vphp.Context
 }
 @[export: 'vslim_database_model_handlers']
 pub fn vslim_database_model_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_model_get_prop),
-        write_handler: voidptr(vslim_database_model_set_prop),
-        sync_handler: voidptr(vslim_database_model_sync_props),
-        new_raw: voidptr(vslim_database_model_new_raw),
-        cleanup_raw: voidptr(vslim_database_model_cleanup_raw),
-        free_raw: voidptr(vslim_database_model_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_model_get_prop,
+        write_handler: vslim_database_model_set_prop,
+        sync_handler: vslim_database_model_sync_props,
+        new_raw: vslim_database_model_new_raw,
+        cleanup_raw: vslim_database_model_cleanup_raw,
+        free_raw: vslim_database_model_free_raw
     )
 }
 pub fn VSlimDatabaseModel.php_class_entry() vphp.ZendClassEntry {
@@ -1441,12 +1435,12 @@ pub fn vslim_database_migration_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_migration_construct']
-pub fn vphp_wrap_vslim_database_migration_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_migration_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseMigration(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseMigration](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_migration_set_manager']
 pub fn vphp_wrap_vslim_database_migration_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1454,14 +1448,12 @@ pub fn vphp_wrap_vslim_database_migration_set_manager(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1487,9 +1479,9 @@ pub fn vphp_wrap_vslim_database_migration_set_name(ptr voidptr, ctx vphp.Context
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_name(arg_0)
     return voidptr(res)
 }
@@ -1523,11 +1515,11 @@ pub fn vphp_wrap_vslim_database_migration_create_table_sql(ptr voidptr, ctx vphp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'tableName', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'columns', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'tableName' },
+        vphp.PhpArgMeta{ index: 1, name: 'columns' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'tableName').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'columns').as_v[[]string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[[]string]()
     res := recv.create_table_sql(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -1537,9 +1529,9 @@ pub fn vphp_wrap_vslim_database_migration_drop_table_sql(ptr voidptr, ctx vphp.C
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'tableName', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'tableName' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'tableName').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.drop_table_sql(arg_0)
     ctx.return().v[string](res)
 }
@@ -1549,11 +1541,11 @@ pub fn vphp_wrap_vslim_database_migration_add_column_sql(ptr voidptr, ctx vphp.C
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'tableName', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'columnDef', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'tableName' },
+        vphp.PhpArgMeta{ index: 1, name: 'columnDef' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'tableName').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'columnDef').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.add_column_sql(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -1563,11 +1555,11 @@ pub fn vphp_wrap_vslim_database_migration_drop_column_sql(ptr voidptr, ctx vphp.
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'tableName', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'columnName', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'tableName' },
+        vphp.PhpArgMeta{ index: 1, name: 'columnName' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'tableName').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'columnName').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.drop_column_sql(arg_0, arg_1)
     ctx.return().v[string](res)
 }
@@ -1577,11 +1569,11 @@ pub fn vphp_wrap_vslim_database_migration_create_table(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'tableName', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'columns', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'tableName' },
+        vphp.PhpArgMeta{ index: 1, name: 'columns' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'tableName').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'columns').as_v[[]string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[[]string]()
     res := recv.create_table(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -1591,9 +1583,9 @@ pub fn vphp_wrap_vslim_database_migration_drop_table(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'tableName', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'tableName' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'tableName').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.drop_table(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -1603,11 +1595,11 @@ pub fn vphp_wrap_vslim_database_migration_add_column(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'tableName', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'columnDef', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'tableName' },
+        vphp.PhpArgMeta{ index: 1, name: 'columnDef' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'tableName').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'columnDef').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.add_column(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -1617,11 +1609,11 @@ pub fn vphp_wrap_vslim_database_migration_drop_column(ptr voidptr, ctx vphp.Cont
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'tableName', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'columnName', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'tableName' },
+        vphp.PhpArgMeta{ index: 1, name: 'columnName' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'tableName').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'columnName').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).as_v[string]()
     res := recv.drop_column(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -1631,9 +1623,9 @@ pub fn vphp_wrap_vslim_database_migration_execute(ptr voidptr, ctx vphp.Context)
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'statement', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'statement' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'statement').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.execute(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -1643,11 +1635,11 @@ pub fn vphp_wrap_vslim_database_migration_execute_params(ptr voidptr, ctx vphp.C
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'statement', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'statement' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'statement').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.execute_params(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -1657,9 +1649,9 @@ pub fn vphp_wrap_vslim_database_migration_query(ptr voidptr, ctx vphp.Context)  
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'statement', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'statement' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'statement').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.query(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -1669,23 +1661,23 @@ pub fn vphp_wrap_vslim_database_migration_query_params(ptr voidptr, ctx vphp.Con
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'statement', attributes: []vphp.PhpAttribute{} },
-        vphp.PhpArgMeta{ index: 1, name: 'params', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'statement' },
+        vphp.PhpArgMeta{ index: 1, name: 'params' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'statement').as_v[string]()
-    arg_1 := php_args.at_named_or_index(1, 'params').value
+    arg_0 := php_args.at(0).as_v[string]()
+    arg_1 := php_args.at(1).value
     res := recv.query_params(arg_0, arg_1)
     ctx.return().v[vphp.PhpValue](res)
 }
 @[export: 'vslim_database_migration_handlers']
 pub fn vslim_database_migration_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_migration_get_prop),
-        write_handler: voidptr(vslim_database_migration_set_prop),
-        sync_handler: voidptr(vslim_database_migration_sync_props),
-        new_raw: voidptr(vslim_database_migration_new_raw),
-        cleanup_raw: voidptr(vslim_database_migration_cleanup_raw),
-        free_raw: voidptr(vslim_database_migration_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_migration_get_prop,
+        write_handler: vslim_database_migration_set_prop,
+        sync_handler: vslim_database_migration_sync_props,
+        new_raw: vslim_database_migration_new_raw,
+        cleanup_raw: vslim_database_migration_cleanup_raw,
+        free_raw: vslim_database_migration_free_raw
     )
 }
 pub fn VSlimDatabaseMigration.php_class_entry() vphp.ZendClassEntry {
@@ -1757,12 +1749,12 @@ pub fn vslim_database_seeder_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_seeder_construct']
-pub fn vphp_wrap_vslim_database_seeder_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_seeder_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseSeeder(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseSeeder](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_seeder_set_manager']
 pub fn vphp_wrap_vslim_database_seeder_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1770,14 +1762,12 @@ pub fn vphp_wrap_vslim_database_seeder_set_manager(ptr voidptr, ctx vphp.Context
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1803,9 +1793,9 @@ pub fn vphp_wrap_vslim_database_seeder_set_name(ptr voidptr, ctx vphp.Context) v
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'name' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'name').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_name(arg_0)
     return voidptr(res)
 }
@@ -1827,13 +1817,13 @@ pub fn vphp_wrap_vslim_database_seeder_run(ptr voidptr, ctx vphp.Context)  {
 }
 @[export: 'vslim_database_seeder_handlers']
 pub fn vslim_database_seeder_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_seeder_get_prop),
-        write_handler: voidptr(vslim_database_seeder_set_prop),
-        sync_handler: voidptr(vslim_database_seeder_sync_props),
-        new_raw: voidptr(vslim_database_seeder_new_raw),
-        cleanup_raw: voidptr(vslim_database_seeder_cleanup_raw),
-        free_raw: voidptr(vslim_database_seeder_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_seeder_get_prop,
+        write_handler: vslim_database_seeder_set_prop,
+        sync_handler: vslim_database_seeder_sync_props,
+        new_raw: vslim_database_seeder_new_raw,
+        cleanup_raw: vslim_database_seeder_cleanup_raw,
+        free_raw: vslim_database_seeder_free_raw
     )
 }
 pub fn VSlimDatabaseSeeder.php_class_entry() vphp.ZendClassEntry {
@@ -1905,12 +1895,12 @@ pub fn vslim_database_migrator_sync_props(ptr voidptr, zv &C.zval) {
     _ = zv
 }
 @[export: 'vphp_wrap_vslim_database_migrator_construct']
-pub fn vphp_wrap_vslim_database_migrator_construct(ptr voidptr, ctx vphp.Context) voidptr {
+pub fn vphp_wrap_vslim_database_migrator_construct(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseMigrator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     res := recv.construct()
-    return voidptr(res)
+    ctx.return().return_v_object[VSlimDatabaseMigrator](res, .borrowed)
 }
 @[export: 'vphp_wrap_vslim_database_migrator_set_manager']
 pub fn vphp_wrap_vslim_database_migrator_set_manager(ptr voidptr, ctx vphp.Context) voidptr {
@@ -1918,14 +1908,12 @@ pub fn vphp_wrap_vslim_database_migrator_set_manager(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'manager', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'manager' },
     ])
-    arg_0_ptr := php_args.at_named_or_index(0, 'manager').to_v_ptr[databasex.VSlimDatabaseManager]() or {
-        vphp.throw_exception('argument 0 must be object bound to databasex.VSlimDatabaseManager, got ' + php_args.at_named_or_index(0, 'manager').zval().type_name(), 0)
-        return // SAFETY: nil literal in unsafe context
-	unsafe { nil }
+    arg_0 := php_args.at(0).bound_v_object[VSlimDatabaseManager]() or {
+        vphp.PhpException.raise_class('TypeError', err.msg(), 0)
+        return unsafe { nil }
     }
-    arg_0 := unsafe { &databasex.VSlimDatabaseManager(arg_0_ptr) }
     res := recv.set_manager(arg_0)
     return voidptr(res)
 }
@@ -1943,9 +1931,9 @@ pub fn vphp_wrap_vslim_database_migrator_set_migrations_path(ptr voidptr, ctx vp
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_migrations_path(arg_0)
     return voidptr(res)
 }
@@ -1963,9 +1951,9 @@ pub fn vphp_wrap_vslim_database_migrator_set_seeds_path(ptr voidptr, ctx vphp.Co
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'path', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'path' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'path').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_seeds_path(arg_0)
     return voidptr(res)
 }
@@ -1983,9 +1971,9 @@ pub fn vphp_wrap_vslim_database_migrator_set_table(ptr voidptr, ctx vphp.Context
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'tableName', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'tableName' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'tableName').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.set_table(arg_0)
     return voidptr(res)
 }
@@ -2019,9 +2007,9 @@ pub fn vphp_wrap_vslim_database_migrator_load_migration(ptr voidptr, ctx vphp.Co
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'file', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'file' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'file').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.load_migration(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -2031,9 +2019,9 @@ pub fn vphp_wrap_vslim_database_migrator_load_seeder(ptr voidptr, ctx vphp.Conte
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
     php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'file', attributes: []vphp.PhpAttribute{} },
+        vphp.PhpArgMeta{ index: 0, name: 'file' },
     ])
-    arg_0 := php_args.at_named_or_index(0, 'file').as_v[string]()
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.load_seeder(arg_0)
     ctx.return().v[vphp.PhpValue](res)
 }
@@ -2066,22 +2054,24 @@ pub fn vphp_wrap_vslim_database_migrator_seed(ptr voidptr, ctx vphp.Context)  {
     mut recv := unsafe { &VSlimDatabaseMigrator(ptr) }
     mut vphp_scope := vphp.PhpScope.once()
     defer { vphp_scope.close() }
-    php_args := ctx.args_with_meta([
-        vphp.PhpArgMeta{ index: 0, name: 'name', attributes: []vphp.PhpAttribute{} },
-    ])
-    arg_0 := if php_args.has_named_or_index(0, 'name') { php_args.at_named_or_index(0, 'name').as_v[string]() } else { '' }
+    php_args := ctx.args_with_php_defaults([
+        vphp.PhpArgMeta{ index: 0, name: 'name', use_php_default: true },
+    ]) or {
+        return
+    }
+    arg_0 := php_args.at(0).as_v[string]()
     res := recv.seed(arg_0)
     ctx.return().v[int](res)
 }
 @[export: 'vslim_database_migrator_handlers']
 pub fn vslim_database_migrator_handlers() voidptr {
-    return vphp.ZendClassHandlers.new(
-        prop_handler: voidptr(vslim_database_migrator_get_prop),
-        write_handler: voidptr(vslim_database_migrator_set_prop),
-        sync_handler: voidptr(vslim_database_migrator_sync_props),
-        new_raw: voidptr(vslim_database_migrator_new_raw),
-        cleanup_raw: voidptr(vslim_database_migrator_cleanup_raw),
-        free_raw: voidptr(vslim_database_migrator_free_raw)
+    return vphp.ZendClassHandlers.new_typed(
+        prop_handler: vslim_database_migrator_get_prop,
+        write_handler: vslim_database_migrator_set_prop,
+        sync_handler: vslim_database_migrator_sync_props,
+        new_raw: vslim_database_migrator_new_raw,
+        cleanup_raw: vslim_database_migrator_cleanup_raw,
+        free_raw: vslim_database_migrator_free_raw
     )
 }
 pub fn VSlimDatabaseMigrator.php_class_entry() vphp.ZendClassEntry {

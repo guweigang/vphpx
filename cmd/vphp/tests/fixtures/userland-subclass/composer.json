@@ -1,0 +1,7 @@
+{
+    "name": "vphp/fixture-userland-subclass",
+    "autoload": {
+        "psr-4": {"VphpFixture\\Author\\": "author/"},
+        "files": ["build/userland_subclass_probe.so.classes.php"]
+    }
+}

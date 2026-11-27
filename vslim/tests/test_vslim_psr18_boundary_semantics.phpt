@@ -109,6 +109,20 @@ namespace Psr\Http\Client {
 }
 
 namespace {
+    final class ThrowingHttpStream {
+        public $context;
+        public static Throwable $failure;
+        public static bool $suspend = false;
+
+        public function stream_open($path, $mode, $options, &$openedPath): bool
+        {
+            if (self::$suspend) {
+                Fiber::suspend('opening');
+            }
+            throw self::$failure;
+        }
+    }
+
     function pick_free_port(): int {
         $server = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
         if (!$server) {
@@ -168,6 +182,45 @@ namespace {
     $request = $requestFactory
         ->createRequest('GET', 'http://127.0.0.1:' . $port . '/echo?foo=bar')
         ->withHeader('X-Test', 'boundary');
+
+    $failure = new RuntimeException('stream open failed');
+    ThrowingHttpStream::$failure = $failure;
+    $previousHandler = static fn () => true;
+    set_error_handler($previousHandler);
+    stream_wrapper_unregister('http');
+    stream_wrapper_register('http', ThrowingHttpStream::class);
+    try {
+        try {
+            $client->sendRequest($request);
+            throw new RuntimeException('Expected the HTTP stream wrapper to throw');
+        } catch (Throwable $caught) {
+            if ($caught !== $failure) {
+                throw $caught;
+            }
+        }
+        $activeHandler = set_error_handler(static fn () => true);
+        restore_error_handler();
+        if ($activeHandler !== $previousHandler) {
+            restore_error_handler();
+            throw new RuntimeException('An exceptional request left the client error handler installed');
+        }
+        ThrowingHttpStream::$suspend = true;
+        $fiber = new Fiber(static fn () => $client->sendRequest($request));
+        if ($fiber->start() !== 'opening') {
+            throw new RuntimeException('The client did not suspend while opening the HTTP stream');
+        }
+        $duringSuspension = set_error_handler(static fn () => true);
+        restore_error_handler();
+        unset($fiber);
+        $afterCancellation = set_error_handler(static fn () => true);
+        restore_error_handler();
+        if ($duringSuspension !== $previousHandler || $afterCancellation !== $previousHandler) {
+            throw new RuntimeException('A suspended or cancelled request changed the active PHP error handler');
+        }
+    } finally {
+        restore_error_handler();
+        stream_wrapper_restore('http');
+    }
 
     $response1 = $client->sendRequest($request);
     $response2 = $client->sendRequest($request);

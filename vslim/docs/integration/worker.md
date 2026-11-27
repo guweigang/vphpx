@@ -1,5 +1,23 @@
 # Worker / Envelope 集成
 
+## vhttpd 0.9 的 PHP worker 入口
+
+将 vhttpd 的 `php.app_entry` 指向项目的 `public/worker.php`。模板入口返回 callable，并将 VSlim 的普通响应和流式响应转换为 vhttpd worker 接受的响应。自定义入口可以使用同一个适配器。
+
+```php
+require_once __DIR__ . '/../bootstrap/worker.php';
+
+return \VSlim\Worker\Adapter::app($app);
+```
+
+如需将 envelope 传给 PSR-15 handler，使用 `Adapter::psr($handler, $requestFactory, $streamFactory)` 并传入项目的 PSR-17 工厂。
+
+如果 vhttpd 的发布二进制和 PHP package 位于不同目录，分别传入 `VHTTPD_BIN` 和 `VHTTPD_ROOT`。全量 PHPT 可以用以下命令运行。
+
+```sh
+VSLIM_INCLUDE_RUNTIME_TESTS=1 make test VHTTPD_BIN=/path/to/vhttpd VHTTPD_ROOT=/path/to/vhttpd-source
+```
+
 这一页描述 VSlim 和 worker / transport 的稳定边界。这里的“真理之源”不是旧设计文档，而是当前代码和测试：
 
 - [`src/php_app.v`](vslim/src/php_app.v)
@@ -161,10 +179,11 @@ dispatch 完成后，VSlim 会自动把请求里的 tracing 信息补到响应�
 
 ## worker 场景下的 handler 返回值
 
-worker facade 层最终会把结果归一化成 `VSlim\VHttpd\Response` 或 map。当前支持：
+worker facade 可以返回缓冲响应或流响应。handler 支持以下返回值。
 
 - `VSlim\VHttpd\Response`
 - `Psr\Http\Message\ResponseInterface`
+- `VSlim\Stream\Response` 或 `VHttpd\PhpWorker\StreamResponse`
 - `string`
 - `array`
 
@@ -178,6 +197,8 @@ return [
     'body' => '{"ok":true}',
 ];
 ```
+
+PSR-7 响应使用文件、PHP stream resource 或用户态流作为正文时，worker 会在中间件结束后按块读取。可定位的正文从开头发送，管道等不可定位的正文从当前游标发送。VSlim 的内存流继续使用缓冲响应。HEAD 和无正文状态只传递状态码和响应头。
 
 ## 请求校验
 

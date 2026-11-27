@@ -3,10 +3,12 @@ module vphp
 pub fn (v PhpValueZBox) with_request_zval[T](run fn (ZVal) T) T {
 	match v.kind {
 		.borrowed {
-			return run((v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) }).to_zval())
+			z := (v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) }).to_zval()
+			return run(z)
 		}
 		.request_owned {
-			return run((v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).to_zval())
+			z := (v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).to_zval()
+			return run(z)
 		}
 		.persistent_owned {
 			mut temp :=
@@ -14,7 +16,8 @@ pub fn (v PhpValueZBox) with_request_zval[T](run fn (ZVal) T) T {
 			defer {
 				temp.release()
 			}
-			return run(temp.to_zval())
+			z := temp.to_zval()
+			return run(z)
 		}
 	}
 }

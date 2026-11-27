@@ -2,25 +2,13 @@ module httpx
 
 import vphp
 
-fn VSlimPsr7UploadedFile.from_stream(stream &VSlimPsr7Stream, size ?int, error int, client_filename ?string, client_media_type ?string) &VSlimPsr7UploadedFile {
-	return &VSlimPsr7UploadedFile{
-		stream_ref:        stream
-		size_hint:         uploaded_file_size_hint(size, stream)
-		error_code:        normalize_uploaded_file_error(error)
-		client_filename:   client_filename or { '' }
-		client_media_type: client_media_type or { '' }
-		moved:             false
-		target_path:       ''
-	}
-}
-
 fn normalize_uploaded_file_error(code int) int {
 	return if code < 0 || code > 8 { 0 } else { code }
 }
 
-fn uploaded_file_size_hint(size ?int, stream &VSlimPsr7Stream) int {
+fn uploaded_file_size_hint(size ?int, stream &VSlimPsr7Stream) i64 {
 	if explicit := size {
-		return if explicit < 0 { -1 } else { explicit }
+		return if explicit < 0 { i64(-1) } else { i64(explicit) }
 	}
 	if stream != unsafe { nil } {
 		if measured := stream.get_size() {
@@ -33,15 +21,15 @@ fn uploaded_file_size_hint(size ?int, stream &VSlimPsr7Stream) int {
 fn is_uploaded_file_leaf(value vphp.PhpValue) bool {
 	return value.is_valid() && value.is_object()
 		&& (value.is_instance_of('VSlim\\Psr7\\UploadedFile')
-		|| value.is_instance_of('VSlimPsr7UploadedFile')
-		|| value.is_instance_of('Psr\\Http\\Message\\UploadedFileInterface'))
+			|| value.is_instance_of('VSlimPsr7UploadedFile')
+			|| value.is_instance_of('Psr\\Http\\Message\\UploadedFileInterface'))
 }
 
 fn uploaded_files_tree_is_valid(value vphp.PhpValue) bool {
 	if !value.is_valid() || value.is_null() || value.is_undef() || !value.is_array() {
 		return false
 	}
-	arr := value.as_array() or { return false }
+	mut arr := value.as_array() or { return false }
 	defer {
 		arr.release()
 	}

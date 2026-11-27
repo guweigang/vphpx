@@ -76,6 +76,9 @@ TOML);
         ->createServerRequest('GET', 'https://example.com/admin')
         ->withCookieParams(['sid' => $cookieValue]);
     $authResponse = $middleware->process($authRequest, $handler);
+    if ($middleware->process(handler: $handler, request: $authRequest)->getStatusCode() !== $authResponse->getStatusCode()) {
+        throw new RuntimeException('Named PSR-15 middleware arguments changed the authorization result');
+    }
     echo $authResponse->getStatusCode() . PHP_EOL;
 }
 ?>

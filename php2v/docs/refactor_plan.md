@@ -104,7 +104,7 @@ mut var_msg := 'Hello ${var_name.to_string()}, next year you will be ${var_age.t
 
 **现状**：`strlen($s)` → `rt.call_function('strlen', [var_s.dup()])`
 
-`call_function` 内部对 `strlen` 等少数函数做了 V 原生实现（[functions.v](file:///Users/guweigang/Source/vphpx/php2v/src/rt/functions.v)），但 **这个优化放错了位置** — 应该在转译阶段（emitter）直接生成 V 原生调用，而不是在运行时做字符串 match。
+`call_function` 内部对 `strlen` 等少数函数做了 V 原生实现（[functions.v](../src/rt/functions.v)），但 **这个优化放错了位置** — 应该在转译阶段（emitter）直接生成 V 原生调用，而不是在运行时做字符串 match。
 
 **可直接映射到 VLib 的常用函数**：
 
@@ -211,7 +211,7 @@ PHP 的 COW（Copy-On-Write）语义被简单粗暴地翻译成了每次赋值�
 
 ### 🟠 transpiler.v 单文件 2254 行 — 需要拆分
 
-[transpiler.v](file:///Users/guweigang/Source/vphpx/php2v/src/emitter/transpiler.v) 包含了所有 visit 方法、类生成、闭包生成、dispatcher 生成、trait 处理等逻辑。按职责应拆分：
+[transpiler.v](../src/emitter/transpiler.v) 包含了所有 visit 方法、类生成、闭包生成、dispatcher 生成、trait 处理等逻辑。按职责应拆分：
 
 | 文件 | 职责 |
 |------|------|
@@ -224,11 +224,11 @@ PHP 的 COW（Copy-On-Write）语义被简单粗暴地翻译成了每次赋值�
 
 ### 🟡 二元运算 12 个 case 高度重复
 
-[transpiler.v L625-L740](file:///Users/guweigang/Source/vphpx/php2v/src/emitter/transpiler.v#L625-L740) 中每个二元运算的模式完全相同（取 left/right → visit → 拼接 `rt.xxx(...)`），可以用一个 map + helper 消除重复。
+[transpiler.v L625-L740](../src/emitter/transpiler.v#L625-L740) 中每个二元运算的模式完全相同（取 left/right → visit → 拼接 `rt.xxx(...)`），可以用一个 map + helper 消除重复。
 
 ### 🟡 write_indent/write_line/write_string 三重分支
 
-每个写入方法都有 `if t.is_in_closure { ... } else if t.is_in_func { ... } else { ... }` 三重分支（[L189-L235](file:///Users/guweigang/Source/vphpx/php2v/src/emitter/transpiler.v#L189-L235)），可以用一个 `current_builder()` 方法统一。
+每个写入方法都有 `if t.is_in_closure { ... } else if t.is_in_func { ... } else { ... }` 三重分支（[L189-L235](../src/emitter/transpiler.v#L189-L235)），可以用一个 `current_builder()` 方法统一。
 
 ### 🟡 `voidptr(xxx) != 0` 空指针检查散落各处
 

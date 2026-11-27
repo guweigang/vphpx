@@ -103,24 +103,38 @@ fn template_object_value(path string, objects map[string]vphp.PhpValue) ?vphp.Ph
 	return none
 }
 
-fn populate_indexed_item_fields(loop_key string, idx string, scalars map[string]string, mut local map[string]string) {
-	prefix_dot := '${loop_key}.${idx}.'
-	prefix_bracket := '${loop_key}[${idx}].'
+struct TemplateLoopField {
+	key string
+	value string
+}
+
+fn indexed_loop_fields(loop_key string, scalars map[string]string) map[string][]TemplateLoopField {
+	dot := loop_key + '.'
+	bracket := loop_key + '['
+	mut fields := map[string][]TemplateLoopField{}
+	mut binding_keys := map[string]string{}
 	for key, value in scalars {
-		if key.starts_with(prefix_dot) {
-			field := key[prefix_dot.len..]
-			if field != '' {
-				local['item.${field}'] = value
-			}
+		start, separator := if key.starts_with(dot) {
+			dot.len, '.'
+		} else if key.starts_with(bracket) {
+			bracket.len, '].'
+		} else {
 			continue
 		}
-		if key.starts_with(prefix_bracket) {
-			field := key[prefix_bracket.len..]
-			if field != '' {
-				local['item.${field}'] = value
+		rest := unsafe { key.substr_unsafe(start, key.len) }
+		end := rest.index(separator) or { continue }
+		idx := unsafe { rest.substr_unsafe(0, end) }
+		field := unsafe { rest.substr_unsafe(end + separator.len, rest.len) }
+		if field != '' && is_numeric_path_segment(idx) {
+			binding_key := binding_keys[field] or {
+				full_key := 'item.${field}'
+				binding_keys[field] = full_key
+				full_key
 			}
+			fields[idx] << TemplateLoopField{ key: binding_key, value: value }
 		}
 	}
+	return fields
 }
 
 fn (subject PhpValueSubject) template_data() (map[string]string, map[string][]string, map[string]vphp.PhpValue) {
@@ -143,7 +157,7 @@ fn collect_template_values(prefix string, value vphp.PhpValue, mut scalars map[s
 		return
 	}
 	if value.is_array() {
-		arr := value.as_array() or { return }
+		mut arr := value.as_array() or { return }
 		defer {
 			arr.release()
 		}
@@ -200,7 +214,7 @@ fn collect_template_values(prefix string, value vphp.PhpValue, mut scalars map[s
 		defer {
 			props_value.release()
 		}
-		if props := props_value.as_array() {
+		if mut props := props_value.as_array() {
 			defer {
 				props.release()
 			}
@@ -263,7 +277,7 @@ fn is_numeric_path_segment(part string) bool {
 }
 
 fn is_template_list(value vphp.PhpValue) bool {
-	arr := value.as_array() or { return false }
+	mut arr := value.as_array() or { return false }
 	defer {
 		arr.release()
 	}
@@ -273,7 +287,7 @@ fn is_template_list(value vphp.PhpValue) bool {
 fn (subject PhpValueSubject) template_list_items() []string {
 	mut items := []string{}
 	value := subject.value
-	arr := value.as_array() or { return items }
+	mut arr := value.as_array() or { return items }
 	defer {
 		arr.release()
 	}
@@ -284,7 +298,7 @@ fn (subject PhpValueSubject) template_list_items() []string {
 }
 
 fn template_list_has_complex_items(value vphp.PhpValue) bool {
-	arr := value.as_array() or { return false }
+	mut arr := value.as_array() or { return false }
 	defer {
 		arr.release()
 	}

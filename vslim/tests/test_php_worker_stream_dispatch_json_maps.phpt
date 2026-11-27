@@ -1,17 +1,13 @@
 --TEST--
-php-worker stream dispatch keeps empty headers/state as JSON objects
+php-worker stream dispatch preserves nonempty maps and decodes empty headers/state as empty maps
 --FILE--
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/php_worker_package_bootstrap.php';
+require_once __DIR__ . '/worker_wire_fixture.php';
 
-$fixture = __DIR__ . '/fixtures/stream_dispatch_fixture.php';
-$server = new VHttpd\PhpWorker\Server('/tmp/vhttpd_stream_strategy_dispatch_test.sock', $fixture);
-$ref = new ReflectionClass($server);
-$method = $ref->getMethod('handleStream');
-
-$open = $method->invoke($server, [
+$worker = new WorkerWireFixture(__DIR__ . '/fixtures/stream_dispatch_fixture.php');
+$open = $worker->request([
     'mode' => 'stream',
     'strategy' => 'dispatch',
     'event' => 'open',
@@ -19,14 +15,14 @@ $open = $method->invoke($server, [
     'path' => '/events/sse',
     'state' => [],
 ]);
-$next = $method->invoke($server, [
+$next = $worker->request([
     'mode' => 'stream',
     'strategy' => 'dispatch',
     'event' => 'next',
     'id' => 'req-1',
-    'state' => ['cursor' => '0', 'limit' => '2'],
+    'state' => $open['state'],
 ]);
-$close = $method->invoke($server, [
+$close = $worker->request([
     'mode' => 'stream',
     'strategy' => 'dispatch',
     'event' => 'close',
@@ -42,5 +38,5 @@ echo json_encode($close['state'], JSON_UNESCAPED_UNICODE), PHP_EOL;
 --EXPECT--
 {"cache-control":"no-cache"}
 {"cursor":"1","limit":"2"}
-{}
-{}
+[]
+[]

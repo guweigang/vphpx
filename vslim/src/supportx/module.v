@@ -2,23 +2,23 @@ module supportx
 
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut mod VSlimModule) construct() &VSlimModule {
 	return &mod
 }
 
-@[php_method: 'setApp']
+@[vphp.PhpExportMethod(name: 'setApp')]
 pub fn (mut mod VSlimModule) set_app(app vphp.PhpObject) &VSlimModule {
 	mod.bind_app_object(app)
 	return &mod
 }
 
-@[php_method: 'hasApp']
+@[vphp.PhpExportMethod(name: 'hasApp')]
 pub fn (mod &VSlimModule) has_app() bool {
 	return mod.app_ref.is_valid()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mod &VSlimModule) app() vphp.PhpObject {
 	app := mod.app_object() or {
 		vphp.PhpException.raise_class('RuntimeException', 'module is not bound to an app', 0)

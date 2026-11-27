@@ -2,23 +2,23 @@ module supportx
 
 import vphp
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut provider VSlimServiceProvider) construct() &VSlimServiceProvider {
 	return &provider
 }
 
-@[php_method: 'setApp']
+@[vphp.PhpExportMethod(name: 'setApp')]
 pub fn (mut provider VSlimServiceProvider) set_app(app vphp.PhpObject) &VSlimServiceProvider {
 	provider.bind_app_object(app)
 	return &provider
 }
 
-@[php_method: 'hasApp']
+@[vphp.PhpExportMethod(name: 'hasApp')]
 pub fn (provider &VSlimServiceProvider) has_app() bool {
 	return provider.app_ref.is_valid()
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (provider &VSlimServiceProvider) app() vphp.PhpObject {
 	app := provider.app_object() or {
 		vphp.PhpException.raise_class('RuntimeException',

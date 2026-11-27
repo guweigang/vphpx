@@ -129,7 +129,7 @@ fn (def CliCommandDefinition) finalize_options(raw_values map[string][]string, o
 				return error('CLI option `--${spec.name}` is required')
 			}
 			if spec.multiple {
-				out[spec.name] = vphp.DynValue.of_list([]vphp.DynValue{})
+				out[spec.name] = vphp.DynValue.empty_array()
 				continue
 			}
 			if spec.value_type == .bool_ {
@@ -165,7 +165,7 @@ fn (def CliCommandDefinition) finalize_arguments(positionals []string) !(map[str
 				if spec.required {
 					return error('CLI ${label} is required')
 				}
-				out[spec.name] = vphp.DynValue.of_list([]vphp.DynValue{})
+				out[spec.name] = vphp.DynValue.empty_array()
 				continue
 			}
 			mut parsed := []vphp.DynValue{}
@@ -173,7 +173,7 @@ fn (def CliCommandDefinition) finalize_arguments(positionals []string) !(map[str
 				parsed << cli_parse_scalar_value(value, spec.value_type, label, spec.choices)!
 				handle_args << value
 			}
-			out[spec.name] = vphp.DynValue.of_list(parsed)
+			out[spec.name] = vphp.DynValue.array_from_list(parsed)
 			idx = positionals.len
 			continue
 		}
@@ -227,7 +227,8 @@ pub fn (def CliCommandDefinition) parse_command_input(raw_args []string) !CliCom
 				raw_args, idx)!
 			continue
 		}
-		if !stop_options && arg.starts_with('-') && arg.len > 1 && !cli_is_negative_number_token(arg) {
+		if !stop_options && arg.starts_with('-') && arg.len > 1
+			&& !cli_is_negative_number_token(arg) {
 			idx += cli_parse_short_option(mut raw_values, mut option_seen, mut warnings, def,
 				raw_args, idx)!
 			continue

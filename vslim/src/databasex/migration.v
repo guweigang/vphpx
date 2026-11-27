@@ -232,98 +232,98 @@ fn (mut migrator VSlimDatabaseMigrator) run_migration_file(file string, method_n
 	}
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut migration VSlimDatabaseMigration) construct() &VSlimDatabaseMigration {
 	migration.name = ''
 	return &migration
 }
 
-@[php_method: 'setManager']
+@[vphp.PhpExportMethod(name: 'setManager')]
 pub fn (mut migration VSlimDatabaseMigration) set_manager(manager &VSlimDatabaseManager) &VSlimDatabaseMigration {
 	migration.manager_ref = manager
 	return &migration
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (migration &VSlimDatabaseMigration) manager() &VSlimDatabaseManager {
 	return migration.manager_ref
 }
 
-@[php_method: 'db']
+@[vphp.PhpExportMethod(name: 'db')]
 pub fn (migration &VSlimDatabaseMigration) db() &VSlimDatabaseManager {
 	return migration.manager_ref
 }
 
-@[php_method: 'setName']
+@[vphp.PhpExportMethod(name: 'setName')]
 pub fn (mut migration VSlimDatabaseMigration) set_name(name string) &VSlimDatabaseMigration {
 	migration.name = name.trim_space()
 	return &migration
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (migration &VSlimDatabaseMigration) name() string {
 	return migration.name
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (migration &VSlimDatabaseMigration) up() bool {
 	return true
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (migration &VSlimDatabaseMigration) down() bool {
 	return true
 }
 
-@[php_arg_name: 'table_name=tableName']
-@[php_method: 'createTableSql']
+@[vphp.PhpArgName(v_name: 'table_name', php_name: 'tableName')]
+@[vphp.PhpExportMethod(name: 'createTableSql')]
 pub fn (migration &VSlimDatabaseMigration) create_table_sql(table_name string, columns []string) string {
 	return migration_create_table_sql(table_name, columns)
 }
 
-@[php_arg_name: 'table_name=tableName']
-@[php_method: 'dropTableSql']
+@[vphp.PhpArgName(v_name: 'table_name', php_name: 'tableName')]
+@[vphp.PhpExportMethod(name: 'dropTableSql')]
 pub fn (migration &VSlimDatabaseMigration) drop_table_sql(table_name string) string {
 	return migration_drop_table_sql(table_name)
 }
 
-@[php_arg_name: 'table_name=tableName,column_def=columnDef']
-@[php_method: 'addColumnSql']
+@[vphp.PhpArgNames(names: 'table_name=tableName,column_def=columnDef')]
+@[vphp.PhpExportMethod(name: 'addColumnSql')]
 pub fn (migration &VSlimDatabaseMigration) add_column_sql(table_name string, column_def string) string {
 	return migration_add_column_sql(table_name, column_def)
 }
 
-@[php_arg_name: 'table_name=tableName,column_name=columnName']
-@[php_method: 'dropColumnSql']
+@[vphp.PhpArgNames(names: 'table_name=tableName,column_name=columnName')]
+@[vphp.PhpExportMethod(name: 'dropColumnSql')]
 pub fn (migration &VSlimDatabaseMigration) drop_column_sql(table_name string, column_name string) string {
 	return migration_drop_column_sql(table_name, column_name)
 }
 
-@[php_arg_name: 'table_name=tableName']
-@[php_method: 'createTable']
+@[vphp.PhpArgName(v_name: 'table_name', php_name: 'tableName')]
+@[vphp.PhpExportMethod(name: 'createTable')]
 pub fn (mut migration VSlimDatabaseMigration) create_table(table_name string, columns []string) vphp.PhpValue {
 	return migration.execute(migration_create_table_sql(table_name, columns))
 }
 
-@[php_arg_name: 'table_name=tableName']
-@[php_method: 'dropTable']
+@[vphp.PhpArgName(v_name: 'table_name', php_name: 'tableName')]
+@[vphp.PhpExportMethod(name: 'dropTable')]
 pub fn (mut migration VSlimDatabaseMigration) drop_table(table_name string) vphp.PhpValue {
 	return migration.execute(migration_drop_table_sql(table_name))
 }
 
-@[php_arg_name: 'table_name=tableName,column_def=columnDef']
-@[php_method: 'addColumn']
+@[vphp.PhpArgNames(names: 'table_name=tableName,column_def=columnDef')]
+@[vphp.PhpExportMethod(name: 'addColumn')]
 pub fn (mut migration VSlimDatabaseMigration) add_column(table_name string, column_def string) vphp.PhpValue {
 	return migration.execute(migration_add_column_sql(table_name, column_def))
 }
 
-@[php_arg_name: 'table_name=tableName,column_name=columnName']
-@[php_method: 'dropColumn']
+@[vphp.PhpArgNames(names: 'table_name=tableName,column_name=columnName')]
+@[vphp.PhpExportMethod(name: 'dropColumn')]
 pub fn (mut migration VSlimDatabaseMigration) drop_column(table_name string, column_name string) vphp.PhpValue {
 	return migration.execute(migration_drop_column_sql(table_name, column_name))
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut migration VSlimDatabaseMigration) execute(statement string) vphp.PhpValue {
 	if migration.manager_ref == unsafe { nil } {
 		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
@@ -332,7 +332,7 @@ pub fn (mut migration VSlimDatabaseMigration) execute(statement string) vphp.Php
 	return migration.manager_ref.execute(statement)
 }
 
-@[php_method: 'executeParams']
+@[vphp.PhpExportMethod(name: 'executeParams')]
 pub fn (mut migration VSlimDatabaseMigration) execute_params(statement string, params vphp.PhpValue) vphp.PhpValue {
 	if migration.manager_ref == unsafe { nil } {
 		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
@@ -341,7 +341,7 @@ pub fn (mut migration VSlimDatabaseMigration) execute_params(statement string, p
 	return migration.manager_ref.execute_params(statement, params)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut migration VSlimDatabaseMigration) query(statement string) vphp.PhpValue {
 	if migration.manager_ref == unsafe { nil } {
 		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
@@ -350,7 +350,7 @@ pub fn (mut migration VSlimDatabaseMigration) query(statement string) vphp.PhpVa
 	return migration.manager_ref.query(statement)
 }
 
-@[php_method: 'queryParams']
+@[vphp.PhpExportMethod(name: 'queryParams')]
 pub fn (mut migration VSlimDatabaseMigration) query_params(statement string, params vphp.PhpValue) vphp.PhpValue {
 	if migration.manager_ref == unsafe { nil } {
 		vphp.PhpException.raise_class('RuntimeException', 'migration manager is not set', 0)
@@ -359,45 +359,45 @@ pub fn (mut migration VSlimDatabaseMigration) query_params(statement string, par
 	return migration.manager_ref.query_params(statement, params)
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut seeder VSlimDatabaseSeeder) construct() &VSlimDatabaseSeeder {
 	seeder.name = ''
 	return &seeder
 }
 
-@[php_method: 'setManager']
+@[vphp.PhpExportMethod(name: 'setManager')]
 pub fn (mut seeder VSlimDatabaseSeeder) set_manager(manager &VSlimDatabaseManager) &VSlimDatabaseSeeder {
 	seeder.manager_ref = manager
 	return &seeder
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (seeder &VSlimDatabaseSeeder) manager() &VSlimDatabaseManager {
 	return seeder.manager_ref
 }
 
-@[php_method: 'db']
+@[vphp.PhpExportMethod(name: 'db')]
 pub fn (seeder &VSlimDatabaseSeeder) db() &VSlimDatabaseManager {
 	return seeder.manager_ref
 }
 
-@[php_method: 'setName']
+@[vphp.PhpExportMethod(name: 'setName')]
 pub fn (mut seeder VSlimDatabaseSeeder) set_name(name string) &VSlimDatabaseSeeder {
 	seeder.name = name.trim_space()
 	return &seeder
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (seeder &VSlimDatabaseSeeder) name() string {
 	return seeder.name
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut seeder VSlimDatabaseSeeder) run() bool {
 	return true
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut migrator VSlimDatabaseMigrator) construct() &VSlimDatabaseMigrator {
 	if migrator.migrations_path.trim_space() == '' {
 		migrator.migrations_path = 'database/migrations'
@@ -418,7 +418,7 @@ pub fn VSlimDatabaseMigrator.from_manager(manager &VSlimDatabaseManager) &VSlimD
 	return migrator
 }
 
-@[php_method: 'setManager']
+@[vphp.PhpExportMethod(name: 'setManager')]
 pub fn (mut migrator VSlimDatabaseMigrator) set_manager(manager &VSlimDatabaseManager) &VSlimDatabaseMigrator {
 	migrator.manager_ref = manager
 	return &migrator
@@ -431,7 +431,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) configure_project_paths(project_root
 	return &migrator
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut migrator VSlimDatabaseMigrator) manager() &VSlimDatabaseManager {
 	if migrator.manager_ref == unsafe { nil } {
 		mut manager := &VSlimDatabaseManager{}
@@ -441,13 +441,13 @@ pub fn (mut migrator VSlimDatabaseMigrator) manager() &VSlimDatabaseManager {
 	return migrator.manager_ref
 }
 
-@[php_method: 'setMigrationsPath']
+@[vphp.PhpExportMethod(name: 'setMigrationsPath')]
 pub fn (mut migrator VSlimDatabaseMigrator) set_migrations_path(path string) &VSlimDatabaseMigrator {
 	migrator.migrations_path = path.trim_space()
 	return &migrator
 }
 
-@[php_method: 'migrationsPath']
+@[vphp.PhpExportMethod(name: 'migrationsPath')]
 pub fn (migrator &VSlimDatabaseMigrator) migrations_path_value() string {
 	if migrator.migrations_path.trim_space() == '' {
 		return 'database/migrations'
@@ -455,13 +455,13 @@ pub fn (migrator &VSlimDatabaseMigrator) migrations_path_value() string {
 	return migrator.migrations_path.trim_space()
 }
 
-@[php_method: 'setSeedsPath']
+@[vphp.PhpExportMethod(name: 'setSeedsPath')]
 pub fn (mut migrator VSlimDatabaseMigrator) set_seeds_path(path string) &VSlimDatabaseMigrator {
 	migrator.seeds_path = path.trim_space()
 	return &migrator
 }
 
-@[php_method: 'seedsPath']
+@[vphp.PhpExportMethod(name: 'seedsPath')]
 pub fn (migrator &VSlimDatabaseMigrator) seeds_path_value() string {
 	if migrator.seeds_path.trim_space() == '' {
 		return 'database/seeds'
@@ -469,14 +469,14 @@ pub fn (migrator &VSlimDatabaseMigrator) seeds_path_value() string {
 	return migrator.seeds_path.trim_space()
 }
 
-@[php_arg_name: 'table_name=tableName']
-@[php_method: 'setTable']
+@[vphp.PhpArgName(v_name: 'table_name', php_name: 'tableName')]
+@[vphp.PhpExportMethod(name: 'setTable')]
 pub fn (mut migrator VSlimDatabaseMigrator) set_table(table_name string) &VSlimDatabaseMigrator {
 	migrator.table_name = table_name.trim_space()
 	return &migrator
 }
 
-@[php_method: 'table']
+@[vphp.PhpExportMethod(name: 'table')]
 pub fn (migrator &VSlimDatabaseMigrator) table_name_value() string {
 	if migrator.table_name.trim_space() == '' {
 		return 'vslim_migrations'
@@ -484,17 +484,17 @@ pub fn (migrator &VSlimDatabaseMigrator) table_name_value() string {
 	return migrator.table_name.trim_space()
 }
 
-@[php_method: 'migrationFiles']
+@[vphp.PhpExportMethod(name: 'migrationFiles')]
 pub fn (migrator &VSlimDatabaseMigrator) migration_files() []string {
 	return migration_sorted_files(migrator.migrations_path_value())
 }
 
-@[php_method: 'seedFiles']
+@[vphp.PhpExportMethod(name: 'seedFiles')]
 pub fn (migrator &VSlimDatabaseMigrator) seed_files() []string {
 	return migration_sorted_files(migrator.seeds_path_value())
 }
 
-@[php_method: 'loadMigration']
+@[vphp.PhpExportMethod(name: 'loadMigration')]
 pub fn (mut migrator VSlimDatabaseMigrator) load_migration(file string) vphp.PhpValue {
 	mut migration := migrator_load_object(file, 'VSlim\\Database\\Migration') or {
 		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
@@ -504,7 +504,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) load_migration(file string) vphp.Php
 	return migration
 }
 
-@[php_method: 'loadSeeder']
+@[vphp.PhpExportMethod(name: 'loadSeeder')]
 pub fn (mut migrator VSlimDatabaseMigrator) load_seeder(file string) vphp.PhpValue {
 	mut seeder := migrator_load_object(file, 'VSlim\\Database\\Seeder') or {
 		vphp.PhpException.raise_class('RuntimeException', err.msg(), 0)
@@ -514,7 +514,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) load_seeder(file string) vphp.PhpVal
 	return seeder
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut migrator VSlimDatabaseMigrator) migrate() int {
 	applied := migrator.applied_migration_batches()
 	files := migrator.migration_files()
@@ -541,7 +541,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) migrate() int {
 	return count
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut migrator VSlimDatabaseMigrator) rollback() int {
 	rows := migrator.applied_migration_rows()
 	mut latest_batch := 0
@@ -582,7 +582,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) rollback() int {
 	return count
 }
 
-@[php_method]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.PhpValue {
 	applied := migrator.applied_migration_batches()
 	rows := migrator.applied_migration_rows()
@@ -597,7 +597,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.PhpValue {
 		name := migration_entry_name(file)
 		seen[name] = true
 		batch := applied[name] or { 0 }
-		out << vphp.DynValue.of_map({
+		out << vphp.DynValue.array_from_map({
 			'migration':       vphp.DynValue.of_string(name)
 			'file':            vphp.DynValue.of_string(file)
 			'applied':         vphp.DynValue.of_bool(name in applied)
@@ -609,7 +609,7 @@ pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.PhpValue {
 		if name in seen {
 			continue
 		}
-		out << vphp.DynValue.of_map({
+		out << vphp.DynValue.array_from_map({
 			'migration':       vphp.DynValue.of_string(name)
 			'file':            vphp.DynValue.of_string('')
 			'applied':         vphp.DynValue.of_bool(true)
@@ -617,12 +617,11 @@ pub fn (mut migrator VSlimDatabaseMigrator) status() vphp.PhpValue {
 			'applied_at_unix': vphp.DynValue.of_string(applied_at[name] or { '' })
 		})
 	}
-	return database_result_value_from_dyn(vphp.DynValue.of_list(out))
+	return database_result_value_from_dyn(vphp.DynValue.array_from_list(out))
 }
 
-@[php_arg_default: 'name=""']
-@[php_arg_optional: 'name']
-@[php_method]
+@[vphp.PhpStringParam('name', php_name: 'name', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: '')]
 pub fn (mut migrator VSlimDatabaseMigrator) seed(name string) int {
 	target := name.trim_space()
 	files := migrator.seed_files()

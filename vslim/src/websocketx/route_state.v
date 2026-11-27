@@ -35,10 +35,10 @@ pub fn select_route_frame(mut conn_routes map[string]int, routes []routex.VSlimR
 	conn_id := frame.string_at('id', '').trim_space()
 	if event == '' || conn_id == '' {
 		return WebSocketRouteFrame{
-			action: .invalid
-			event: event
+			action:  .invalid
+			event:   event
 			conn_id: conn_id
-			index: -1
+			index:   -1
 		}
 	}
 	path := routex.normalize_route_path(frame.string_at('path', '/'))
@@ -46,18 +46,18 @@ pub fn select_route_frame(mut conn_routes map[string]int, routes []routex.VSlimR
 		idx, matched := routex.route_index_for_path(routes, path)
 		if !matched {
 			return WebSocketRouteFrame{
-				action: .reject_open
-				event: event
+				action:  .reject_open
+				event:   event
 				conn_id: conn_id
-				index: -1
+				index:   -1
 			}
 		}
 		conn_routes[conn_id] = idx
 		return WebSocketRouteFrame{
-			action: .dispatch
-			event: event
+			action:  .dispatch
+			event:   event
 			conn_id: conn_id
-			index: idx
+			index:   idx
 		}
 	}
 	idx := conn_routes[conn_id] or {
@@ -68,10 +68,10 @@ pub fn select_route_frame(mut conn_routes map[string]int, routes []routex.VSlimR
 		return select_fallback_route_frame(mut conn_routes, routes, event, conn_id, path)
 	}
 	return WebSocketRouteFrame{
-		action: .dispatch
-		event: event
+		action:  .dispatch
+		event:   event
 		conn_id: conn_id
-		index: idx
+		index:   idx
 	}
 }
 
@@ -79,23 +79,23 @@ fn select_fallback_route_frame(mut conn_routes map[string]int, routes []routex.V
 	fallback_idx, matched := routex.route_index_for_path(routes, path)
 	if !matched {
 		return WebSocketRouteFrame{
-			action: .no_route
-			event: event
+			action:  .no_route
+			event:   event
 			conn_id: conn_id
-			index: -1
+			index:   -1
 		}
 	}
 	conn_routes[conn_id] = fallback_idx
 	return WebSocketRouteFrame{
-		action: .dispatch
-		event: event
+		action:  .dispatch
+		event:   event
 		conn_id: conn_id
-		index: fallback_idx
+		index:   fallback_idx
 	}
 }
 
-pub fn finish_route_frame(mut conn_routes map[string]int, frame WebSocketRouteFrame) {
-	if frame.should_cleanup_after_dispatch() {
+pub fn finish_route_frame(mut conn_routes map[string]int, frame WebSocketRouteFrame, result vphp.PhpValue, conn vphp.PhpObject) {
+	if frame.should_cleanup_after_dispatch() || (frame.event == 'open' && websocket_open_failed(result, conn)) {
 		conn_routes.delete(frame.conn_id)
 	}
 }

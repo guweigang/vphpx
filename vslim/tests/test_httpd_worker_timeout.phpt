@@ -5,14 +5,15 @@ vhttpd returns 504 and timeout headers when worker read timeout is exceeded
 if (!extension_loaded("vslim")) print "skip";
 if (getenv("CODEX_SANDBOX_NETWORK_DISABLED") === "1") print "skip";
 $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname(__DIR__, 3) . '/vhttpd';
-if (!is_file($vhttpdRoot . '/vhttpd')) print "skip";
+if (!is_file(getenv('VHTTPD_BIN') ?: $vhttpdRoot . '/vhttpd')) print "skip";
 ?>
 --FILE--
 <?php
+require_once __DIR__ . '/vhttpd_process_fixture.php';
 $root = dirname(__DIR__);
 $vhttpdRoot = getenv('VHTTPD_ROOT') ?: dirname($root, 2) . '/vhttpd';
 $src = $vhttpdRoot . '/src';
-$bin = $vhttpdRoot . '/vhttpd';
+$bin = getenv('VHTTPD_BIN') ?: $vhttpdRoot . '/vhttpd';
 
 function last_response_headers(): array {
     $headers = function_exists('http_get_last_response_headers')
@@ -34,26 +35,43 @@ $workerPhp = $vhttpdRoot . '/php/package/bin/vphp-worker';
 $extSo = $root . '/vslim.so';
 $slowApp = $root . '/tests/fixtures/slow_app_fixture.php';
 
-$workerCmd = sprintf(
-    'VHTTPD_APP=%s php -d extension=%s %s --socket %s',
-    escapeshellarg($slowApp),
-    escapeshellarg($extSo),
-    escapeshellarg($workerPhp),
-    escapeshellarg($workerSock),
-);
+$configPath = $tmp . '/vhttpd.toml';
+file_put_contents($configPath, <<<TOML
+version = 2
 
-$cmd = sprintf(
-    '%s --host %s --port %d --pid-file %s --event-log %s --worker-socket %s --worker-autostart 1 --worker-read-timeout-ms 50 --worker-cmd %s >> %s 2>&1 &',
-    escapeshellarg($bin),
-    escapeshellarg('127.0.0.1'),
-    $port,
-    escapeshellarg($pidFile),
-    escapeshellarg($eventLog),
-    escapeshellarg($workerSock),
-    escapeshellarg($workerCmd),
-    escapeshellarg($stdoutLog),
-);
-exec($cmd);
+[server]
+pid_file = "{$pidFile}"
+
+[observability]
+event_log = "{$eventLog}"
+
+[listeners.web]
+protocol = "http"
+transport = "tcp"
+host = "127.0.0.1"
+port = {$port}
+
+[engines.php]
+kind = "php-worker"
+entry = "{$workerPhp}"
+app = "{$slowApp}"
+extensions = ["{$extSo}"]
+autostart = true
+socket = "{$workerSock}"
+read_timeout_ms = 50
+
+[adapters.http]
+kind = "http-handler"
+engine = "engine:php"
+
+[[pipelines]]
+id = "worker-test"
+ingress = "listener:web"
+match.paths = ["*"]
+egress = "adapter:http"
+TOML);
+
+$process = launch_vhttpd($bin, $configPath, $stdoutLog);
 
 $base = 'http://127.0.0.1:' . $port;
 $ready = false;
@@ -94,15 +112,7 @@ foreach ($headers as $h) {
 echo $errClass . "\n";
 echo ($traceId !== '' ? 'trace' : 'no-trace') . "\n";
 
-$pid = is_file($pidFile) ? (int) trim((string) file_get_contents($pidFile)) : 0;
-if ($pid > 0) {
-    exec(sprintf('kill %d >/dev/null 2>&1', $pid));
-    usleep(200_000);
-    exec(sprintf('kill -0 %d >/dev/null 2>&1', $pid), $noop, $alive);
-    echo $alive === 0 ? "still_running\n" : "stopped\n";
-} else {
-    echo "stopped\n";
-}
+echo stop_vhttpd($process) ? "stopped\n" : "still_running\n";
 ?>
 --EXPECT--
 ready

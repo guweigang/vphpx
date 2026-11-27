@@ -1,15 +1,8 @@
 module vphp
 
-fn C.vphp_object_ce_equals(obj voidptr, ce voidptr) bool
-fn C.vphp_object_is_instance_of(obj voidptr, ce voidptr) bool
+import vphp.zend
 
 type GetClassEntryFn = fn (string) voidptr
-
-struct SumTypeLayout {
-mut:
-	ptr voidptr
-	typ int
-}
 
 __global (
 	vphp_get_class_entry_fn GetClassEntryFn
@@ -30,7 +23,33 @@ pub fn register_class_entry_lookup(f GetClassEntryFn) {
 }
 
 fn cached_class_entry(name string) voidptr {
-	return unsafe { vphp_get_class_entry_fn(name) }
+	lookup := vphp_get_class_entry_fn
+	if lookup == unsafe { nil } {
+		return unsafe { nil }
+	}
+	return lookup(name)
+}
+
+// enum_case_to_v resolves a case of the exported enum by name, independent of its PHP backing value.
+pub fn (obj ZendObject) enum_case_to_v[T]() !T {
+	$if T is $enum {
+		type_name := php_enum_class_name(unsafe { T(0) })
+		ce := C.vphp_find_loaded_class_entry(&char(type_name.str), type_name.len)
+		if !obj.is_valid() || ce == unsafe { nil }
+			|| !zend.object_is_instance_of(obj.raw_ptr(), ce) {
+			return error('expected a PHP enum case of ${type_name}')
+		}
+		name := obj.prop_borrowed('name').to_string()
+		$for item in T.values {
+			case_ := unsafe { T(item.value) }
+			if name == php_enum_case_name(case_, item.name) {
+				return case_
+			}
+		}
+		return error('unknown PHP enum case ${type_name}::${name}')
+	} $else {
+		$compile_error('enum_case_to_v needs a V enum')
+	}
 }
 
 // ======== Zend Value -> V 转换 API ========
@@ -57,11 +76,19 @@ pub fn (v ZVal) to_string_list() []string {
 
 // 将 Zend Value 转换为明确的 V 类型（严格校验类型）
 pub fn (v ZVal) to_v[T]() !T {
+	$if T is PhpInterfaceValue {
+		mut value := T{}
+		value.bind_php_interface_zval(v)!
+		return value
+	}
 	$if T is $enum {
 		if v.is_numeric() {
 			return unsafe { T(v.to_int()) }
 		}
 		if v.is_object() {
+			if case_value := ZendObject.from_zval(v).enum_case_to_v[T]() {
+				return case_value
+			}
 			obj := PhpObject.from_zval(v) or {
 				return error('expected enum object, failed to cast')
 			}
@@ -75,19 +102,25 @@ pub fn (v ZVal) to_v[T]() !T {
 	}
 	$if T is $struct {
 		if v.is_object() {
-			mut v_name := typeof(T).name
+			mut v_name := typeof[T]().name.trim_left('&')
 			if v_name.contains('.') {
 				v_name = v_name.all_after_last('.')
 			}
 			ce := cached_class_entry(v_name)
 			if ce != unsafe { nil } // SAFETY: nil literal in unsafe context
-			  {
+
+			{
 				zend_obj := ZendObject.from_zval(v)
-				if C.vphp_object_is_instance_of(zend_obj.raw_ptr(), ce) {
+				if zend.object_is_instance_of(zend_obj.raw_ptr(), ce) {
 					ptr := zend_obj.bound_v_ptr()
 					if ptr != unsafe { nil } // SAFETY: nil literal in unsafe context
-					  {
-						return unsafe { *(&T(ptr)) }
+
+					{
+						$if T is $pointer {
+							return unsafe { T(ptr) }
+						} $else {
+							return unsafe { *(&T(ptr)) }
+						}
 					}
 				}
 			}
@@ -124,11 +157,12 @@ pub fn (v ZVal) to_v[T]() !T {
 		}
 		return v.to_i64()
 	}
-	$if T is f64 {
+	$if T is f64 || T is f32 {
 		if !v.is_numeric() {
-			return error('type mismatch: expected f64, got ${v.type_name()}')
+			return error('type mismatch: expected ${typeof[T]().name}, got ${v.type_name()}')
 		}
-		return v.to_f64()
+		wide := v.to_f64()
+		return T(wide)
 	}
 	$if T is string {
 		if !v.is_string() {
@@ -140,11 +174,7 @@ pub fn (v ZVal) to_v[T]() !T {
 		if !v.is_array() {
 			return error('type mismatch: expected array<string>, got ${v.type_name()}')
 		}
-		mut out := []string{}
-		out = v.foreach_with_ctx[[]string](out, fn (_ ZVal, val ZVal, mut acc []string) {
-			acc << val.to_string()
-		})
-		return out
+		return v.to_string_list()
 	}
 	$if T is []int {
 		if !v.is_array() {
@@ -200,11 +230,7 @@ pub fn (v ZVal) to_v[T]() !T {
 		if !v.is_array() {
 			return error('type mismatch: expected map<string,string>, got ${v.type_name()}')
 		}
-		mut out := map[string]string{}
-		out = v.foreach_with_ctx[map[string]string](out, fn (key ZVal, val ZVal, mut m map[string]string) {
-			m[key.to_string()] = val.to_string()
-		})
-		return out
+		return v.to_string_map()
 	}
 	$if T is map[string]int {
 		if !v.is_array() {
@@ -319,53 +345,48 @@ pub fn (v ZVal) to_v[T]() !T {
 					}
 					ce := cached_class_entry(v_name)
 					if ce != unsafe { nil } // SAFETY: nil literal in unsafe context
-					  {
+
+					{
 						zend_obj := ZendObject.from_zval(v)
-						eq := C.vphp_object_is_instance_of(zend_obj.raw_ptr(), ce)
+						eq := zend.object_is_instance_of(zend_obj.raw_ptr(), ce)
 						if eq {
 							ptr := zend_obj.bound_v_ptr()
 							if ptr != unsafe { nil } // SAFETY: nil literal in unsafe context
-							  {
-								mut layout := SumTypeLayout{
-									typ: variant.typ
-									ptr: ptr
-								}
-								mut res := T{}
-								// SAFETY: C interop block with valid pointer arguments
+
+							{
+								mut value := $zero(variant.typ)
 								unsafe {
-									C.memcpy(&res, &layout, sizeof(T))
+									C.memcpy(&value, ptr, sizeof(value))
 								}
-								return res
+								return T(value)
 							}
 						}
 					}
 				}
 			}
 			$if variant.typ is $enum {
-				mut enum_val_int := 0
-				mut has_val := false
-				if v.is_numeric() {
-					enum_val_int = v.to_int()
-					has_val = true
-				} else if v.is_object() {
-					if obj := PhpObject.from_zval(v) {
-						val_prop := obj.prop('value')
-						if val_prop.is_numeric() {
-							enum_val_int = val_prop.to_int()
-							has_val = true
-						}
-					}
-				}
-				if has_val {
-					$for enum_case in variant.typ.values {
-						if int(enum_case.value) == enum_val_int {
-							return T(enum_case.value)
-						}
-					}
+				enum_type := $zero(variant.typ)
+				if item := read_sumtype_enum(v, enum_type) {
+					return T(item)
 				}
 			}
 		}
 		return error('no matching variant found in sumtype ${typeof[T]().name} for zval of type ${v.type_name()}')
 	}
 	return error('unsupported to_v conversion for requested type')
+}
+
+fn read_sumtype_enum[E](v ZVal, _ E) ?E {
+	ce := cached_class_entry(typeof[E]().name.all_after_last('.'))
+	if ce != unsafe { nil }
+		&& (!v.is_object() || !zend.object_is_instance_of(ZendObject.from_zval(v).raw_ptr(), ce)) {
+		return none
+	}
+	value := v.to_v[E]() or { return none }
+	$for enum_case in E.values {
+		if value == enum_case.value {
+			return value
+		}
+	}
+	return none
 }

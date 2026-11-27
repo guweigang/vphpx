@@ -7,13 +7,13 @@ VSlim app validate helper returns a validated validator instance
 $app = VSlim\App::demo();
 
 $validator = $app->validate(
-    [
-        'name' => 'trinity',
-        'email' => 'trinity@matrix.io',
-    ],
-    [
+    rules: [
         'name' => 'required|string|min:3',
         'email' => 'required|email',
+    ],
+    data: [
+        'name' => 'trinity',
+        'email' => 'trinity@matrix.io',
     ]
 );
 

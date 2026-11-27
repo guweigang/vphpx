@@ -82,6 +82,11 @@ pub fn CallableProcessor.struct_closure() fn (StructClosureArgs) string {
 	return my_struct_closure
 }
 
+@[php_method: 'computedParams']
+pub fn (p &CallableProcessor) computed_params(params VPhpComputedParamsDemo) string {
+	return v_php_computed_params(p.prefix, params)
+}
+
 fn my_zval_0(args ...vphp.ZVal) vphp.ZVal {
 	_ = args.len
 	return vphp.ZVal.new_string('variadic-0-result')
@@ -130,6 +135,68 @@ struct StructClosureArgs {
 
 fn my_struct_closure(args StructClosureArgs) string {
 	return '${args.name}:${args.count}'
+}
+
+@[params]
+struct StructClosureDefaults {
+	name     string
+	count    int     = 7
+	flag     bool    = true
+	label    ?string = none
+	computed int     = struct_closure_default_count()
+}
+
+fn struct_closure_default_count() int {
+	return 7
+}
+
+__global (
+	struct_closure_default_calls int
+)
+
+@[params]
+struct StructClosureComputedDefaults {
+	name   string
+	first  int  = next_struct_closure_default()
+	second ?int = next_struct_closure_default()
+	flag   bool = true
+}
+
+fn next_struct_closure_default() int {
+	struct_closure_default_calls++
+	return struct_closure_default_calls
+}
+
+fn format_struct_closure_computed_defaults(args StructClosureComputedDefaults) string {
+	second := if value := args.second { value.str() } else { '<null>' }
+	return '${args.name}:${args.first}:${second}:${args.flag}'
+}
+
+struct NativeClosurePayload {
+	value int
+}
+
+@[params]
+struct StructClosureNativeDefaults {
+	payload NativeClosurePayload = next_native_closure_payload()
+	label   string               = 'trailing'
+}
+
+fn next_native_closure_payload() NativeClosurePayload {
+	return NativeClosurePayload{ value: next_struct_closure_default() }
+}
+
+fn format_struct_closure_native_defaults(args StructClosureNativeDefaults) string {
+	return '${args.label}:${args.payload.value}'
+}
+
+fn format_struct_closure_defaults(args StructClosureDefaults) string {
+	label := args.label or { '' }
+	return '${args.name}:${args.count}:${args.flag}:${args.computed}:${label}'
+}
+
+fn print_struct_closure_defaults(args StructClosureDefaults) {
+	vphp.PhpOutput.line(format_struct_closure_defaults(args))
 }
 
 fn my_variadic_value_closure(args ...vphp.PhpValue) string {
@@ -231,6 +298,60 @@ fn v_get_struct_param_closure() fn (StructClosureArgs) string {
 }
 
 @[php_function]
+fn v_get_struct_default_closure() fn (StructClosureDefaults) string {
+	return format_struct_closure_defaults
+}
+
+@[php_function]
+fn v_get_struct_default_closure_void() fn (StructClosureDefaults) {
+	return print_struct_closure_defaults
+}
+
+@[php_function]
+fn v_get_struct_computed_defaults_closure() fn (StructClosureComputedDefaults) string {
+	return format_struct_closure_computed_defaults
+}
+
+@[php_function]
+fn v_get_struct_native_defaults_closure() fn (StructClosureNativeDefaults) string {
+	return format_struct_closure_native_defaults
+}
+
+@[params]
+struct StructClosureFailingDefaults {
+	first  int  = fail_struct_closure_default()
+	second int  = next_struct_closure_default()
+	tail   bool = true
+}
+
+fn fail_struct_closure_default() int {
+	vphp.PhpException.raise_class('RuntimeException', 'closure default failed', 0)
+	return 0
+}
+
+@[php_function]
+fn v_get_struct_failing_defaults_closure() fn (StructClosureFailingDefaults) string {
+	return fn (args StructClosureFailingDefaults) string {
+		return '${args.first}:${args.second}:${args.tail}'
+	}
+}
+
+type LegacyStructClosureVoid = fn (StructClosureDefaults)
+
+@[php_function]
+fn v_invoke_legacy_struct_closure(ctx vphp.Context) {
+	ctx.invoke_struct_closure[fn (StructClosureDefaults) string, StructClosureDefaults, string](format_struct_closure_defaults,
+		StructClosureDefaults{ name: 'legacy' })
+}
+
+@[php_function]
+fn v_invoke_legacy_struct_closure_void(ctx vphp.Context) {
+	callback := LegacyStructClosureVoid(print_struct_closure_defaults)
+	ctx.invoke_struct_closure_void[LegacyStructClosureVoid, StructClosureDefaults](callback,
+		StructClosureDefaults{ name: 'legacy void' })
+}
+
+@[php_function]
 fn v_get_variadic_value_closure() fn (...vphp.PhpValue) string {
 	return my_variadic_value_closure
 }
@@ -246,6 +367,16 @@ fn v_get_variadic_zval_void() fn (...vphp.ZVal) {
 }
 
 @[php_function]
+fn v_get_variadic_borrowed_closure() fn (...vphp.RequestBorrowedZBox) vphp.ZVal {
+	return fn (args ...vphp.RequestBorrowedZBox) vphp.ZVal {
+		if args.len == 0 {
+			return vphp.ZVal.new_null()
+		}
+		return args[args.len - 1].to_zval()
+	}
+}
+
+@[php_function]
 fn v_get_variadic_scalar_string() fn (...vphp.VScalarValue) string {
 	return my_variadic_scalar_string
 }
@@ -258,4 +389,128 @@ fn v_get_variadic_scalar_i64() fn (...vphp.VScalarValue) i64 {
 @[php_function]
 fn v_get_variadic_scalar_value() fn (...vphp.VScalarValue) vphp.VScalarValue {
 	return my_variadic_scalar_value
+}
+
+type LegacyVariadicScalarCallback = fn (...vphp.VScalarValue) i64
+
+@[php_function]
+fn v_invoke_legacy_variadic_scalar(ctx vphp.Context) {
+	ctx.invoke_variadic_closure[fn (...vphp.VScalarValue) string, string](my_variadic_scalar_string)
+}
+
+@[php_function]
+fn v_invoke_legacy_variadic_scalar_alias(ctx vphp.Context) {
+	callback := LegacyVariadicScalarCallback(my_variadic_scalar_i64)
+	ctx.invoke_variadic_closure[LegacyVariadicScalarCallback, i64](callback)
+}
+
+type LegacyVariadicVoidCallback = fn (...vphp.VScalarValue)
+
+fn print_variadic_scalar_args(args ...vphp.VScalarValue) {
+	vphp.PhpOutput.line(my_variadic_scalar_string(...args))
+}
+
+@[php_function]
+fn v_invoke_legacy_variadic_void(ctx vphp.Context) {
+	ctx.invoke_variadic_closure_void[fn (...vphp.VScalarValue)](print_variadic_scalar_args)
+}
+
+@[php_function]
+fn v_invoke_legacy_variadic_void_alias(ctx vphp.Context) {
+	callback := LegacyVariadicVoidCallback(print_variadic_scalar_args)
+	ctx.invoke_variadic_closure_void[LegacyVariadicVoidCallback](callback)
+}
+
+@[params]
+pub struct VPhpLiteralParamsDemo {
+	message  string         = 'a\n\t\x00\u263a\$\'\\"'
+	raw      string         = r'\n${literal}'
+	octal    int            = (-(0o17))
+	binary   i64            = 0B1010_0001
+	floating f64            = (2)
+	single   f32            = 0.1
+	option   ?string        = ('present')
+	nullable ?int           = none
+	items    []int          = [1, 0x10]
+	empty    []string       = []string{}
+	lookup   map[string]int = {
+		'count': 0x10
+	}
+	tail     bool = true
+}
+
+fn describe_literal_params(params VPhpLiteralParamsDemo) string {
+	option := params.option or { '<null>' }
+	nullable := if value := params.nullable { value.str() } else { '<null>' }
+	return '${params.message.bytes().hex()}|${params.raw}|${params.octal}|${params.binary}|${params.floating}|${f64(params.single)}|${option}|${nullable}|${params.items}|${params.empty}|${params.lookup}|${params.tail}'
+}
+
+@[php_function]
+fn v_php_literal_params(params VPhpLiteralParamsDemo) string {
+	return describe_literal_params(params)
+}
+
+@[php_method: 'literalParams']
+pub fn CallableProcessor.literal_params(params VPhpLiteralParamsDemo) string {
+	return describe_literal_params(params)
+}
+
+@[php_function]
+fn v_get_struct_literal_defaults_closure() fn (VPhpLiteralParamsDemo) string {
+	return describe_literal_params
+}
+
+@[params]
+pub struct VPhpOverriddenParamsDemo {
+	option   ?string = 'native option'
+	spacer   string  = 'native spacer'
+	count    int     = next_computed_params_value()
+	nullable ?string = 'native nullable'
+	items    vphp.PhpArray
+	tail     bool = true
+}
+
+fn describe_overridden_params(prefix string, params VPhpOverriddenParamsDemo) string {
+	option := params.option or { '<null>' }
+	nullable := params.nullable or { '<null>' }
+	return '${prefix}:${option}:${params.spacer}:${params.count}:${nullable}:${params.items.count()}:${params.tail}'
+}
+
+@[php_arg_default(option: '"php\tvalue"', count: 'VPHP_PARAMS_OVERRIDE_COUNT', nullable: 'null', items: '[1, 2]')]
+@[php_function]
+fn v_php_overridden_params(prefix string, params VPhpOverriddenParamsDemo) string {
+	return describe_overridden_params(prefix, params)
+}
+
+@[php_arg_default(option: '"php\tvalue"', count: 'VPHP_PARAMS_OVERRIDE_COUNT', nullable: 'null', items: '[1, 2]')]
+@[php_method: 'overriddenParams']
+pub fn (p &CallableProcessor) overridden_params(ctx vphp.Context, params VPhpOverriddenParamsDemo) string {
+	_ = ctx
+	return describe_overridden_params(p.prefix, params)
+}
+
+fn describe_direct_defaults(count int, values ?vphp.PhpArray, label ?string, enabled bool) string {
+	array := if present := values { present.to_json() } else { '<null>' }
+	name := label or { '<null>' }
+	return '${count}|${array}|${name}|${enabled}'
+}
+
+@[php_arg_default(count: 'VPHP_ORDINARY_ARG_COUNT', values: '[1, VPHP_ORDINARY_ARG_COUNT]', label: '"fallback"', enabled: 'true')]
+@[php_function]
+fn v_php_direct_defaults(prefix string, count int, values ?vphp.PhpArray, label ?string, enabled bool) string {
+	return prefix + describe_direct_defaults(count, values, label, enabled)
+}
+
+@[php_arg_default(count: 'VPHP_ORDINARY_ARG_COUNT', values: '[1, VPHP_ORDINARY_ARG_COUNT]', label: '"fallback"', enabled: 'true')]
+@[php_method: 'directDefaults']
+pub fn CallableProcessor.direct_defaults(ctx vphp.Context, prefix string, count int, values ?vphp.PhpArray, label ?string, enabled bool) string {
+	_ = ctx
+	return prefix + describe_direct_defaults(count, values, label, enabled)
+}
+
+@[php_arg_default(before: '5', blocked: '9')]
+@[php_arg_optional(blocked: false, tail: true)]
+@[php_function]
+fn v_php_legacy_optional_tail(before int, blocked int, tail int) string {
+	return '${before}|${blocked}|${tail}'
 }

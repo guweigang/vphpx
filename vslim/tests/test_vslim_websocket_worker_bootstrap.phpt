@@ -128,8 +128,62 @@ echo ($close[0]['event'] ?? '') . '|' . ($close[0]['reason'] ?? '') . "\n";
 echo ($close[1]['event'] ?? '') . "\n";
 
 fclose($conn);
-if ($pid > 0) {
-    exec(sprintf('kill %d >/dev/null 2>&1', $pid));
+try {
+    $conn = stream_socket_client('unix://' . $sock, $errno, $errstr, 2.0);
+    if (!is_resource($conn)) {
+        throw new RuntimeException('Could not open a second worker connection');
+    }
+    stream_set_timeout($conn, 5);
+    try {
+        $open = $send($conn, ['mode' => 'websocket', 'event' => 'open', 'id' => 'callback', 'path' => '/callback']);
+        $message = $send($conn, ['mode' => 'websocket', 'event' => 'message', 'id' => 'callback', 'data' => "a\0b"]);
+        $close = $send($conn, ['mode' => 'websocket', 'event' => 'close', 'id' => 'callback']);
+        if (array_column($open, 'event') !== ['accept', 'send', 'done']
+            || ($open[1]['data'] ?? null) !== 'callback:connected'
+            || array_column($message, 'event') !== ['send', 'done']
+            || ($message[0]['data'] ?? null) !== "callback:a\0b"
+            || array_column($close, 'event') !== ['done']) {
+            throw new RuntimeException('The worker lost the WebSocket callback frames');
+        }
+    } finally {
+        fclose($conn);
+    }
+    $conn = stream_socket_client('unix://' . $sock, $errno, $errstr, 2.0);
+    if (!is_resource($conn)) {
+        throw new RuntimeException('Could not open a connection to verify rejection');
+    }
+    stream_set_timeout($conn, 5);
+    try {
+        $rejected = $send($conn, ['mode' => 'websocket', 'event' => 'open', 'id' => 'rejected', 'path' => '/reject']);
+        if (array_column($rejected, 'event') !== ['reject', 'done']) {
+            throw new RuntimeException('The worker did not emit the handshake rejection');
+        }
+    } finally {
+        fclose($conn);
+    }
+    foreach (['/reject-direct' => ['reject', 'status', 401], '/close-during-open' => ['close', 'code', 1000]] as $path => [$event, $key, $value]) {
+        $conn = stream_socket_client('unix://' . $sock, $errno, $errstr, 2.0);
+        if (!is_resource($conn)) {
+            throw new RuntimeException("Could not open a connection to test $path");
+        }
+        stream_set_timeout($conn, 5);
+        try {
+            $open = $send($conn, ['mode' => 'websocket', 'event' => 'open', 'id' => $path, 'path' => $path]);
+            $late = $send($conn, ['mode' => 'websocket', 'event' => 'message', 'id' => $path, 'data' => 'late']);
+            if (array_column($open, 'event') !== [$event, 'done'] || ($open[0][$key] ?? null) !== $value
+                || array_column($late, 'event') !== ['done']) {
+                throw new RuntimeException("The worker kept the route or emitted an unexpected frame after $event");
+            }
+        } finally {
+            fclose($conn);
+        }
+    }
+} finally {
+    if ($pid > 0) {
+        exec(sprintf('kill %d >/dev/null 2>&1', $pid));
+    }
+    @unlink($sock);
+    @unlink($log);
 }
 ?>
 --EXPECT--

@@ -2,8 +2,15 @@ name: VPHP CI
 
 on:
   workflow_dispatch:
+    inputs:
+      standalone_only:
+        description: Run only the standalone extension matrix
+        type: boolean
+        default: false
   pull_request:
     paths:
+      - 'bin/vphp'
+      - 'cmd/vphp/**'
       - 'vphp/**'
       - 'vphptest/**'
       - '.github/workflows/vphp-ci.yml'
@@ -11,6 +18,8 @@ on:
     branches:
       - main
     paths:
+      - 'bin/vphp'
+      - 'cmd/vphp/**'
       - 'vphp/**'
       - 'vphptest/**'
       - '.github/workflows/vphp-ci.yml'
@@ -21,6 +30,7 @@ env:
 
 jobs:
   lint:
+    if: ${{ !inputs.standalone_only }}
     name: V format check
     runs-on: ubuntu-latest
     steps:
@@ -31,6 +41,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if command -v v >/dev/null; then
+            v version
+            exit 0
+          fi
           rm -rf /tmp/v /tmp/vlang
           git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v /tmp/vlang
           make -C /tmp/vlang
@@ -43,6 +57,7 @@ jobs:
           v fmt -verify vphp/
 
   vphptest:
+    if: ${{ !inputs.standalone_only }}
     name: vphptest PHP ${{ matrix.php-version }} ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -56,6 +71,7 @@ jobs:
           - '8.3'
           - '8.4'
           - '8.5'
+          - '8.6'
 
     steps:
       - name: Checkout
@@ -71,6 +87,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if command -v v >/dev/null; then
+            v version
+            exit 0
+          fi
           rm -rf /tmp/v /tmp/vlang
           git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v /tmp/vlang
           make -C /tmp/vlang
@@ -95,3 +115,163 @@ jobs:
         shell: bash
         run: |
           make -C vphptest test
+
+  standalone-extension:
+    name: Standalone extension (${{ matrix.platform }})${{ matrix.php-version != '8.3' && format(' PHP {0}', matrix.php-version) || '' }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macOS arm64
+            runner: macos-15
+            machine: arm64
+            php-version: '8.3'
+          - platform: Linux arm64
+            runner: ubuntu-24.04-arm
+            machine: aarch64
+            php-version: '8.3'
+          - platform: Linux amd64
+            runner: ubuntu-24.04
+            machine: x86_64
+            php-version: '8.3'
+          - platform: Linux amd64
+            runner: ubuntu-24.04
+            machine: x86_64
+            php-version: '8.2'
+          - platform: Linux amd64
+            runner: ubuntu-24.04
+            machine: x86_64
+            php-version: '8.4'
+          - platform: Linux amd64
+            runner: ubuntu-24.04
+            machine: x86_64
+            php-version: '8.5'
+          - platform: Linux amd64
+            runner: ubuntu-24.04
+            machine: x86_64
+            php-version: '8.6'
+    env:
+      VPHP_V_GC: boehm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+
+      - name: Use the runner's V or bootstrap it
+        shell: bash
+        run: |
+          if command -v v >/dev/null; then
+            exit 0
+          fi
+          v_root=$(mktemp -d "$RUNNER_TEMP/vlang.XXXXXX")
+          git clone --depth=1 --branch "$V_REF" https://github.com/vlang/v "$v_root"
+          make -C "$v_root"
+          echo "$v_root" >> "$GITHUB_PATH"
+
+      - name: Check, build, load and lint an external extension
+        shell: bash
+        env:
+          EXPECTED_MACHINE: ${{ matrix.machine }}
+        run: |
+          uname -sm
+          test "$(uname -m)" = "$EXPECTED_MACHINE"
+          v version
+          php -n -v
+          php-config --version
+          if [ "$RUNNER_OS" = Linux ]; then
+            # Some V installations have GC sources but no prebuilt archive.
+            export VFLAGS="${VFLAGS:+$VFLAGS }-d use_bundled_libgc"
+          fi
+          VPHP_PACKAGE_OUTPUT="$RUNNER_TEMP/vphp" TMPDIR="$RUNNER_TEMP" sh cmd/vphp/tests/smoke.sh
+          tar -czf "$RUNNER_TEMP/vphp.tar.gz" -C "$RUNNER_TEMP" vphp
+
+      - name: Upload bundled VPHP CLI
+        if: matrix.php-version == '8.3'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vphp-${{ runner.os }}-${{ matrix.machine }}
+          path: ${{ runner.temp }}/vphp.tar.gz
+
+  linux-static:
+    name: Static Linux CLI (${{ matrix.machine }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            machine: x86_64
+          - runner: ubuntu-24.04-arm
+            machine: aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build a static musl executable
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/vphp-static"
+          docker run --rm \
+            -v "$PWD:/source:ro" \
+            -v "$RUNNER_TEMP/vphp-static:/output" \
+            alpine:3.22 sh /source/cmd/vphp/scripts/package-musl.sh /output/vphp
+          tar -czf "$RUNNER_TEMP/vphp-static.tar.gz" -C "$RUNNER_TEMP/vphp-static" vphp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vphp-Linux-static-${{ matrix.machine }}
+          path: ${{ runner.temp }}/vphp-static.tar.gz
+
+  bootstrap-linux:
+    name: Fresh setup (${{ matrix.image }} / ${{ matrix.machine }})
+    needs: linux-static
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            machine: x86_64
+            image: ubuntu:24.04
+          - runner: ubuntu-24.04
+            machine: x86_64
+            image: debian:12-slim
+          - runner: ubuntu-24.04
+            machine: x86_64
+            image: fedora:43
+          - runner: ubuntu-24.04
+            machine: x86_64
+            image: archlinux:base
+          - runner: ubuntu-24.04
+            machine: x86_64
+            image: opensuse/tumbleweed:latest
+          - runner: ubuntu-24.04
+            machine: x86_64
+            image: alpine:3.22
+          - runner: ubuntu-24.04-arm
+            machine: aarch64
+            image: ubuntu:24.04
+          - runner: ubuntu-24.04-arm
+            machine: aarch64
+            image: alpine:3.22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: vphp-Linux-static-${{ matrix.machine }}
+          path: ${{ runner.temp }}/vphp-bootstrap
+      - name: Set up from only the downloaded binary
+        shell: bash
+        env:
+          BOOTSTRAP_IMAGE: ${{ matrix.image }}
+        run: |
+          tar -xzf "$RUNNER_TEMP/vphp-bootstrap/vphp-static.tar.gz" -C "$RUNNER_TEMP/vphp-bootstrap"
+          docker run --rm -e DEBIAN_FRONTEND=noninteractive \
+            -v "$RUNNER_TEMP/vphp-bootstrap/vphp:/usr/local/bin/vphp:ro" \
+            -v "$PWD/cmd/vphp/tests/bootstrap-container.sh:/bootstrap.sh:ro" \
+            "$BOOTSTRAP_IMAGE" sh /bootstrap.sh

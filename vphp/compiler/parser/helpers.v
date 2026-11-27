@@ -1,6 +1,6 @@
 module parser
 
-import v.ast
+import compiler.syntax as ast
 
 pub fn collect_struct_field_types(stmts []ast.Stmt, table &ast.Table) map[string]string {
 	mut field_types := map[string]string{}

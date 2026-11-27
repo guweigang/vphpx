@@ -20,8 +20,8 @@ pub fn is_live_route_handler_object(handler vphp.PhpObject) bool {
 }
 
 pub fn dispatch_live_route_handler(handler vphp.PhpObject, payload vphp.PhpValue) !vphp.PhpValue {
-	socket_obj := VSlimLiveSocket.new_object()!
-	payload_arg := payload.owned()
+	mut socket_obj := VSlimLiveSocket.new_object()!
+	mut payload_arg := payload.owned()
 	defer {
 		payload_arg.release()
 		socket_obj.release()

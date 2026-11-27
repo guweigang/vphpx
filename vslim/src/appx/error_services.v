@@ -8,85 +8,75 @@ import os
 import sessionx
 import vphp
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_arg_name: 'error_code=errorCode']
-@[php_arg_default: 'error_code=""']
-@[php_method: 'errorResponse']
-@[php_arg_optional: 'error_code']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpStringParam('error_code', php_name: 'errorCode', default_value: '', optional: true)]
+@[vphp.PhpExportMethod(name: 'errorResponse')]
 pub fn (app &VSlimApp) error_response(status int, message string, error_code string) &httpx.VSlimPsr7Response {
 	code := if error_code.trim_space() == '' { 'runtime_error' } else { error_code.trim_space() }
 	return app.default_error_response(status, message, code).to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'validationError']
-@[php_arg_default: 'status=422']
-@[php_arg_optional: 'status']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'validationError')]
+@[vphp.PhpArgDefault(v_name: 'status', default_value: '422')]
 pub fn (app &VSlimApp) validation_error(errors vphp.PhpValue, status int) &httpx.VSlimPsr7Response {
 	error_status := if status <= 0 { 422 } else { status }
 	json_body := httpx.validation_error_json_body(error_status, errors)
 	return httpx.VSlimResponse.json(error_status, json_body).to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_arg_default: 'message="Unauthorized"']
-@[php_method: 'unauthorized']
-@[php_arg_optional: 'message']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpStringParam('message', php_name: 'message', default_value: 'Unauthorized', optional: true)]
+@[vphp.PhpExportMethod(name: 'unauthorized')]
 pub fn (app &VSlimApp) unauthorized_response(message string) &httpx.VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Unauthorized' } else { message }
 	return app.default_error_response(401, msg, 'unauthorized').to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_arg_default: 'message="Forbidden"']
-@[php_method: 'forbidden']
-@[php_arg_optional: 'message']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpStringParam('message', php_name: 'message', default_value: 'Forbidden', optional: true)]
+@[vphp.PhpExportMethod(name: 'forbidden')]
 pub fn (app &VSlimApp) forbidden_response(message string) &httpx.VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Forbidden' } else { message }
 	return app.default_error_response(403, msg, 'forbidden').to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_arg_default: 'message="Bad Request"']
-@[php_method: 'badRequest']
-@[php_arg_optional: 'message']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpStringParam('message', php_name: 'message', default_value: 'Bad Request', optional: true)]
+@[vphp.PhpExportMethod(name: 'badRequest')]
 pub fn (app &VSlimApp) bad_request_response(message string) &httpx.VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Bad Request' } else { message }
 	return app.default_error_response(400, msg, 'bad_request').to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_arg_default: 'message="Not Found"']
-@[php_method: 'notFound']
-@[php_arg_optional: 'message']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpStringParam('message', php_name: 'message', default_value: 'Not Found', optional: true)]
+@[vphp.PhpExportMethod(name: 'notFound')]
 pub fn (app &VSlimApp) not_found_response_helper(message string) &httpx.VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Not Found' } else { message }
 	return app.default_error_response(404, msg, 'not_found').to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_arg_default: 'message="Conflict"']
-@[php_method: 'conflict']
-@[php_arg_optional: 'message']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpStringParam('message', php_name: 'message', default_value: 'Conflict', optional: true)]
+@[vphp.PhpExportMethod(name: 'conflict')]
 pub fn (app &VSlimApp) conflict_response(message string) &httpx.VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Conflict' } else { message }
 	return app.default_error_response(409, msg, 'conflict').to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_arg_default: 'message="Service Unavailable"']
-@[php_method: 'serviceUnavailable']
-@[php_arg_optional: 'message']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpStringParam('message', php_name: 'message', default_value: 'Service Unavailable', optional: true)]
+@[vphp.PhpExportMethod(name: 'serviceUnavailable')]
 pub fn (app &VSlimApp) service_unavailable_response(message string) &httpx.VSlimPsr7Response {
 	msg := if message.trim_space() == '' { 'Service Unavailable' } else { message }
 	return app.default_error_response(503, msg, 'service_unavailable').to_psr7_response()
 }
 
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_arg_name: 'fallback_status=fallbackStatus']
-@[php_arg_default: 'fallback_status=500']
-@[php_method: 'exceptionResponse']
-@[php_arg_optional: 'fallback_status']
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpArgName(v_name: 'fallback_status', php_name: 'fallbackStatus')]
+@[vphp.PhpArgDefault(v_name: 'fallback_status', default_value: '500')]
+@[vphp.PhpExportMethod(name: 'exceptionResponse')]
 pub fn (app &VSlimApp) exception_response(exception vphp.PhpObject, fallback_status int) &httpx.VSlimPsr7Response {
 	status := if fallback_status >= 400 && fallback_status <= 599 { fallback_status } else { 500 }
 	resolved_status := httpx.exception_status_code(exception, status)
@@ -95,7 +85,7 @@ pub fn (app &VSlimApp) exception_response(exception vphp.PhpObject, fallback_sta
 	return app.default_error_response(resolved_status, message, code).to_psr7_response()
 }
 
-@[php_method: 'doctor']
+@[vphp.PhpExportMethod(name: 'doctor')]
 pub fn (mut app VSlimApp) doctor_report() map[string]string {
 	mut cfg_ref := &cfgx.VSlimConfig(unsafe { nil })
 	if app.has_config() {

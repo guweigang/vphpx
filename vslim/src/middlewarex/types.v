@@ -1,13 +1,25 @@
 module middlewarex
 
 import httpx
-import loggerx
 import vphp
 
+@[vphp.PhpExternalInterface(name: 'Psr\\Http\\Server\\RequestHandlerInterface')]
+pub interface PsrRequestHandlerContract {}
+
+pub type PsrRequestHandler = vphp.PhpInterface[PsrRequestHandlerContract]
+
+@[vphp.PhpExportEnum(name: 'VSlim\\MiddlewarePhase')]
+@[vphp.PhpUnitEnum]
 pub enum MiddlewareRegistrationKind {
 	standard
 	before
 	after
+}
+
+@[params]
+pub struct MiddlewareOptions {
+pub:
+	phase MiddlewareRegistrationKind = .standard
 }
 
 pub fn registration_error(kind MiddlewareRegistrationKind) string {
@@ -31,27 +43,27 @@ pub enum Psr15NextHandlerMode {
 	continue_marker
 }
 
-pub type Psr15NextDispatcher = fn (mut Psr15NextHandlerState, u64, vphp.PhpObject) &httpx.VSlimPsr7Response
+pub type Psr15NextDispatcher = fn (mut Psr15NextHandlerState, vphp.PhpObject) &httpx.VSlimPsr7Response
 
 pub struct Psr15NextHandlerState {
 pub mut:
-	mode                  Psr15NextHandlerMode     = .continue_marker
-	chain_ref             &MiddlewareChain         = unsafe { nil }
-	fixed_response_ref    &httpx.VSlimPsr7Response = unsafe { nil }
-	has_forwarded_request bool
-	dispatcher            Psr15NextDispatcher = unsafe { nil }
+	mode               Psr15NextHandlerMode     = .continue_marker
+	chain_ref          &MiddlewareChain         = unsafe { nil }
+	fixed_response_ref &httpx.VSlimPsr7Response = unsafe { nil }
+	forwarded_request  vphp.PhpObject           = vphp.PhpObject.invalid()
+	dispatcher         Psr15NextDispatcher      = unsafe { nil }
 }
 
-@[php_implements: 'Psr\\Http\\Server\\RequestHandlerInterface']
-@[php_class: 'VSlim\\Psr15\\NextHandler']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Server\\RequestHandlerInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr15\\NextHandler')]
 @[heap]
 pub struct VSlimPsr15NextHandler {
 pub mut:
 	state Psr15NextHandlerState
 }
 
-@[php_implements: 'Psr\\Http\\Server\\RequestHandlerInterface']
-@[php_class: 'VSlim\\Psr15\\ContinueHandler']
+@[vphp.PhpImplements(names: 'Psr\\Http\\Server\\RequestHandlerInterface')]
+@[vphp.PhpExportClass(name: 'VSlim\\Psr15\\ContinueHandler')]
 @[heap]
 pub struct VSlimPsr15ContinueHandler {
 pub mut:
@@ -110,9 +122,9 @@ pub fn (handler &VSlimPsr15ContinueHandler) request_handler_object() vphp.PhpObj
 	return object
 }
 
-pub fn (mut state Psr15NextHandlerState) dispatch_next(key u64, request vphp.PhpObject) &httpx.VSlimPsr7Response {
+pub fn (mut state Psr15NextHandlerState) dispatch_next(request vphp.PhpObject) &httpx.VSlimPsr7Response {
 	if state.dispatcher != unsafe { nil } {
-		return state.dispatcher(mut state, key, request)
+		return state.dispatcher(mut state, request)
 	}
 	return match state.mode {
 		.fixed_response {
@@ -121,7 +133,7 @@ pub fn (mut state Psr15NextHandlerState) dispatch_next(key u64, request vphp.Php
 			} else {
 				res := state.fixed_response_ref
 				res.clone_with(res.get_protocol_version(), httpx.clone_header_values(res.headers),
-					httpx.clone_header_names(res.header_names), res.body_or_empty(),
+					httpx.clone_header_names(res.header_names), res.body_ref,
 					res.get_status_code(), res.get_reason_phrase())
 			}
 		}
@@ -131,35 +143,36 @@ pub fn (mut state Psr15NextHandlerState) dispatch_next(key u64, request vphp.Php
 	}
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'handle']
-pub fn (handler &VSlimPsr15NextHandler) handle(request vphp.PhpObject) &httpx.VSlimPsr7Response {
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'handle')]
+pub fn (handler &VSlimPsr15NextHandler) handle(request httpx.PsrServerRequest) &httpx.VSlimPsr7Response {
 	unsafe {
 		mut writable := &VSlimPsr15NextHandler(handler)
-		res := writable.state.dispatch_next(forwarded_request_key(handler), request)
+		res := writable.state.dispatch_next(request.to_object())
 		if res == nil {
 			return httpx.VSlimPsr7Response.text(500, 'Middleware next handler returned null')
 		}
-		loggerx.cli_debug_log('next.handle result status=${res.get_status_code()} body_len=${httpx.psr7_stream_string(res.body_or_empty()).len}')
 		return res.clone_with(res.get_protocol_version(), httpx.clone_header_values(res.headers),
-			httpx.clone_header_names(res.header_names), res.body_or_empty(), res.get_status_code(),
+			httpx.clone_header_names(res.header_names), res.body_ref, res.get_status_code(),
 			res.get_reason_phrase())
 	}
 }
 
-@[php_arg_type: 'request=Psr\\Http\\Message\\ServerRequestInterface']
-@[php_return_type: 'Psr\\Http\\Message\\ResponseInterface']
-@[php_method: 'handle']
-pub fn (handler &VSlimPsr15ContinueHandler) handle(request vphp.PhpObject) &httpx.VSlimPsr7Response {
+@[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ResponseInterface')]
+@[vphp.PhpExportMethod(name: 'handle')]
+pub fn (handler &VSlimPsr15ContinueHandler) handle(request httpx.PsrServerRequest) &httpx.VSlimPsr7Response {
 	unsafe {
 		mut writable := &VSlimPsr15ContinueHandler(handler)
-		res := writable.state.dispatch_next(forwarded_request_key(handler), request)
+		res := writable.state.dispatch_next(request.to_object())
 		if res == nil {
 			return httpx.VSlimPsr7Response.text(500, 'Middleware continue handler returned null')
 		}
 		return res.clone_with(res.get_protocol_version(), httpx.clone_header_values(res.headers),
-			httpx.clone_header_names(res.header_names), res.body_or_empty(), res.get_status_code(),
+			httpx.clone_header_names(res.header_names), res.body_ref, res.get_status_code(),
 			res.get_reason_phrase())
 	}
+}
+
+pub fn (mut handler VSlimPsr15ContinueHandler) cleanup() {
+	handler.state.forwarded_request.release()
 }
