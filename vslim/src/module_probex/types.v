@@ -76,22 +76,6 @@ pub fn (mut uri VSlimSerializableUriProbe) unserialize_probe_state(data vphp.Php
 	}
 }
 
-@[vphp.PhpExportTrait(name: 'VSlim\\Dev\\UserlandCounterMethods')]
-@[vphp.PhpUserlandSubclass(name: 'VSlim\\Dev\\UserlandCounter', parent: 'VphpFixture\\Author\\Counter')]
-@[vphp.PhpDeclaredPropertyWithDefault('steps', 'int', '0')]
-pub struct VSlimUserlandCounterMethods {}
-
-@[vphp.PhpExportMethod(name: 'advance')]
-@[vphp.PhpArgDefault(v_name: 'amount', default_value: '1')]
-pub fn (counter VSlimUserlandCounterMethods) advance(ctx vphp.Context, amount int) int {
-	obj := ctx.ex.this_zend_object()
-	total := obj.prop_borrowed('steps').to_int() + amount
-	mut value := vphp.PhpInt.of(i64(total))
-	obj.set_prop_input('steps', value)
-	value.release()
-	return total
-}
-
 @[vphp.PhpExportTrait(name: 'VSlim\\Dev\\LegacySignatureTrait')]
 @[vphp.PhpClassAttribute(name: 'Deprecated', args: 'message: "Use PhpSignatureProbe"')]
 pub struct VSlimLegacySignatureTrait {}

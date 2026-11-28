@@ -1,16 +1,15 @@
 --TEST--
-VSlim exposes V methods on a class extending an autoloaded PHP parent
+VSlim does not ship the userland subclass test fixture
 --SKIPIF--
 <?php if (!extension_loaded('vslim')) echo 'skip vslim extension missing'; ?>
 --FILE--
 <?php
 $extension = PHP_OS_FAMILY === 'Windows' ? 'php_vslim.dll' : 'vslim.so';
-$argv = [
-    __FILE__,
-    VSlim\Dev\UserlandCounter::class,
-    dirname(__DIR__) . '/' . $extension . '.classes.php',
-];
-require dirname(__DIR__, 2) . '/cmd/vphp/tests/fixtures/userland-subclass/verify.php';
+var_dump(class_exists('VSlim\\Dev\\UserlandCounter', false));
+var_dump(trait_exists('VSlim\\Dev\\UserlandCounterMethods', false));
+var_dump(file_exists(dirname(__DIR__) . '/' . $extension . '.classes.php'));
 ?>
 --EXPECT--
-userland subclass ok
+bool(false)
+bool(false)
+bool(false)

@@ -97,7 +97,6 @@ extern zend_class_entry *vslim__dev__phpsignatureprobe_ce;
 extern zend_class_entry *vslim__debug__objectprobe_ce;
 extern zend_class_entry *vslim__dev__cloneresponseprobe_ce;
 extern zend_class_entry *vslim__dev__serializableuriprobe_ce;
-extern zend_class_entry *vslim__dev__userlandcountermethods_ce;
 extern zend_class_entry *vslim__dev__legacysignaturetrait_ce;
 extern zend_class_entry *vslim__log__logger_ce;
 extern zend_class_entry *vslim__log__psrlogger_ce;

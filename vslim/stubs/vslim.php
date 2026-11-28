@@ -1904,14 +1904,4 @@ namespace VSlim\Dev {
         public function __unserialize(array $data): void {}
     }
 
-    trait UserlandCounterMethods
-    {
-        public int $steps = 0;
-        public function advance(int $amount = 1): int {}
-    }
-
-    class UserlandCounter extends \VphpFixture\Author\Counter
-    {
-        use \VSlim\Dev\UserlandCounterMethods;
-    }
 }

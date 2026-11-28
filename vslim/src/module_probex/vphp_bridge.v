@@ -1319,22 +1319,6 @@ pub fn (val VSlimSerializableUriProbe) php_class_name() string {
     return 'VSlim\\Dev\\SerializableUriProbe'
 }
 
-@[export: 'vphp_wrap_vslim_userland_counter_methods_advance']
-pub fn vphp_wrap_vslim_userland_counter_methods_advance(ctx vphp.Context)  {
-    mut recv := VSlimUserlandCounterMethods{}
-    mut vphp_scope := vphp.PhpScope.once()
-    defer { vphp_scope.close() }
-    php_args := ctx.args_with_php_defaults([
-        vphp.PhpArgMeta{ index: 0, name: 'amount', use_php_default: true },
-    ]) or {
-        return
-    }
-    arg_0 := ctx
-    arg_1 := php_args.at(0).as_v[int]()
-    res := recv.advance(arg_0, arg_1)
-    ctx.return().v[int](res)
-}
-
 @[export: 'vphp_wrap_vslim_legacy_signature_trait_legacy_signature']
 pub fn vphp_wrap_vslim_legacy_signature_trait_legacy_signature(ctx vphp.Context)  {
     mut recv := VSlimLegacySignatureTrait{}
