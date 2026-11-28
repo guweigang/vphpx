@@ -5526,7 +5526,9 @@ static void php_vphptest_init_globals(zend_vphptest_globals *globals) {
 }
 PHP_INI_BEGIN()
     PHP_INI_ENTRY("vphptest.enable_cache", "1", PHP_INI_ALL, NULL)
+    PHP_INI_ENTRY("vphptest.escaped", "quote: \"; slash: \\; newline:\012\351\233\252", PHP_INI_USER, NULL)
     PHP_INI_ENTRY("vphptest.max_threads", "4", PHP_INI_ALL, NULL)
+    PHP_INI_ENTRY("vphptest.system_limit", "12", PHP_INI_SYSTEM, NULL)
 PHP_INI_END()
 static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_add, arginfo_v_add)

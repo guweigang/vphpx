@@ -117,9 +117,13 @@ fn run(command Command) ! {
 	if os.user_os() !in ['macos', 'linux', 'windows'] {
 		return error('the standalone builder currently targets macOS, Linux and Windows')
 	}
-	entries := os.ls(command.project)!
-	if !entries.any(is_extension_source(it) && os.is_file(os.join_path(command.project, it))) {
-		return error('expected a V source file at the project root')
+	source_project := os.join_path(command.project, 'src')
+	if !os.is_dir(source_project) || os.is_link(source_project) {
+		return error('expected a source directory at ${source_project}')
+	}
+	entries := os.ls(source_project)!
+	if !entries.any(is_extension_source(it) && os.is_file(os.join_path(source_project, it))) {
+		return error('expected a V source file in ${source_project}')
 	}
 	php := selected_php()
 	inferred_php := os.getenv_opt('VPHP_PHP') == none
@@ -144,7 +148,33 @@ fn run(command Command) ! {
 		os.symlink(runtime, os.join_path(scratch, 'vphp'))!
 	}
 	mut sources := []string{}
-	stage_sources(command.project, staged, mut sources)!
+	stage_sources(source_project, staged, mut sources)!
+	{
+		// Sibling V modules (for example VSlim's pathutil) remain importable.
+		for entry in os.ls(command.project)! {
+			from := os.join_path(command.project, entry)
+			to := os.join_path(staged, entry)
+			if entry in ['src', 'build', 'vendor', 'node_modules', 'tests'] || entry.starts_with('.')
+				|| os.is_link(from) || !os.is_dir(from) || os.exists(to) {
+				continue
+			}
+			module_entries := os.ls(from)!
+			if module_entries.any(is_extension_source(it) && os.is_file(os.join_path(from, it))) {
+				os.mkdir(to)!
+				mut module_sources := []string{}
+				stage_sources(from, to, mut module_sources)!
+			}
+		}
+	}
+	if !os.exists(os.join_path(staged, 'config.toml')) {
+		root_config := os.join_path(command.project, 'config.toml')
+		if os.is_link(root_config) {
+			return error('symlinked source entries are unsupported: ${root_config}')
+		}
+		if os.is_file(root_config) {
+			os.cp(root_config, os.join_path(staged, 'config.toml'))!
+		}
+	}
 	sources.sort()
 	previous_dir := os.getwd()
 	os.chdir(staged)!
@@ -154,13 +184,13 @@ fn run(command Command) ! {
 
 	mut generator := compiler.new(sources)
 	name := generator.compile() or {
-		return error(rebase_diagnostic(err.msg(), staged, command.project))
+		return error(rebase_diagnostic(err.msg(), staged, source_project))
 	}
 	if !valid_extension_name(name) {
 		return error('ExtensionConfig.name must be a C identifier: ${name}')
 	}
 	generator.generate_all() or {
-		return error(rebase_diagnostic(err.msg(), staged, command.project))
+		return error(rebase_diagnostic(err.msg(), staged, source_project))
 	}
 
 	declarations := generator.userland_class_declarations()
@@ -170,7 +200,7 @@ fn run(command Command) ! {
 		run_tool([php, '-n', '-l', classes_file])!
 	}
 	extension := build_extension(name, staged, runtime, repo) or {
-		return error(rebase_diagnostic(err.msg(), staged, command.project))
+		return error(rebase_diagnostic(err.msg(), staged, source_project))
 	}
 	if command.action == 'check' {
 		println('Checked ${name}')
@@ -239,7 +269,7 @@ fn stage_sources(source string, target string, mut sources []string) ! {
 		from := os.join_path(source, entry)
 		to := os.join_path(target, entry)
 		if os.is_link(from) {
-			if os.is_dir(from) || entry.ends_with('.v') {
+			if os.is_dir(from) || entry.ends_with('.v') || entry == 'config.toml' {
 				return error('symlinked source entries are unsupported: ${from}')
 			}
 			continue

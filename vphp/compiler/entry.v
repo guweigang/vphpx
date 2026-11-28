@@ -15,6 +15,8 @@ pub mut:
 	ext_version     string
 	ext_description string
 	ini_entries     map[string]string
+	ini_access      map[string]string
+	config_path     string
 	globals_repr    repr.PhpGlobalsRepr
 	elements        []repr.PhpRepr
 	params_structs  map[string]repr.PhpParamsStruct
@@ -30,12 +32,15 @@ pub fn new(target_files []string) Compiler {
 	return Compiler{
 		target_files: target_files
 		ext_name:     ''
+		config_path:  os.join_path(os.getwd(), 'config.toml')
 		table:        ast.new_table()
 	}
 }
 
 pub fn (mut c Compiler) compile() !string {
 	mut all_stmts := []ast.Stmt{}
+	mut v_meta := cparser.ExtensionMeta{}
+	mut has_extension_meta := false
 	c.module_dirs.clear()
 
 	for file in c.target_files {
@@ -43,24 +48,18 @@ pub fn (mut c Compiler) compile() !string {
 		if file_ast.module_name !in c.module_dirs {
 			c.module_dirs[file_ast.module_name] = os.dir(file)
 		}
-		if c.ext_name == '' {
-			if name, version, description, ini_entries := cparser.parse_extension_meta(file_ast,
-				c.table)
-			{
-				c.ext_name = name
-				c.ext_version = version
-				c.ext_description = description
-				c.ini_entries = ini_entries.clone()
+		if meta := cparser.parse_extension_meta_fields(file_ast, c.table) {
+			if !has_extension_meta || (v_meta.name == '' && meta.name != '') {
+				v_meta = meta
+				has_extension_meta = true
 			}
 		}
 		c.remember_decl_modules(file_ast.stmts, file_ast.module_name)
 		all_stmts << file_ast.stmts
 	}
 
-	if c.ext_name == '' {
-		return error('无法在输入的文件中找到 ext_config 配置，请确保定义了 ExtensionConfig')
-	}
-	println('  - [Compiler] 识别到扩展名: ${c.ext_name}')
+	c.apply_extension_config(v_meta, has_extension_meta)!
+	println('  - [Compiler] Extension name: ${c.ext_name}')
 	c.external_interfaces = cparser.collect_external_interfaces(all_stmts)!
 	field_types := cparser.collect_struct_field_types(all_stmts, c.table)
 	resolved_borrowed := linker.resolve_borrowed_methods(all_stmts, c.table, field_types)

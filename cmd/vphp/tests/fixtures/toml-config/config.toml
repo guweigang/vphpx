@@ -1,0 +1,8 @@
+[extension]
+name = "tomldemo"
+version = "1.2.3"
+description = "TOML-only extension"
+
+[ini."tomldemo.answer"]
+default = "42"
+access = "system"

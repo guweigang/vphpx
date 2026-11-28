@@ -108,7 +108,7 @@ fn verify_setup_build() ! {
 	project := os.join_path(directory, 'setup_probe')
 	println('Verifying extension compilation and PHP loading...')
 	create_project(project)!
-	entry := os.join_path(project, 'extension.v')
+	entry := os.join_path(project, 'src', 'config.v')
 	os.write_file(entry, os.read_file(entry)! + "\n@[vphp.PhpExportClass(name: 'VphpSetupProbeException')]\n@[vphp.PhpExtends(name: 'RuntimeException')]\npub struct SetupProbeException {}\n")!
 	probe_script := os.join_path(project, 'tests', 'smoke.php')
 	os.write_file(probe_script, os.read_file(probe_script)! + "\nif (!is_subclass_of('VphpSetupProbeException', RuntimeException::class)) {\n    throw new RuntimeException('Internal parent reflection failed');\n}\n")!

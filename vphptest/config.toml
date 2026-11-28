@@ -1,0 +1,18 @@
+[extension]
+name = "vphptest"
+version = "0.1.0"
+
+[ini."vphptest.enable_cache"]
+default = "1"
+access = "all"
+
+[ini."vphptest.system_limit"]
+default = "12"
+access = "system"
+
+[ini."vphptest.escaped"]
+default = "quote: \"; slash: \\; newline:\n雪"
+access = "user"
+
+[unrelated_application]
+enabled = true

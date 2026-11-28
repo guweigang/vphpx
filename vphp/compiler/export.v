@@ -291,8 +291,10 @@ fn (mut c Compiler) generate_c(default_class string, closure_defaults []StructCl
 	mod_builder.has_native_traits = c.elements.any(it is repr.PhpClassRepr && it.is_native_trait)
 	mut fragments := c.collect_non_type_fragments()
 	mut type_fragments := c.collect_type_fragments()!
-	for k, v in c.ini_entries {
-		mod_builder.add_ini_entry(k, v)
+	mut ini_names := c.ini_entries.keys()
+	ini_names.sort()
+	for name in ini_names {
+		mod_builder.add_ini_entry_with_access(name, c.ini_entries[name], c.ini_access[name] or { 'all' })
 	}
 	mod_builder.globals = c.globals_repr
 
@@ -509,5 +511,5 @@ fn (mut c Compiler) generate_h() ! {
 	// 7. 物理写入文件
 	os.write_file('php_bridge.h', res.str()) or { return error('无法写入 php_bridge.h: $err') }
 
-	println('  - [Generator] 已生成 php_bridge.h')
+	println('  - [Generator] Generated php_bridge.h')
 }

@@ -12,9 +12,9 @@ if [ -n "${VHTTPD_ROOT:-}" ]; then
 fi
 
 project="$tmp/External Extension"
-mkdir -p "$project/extra"
+mkdir -p "$project/src/extra"
 project=$(CDPATH='' cd "$project" && pwd -P)
-cat > "$project/entry.v" <<'EOF'
+cat > "$project/src/entry.v" <<'EOF'
 module main
 
 import extra
@@ -840,7 +840,7 @@ fn standalone_identity(value vphp.PhpValue) vphp.PhpValue {
 	return value
 }
 EOF
-cat > "$project/extra/extra.v" <<'EOF'
+cat > "$project/src/extra/extra.v" <<'EOF'
 /* An exported module may have a block comment before its declaration. */
 module extra
 
@@ -2525,6 +2525,8 @@ foreach ([
 EOF
 
 cd "$project"
+
+mkdir -p src
 "$repo/bin/vphp" check
 test ! -e build
 "$repo/bin/vphp" build
@@ -2649,7 +2651,8 @@ date_fixture="$repo/cmd/vphp/tests/fixtures/date-time-immutable"
 mkdir "$tmp/DateTimeImmutable"
 (
     cd "$tmp/DateTimeImmutable"
-    cp "$date_fixture/entry.v" .
+    mkdir -p src
+    cp "$date_fixture/entry.v" src/
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub
     "${VPHP_PHP:-php}" -n -l build/date_time_immutable_probe.php
@@ -2661,7 +2664,8 @@ lazy_fixture="$repo/cmd/vphp/tests/fixtures/lazy-objects"
 mkdir "$tmp/Lazy Objects"
 (
     cd "$tmp/Lazy Objects"
-    cp "$lazy_fixture/entry.v" .
+    mkdir -p src
+    cp "$lazy_fixture/entry.v" src/
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub
     "${VPHP_PHP:-php}" -n -l build/lazy_objects_probe.php
@@ -2678,7 +2682,8 @@ fi
 mkdir "$tmp/Attribute Constants"
 (
     cd "$tmp/Attribute Constants"
-    cp "$attribute_constants_fixture/entry.v" .
+    mkdir -p src
+    cp "$attribute_constants_fixture/entry.v" src/
     "$repo/bin/vphp" check
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub
@@ -2692,8 +2697,9 @@ mkdir "$tmp/Attribute Constants"
 mkdir "$tmp/Invalid Parameter Attribute"
 (
     cd "$tmp/Invalid Parameter Attribute"
+    mkdir -p src
     for target in apiKey ctx; do
-        cat > entry.v <<EOF
+        cat > src/entry.v <<EOF
 module main
 
 import vphp
@@ -2712,7 +2718,7 @@ EOF
         fi
         grep -F "PHP parameter attribute on inspectSecret: \`$target\` is not a PHP-visible V parameter" diagnostic.log
     done
-    cat > entry.v <<'EOF'
+    cat > src/entry.v <<'EOF'
 module main
 
 import vphp
@@ -2730,8 +2736,8 @@ EOF
     grep -F 'PhpSensitiveField requires a field of a @[params] struct:' diagnostic.log
 )
 
-mkdir "$tmp/Invalid Function Version"
-cat > "$tmp/Invalid Function Version/entry.v" <<'EOF'
+mkdir -p "$tmp/Invalid Function Version/src"
+cat > "$tmp/Invalid Function Version/src/entry.v" <<'EOF'
 module main
 
 import vphp
@@ -2747,8 +2753,8 @@ if "$repo/bin/vphp" check "$tmp/Invalid Function Version" > "$tmp/function-versi
 fi
 grep -F 'PhpFunctionSince requires an exported PHP function: internal_helper' "$tmp/function-version.log"
 
-mkdir "$tmp/Invalid Constant Version"
-cat > "$tmp/Invalid Constant Version/entry.v" <<'EOF'
+mkdir -p "$tmp/Invalid Constant Version/src"
+cat > "$tmp/Invalid Constant Version/src/entry.v" <<'EOF'
 module main
 
 import vphp
@@ -2774,7 +2780,8 @@ check_versioned_contract_fixture() (
     contract_php="${VPHP_PHP:-php}"
     mkdir "$project"
     cd "$project"
-    cp "$fixture/entry.v" .
+    mkdir -p src
+    cp "$fixture/entry.v" src/
     "$repo/bin/vphp" check
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub
@@ -2822,7 +2829,8 @@ trait_versions_fixture="$repo/cmd/vphp/tests/fixtures/trait-method-versions"
 mkdir "$tmp/Trait Method Versions"
 (
     cd "$tmp/Trait Method Versions"
-    cp "$trait_versions_fixture/entry.v" .
+    mkdir -p src
+    cp "$trait_versions_fixture/entry.v" src/
     "$repo/bin/vphp" check
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub
@@ -2838,7 +2846,8 @@ mkdir "$tmp/Trait Method Versions"
 mkdir "$tmp/Invalid Deprecated Type"
 (
     cd "$tmp/Invalid Deprecated Type"
-    cat > entry.v <<'EOF'
+    mkdir -p src
+    cat > src/entry.v <<'EOF'
 module main
 
 import vphp
@@ -2860,8 +2869,9 @@ constructor_versions_fixture="$repo/cmd/vphp/tests/fixtures/constructor-versions
 mkdir "$tmp/Constructor Versions"
 (
     cd "$tmp/Constructor Versions"
-    cp "$constructor_versions_fixture/entry.v" "$constructor_versions_fixture/exception.v" .
-    cp -R "$constructor_versions_fixture/ancestor" .
+    mkdir -p src
+    cp "$constructor_versions_fixture/entry.v" "$constructor_versions_fixture/exception.v" src/
+    cp -R "$constructor_versions_fixture/ancestor" src/
     "$repo/bin/vphp" check
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub
@@ -2871,8 +2881,8 @@ mkdir "$tmp/Constructor Versions"
 )
 
 type_versions_fixture="$repo/cmd/vphp/tests/fixtures/type-versions"
-mkdir "$tmp/Invalid Type Version"
-cat > "$tmp/Invalid Type Version/entry.v" <<'EOF'
+mkdir -p "$tmp/Invalid Type Version/src"
+cat > "$tmp/Invalid Type Version/src/entry.v" <<'EOF'
 module main
 
 import vphp
@@ -2888,8 +2898,8 @@ if "$repo/bin/vphp" check "$tmp/Invalid Type Version" > "$tmp/type-version.log" 
 fi
 grep -F 'PhpTypeSince requires an exported PHP type: InternalType' "$tmp/type-version.log"
 
-mkdir "$tmp/Invalid Gated Parent"
-cat > "$tmp/Invalid Gated Parent/entry.v" <<'EOF'
+mkdir -p "$tmp/Invalid Gated Parent/src"
+cat > "$tmp/Invalid Gated Parent/src/entry.v" <<'EOF'
 module main
 
 import vphp
@@ -2914,7 +2924,8 @@ fi
 mkdir "$tmp/Type Versions"
 (
     cd "$tmp/Type Versions"
-    cp "$type_versions_fixture/entry.v" .
+    mkdir -p src
+    cp "$type_versions_fixture/entry.v" src/
     "$repo/bin/vphp" check
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub
@@ -2923,8 +2934,8 @@ mkdir "$tmp/Type Versions"
     "${VPHP_PHP:-php}" -n "$type_versions_fixture/verify.php" "$PWD/build/type_versions_probe.php"
 )
 
-mkdir "$tmp/Version Gated Serialization"
-cp "$repo/cmd/vphp/tests/fixtures/version-gated-serialization/entry.v" "$tmp/Version Gated Serialization/"
+mkdir -p "$tmp/Version Gated Serialization/src"
+cp "$repo/cmd/vphp/tests/fixtures/version-gated-serialization/entry.v" "$tmp/Version Gated Serialization/src/"
 if "$repo/bin/vphp" check "$tmp/Version Gated Serialization" > "$tmp/serialization-gate.log" 2>&1; then
     echo 'Accepted a version-gated serialization hook' >&2
     exit 1
@@ -2935,7 +2946,8 @@ property_override_fixture="$repo/cmd/vphp/tests/fixtures/property-override"
 mkdir "$tmp/Property Override" "$tmp/Unmatched Property Override"
 (
     cd "$tmp/Property Override"
-    cp "$property_override_fixture/valid.v" entry.v
+    mkdir -p src
+    cp "$property_override_fixture/valid.v" src/entry.v
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub --output "$PWD/property_override.php"
     "${VPHP_PHP:-php}" -n -d extension="$PWD/build/property_override.so" "$property_override_fixture/verify.php"
@@ -2947,7 +2959,8 @@ mkdir "$tmp/Property Override" "$tmp/Unmatched Property Override"
 )
 (
     cd "$tmp/Unmatched Property Override"
-    cp "$property_override_fixture/invalid.v" entry.v
+    mkdir -p src
+    cp "$property_override_fixture/invalid.v" src/entry.v
     "$repo/bin/vphp" build
     if "${VPHP_PHP:-php}" -n -r 'exit(PHP_VERSION_ID >= 80500 ? 0 : 1);'; then
         if "${VPHP_PHP:-php}" -n -d extension="$PWD/build/unmatched_property_override.so" \
@@ -2969,7 +2982,8 @@ hook_fixture="$repo/cmd/vphp/tests/fixtures/property-hooks"
 mkdir "$tmp/Property Hooks" "$tmp/Unmatched Property Hook"
 (
     cd "$tmp/Property Hooks"
-    cp "$hook_fixture/valid.v" entry.v
+    mkdir -p src
+    cp "$hook_fixture/valid.v" src/entry.v
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub --output "$PWD/property_hooks.php"
     "${VPHP_PHP:-php}" -n -d extension="$PWD/build/property_hooks.so" "$hook_fixture/verify.php"
@@ -2983,7 +2997,8 @@ mkdir "$tmp/Property Hooks" "$tmp/Unmatched Property Hook"
 )
 (
     cd "$tmp/Unmatched Property Hook"
-    cp "$hook_fixture/invalid.v" entry.v
+    mkdir -p src
+    cp "$hook_fixture/invalid.v" src/entry.v
     "$repo/bin/vphp" build
     if "${VPHP_PHP:-php}" -n -r 'exit(PHP_VERSION_ID >= 80500 ? 0 : 1);'; then
         if "${VPHP_PHP:-php}" -n -d extension="$PWD/build/unmatched_property_hook.so" \
@@ -3005,7 +3020,8 @@ interface_fixture="$repo/cmd/vphp/tests/fixtures/interface-properties"
 mkdir "$tmp/Interface Properties" "$tmp/Invalid Interface Property"
 (
     cd "$tmp/Interface Properties"
-    cp "$interface_fixture/valid.v" entry.v
+    mkdir -p src
+    cp "$interface_fixture/valid.v" src/entry.v
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub --output "$PWD/interface_properties.php"
     "${VPHP_PHP:-php}" -n -d extension="$PWD/build/interface_properties.so" "$interface_fixture/verify.php"
@@ -3030,7 +3046,8 @@ mkdir "$tmp/Interface Properties" "$tmp/Invalid Interface Property"
 )
 (
     cd "$tmp/Invalid Interface Property"
-    cp "$interface_fixture/invalid.v" entry.v
+    mkdir -p src
+    cp "$interface_fixture/invalid.v" src/entry.v
     "$repo/bin/vphp" build
     if "${VPHP_PHP:-php}" -n -r 'exit(PHP_VERSION_ID >= 80400 ? 0 : 1);'; then
         if "${VPHP_PHP:-php}" -n -d extension="$PWD/build/invalid_interface_property.so" \
@@ -3052,7 +3069,8 @@ abstract_fixture="$repo/cmd/vphp/tests/fixtures/abstract-properties"
 mkdir "$tmp/Abstract Properties" "$tmp/Invalid Abstract Property"
 (
     cd "$tmp/Abstract Properties"
-    cp "$abstract_fixture/valid.v" entry.v
+    mkdir -p src
+    cp "$abstract_fixture/valid.v" src/entry.v
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub --output "$PWD/abstract_properties.php"
     "${VPHP_PHP:-php}" -n -d extension="$PWD/build/abstract_properties.so" "$abstract_fixture/verify.php"
@@ -3087,7 +3105,8 @@ mkdir "$tmp/Abstract Properties" "$tmp/Invalid Abstract Property"
 )
 (
     cd "$tmp/Invalid Abstract Property"
-    cp "$abstract_fixture/invalid.v" entry.v
+    mkdir -p src
+    cp "$abstract_fixture/invalid.v" src/entry.v
     "$repo/bin/vphp" build
     if "${VPHP_PHP:-php}" -n -r 'exit(PHP_VERSION_ID >= 80400 ? 0 : 1);'; then
         if "${VPHP_PHP:-php}" -n -d extension="$PWD/build/invalid_abstract_property.so" \
@@ -3109,7 +3128,8 @@ final_hook_fixture="$repo/cmd/vphp/tests/fixtures/final-property-hooks"
 mkdir "$tmp/Final Property Hooks"
 (
     cd "$tmp/Final Property Hooks"
-    cp "$final_hook_fixture/valid.v" entry.v
+    mkdir -p src
+    cp "$final_hook_fixture/valid.v" src/entry.v
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub --output "$PWD/final_property_hooks.php"
     "${VPHP_PHP:-php}" -n -d extension="$PWD/build/final_property_hooks.so" "$final_hook_fixture/verify.php"
@@ -3119,8 +3139,9 @@ for operation in get set; do
     mkdir "$tmp/Override Final Hook $operation"
     (
         cd "$tmp/Override Final Hook $operation"
-        cp "$final_hook_fixture/valid.v" entry.v
-        cp "$final_hook_fixture/invalid-$operation.v" override.v
+        mkdir -p src
+        cp "$final_hook_fixture/valid.v" src/entry.v
+        cp "$final_hook_fixture/invalid-$operation.v" src/override.v
         "$repo/bin/vphp" build
         if "${VPHP_PHP:-php}" -n -r 'exit(PHP_VERSION_ID >= 80400 ? 0 : 1);'; then
             case "$operation" in
@@ -3157,7 +3178,8 @@ reference_hook_fixture="$repo/cmd/vphp/tests/fixtures/reference-property-hooks"
 mkdir "$tmp/Reference Property Hooks"
 (
     cd "$tmp/Reference Property Hooks"
-    cp "$reference_hook_fixture/valid.v" entry.v
+    mkdir -p src
+    cp "$reference_hook_fixture/valid.v" src/entry.v
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub --output "$PWD/reference_property_hooks.php"
     "${VPHP_PHP:-php}" -n -d extension="$PWD/build/reference_property_hooks.so" "$reference_hook_fixture/verify.php"
@@ -3188,8 +3210,9 @@ for invalid in invalid invalid-backed-pair; do
     mkdir "$tmp/Reference Property Hooks $invalid"
     (
         cd "$tmp/Reference Property Hooks $invalid"
-        cp "$reference_hook_fixture/valid.v" entry.v
-        cp "$reference_hook_fixture/$invalid.v" invalid.v
+        mkdir -p src
+        cp "$reference_hook_fixture/valid.v" src/entry.v
+        cp "$reference_hook_fixture/$invalid.v" src/invalid.v
         "$repo/bin/vphp" build
         if "${VPHP_PHP:-php}" -n -r 'exit(PHP_VERSION_ID >= 80400 ? 0 : 1);'; then
             case "$invalid" in
@@ -3211,12 +3234,13 @@ done
 
 ref_contract_fixture="$repo/cmd/vphp/tests/fixtures/reference-property-contracts"
 stage_reference_contract_fixture() {
-    cp "$ref_contract_fixture/valid.v" entry.v
-    cp -R "$ref_contract_fixture/dnf_defaults" .
+    cp "$ref_contract_fixture/valid.v" src/entry.v
+    cp -R "$ref_contract_fixture/dnf_defaults" src/
 }
 mkdir "$tmp/Reference Property Contracts"
 (
     cd "$tmp/Reference Property Contracts"
+    mkdir -p src
     stage_reference_contract_fixture
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub --output "$PWD/reference_property_contracts.php"
@@ -3271,7 +3295,8 @@ mkdir "$tmp/Reference Property Contracts"
 mkdir "$tmp/Invalid Embedded Interface"
 (
     cd "$tmp/Invalid Embedded Interface"
-    cp "$ref_contract_fixture/invalid-embedded-interface.v" entry.v
+    mkdir -p src
+    cp "$ref_contract_fixture/invalid-embedded-interface.v" src/entry.v
     if "$repo/bin/vphp" check >"$tmp/invalid-embedded-interface.log" 2>&1; then
         echo 'VPHP accepted an embedded interface without a PHP export'
         exit 1
@@ -3283,7 +3308,8 @@ for invalid in duplicate range; do
     mkdir "$tmp/Invalid Enum Backing $invalid"
     (
         cd "$tmp/Invalid Enum Backing $invalid"
-        cp "$ref_contract_fixture/invalid-enum-backing-$invalid.v" entry.v
+        mkdir -p src
+        cp "$ref_contract_fixture/invalid-enum-backing-$invalid.v" src/entry.v
         "$repo/bin/vphp" build
         case "$invalid" in
             duplicate) expected='DuplicateEnumBacking::second duplicates an integer backing value' ;;
@@ -3301,8 +3327,9 @@ for invalid in mixed untyped; do
     mkdir "$tmp/Invalid Class Property $invalid"
     (
         cd "$tmp/Invalid Class Property $invalid"
+        mkdir -p src
         stage_reference_contract_fixture
-        cp "$ref_contract_fixture/invalid-class-$invalid.v" invalid.v
+        cp "$ref_contract_fixture/invalid-class-$invalid.v" src/invalid.v
         "$repo/bin/vphp" build
         case "$invalid" in
             mixed) child=UnexpectedMixed; parent=VClassUntypedBase ;;
@@ -3330,8 +3357,9 @@ done
 mkdir "$tmp/Invalid Class Property typed"
 (
     cd "$tmp/Invalid Class Property typed"
+    mkdir -p src
     stage_reference_contract_fixture
-    cp "$ref_contract_fixture/invalid-class-typed.v" invalid.v
+    cp "$ref_contract_fixture/invalid-class-typed.v" src/invalid.v
     log="$tmp/invalid-class-property-typed.log"
     if "$repo/bin/vphp" check > "$log" 2>&1; then
         echo "VPHP accepted incompatible inherited property VClassUnexpectedTyped::\$choice" >&2
@@ -3357,8 +3385,9 @@ for conflict in static type signature constant mixed; do
     mkdir "$tmp/Conflicting Native Trait $conflict"
     (
         cd "$tmp/Conflicting Native Trait $conflict"
+        mkdir -p src
         stage_reference_contract_fixture
-        cp "$ref_contract_fixture/invalid-native-trait-$conflict.v" invalid.v
+        cp "$ref_contract_fixture/invalid-native-trait-$conflict.v" src/invalid.v
         log="$tmp/conflicting-native-trait-$conflict.log"
         if "$repo/bin/vphp" check > "$log" 2>&1; then
             echo "VPHP accepted a conflicting $conflict declaration in a composed trait" >&2
@@ -3378,8 +3407,9 @@ for invalid in interface abstract; do
     mkdir "$tmp/Reference Property Contract $invalid"
     (
         cd "$tmp/Reference Property Contract $invalid"
+        mkdir -p src
         stage_reference_contract_fixture
-        cp "$ref_contract_fixture/invalid-$invalid.v" invalid.v
+        cp "$ref_contract_fixture/invalid-$invalid.v" src/invalid.v
         "$repo/bin/vphp" build
         if "${VPHP_PHP:-php}" -n -r 'exit(PHP_VERSION_ID >= 80400 ? 0 : 1);'; then
             case "$invalid" in
@@ -3420,8 +3450,9 @@ for access in readonly protected; do
         mkdir "$probe"
         (
             cd "$probe"
+            mkdir -p src
             stage_reference_contract_fixture
-            sh "$ref_contract_fixture/restricted-source.sh" "$access" "$contract" > invalid.v
+            sh "$ref_contract_fixture/restricted-source.sh" "$access" "$contract" > src/invalid.v
             "$repo/bin/vphp" build
             extension="$PWD/build/reference_property_contracts.so"
             php_bin="${VPHP_PHP:-php}"
@@ -3457,8 +3488,9 @@ for contract in Interface Abstract; do
     mkdir "$probe"
     (
         cd "$probe"
+        mkdir -p src
         stage_reference_contract_fixture
-        cat > invalid.v <<EOF
+        cat > src/invalid.v <<EOF
 module main
 
 import vphp
@@ -3504,8 +3536,9 @@ for contract in interface abstract; do
     mkdir "$probe"
     (
         cd "$probe"
+        mkdir -p src
         stage_reference_contract_fixture
-        sh "$ref_contract_fixture/value-method-source.sh" "$contract" > invalid.v
+        sh "$ref_contract_fixture/value-method-source.sh" "$contract" > src/invalid.v
         "$repo/bin/vphp" build
         extension="$PWD/build/reference_property_contracts.so"
         php_bin="${VPHP_PHP:-php}"
@@ -3540,7 +3573,8 @@ done
 mkdir "$tmp/Unmatched Override"
 (
     cd "$tmp/Unmatched Override"
-    cat > entry.v <<'EOF'
+    mkdir -p src
+    cat > src/entry.v <<'EOF'
 module main
 
 import vphp
@@ -3582,16 +3616,16 @@ EOF
         "${VPHP_PHP:-php}" -n -r "require \$argv[1]; $verify" unmatched_override.php
     fi
 )
-cp "$project/entry.v" "$tmp/original-rule-name.v"
+cp "$project/src/entry.v" "$tmp/original-rule-name.v"
 sed -e 's/^const combined_trait_rules =/const renamed_composition =/' \
     -e 's/^const restricted_constant_table =/const renamed_class_table =/' \
     -e 's/^const contract_constant_table =/const renamed_interface_table =/' \
     -e 's/^const enum_constant_table =/const renamed_enum_table =/' \
     -e 's/^const standalone_static_table =/const renamed_static_table =/' \
-    "$tmp/original-rule-name.v" > "$project/entry.v"
+    "$tmp/original-rule-name.v" > "$project/src/entry.v"
 "$repo/bin/vphp" stub --output "$tmp/Renamed Rules Stub.php"
 cmp "$tmp/Standalone Stub.php" "$tmp/Renamed Rules Stub.php"
-cp "$tmp/original-rule-name.v" "$project/entry.v"
+cp "$tmp/original-rule-name.v" "$project/src/entry.v"
 cat > "$tmp/override-final-trait-method.php" <<'EOF'
 <?php
 if ($argv[1] !== '') {
@@ -3767,32 +3801,32 @@ test ! -e vphp_bridge.v
 test ! -e extra/vphp_bridge.v
 test ! -e php_bridge.c
 
-cp "$project/entry.v" "$tmp/valid.v"
-sed 's/return extra.greet(name)/return 42/' "$project/entry.v" > "$tmp/broken.v"
-mv "$tmp/broken.v" "$project/entry.v"
+cp "$project/src/entry.v" "$tmp/valid.v"
+sed 's/return extra.greet(name)/return 42/' "$project/src/entry.v" > "$tmp/broken.v"
+mv "$tmp/broken.v" "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/check.log" 2>&1; then
     echo 'check accepted an invalid V return value' >&2
     exit 1
 fi
-grep -F "$project/entry.v:" "$tmp/check.log"
+grep -F "$project/src/entry.v:" "$tmp/check.log"
 
 sed 's/PhpExportFunction(name:/PhpExportFunction(unknown:/' "$tmp/valid.v" > "$tmp/broken-attribute.v"
-mv "$tmp/broken-attribute.v" "$project/entry.v"
+mv "$tmp/broken-attribute.v" "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/attribute.log" 2>&1; then
     echo 'check accepted an invalid V export attribute' >&2
     exit 1
 fi
 grep -F 'unknown field `unknown` in attribute `vphp.PhpExportFunction`' "$tmp/attribute.log"
 
-sed 's/PhpExportFunction(name:/PhpExportClass(name:/' "$tmp/valid.v" > "$project/entry.v"
+sed 's/PhpExportFunction(name:/PhpExportClass(name:/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/target.log" 2>&1; then
     echo 'check accepted a class export attribute on a function' >&2
     exit 1
 fi
 grep -F 'cannot be applied to `fn`' "$tmp/target.log" | grep -F 'PhpExportClass'
 
-cp "$tmp/valid.v" "$project/entry.v"
-cat >> "$project/entry.v" <<'EOF'
+cp "$tmp/valid.v" "$project/src/entry.v"
+cat >> "$project/src/entry.v" <<'EOF'
 
 @[vphp.PhpExportFunction(name: 'vphp\\smoke_first\\HELLO')]
 fn duplicate_hello() {}
@@ -3803,8 +3837,8 @@ if "$repo/bin/vphp" check > "$tmp/duplicate-function.log" 2>&1; then
 fi
 grep -F 'duplicate exported PHP function name' "$tmp/duplicate-function.log"
 
-cp "$tmp/valid.v" "$project/entry.v"
-cat >> "$project/entry.v" <<'EOF'
+cp "$tmp/valid.v" "$project/src/entry.v"
+cat >> "$project/src/entry.v" <<'EOF'
 
 @[vphp.PhpExportConstant(name: 'vphp\\smoke_first\\VALUE')]
 const duplicate_value = 1
@@ -3816,7 +3850,7 @@ fi
 grep -F 'duplicate exported PHP constant name' "$tmp/duplicate-constant.log"
 
 sed "s/php_type: 'int', default_value: '-12'/php_type: 'int', default_value: 'true'/" \
-    "$tmp/valid.v" > "$project/entry.v"
+    "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/property-default.log" 2>&1; then
     echo 'check accepted a boolean default for an int property' >&2
     exit 1
@@ -3824,56 +3858,56 @@ fi
 grep -F 'default: bool does not match type int' "$tmp/property-default.log"
 
 sed "s/name: 'text', php_type: '?string'/name: 'text', php_type: '?callable'/" \
-    "$tmp/valid.v" > "$project/entry.v"
+    "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/nullable-property.log" 2>&1; then
     echo 'check accepted an invalid nullable property type' >&2
     exit 1
 fi
 grep -F 'unsupported nullable type ?callable' "$tmp/nullable-property.log"
 
-sed "s/php_type: 'INT|string'/php_type: 'int|callable'/" "$tmp/valid.v" > "$project/entry.v"
+sed "s/php_type: 'INT|string'/php_type: 'int|callable'/" "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/union-property.log" 2>&1; then
     echo 'check accepted callable in a property union' >&2
     exit 1
 fi
 grep -F 'unsupported or invalid compound type int|callable' "$tmp/union-property.log"
 
-sed "s/Countable&IteratorAggregate/Countable\&INT/" "$tmp/valid.v" > "$project/entry.v"
+sed "s/Countable&IteratorAggregate/Countable\&INT/" "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/intersection-property.log" 2>&1; then
     echo 'check accepted a scalar inside a property intersection' >&2
     exit 1
 fi
 grep -F 'unsupported or invalid compound type Countable&INT' "$tmp/intersection-property.log"
 
-sed "s/set_visibility: .protected/set_visibility: .public/" "$tmp/valid.v" > "$project/entry.v"
+sed "s/set_visibility: .protected/set_visibility: .public/" "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/set-visibility.log" 2>&1; then
     echo 'check accepted an invalid asymmetric setter visibility' >&2
     exit 1
 fi
 grep -F 'expects an enum value: .protected, .private' "$tmp/set-visibility.log"
 
-sed "s/set_visibility: .protected/set_visibility: 'protected'/" "$tmp/valid.v" > "$project/entry.v"
+sed "s/set_visibility: .protected/set_visibility: 'protected'/" "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/string-visibility.log" 2>&1; then
     echo 'check accepted a string for enum setter visibility' >&2
     exit 1
 fi
 grep -F 'expects an enum value: .protected, .private' "$tmp/string-visibility.log"
 
-sed "s/php_type: 'int'/v_type: 'int'/" "$tmp/valid.v" > "$project/entry.v"
+sed "s/php_type: 'int'/v_type: 'int'/" "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/legacy-property-type.log" 2>&1; then
     echo 'check accepted the old v_type field' >&2
     exit 1
 fi
 grep -F 'unknown field `v_type` in attribute' "$tmp/legacy-property-type.log"
 
-sed "s/\.private, 'null')/.private, '7')/" "$tmp/valid.v" > "$project/entry.v"
+sed "s/\.private, 'null')/.private, '7')/" "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/asymmetric-default.log" 2>&1; then
     echo 'check accepted an int default for a nullable string property' >&2
     exit 1
 fi
 grep -F 'default: int does not match type ?string' "$tmp/asymmetric-default.log"
 
-sed "s/PhpFinalDeclaredProperty('limit')/PhpFinalDeclaredProperty('missing')/" "$tmp/valid.v" > "$project/entry.v"
+sed "s/PhpFinalDeclaredProperty('limit')/PhpFinalDeclaredProperty('missing')/" "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/final-missing.log" 2>&1; then
     echo 'check accepted a final modifier for an undeclared property' >&2
     exit 1
@@ -3882,15 +3916,15 @@ grep -F 'final modifier targets unknown PHP-only property `missing`' "$tmp/final
 
 sed '/^pub fn (target StandaloneFinalMethods) fixed_value/i\
 @[vphp.PhpAbstractMethod]
-' "$tmp/valid.v" > "$project/entry.v"
+' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/final-abstract.log" 2>&1; then
     echo 'check accepted an abstract final method' >&2
     exit 1
 fi
 grep -F 'an abstract method cannot be final' "$tmp/final-abstract.log"
 
-cp "$tmp/valid.v" "$project/entry.v"
-cat >> "$project/entry.v" <<'EOF'
+cp "$tmp/valid.v" "$project/src/entry.v"
+cat >> "$project/src/entry.v" <<'EOF'
 
 @[vphp.PhpExportClass(name: 'VPHP\\Smoke\\InvalidFinalOverride')]
 @[vphp.PhpExtends(name: 'StandaloneFinalMethods')]
@@ -3907,15 +3941,15 @@ if "$repo/bin/vphp" check > "$tmp/final-method-override.log" 2>&1; then
 fi
 grep -F 'cannot override final method' "$tmp/final-method-override.log"
 
-sed 's/PhpClassConstantVisibility(visibility: .protected)/PhpClassConstantVisibility(visibility: .private)/' "$tmp/valid.v" > "$project/entry.v"
+sed 's/PhpClassConstantVisibility(visibility: .protected)/PhpClassConstantVisibility(visibility: .private)/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/private-final-constant.log" 2>&1; then
     echo 'check accepted a private final constant' >&2
     exit 1
 fi
 grep -F 'a private constant cannot be final' "$tmp/private-final-constant.log"
 
-cp "$tmp/valid.v" "$project/entry.v"
-cat >> "$project/entry.v" <<'EOF'
+cp "$tmp/valid.v" "$project/src/entry.v"
+cat >> "$project/src/entry.v" <<'EOF'
 
 struct InvalidConstantOverrideValues {
 	locked int
@@ -3936,15 +3970,15 @@ grep -F 'cannot override final constant' "$tmp/final-constant-override.log"
 
 sed '/^pub fn (target StandaloneMethodVisibility) private_instance/i\
 @[vphp.PhpAbstractMethod]
-' "$tmp/valid.v" > "$project/entry.v"
+' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/private-abstract-method.log" 2>&1; then
     echo 'check accepted a private abstract method' >&2
     exit 1
 fi
 grep -F 'an abstract method cannot be private' "$tmp/private-abstract-method.log"
 
-cp "$tmp/valid.v" "$project/entry.v"
-cat >> "$project/entry.v" <<'EOF'
+cp "$tmp/valid.v" "$project/src/entry.v"
+cat >> "$project/src/entry.v" <<'EOF'
 
 @[vphp.PhpExportClass(name: 'VPHP\\Smoke\\InvalidVisibilityOverride')]
 @[vphp.PhpExtends(name: 'StandaloneMethodVisibility')]
@@ -3962,29 +3996,29 @@ if "$repo/bin/vphp" check > "$tmp/method-visibility-override.log" 2>&1; then
 fi
 grep -F 'access must be public or wider' "$tmp/method-visibility-override.log"
 
-sed "s/PhpDeclaredPropertyVisibility('note', .private)/PhpDeclaredPropertyVisibility('note', .missing)/" "$tmp/valid.v" > "$project/entry.v"
+sed "s/PhpDeclaredPropertyVisibility('note', .private)/PhpDeclaredPropertyVisibility('note', .missing)/" "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/invalid-read-visibility.log" 2>&1; then
     echo 'check accepted an invalid read visibility' >&2
     exit 1
 fi
 grep -F 'expects an enum value: .public, .protected, .private' "$tmp/invalid-read-visibility.log"
 
-sed "s/PhpDeclaredPropertyWithSetVisibility('note', '?string', .private)/PhpDeclaredPropertyWithSetVisibility('note', '?string', .protected)/" "$tmp/valid.v" > "$project/entry.v"
+sed "s/PhpDeclaredPropertyWithSetVisibility('note', '?string', .private)/PhpDeclaredPropertyWithSetVisibility('note', '?string', .protected)/" "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/wider-set-visibility.log" 2>&1; then
     echo 'check accepted write visibility wider than read visibility' >&2
     exit 1
 fi
 grep -F 'set visibility cannot be wider than read visibility' "$tmp/wider-set-visibility.log"
 
-sed '/slot: "contract"/s/; vphp.PhpFinalClassConstant/; vphp.PhpClassConstantVisibility(.protected); vphp.PhpFinalClassConstant/' "$tmp/valid.v" > "$project/entry.v"
+sed '/slot: "contract"/s/; vphp.PhpFinalClassConstant/; vphp.PhpClassConstantVisibility(.protected); vphp.PhpFinalClassConstant/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/interface-constant-visibility.log" 2>&1; then
     echo 'check accepted a non-public interface constant' >&2
     exit 1
 fi
 grep -F 'visibility must be public' "$tmp/interface-constant-visibility.log"
 
-cp "$tmp/valid.v" "$project/entry.v"
-cat >> "$project/entry.v" <<'EOF'
+cp "$tmp/valid.v" "$project/src/entry.v"
+cat >> "$project/src/entry.v" <<'EOF'
 
 struct InvalidInterfaceOverrideValues {
 	limit int
@@ -4003,49 +4037,49 @@ if "$repo/bin/vphp" check > "$tmp/interface-constant-override.log" 2>&1; then
 fi
 grep -F 'cannot override final interface constant' "$tmp/interface-constant-override.log"
 
-sed '/^struct StandaloneEnumValues {/,/^}/s/PhpClassConstantVisibility(.private)]/PhpClassConstantVisibility(.private); vphp.PhpFinalClassConstant]/' "$tmp/valid.v" > "$project/entry.v"
+sed '/^struct StandaloneEnumValues {/,/^}/s/PhpClassConstantVisibility(.private)]/PhpClassConstantVisibility(.private); vphp.PhpFinalClassConstant]/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/private-final-enum-constant.log" 2>&1; then
     echo 'check accepted a private final enum constant' >&2
     exit 1
 fi
 grep -F 'EnumConstants::SECRET: a private constant cannot be final' "$tmp/private-final-enum-constant.log"
 
-sed 's/values: standalone_enum_values/values: missing_enum_values/' "$tmp/valid.v" > "$project/entry.v"
+sed 's/values: standalone_enum_values/values: missing_enum_values/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/missing-enum-constant-source.log" 2>&1; then
     echo 'check accepted an undeclared enum constant source' >&2
     exit 1
 fi
 grep -F 'constant source `missing_enum_values` must be a V constant struct' "$tmp/missing-enum-constant-source.log"
 
-sed 's/preferred: StandaloneEnumConstants.active/preferred: StandaloneEnumConstants.missing/' "$tmp/valid.v" > "$project/entry.v"
+sed 's/preferred: StandaloneEnumConstants.active/preferred: StandaloneEnumConstants.missing/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/missing-enum-alias-case.log" 2>&1; then
     echo 'check accepted an enum alias to an unknown case' >&2
     exit 1
 fi
 grep -F 'unknown case `missing`' "$tmp/missing-enum-alias-case.log"
 
-sed 's/default_mode: StandaloneEnumConstants.active/default_mode: StandaloneEnumConstants.missing/' "$tmp/valid.v" > "$project/entry.v"
+sed 's/default_mode: StandaloneEnumConstants.active/default_mode: StandaloneEnumConstants.missing/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/missing-class-alias-case.log" 2>&1; then
     echo 'check accepted a class constant reference to an unknown case' >&2
     exit 1
 fi
 grep -F '::DEFAULT_MODE: unknown case `missing`' "$tmp/missing-class-alias-case.log"
 
-sed 's/contract_mode: .ready/contract_mode: .missing/' "$tmp/valid.v" > "$project/entry.v"
+sed 's/contract_mode: .ready/contract_mode: .missing/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/missing-interface-alias-case.log" 2>&1; then
     echo 'check accepted an interface constant reference to an unknown case' >&2
     exit 1
 fi
 grep -F '::CONTRACT_MODE: unknown case `missing`' "$tmp/missing-interface-alias-case.log"
 
-sed 's/trait_mode: StandaloneEnumAliasTarget.ready/trait_mode: StandaloneEnumAliasTarget.missing/' "$tmp/valid.v" > "$project/entry.v"
+sed 's/trait_mode: StandaloneEnumAliasTarget.ready/trait_mode: StandaloneEnumAliasTarget.missing/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/missing-trait-alias-case.log" 2>&1; then
     echo 'check accepted a trait constant reference to an unknown case' >&2
     exit 1
 fi
 grep -F 'CaseTrait::TRAIT_MODE: unknown case `missing`' "$tmp/missing-trait-alias-case.log"
 
-sed 's/init_trait(ctx vphp.Context, level int, offset int) {/init_trait(ctx vphp.Context, level int, offset int) int {/' "$tmp/valid.v" > "$project/entry.v"
+sed 's/init_trait(ctx vphp.Context, level int, offset int) {/init_trait(ctx vphp.Context, level int, offset int) int {/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/trait-constructor-return.log" 2>&1; then
     echo 'check accepted a native trait constructor returning a value' >&2
     exit 1
@@ -4054,37 +4088,37 @@ grep -F 'CaseTrait::__construct: a constructor cannot return a value' "$tmp/trai
 
 sed '/^struct StandaloneCaseTrait {}/i\
 @[vphp.PhpUsesTraits(source: "cyclic_trait_sources")]
-' "$tmp/valid.v" > "$project/entry.v"
-printf '\nconst cyclic_trait_sources = [StandaloneCombinedCaseTrait{}]\n' >> "$project/entry.v"
+' "$tmp/valid.v" > "$project/src/entry.v"
+printf '\nconst cyclic_trait_sources = [StandaloneCombinedCaseTrait{}]\n' >> "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/trait-cycle.log" 2>&1; then
     echo 'check accepted cyclic native trait composition' >&2
     exit 1
 fi
 grep -F 'cyclic PHP type registration dependency' "$tmp/trait-cycle.log"
 
-sed 's/CaseTrait::TRAITLABEL as init/CaseTrait::missingMethod as init/' "$tmp/valid.v" > "$project/entry.v"
+sed 's/CaseTrait::TRAITLABEL as init/CaseTrait::missingMethod as init/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/trait-unknown-alias.log" 2>&1; then
     echo 'check accepted a native trait alias for an unknown method' >&2
     exit 1
 fi
 grep -F 'CaseTrait::missingMethod` in alias' "$tmp/trait-unknown-alias.log"
 
-sed '/precedences: combined_trait_precedences/d' "$tmp/valid.v" > "$project/entry.v"
+sed '/precedences: combined_trait_precedences/d' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/trait-conflict.log" 2>&1; then
     echo 'check accepted a conflicting trait method without a precedence rule' >&2
     exit 1
 fi
 grep -F 'conflicting method' "$tmp/trait-conflict.log"
 
-sed 's/instead_of: \[StandaloneRivalCaseTrait{}, StandaloneAlternateCaseTrait{}\]/instead_of: [StandaloneCombinedCaseTrait{}]/' "$tmp/valid.v" > "$project/entry.v"
+sed 's/instead_of: \[StandaloneRivalCaseTrait{}, StandaloneAlternateCaseTrait{}\]/instead_of: [StandaloneCombinedCaseTrait{}]/' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/trait-indirect-exclusion.log" 2>&1; then
     echo 'check accepted an excluded trait outside the direct composition' >&2
     exit 1
 fi
 grep -F 'excluded trait `main.StandaloneCombinedCaseTrait` must be directly used' "$tmp/trait-indirect-exclusion.log"
 
-cp "$tmp/valid.v" "$project/entry.v"
-printf '\nconst duplicate_composition = vphp.PhpTraitRules[StandaloneCombinedCaseTrait]{}\n' >> "$project/entry.v"
+cp "$tmp/valid.v" "$project/src/entry.v"
+printf '\nconst duplicate_composition = vphp.PhpTraitRules[StandaloneCombinedCaseTrait]{}\n' >> "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/trait-duplicate-rules.log" 2>&1; then
     echo 'check accepted duplicate generic rule tables for one native trait' >&2
     exit 1
@@ -4093,22 +4127,22 @@ grep -F 'duplicate PhpTraitRules for main.StandaloneCombinedCaseTrait' "$tmp/tra
 
 sed '/^struct StandaloneCombinedCaseTrait {}/i\
 @[vphp.PhpUsesTraits(source: "combined_trait_sources")]
-' "$tmp/valid.v" > "$project/entry.v"
+' "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/trait-overlapping-rules.log" 2>&1; then
     echo 'check accepted two declarations for the same trait rule field' >&2
     exit 1
 fi
 grep -F 'PhpTraitRules combined_trait_rules.uses and PhpUsesTraits both declare uses' "$tmp/trait-overlapping-rules.log"
 
-sed "s/default_value: '\[\[\]\]'/default_value: '[[PHP_VERSION]]'/" "$tmp/valid.v" > "$project/entry.v"
+sed "s/default_value: '\[\[\]\]'/default_value: '[[PHP_VERSION]]'/" "$tmp/valid.v" > "$project/src/entry.v"
 if "$repo/bin/vphp" check > "$tmp/array-default.log" 2>&1; then
     echo 'check accepted an unquoted constant inside a property array default' >&2
     exit 1
 fi
 grep -F 'array literal, got `PHP_VERSION`' "$tmp/array-default.log"
 
-cp "$tmp/valid.v" "$project/entry.v"
-cat >> "$project/entry.v" <<'EOF'
+cp "$tmp/valid.v" "$project/src/entry.v"
+cat >> "$project/src/entry.v" <<'EOF'
 
 @[vphp.PhpExportFunction(name: 'nodiscard_void')]
 @[vphp.PhpCallableAttribute(name: 'NoDiscard', args: '')]
@@ -4121,7 +4155,7 @@ fi
 grep -F 'PHP attribute NoDiscard on nodiscard_void: requires a callable that returns a value' "$tmp/nodiscard-void.log"
 
 assert_attribute_diagnostic() {
-    sed "/SmokeCallable.*args: '\\[1, \"two\"\\]/s|args: '[^']*'|args: '$1'|" "$tmp/valid.v" > "$project/entry.v"
+    sed "/SmokeCallable.*args: '\\[1, \"two\"\\]/s|args: '[^']*'|args: '$1'|" "$tmp/valid.v" > "$project/src/entry.v"
     if "$repo/bin/vphp" check > "$tmp/attribute-args.log" 2>&1; then
         echo "check accepted invalid PHP attribute arguments: $1" >&2
         exit 1
@@ -4181,24 +4215,24 @@ assert_readonly_diagnostic() {
 
 sed "/^pub struct StandaloneReadonlyRecord {}/i\\
 @[vphp.PhpDeclaredPropertyWithDefault('invalid', 'int', '1')]
-" "$tmp/valid.v" > "$project/entry.v"
+" "$tmp/valid.v" > "$project/src/entry.v"
 assert_readonly_diagnostic 'default values are not allowed'
 
 sed '/^pub struct StandaloneReadonlyValue {$/,+2 s/^pub:$/pub mut:/' \
-    "$tmp/valid.v" > "$project/entry.v"
+    "$tmp/valid.v" > "$project/src/entry.v"
 assert_readonly_diagnostic 'exported V fields must be immutable'
 
 sed '/^pub struct StandaloneReadonlyValue {$/,+2 s/^	value int = 7$/	@[vphp.PhpStaticProperty]\
-	value int = 7/' "$tmp/valid.v" > "$project/entry.v"
+	value int = 7/' "$tmp/valid.v" > "$project/src/entry.v"
 assert_readonly_diagnostic 'static properties are not allowed'
 
 sed "/^pub struct StandaloneReadonlyRecord {}/i\\
 @[vphp.PhpClassAttribute('AllowDynamicProperties', '')]
-" "$tmp/valid.v" > "$project/entry.v"
+" "$tmp/valid.v" > "$project/src/entry.v"
 assert_readonly_diagnostic 'AllowDynamicProperties is not allowed'
 
-cp "$tmp/valid.v" "$project/entry.v"
-cat >> "$project/entry.v" <<'V'
+cp "$tmp/valid.v" "$project/src/entry.v"
+cat >> "$project/src/entry.v" <<'V'
 
 @[vphp.PhpExportClass(name: 'VPHP\\Smoke\\InvalidReadonlyChild')]
 @[vphp.PhpExtends('StandaloneReadonlyRecord')]
@@ -4208,16 +4242,17 @@ assert_readonly_diagnostic 'readonly modifier must match parent'
 
 sed "/^pub struct StandaloneDynamicRecord {}/i\\
 @[vphp.PhpClassAttribute('allowdynamicproperties', '')]
-" "$tmp/valid.v" > "$project/entry.v"
+" "$tmp/valid.v" > "$project/src/entry.v"
 assert_readonly_diagnostic 'AllowDynamicProperties must not be repeated'
 
 task_scheduler_fixture="$repo/cmd/vphp/tests/fixtures/task-scheduler"
 mkdir "$tmp/Task Scheduler"
 (
     cd "$tmp/Task Scheduler"
-    cp "$task_scheduler_fixture/entry.v" .
-    mkdir taskx
-    cp "$repo/vslim/src/taskx/task.v" "$repo/vslim/src/taskx/channel.v" taskx/
+    mkdir -p src
+    cp "$task_scheduler_fixture/entry.v" src/
+    mkdir src/taskx
+    cp "$repo/vslim/src/taskx/task.v" "$repo/vslim/src/taskx/channel.v" src/taskx/
     "$repo/bin/vphp" check
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub
@@ -4244,7 +4279,9 @@ userland_fixture="$repo/cmd/vphp/tests/fixtures/userland-subclass"
 mkdir "$tmp/Userland Subclass"
 (
     cd "$tmp/Userland Subclass"
+    mkdir -p src
     cp -R "$userland_fixture"/. .
+    mv entry.v src/entry.v
     "$repo/bin/vphp" check
     "$repo/bin/vphp" build
     "$repo/bin/vphp" stub
@@ -4254,9 +4291,9 @@ mkdir "$tmp/Userland Subclass"
     "$php_bin" -n -l build/userland_subclass_probe.php
     grep -F 'class Counter extends \VphpFixture\Author\Counter' build/userland_subclass_probe.php
     set -- 'VphpFixture\Extension\Counter' "$declarations"
+    "$php_bin" -n -d extension=build/userland_subclass_probe.so verify.php "$@"
     if command -v composer >/dev/null 2>&1; then
         composer dump-autoload --no-interaction --no-scripts --no-plugins
-        set -- "$@" vendor/autoload.php
+        "$php_bin" -n -d extension=build/userland_subclass_probe.so verify.php "$@" vendor/autoload.php
     fi
-    "$php_bin" -n -d extension=build/userland_subclass_probe.so verify.php "$@"
 )

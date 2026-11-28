@@ -69,13 +69,16 @@ RUNTIME_VHTTPD_TESTS := \
 all: build
 
 build:
-	VPHP_V_GC="$(VPHP_V_GC)" v -path ".:..:@vlib" run build.v
+	@mkdir -p .tmp
+	VPHP_V_GC="$(VPHP_V_GC)" v -path ".:..:@vlib" -o .tmp/vslim-builder run build.v
 
 emit-only:
-	VPHP_V_GC="$(VPHP_V_GC)" v -path ".:..:@vlib" run build.v -emit-only
+	@mkdir -p .tmp
+	VPHP_V_GC="$(VPHP_V_GC)" v -path ".:..:@vlib" -o .tmp/vslim-builder run build.v -emit-only
 
 prod:
-	VPHP_V_GC="$(VPHP_V_GC)" v -path ".:..:@vlib" run build.v -prod
+	@mkdir -p .tmp
+	VPHP_V_GC="$(VPHP_V_GC)" v -path ".:..:@vlib" -o .tmp/vslim-builder run build.v -prod
 
 build-prod: prod
 
@@ -120,10 +123,11 @@ server:
 	$(MAKE) -C $(ROOT)/server build VPHP_EMBED_PREFIX="$(VPHP_EMBED_PREFIX)"
 
 server-extension:
+	@mkdir -p .tmp
 	VPHP_PHP_CONFIG="$(VPHP_EMBED_PREFIX)/bin/php-config" \
 	VSLIM_OUTPUT="$(VSLIM_SERVER_EXTENSION)" \
 	VPHP_V_GC="$(VPHP_V_GC)" \
-	v -path ".:..:@vlib" run build.v
+	v -path ".:..:@vlib" -o .tmp/vslim-builder run build.v
 
 server-test:
 	$(MAKE) -C $(ROOT)/server test VPHP_EMBED_PREFIX="$(VPHP_EMBED_PREFIX)"

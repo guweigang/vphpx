@@ -1,0 +1,7 @@
+[extension]
+name = "demo"
+version = "0.1.0"
+
+[ini."demo.extra"]
+default = "configured"
+access = "all"

@@ -52,7 +52,7 @@ If you only want a friendlier way to write PHP extensions, there are already mat
 
 Here is the smallest useful mental model: define `ExtensionConfig`, export a function, build, then call it from PHP.
 
-### 1. Write the V extension entry
+### 1. Write the V extension entry in `src/config.v`
 
 ```v
 module main
@@ -312,7 +312,7 @@ So `vphpx` is no longer just a loose experiment. It already has:
 
 最小心智模型其实很简单：配 `ExtensionConfig`，导出一个函数，编译，然后在 PHP 里加载它。
 
-### 1. 先写扩展入口
+### 1. 在 `src/config.v` 中编写扩展入口
 
 ```v
 module main

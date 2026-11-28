@@ -47,7 +47,7 @@ done
 test ! -e "$tmp/missing-scratch"
 sh "$repo/cmd/vphp/tests/dependencies.sh" "$cli"
 "$cli" new demo
-for file in extension.v v.mod README.md .gitignore tests/smoke.php; do
+for file in src/config.v src/config.toml v.mod README.md .gitignore tests/smoke.php; do
     test -f "demo/$file"
 done
 if "$cli" new demo > "$tmp/existing.log" 2>&1; then
@@ -55,7 +55,11 @@ if "$cli" new demo > "$tmp/existing.log" 2>&1; then
     exit 1
 fi
 grep -q 'destination already exists' "$tmp/existing.log"
-grep -q "name: 'demo'" demo/extension.v
+grep -q 'name = "demo"' demo/src/config.toml
+if grep -q 'ExtensionConfig' demo/src/config.v; then
+    echo 'new project duplicates extension configuration' >&2
+    exit 1
+fi
 for invalid in bad-name 123demo; do
     if "$cli" new "$invalid" > "$tmp/invalid.log" 2>&1; then
         echo 'new accepted an invalid extension name' >&2
@@ -92,10 +96,11 @@ test ! -e build
 "${VPHP_PHP:-php}" -n -l build/demo.php
 grep -q 'function demo_hello' build/demo.php
 test "$(wc -l < "$VPHP_TEST_V_LOG" | tr -d ' ')" = 3
+sh "$repo/cmd/vphp/tests/toml-config.sh" "$cli" "$tmp" "$repo"
 # Source launcher has the same project creation contract.
 test "$("$repo/bin/vphp" -v)" = "vphp $expected_version"
 "$repo/bin/vphp" -h > "$tmp/source-help.out"
 cmp "$tmp/help.out" "$tmp/source-help.out"
 "$repo/bin/vphp" new "$tmp/source_demo"
-test -f "$tmp/source_demo/extension.v"
+test -f "$tmp/source_demo/src/config.v"
 printf '%s\n' 'VPHP scaffold and bundled SDK smoke passed'

@@ -132,8 +132,45 @@ requires V before it can run any command.
 
 For source development, put this checkout's `bin` directory on `PATH` instead.
 The source launcher uses the `v` on `PATH` on every run.
-The project declares its name and version in `vphp.ExtensionConfig` and
-marks exports with the usual VPHP attributes.
+The project declares extension metadata in `vphp.ExtensionConfig`,
+`config.toml`, or both, and marks exports with the usual VPHP attributes.
+Projects put their V sources in `src/`; output goes to the project root's
+`build/` directory. The CLI reads `src/config.toml`, falling back to a root
+`config.toml` when it is absent. Root V files are not extension entry sources.
+
+For example, `src/config.toml` can register PHP INI directives:
+
+```toml
+[extension]
+name = "myext"
+version = "0.1.0"
+description = "My PHP extension"
+
+[ini."myext.enable_cache"]
+default = "1"
+access = "all"
+
+[ini."myext.max_threads"]
+default = "4"
+access = "system"
+```
+
+All metadata and INI defaults are TOML strings. Quote INI names containing
+dots, so each is one key. INI `default` is required; `access` defaults to
+`all` and may be `all`, `user`, `perdir`, or `system`. Unrelated top-level
+tables are ignored. The compiler reads this file at build time and generates
+native PHP INI registration; the installed extension does not need the TOML
+file at runtime. INI values remain PHP strings and do not automatically
+synchronize into V globals.
+
+Existing `ExtensionConfig` declarations, including `ini_entries`, continue to
+work. TOML can supply omitted fields and additional INI entries; if the same
+metadata field or INI default is declared in both places, the values must
+match or the build fails with a conflict diagnostic. A matching TOML INI entry
+may specify its access mode; V-only entries retain `all`. When using
+`compiler.new` directly, `config_path` defaults to `config.toml` in the current
+directory and can be set explicitly to the project file (or to an empty string
+to disable loading).
 
 ```sh
 vphp check /path/to/extension

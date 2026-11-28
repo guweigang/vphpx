@@ -393,6 +393,7 @@ fn main() {
 
 	println('🛠️  1. 启动 VPHP Compiler 流程...')
 	mut vphp_c := compiler.new(target_files)
+	vphp_c.config_path = os.join_path(source_dir, 'config.toml')
 
 	ext_name := vphp_c.compile() or {
 		eprintln('❌ 编译阶段失败: ${err}')

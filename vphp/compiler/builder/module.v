@@ -8,7 +8,7 @@ pub struct IniEntry {
 pub:
 	name          string
 	default_value string
-	// 后续可以增加类型校验回调逻辑
+	access        string = 'all'
 }
 
 // 模块构建器：负责 zend_module_entry 相关的 C 代码生成
@@ -48,7 +48,30 @@ pub fn (mut b ModuleBuilder) add_rinit_line(line string) {
 }
 
 pub fn (mut b ModuleBuilder) add_ini_entry(name string, def_val string) {
-	b.ini_entries << IniEntry{name, def_val}
+	b.ini_entries << IniEntry{name, def_val, 'all'}
+}
+
+pub fn (mut b ModuleBuilder) add_ini_entry_with_access(name string, def_val string, access string) {
+	b.ini_entries << IniEntry{name, def_val, access}
+}
+
+fn ini_c_string(value string) string {
+	mut out := strings.new_builder(value.len)
+	for byte in value.bytes() {
+		if byte == `\\` {
+			out.write_string('\\\\')
+		} else if byte == `"` {
+			out.write_string('\\"')
+		} else if byte < 32 || byte >= 127 {
+			out.write_u8(`\\`)
+			out.write_u8(`0` + ((byte >> 6) & 7))
+			out.write_u8(`0` + ((byte >> 3) & 7))
+			out.write_u8(`0` + (byte & 7))
+		} else {
+			out.write_u8(byte)
+		}
+	}
+	return out.str()
 }
 
 // 渲染函数表 (zend_function_entry)
@@ -72,8 +95,7 @@ pub fn (b &ModuleBuilder) render_ini_entries() string {
 	mut res := strings.new_builder(256)
 	res.write_string('PHP_INI_BEGIN()\n')
 	for entry in b.ini_entries {
-		// 目前简单处理为字面量字符串配置
-		res.write_string('    PHP_INI_ENTRY("${entry.name}", "${entry.default_value}", PHP_INI_ALL, NULL)\n')
+		res.write_string('    PHP_INI_ENTRY("${ini_c_string(entry.name)}", "${ini_c_string(entry.default_value)}", PHP_INI_${entry.access.to_upper()}, NULL)\n')
 	}
 	res.write_string('PHP_INI_END()\n')
 	return res.str()
@@ -248,9 +270,9 @@ pub fn (b &ModuleBuilder) render_minfo() string {
 	res.write_string('PHP_MINFO_FUNCTION(${b.ext_name}) {\n')
 	res.write_string('    php_info_print_table_start();\n')
 	res.write_string('    php_info_print_table_header(2, "${b.ext_name} support", "enabled");\n')
-	res.write_string('    php_info_print_table_row(2, "Version", "${b.version}");\n')
+	res.write_string('    php_info_print_table_row(2, "Version", "${ini_c_string(b.version)}");\n')
 	if b.description != '' {
-		res.write_string('    php_info_print_table_row(2, "Description", "${b.description}");\n')
+		res.write_string('    php_info_print_table_row(2, "Description", "${ini_c_string(b.description)}");\n')
 	}
 	res.write_string('    php_info_print_table_end();\n')
 	if b.ini_entries.len > 0 {
@@ -278,7 +300,7 @@ pub fn (b &ModuleBuilder) render_module_entry() string {
 	} else {
 		res.write_string('    ${b.ext_name}_functions,\n')
 	}
-	res.write_string('    PHP_MINIT(${b.ext_name}), ${mshutdown}, PHP_RINIT(${b.ext_name}), PHP_RSHUTDOWN(${b.ext_name}), PHP_MINFO(${b.ext_name}), "${b.version}",\n')
+	res.write_string('    PHP_MINIT(${b.ext_name}), ${mshutdown}, PHP_RINIT(${b.ext_name}), PHP_RSHUTDOWN(${b.ext_name}), PHP_MINFO(${b.ext_name}), "${ini_c_string(b.version)}",\n')
 	if b.globals.name != '' {
 		res.write_string('    PHP_MODULE_GLOBALS(${b.ext_name}),\n')
 		res.write_string('    (void (*)(void*)) php_${b.ext_name}_init_globals,\n')
