@@ -119,9 +119,11 @@ pub fn persistent_assoc_without_key(value vphp.PhpArray, key string) vphp.PhpArr
 }
 
 pub fn persistent_value_assoc_without_key(value vphp.PhpValue, key string) vphp.PhpValue {
-	mut out := value.with_array(fn [key] (arr vphp.PhpArray) vphp.PhpArray {
-		return persistent_assoc_without_key(arr, key)
-	}) or { empty_persistent_array() }
+	mut request_value := value.to_request_owned()
+	defer { request_value.release() }
+	mut arr := request_value.as_array() or { return empty_persistent_array_value() }
+	defer { arr.release() }
+	mut out := persistent_assoc_without_key(arr, key)
 	defer {
 		out.release()
 	}

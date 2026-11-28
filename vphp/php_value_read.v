@@ -13,21 +13,27 @@ pub fn (v PhpValue) value(key string) !PhpValue {
 }
 
 pub fn (v PhpValue) property_exists(name string) bool {
-	return v.with_object[bool](fn [name] (obj PhpObject) bool {
-		return obj.property_exists(name)
-	}) or { false }
+	mut copy := v.to_request_owned()
+	defer { copy.release() }
+	mut obj := copy.as_object() or { return false }
+	defer { obj.release() }
+	return obj.property_exists(name)
 }
 
 pub fn (v PhpValue) prop_value(name string) PhpValue {
-	return v.with_object[PhpValue](fn [name] (obj PhpObject) PhpValue {
-		return obj.prop_value(name)
-	}) or { PhpValue.null() }
+	mut copy := v.to_request_owned()
+	defer { copy.release() }
+	mut obj := copy.as_object() or { return PhpValue.null() }
+	defer { obj.release() }
+	return obj.prop_value(name)
 }
 
 pub fn (v PhpValue) call_method(method string, args ...PhpArgInput) PhpValue {
-	return v.with_object[PhpValue](fn [method, args] (obj PhpObject) PhpValue {
-		return obj.call_method(method, ...args)
-	}) or { PhpValue.null() }
+	mut copy := v.to_request_owned()
+	defer { copy.release() }
+	mut obj := copy.as_object() or { return PhpValue.null() }
+	defer { obj.release() }
+	return obj.call_method(method, ...args)
 }
 
 pub fn (v PhpValue) [] (key string) PhpValue {

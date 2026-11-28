@@ -407,6 +407,11 @@ fn v_zval_conversion_api() string {
 }
 
 @[php_function]
+fn v_vptr_root_count() int {
+	return vphp.runtime_counters().vptr_root_len
+}
+
+@[php_function]
 fn v_persistent_fallback_counter_probe(raw vphp.ZVal) string {
 	before := vphp.runtime_counters().persistent_fallback_zval_len
 	mut boxed := vphp.PersistentOwnedZBox.of_mixed(raw)

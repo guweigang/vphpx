@@ -23,9 +23,21 @@ pub fn (v PhpValueZBox) with_request_zval[T](run fn (ZVal) T) T {
 }
 
 pub fn (v PhpValueZBox) with_request_value[T](run fn (PhpValue) T) T {
-	return v.with_request_zval[T](fn [run] [T](z ZVal) T {
-		return run(PhpValue.from_zval(z))
-	})
+	match v.kind {
+		.borrowed {
+			z := (v.request_borrowed or { RequestBorrowedZBox.from_zval(invalid_zval()) }).to_zval()
+			return run(PhpValue.from_zval(z))
+		}
+		.request_owned {
+			z := (v.request_owned or { RequestOwnedZBox.adopt_zval(invalid_zval()) }).to_zval()
+			return run(PhpValue.from_zval(z))
+		}
+		.persistent_owned {
+			mut temp := (v.persistent_owned or { PersistentOwnedZBox.new_null() }).clone_request_owned()
+			defer { temp.release() }
+			return run(PhpValue.from_zval(temp.to_zval()))
+		}
+	}
 }
 
 pub fn (v PhpValueZBox) with_request_array[T](run fn (PhpArray) T) ?T {

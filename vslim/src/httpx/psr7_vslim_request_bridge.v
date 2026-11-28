@@ -62,6 +62,8 @@ pub fn VSlimRequest.from_psr_server_request_object(payload vphp.PhpObject, route
 		} else {
 			persistent_array_to_string_map(internal.query_params_ref)
 		}
+		mut uploaded_files := internal.get_uploaded_files()
+		defer { uploaded_files.release() }
 		mut out := &VSlimRequest{
 			method:           internal.get_method()
 			raw_path:         raw_path
@@ -84,7 +86,7 @@ pub fn VSlimRequest.from_psr_server_request_object(payload vphp.PhpObject, route
 			cookies:          snapshot_string_map(persistent_array_to_string_map(internal.cookie_params_ref))
 			attributes:       snapshot_string_map(persistent_value_to_scalar_string_map(internal.attributes_ref))
 			server:           snapshot_string_map(persistent_array_to_string_map(internal.server_params_ref))
-			uploaded_files:   snapshot_string_list(uploaded_files_to_filenames_array(internal.get_uploaded_files()))
+			uploaded_files:   snapshot_string_list(uploaded_files_to_filenames_array(uploaded_files))
 			params:           snapshot_string_map(route_params)
 		}
 		for key, value in route_params {
@@ -98,7 +100,10 @@ pub fn VSlimRequest.from_psr_server_request_object(payload vphp.PhpObject, route
 }
 
 pub fn VSlimRequest.from_psr_server_request_value(payload vphp.PhpValue, route_params map[string]string) &VSlimRequest {
-	if object := payload.as_object() {
+	mut request_value := payload.to_request_owned()
+	defer { request_value.release() }
+	if mut object := request_value.as_object() {
+		defer { object.release() }
 		return VSlimRequest.from_psr_server_request_object(object, route_params)
 	}
 	return VSlimRequest.new('GET', '/', '')
@@ -148,12 +153,14 @@ fn (req &VSlimRequest) uri_string() string {
 
 pub fn persistent_value_assoc_with_strings(value vphp.PhpValue, extras map[string]string) vphp.PhpValue {
 	mut out := vphp.PhpArray.new()
-	value.with_array(fn [mut out] (arr vphp.PhpArray) bool {
+	mut request_value := value.to_request_owned()
+	defer { request_value.release() }
+	if mut arr := request_value.as_array() {
+		defer { arr.release() }
 		for name in arr.assoc_keys() {
 			out.set_value(name, arr[name])
 		}
-		return true
-	})
+	}
 	for key, item in extras {
 		out.string(key, item)
 	}

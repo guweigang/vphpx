@@ -358,10 +358,12 @@ pub fn (r &VSlimPsr7ServerRequest) get_attribute(name vphp.PhpValue, default_val
 	if key == '' {
 		return psr7_default_value_or_null(default_value)
 	}
-	return r.attributes_ref.with_array(fn [key, default_value] (arr vphp.PhpArray) vphp.PhpValue {
-		value := arr.find(key) or { return psr7_default_value_or_null(default_value) }
-		return value.owned()
-	}) or { psr7_default_value_or_null(default_value) }
+	mut request_value := r.attributes_ref.to_request_owned()
+	defer { request_value.release() }
+	mut arr := request_value.as_array() or { return psr7_default_value_or_null(default_value) }
+	defer { arr.release() }
+	value := arr.find(key) or { return psr7_default_value_or_null(default_value) }
+	return value.owned()
 }
 
 @[vphp.PhpReturnType(php_type: 'Psr\\Http\\Message\\ServerRequestInterface')]

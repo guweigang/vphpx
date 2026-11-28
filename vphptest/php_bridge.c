@@ -400,6 +400,19 @@ PHP_FUNCTION(v_zval_conversion_api) {
         return;
     }
 }
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_vptr_root_count, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+extern void vphp_wrap_v_vptr_root_count(vphp_context_internal ctx);
+PHP_FUNCTION(v_vptr_root_count) {
+    if (!vphp_validate_internal_call(execute_data)) {
+        return;
+    }
+    vphp_context_internal ctx = vphp_context_from_execute(execute_data, return_value);
+    vphp_wrap_v_vptr_root_count(ctx);
+    if (!vphp_validate_internal_return(execute_data, return_value)) {
+        return;
+    }
+}
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_v_persistent_fallback_counter_probe, 0, 1, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, raw, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
@@ -5555,6 +5568,7 @@ static const zend_function_entry vphptest_functions[] = {
     PHP_FE(v_typed_php_interop, arginfo_v_typed_php_interop)
     PHP_FE(v_typed_object_restore, arginfo_v_typed_object_restore)
     PHP_FE(v_zval_conversion_api, arginfo_v_zval_conversion_api)
+    PHP_FE(v_vptr_root_count, arginfo_v_vptr_root_count)
     PHP_FE(v_persistent_fallback_counter_probe, arginfo_v_persistent_fallback_counter_probe)
     PHP_FE(v_request_scope_counter_probe, arginfo_v_request_scope_counter_probe)
     PHP_FE(v_php_value_zbox_lifecycle_probe, arginfo_v_php_value_zbox_lifecycle_probe)

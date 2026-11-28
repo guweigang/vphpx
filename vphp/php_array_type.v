@@ -203,9 +203,7 @@ pub fn (a PhpArray) clone_request_owned() RequestOwnedZBox {
 }
 
 pub fn (a PhpArray) with_array[T](run fn (PhpArray) T) T {
-	return a.value.with_request_array[T](fn [run] [T](arr PhpArray) T {
-		return run(arr)
-	}) or { run(a) }
+	return a.value.with_request_array[T](run) or { run(a) }
 }
 
 pub fn (mut a PhpArray) release() {

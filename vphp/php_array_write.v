@@ -29,10 +29,9 @@ pub fn (a PhpArray) set(key string, value PhpArgInput) {
 }
 
 pub fn (a PhpArray) set_value(key string, value PhpValue) {
-	value.value.with_request_zval(fn [a, key] (raw ZVal) bool {
-		a.assoc_zval(key, raw)
-		return true
-	})
+	mut copy := value.to_request_owned()
+	defer { copy.release() }
+	a.assoc_zval(key, copy.to_zval())
 }
 
 // set_callable copies a PHP callable into the array and releases any temporary

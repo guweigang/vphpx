@@ -111,7 +111,7 @@ namespace {
             );
         }
     });
-    $app->get('/hello/:name', new class implements RequestHandlerInterface {
+    $handler = new class implements RequestHandlerInterface {
         public function handle(ServerRequestInterface $request): ResponseInterface
         {
             return (new VSlim\Psr7\Response(200, ''))
@@ -121,7 +121,8 @@ namespace {
                 ->withHeader('content-type', 'text/plain; charset=utf-8')
                 ->withHeader('x-route-trace', $request->getHeaderLine('x-trace-id'));
         }
-    });
+    };
+    $app->get('/hello/:name', $handler);
 
     $map = $app->dispatchEnvelopeMap([
         'method' => 'GET',
@@ -145,6 +146,40 @@ namespace {
 
     echo $map['status'] . '|' . $map['body'] . '|' . $map['content_type'] . PHP_EOL;
     echo $map['headers_x-route-trace'] . '|' . $map['headers_x-request-id'] . '|' . $map['headers_x-trace-id'] . '|' . $map['headers_x-vhttpd-trace-id'] . PHP_EOL;
+
+    // A long-lived worker dispatches many requests within one PHP request.
+    $plain = new VSlim\App();
+    $plain->get('/hello/:name', $handler);
+    $envelope = [
+        'method' => 'GET', 'path' => '/hello/codex', 'query' => [],
+        'headers' => ['x-request-id' => 'rid-100', 'x-trace-id' => 'trace-100'],
+        'cookies' => [], 'attributes' => [], 'body' => '', 'scheme' => 'http',
+        'host' => 'demo.local', 'port' => '80', 'protocol_version' => '1.1',
+        'remote_addr' => '127.0.0.1', 'server' => [], 'uploaded_files' => [],
+    ];
+    foreach ([$app, $plain] as $candidate) {
+        for ($i = 0; $i < 2048; $i++) {
+            $result = $candidate->dispatchEnvelopeMap($envelope);
+            if ($result['status'] !== '200') throw new \RuntimeException('dispatch failed');
+            unset($result);
+            if ($i === 511) {
+                gc_collect_cycles();
+                $baseline = memory_get_usage();
+                $rssBaseline = function_exists('getrusage') ? (getrusage()['ru_maxrss'] ?? 0) : 0;
+            }
+        }
+        gc_collect_cycles();
+        if (memory_get_usage() - $baseline > 32768) {
+            throw new \RuntimeException('dispatch retains PHP heap across requests');
+        }
+        if ($rssBaseline > 0 && (PHP_OS_FAMILY === 'Linux' || PHP_OS_FAMILY === 'Darwin')) {
+            $rss = getrusage()['ru_maxrss'] ?? 0;
+            $rssGrowth = ($rss - $rssBaseline) * (PHP_OS_FAMILY === 'Linux' ? 1024 : 1);
+            if ($rssBaseline > 0 && $rssGrowth > 48 * 1024 * 1024) {
+                throw new \RuntimeException('dispatch retains native memory across requests');
+            }
+        }
+    }
 }
 ?>
 --EXPECT--

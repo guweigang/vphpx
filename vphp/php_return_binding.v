@@ -107,11 +107,9 @@ pub fn (ret PhpReturn) bound_object(v_ptr voidptr, ce ZendClassEntry, handlers o
 			object.return_bound(ret.raw_ptr(), v_ptr, ce, handlers, .borrowed)
 		}
 		.owned_request {
-			object.register_root(v_ptr)
 			object.return_bound(ret.raw_ptr(), v_ptr, ce, handlers, .owned)
 		}
 		.owned_persistent {
-			object.register_root(v_ptr)
 			object.return_bound(ret.raw_ptr(), v_ptr, ce, handlers, .owned)
 		}
 	}

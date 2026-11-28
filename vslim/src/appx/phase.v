@@ -37,10 +37,10 @@ fn (app &VSlimApp) apply_before_middlewares(path string, payload vphp.PhpValue, 
 	}
 	if app.before_middlewares.len == 0 && group_before.len == 0 {
 		return middlewarex.VSlimBeforeMiddlewareResult{
-			payload_ref: payload.owned()
+			payload_ref: payload.to_request_scoped()
 		}
 	}
-	mut current_payload := payload.owned()
+	mut current_payload := payload.to_request_scoped()
 	mut all := app.collect_before_middlewares(group_before)
 	defer {
 		release_collected_middlewares(mut all)
@@ -53,13 +53,13 @@ fn (app &VSlimApp) apply_before_middlewares(path string, payload vphp.PhpValue, 
 		if !phase_result.continued {
 			return middlewarex.VSlimBeforeMiddlewareResult{
 				response_ref: phase_result.response_ref
-				payload_ref:  current_payload.owned()
+				payload_ref:  current_payload.to_request_scoped()
 			}
 		}
-		current_payload = phase_result.payload_ref.owned()
+		current_payload = phase_result.payload_ref.to_request_scoped()
 	}
 	return middlewarex.VSlimBeforeMiddlewareResult{
-		payload_ref: current_payload.owned()
+		payload_ref: current_payload.to_request_scoped()
 	}
 }
 
@@ -76,7 +76,11 @@ fn (app &VSlimApp) matching_group_after_middlewares(path string) []vphp.PhpValue
 }
 
 fn (app &VSlimApp) collect_group_middlewares(table routex.HookTable, bucket RegistrationValues, path string) []vphp.PhpValue {
-	return table.collect_matching_with(path, fn [app, bucket] (index int, fallback vphp.PhpValue) vphp.PhpValue {
-		return app.registration_value(bucket, index, fallback).owned()
-	})
+	mut result := []vphp.PhpValue{}
+	for index, handler in table.handlers {
+		if table.matches_at(index, path) {
+			result << app.registration_value(bucket, index, handler).owned()
+		}
+	}
+	return result
 }

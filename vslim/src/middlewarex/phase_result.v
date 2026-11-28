@@ -26,16 +26,23 @@ fn is_internal_phase_continue_response(result vphp.PhpValue) bool {
 
 pub fn PhaseMiddlewareDispatchResult.from_before(payload vphp.PhpValue, route_params map[string]string, cont &VSlimPsr15ContinueHandler, response vphp.PhpValue) PhaseMiddlewareDispatchResult {
 	continued := cont.state.forwarded_request.is_valid() && is_internal_phase_continue_response(response)
+	mut response_owner := response
+	scoped_response := if response_owner.is_borrowed() {
+		response_owner
+	} else {
+		response_owner.move_to_request_scope()
+	}
 	if continued {
 		mut request := httpx.normalize_psr15_server_request_object(cont.state.forwarded_request, route_params)
+		defer { request.release() }
 		return PhaseMiddlewareDispatchResult{
-			response_ref: response
-			payload_ref:  request.to_value()
+			response_ref: scoped_response
+			payload_ref:  request.to_borrowed().to_value().to_request_scoped()
 			continued:    true
 		}
 	}
 	return PhaseMiddlewareDispatchResult{
-		response_ref: response
-		payload_ref:  payload.owned()
+		response_ref: scoped_response
+		payload_ref:  payload.to_request_scoped()
 	}
 }

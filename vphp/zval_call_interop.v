@@ -1,22 +1,19 @@
 module vphp
 
-import vphp.zval as zvalmod
-
 fn call_zval_target(target ZendCallTarget, args []ZVal, ownership OwnershipKind) ZVal {
-	mut handles := []zvalmod.Handle{cap: args.len}
+	mut params := []voidptr{cap: args.len}
 	for arg in args {
-		handles << arg.handle()
+		params << arg.raw_ptr()
 	}
-	return zvalmod.with_call_args[ZVal](handles, fn [target, ownership] (count int, params voidptr) ZVal {
-		retval := ZVal.new_request()
-		res := invoke_zval_call_target(target, retval.raw, count, params)
-		if res == -1 {
-			mut failed := retval
-			failed.release()
-			return invalid_zval()
-		}
-		return adopt_raw_with_ownership(retval.raw, ownership)
-	})
+	retval := ZVal.new_request()
+	ptr := if params.len == 0 { unsafe { nil } } else { unsafe { params.data } }
+	res := invoke_zval_call_target(target, retval.raw, params.len, ptr)
+	if res == -1 {
+		mut failed := retval
+		failed.release()
+		return invalid_zval()
+	}
+	return adopt_raw_with_ownership(retval.raw, ownership)
 }
 
 fn call_method_zval(receiver ZVal, method string, args []ZVal, ownership OwnershipKind) ZVal {

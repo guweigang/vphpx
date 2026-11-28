@@ -7,9 +7,10 @@ pub fn (o PhpObject) method_zval(method string, args []ZVal) ZVal {
 }
 
 pub fn (o PhpObject) method_owned_request(method string, args []ZVal) ZVal {
-	return o.value.with_request_object[ZVal](fn [method, args] (obj PhpObject) ZVal {
-		return obj.to_zval().method_owned_request(method, args)
-	}) or { invalid_zval() }
+	mut obj := o.to_request_owned()
+	defer { obj.release() }
+	if !obj.is_valid() { return invalid_zval() }
+	return obj.to_zval().method_owned_request(method, args)
 }
 
 pub fn (o PhpObject) method_owned_persistent(method string, args []ZVal) ZVal {

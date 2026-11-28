@@ -1,6 +1,7 @@
 module vphp
 
 import vphp.zval
+import vphp.object
 
 // ============================================
 // ZVal — low-level bridge wrapper around Zend zval
@@ -57,6 +58,7 @@ pub:
 	obj_registry_len             u32
 	rev_registry_len             u32
 	persistent_fallback_zval_len int
+	vptr_root_len                int
 }
 
 fn ZVal.new_request() ZVal {
@@ -162,5 +164,6 @@ pub fn runtime_counters() RuntimeCounters {
 		obj_registry_len:             state.obj_registry_len
 		rev_registry_len:             state.rev_registry_len
 		persistent_fallback_zval_len: persistent_fallback_zval_count()
+		vptr_root_len:                object.root_count()
 	}
 }

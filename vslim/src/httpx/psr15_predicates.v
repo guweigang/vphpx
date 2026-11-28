@@ -34,22 +34,24 @@ pub fn is_psr15_request_handler(handler vphp.PhpValue) bool {
 pub fn is_psr15_request_handler_like_object(handler vphp.PhpObject) bool {
 	return handler.is_valid()
 		&& (handler.is_instance_of('Psr\\Http\\Server\\RequestHandlerInterface')
-		|| handler.method_exists('handle'))
+			|| handler.method_exists('handle'))
 }
 
 pub fn is_psr_server_request_payload(payload vphp.PhpValue) bool {
 	if !payload.is_valid() {
 		return false
 	}
-	return payload.is_object() && is_psr_server_request_object(payload.as_object() or {
-		vphp.PhpObject.invalid()
-	})
+	mut request_value := payload.to_request_owned()
+	defer { request_value.release() }
+	mut object := request_value.as_object() or { return false }
+	defer { object.release() }
+	return is_psr_server_request_object(object)
 }
 
 pub fn is_psr_server_request_object(payload vphp.PhpObject) bool {
 	return payload.is_valid()
 		&& (payload.is_instance_of('Psr\\Http\\Message\\ServerRequestInterface')
-		|| (payload.method_exists('getMethod') && payload.method_exists('getUri')))
+			|| (payload.method_exists('getMethod') && payload.method_exists('getUri')))
 }
 
 pub fn psr15_middleware_target_method(target vphp.PhpValue, explicit_method string) string {

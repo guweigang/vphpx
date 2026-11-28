@@ -33,6 +33,11 @@ pub fn (table HookTable) has_matching(path string) bool {
 	return false
 }
 
+pub fn (table HookTable) matches_at(index int, path string) bool {
+	return index >= 0 && index < table.prefixes.len && index < table.handlers.len
+		&& path_has_prefix(path, table.prefixes[index])
+}
+
 pub fn (mut table HookTable) release_owned_refs() {
 	for mut handler in table.handlers {
 		if handler.is_valid() {

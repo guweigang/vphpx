@@ -243,33 +243,31 @@ pub fn (v PhpValue) to_dyn_value() !DynValue {
 }
 
 pub fn (v PhpValue) with_value[T](run fn (PhpValue) T) T {
-	return v.value.with_request_value[T](fn [run] [T](value PhpValue) T {
-		return run(value)
-	})
+	return v.value.with_request_value[T](run)
 }
 
 pub fn (v PhpValue) with_array[T](run fn (PhpArray) T) ?T {
-	return v.value.with_request_array[T](fn [run] [T](arr PhpArray) T {
-		return run(arr)
-	})
+	return v.value.with_request_array[T](run)
 }
 
 pub fn (v PhpValue) with_object[T](run fn (PhpObject) T) ?T {
-	return v.value.with_request_object[T](fn [run] [T](obj PhpObject) T {
-		return run(obj)
-	})
+	return v.value.with_request_object[T](run)
 }
 
 pub fn (v PhpValue) method_exists(name string) bool {
-	return v.with_object[bool](fn [name] (obj PhpObject) bool {
-		return obj.method_exists(name)
-	}) or { false }
+	mut copy := v.to_request_owned()
+	defer { copy.release() }
+	mut obj := copy.as_object() or { return false }
+	defer { obj.release() }
+	return obj.method_exists(name)
 }
 
 pub fn (v PhpValue) is_instance_of(class_name string) bool {
-	return v.with_object[bool](fn [class_name] (obj PhpObject) bool {
-		return obj.is_instance_of(class_name)
-	}) or { false }
+	mut copy := v.to_request_owned()
+	defer { copy.release() }
+	mut obj := copy.as_object() or { return false }
+	defer { obj.release() }
+	return obj.is_instance_of(class_name)
 }
 
 pub fn (v PhpValue) class_name() string {
@@ -283,9 +281,7 @@ pub fn (v PhpValue) resource_type() ?string {
 }
 
 pub fn (v PhpValue) with_callable[T](run fn (PhpCallable) T) ?T {
-	return v.value.with_request_callable[T](fn [run] [T](callable PhpCallable) T {
-		return run(callable)
-	})
+	return v.value.with_request_callable[T](run)
 }
 
 pub fn (mut v PhpValue) release() {

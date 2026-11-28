@@ -181,11 +181,14 @@ pub fn normalize_psr15_server_request_object(request vphp.PhpObject, route_param
 }
 
 pub fn normalize_psr15_server_request_value(payload_value vphp.PhpValue, route_params map[string]string) vphp.PhpObject {
-	payload_object := payload_value.as_object() or {
+	mut request_value := payload_value.to_request_owned()
+	defer { request_value.release() }
+	mut payload_object := request_value.as_object() or {
 		mut cloned := VSlimPsr7ServerRequest.from_vslim_request_value(VSlimRequest.new('GET', '/', ''),
 			route_params)
 		return object_from_owned_value(mut cloned)
 	}
+	defer { payload_object.release() }
 	return normalize_psr15_server_request_object(payload_object, route_params)
 }
 
@@ -201,7 +204,10 @@ pub fn persistent_array_value(value vphp.PhpValue) vphp.PhpValue {
 }
 
 pub fn vslim_request_from_psr_server_request(payload vphp.PhpValue, route_params map[string]string, options PsrRequestProjectionOptions) &VSlimRequest {
-	if payload_object := payload.as_object() {
+	mut request_value := payload.to_request_owned()
+	defer { request_value.release() }
+	if mut payload_object := request_value.as_object() {
+		defer { payload_object.release() }
 		if (payload_object.is_instance_of('VSlim\\VHttpd\\Request')
 			|| payload_object.is_instance_of('VSlimRequest')) && payload_object.is_valid() {
 			if req := payload_object.to_v_object[VSlimRequest]() {

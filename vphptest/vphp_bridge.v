@@ -3754,6 +3754,14 @@ fn vphp_wrap_v_zval_conversion_api(ctx vphp.Context) {
     ctx.return().v[string](res)
 }
 
+@[export: 'vphp_wrap_v_vptr_root_count']
+fn vphp_wrap_v_vptr_root_count(ctx vphp.Context) {
+    mut vphp_scope := vphp.PhpScope.once()
+    defer { vphp_scope.close() }
+    res := v_vptr_root_count()
+    ctx.return().v[int](res)
+}
+
 @[export: 'vphp_wrap_v_persistent_fallback_counter_probe']
 fn vphp_wrap_v_persistent_fallback_counter_probe(ctx vphp.Context) {
     mut vphp_scope := vphp.PhpScope.once()

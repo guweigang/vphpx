@@ -68,3 +68,15 @@ pub fn unregister_root(ptr voidptr) {
 		}
 	}
 }
+
+// Number of distinct V objects currently rooted for PHP-owned wrappers.
+pub fn root_count() int {
+	vphp_vptr_roots_lock.lock()
+	defer { vphp_vptr_roots_lock.unlock() }
+	unsafe {
+		if isnil(vphp_vptr_roots) {
+			return 0
+		}
+		return vphp_vptr_roots.len
+	}
+}

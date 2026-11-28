@@ -27,7 +27,7 @@ fn (app &VSlimApp) dispatch_request_with_params(req &httpx.VSlimRequest, trace_o
 		result := app.dispatch_not_found_terminal(req)
 		ctx := middlewarex.PipelineRequestContext{
 			path:         path
-			payload_ref:  result.payload_ref.owned()
+			payload_ref:  result.payload_ref.to_request_scoped()
 			route_params: map[string]string{}
 		}
 		res, snapshot := app.finalize_response_with_snapshot(ctx, result.response_ref)
@@ -63,7 +63,7 @@ fn (app &VSlimApp) dispatch_request_worker_value(req &httpx.VSlimRequest) vphp.P
 		result := app.dispatch_not_found_terminal(req, worker_response_import)
 		ctx := middlewarex.PipelineRequestContext{
 			path:            path
-			payload_ref:     result.payload_ref.owned()
+			payload_ref:     result.payload_ref.to_request_scoped()
 			route_params:    map[string]string{}
 			response_import: worker_response_import
 		}
@@ -81,9 +81,12 @@ fn (app &VSlimApp) dispatch_request_worker_value(req &httpx.VSlimRequest) vphp.P
 }
 
 fn (app &VSlimApp) dispatch_psr15_request_value(request_value vphp.PhpValue) &httpx.VSlimPsr7Response {
-	request_object := request_value.as_object() or {
+	mut local_value := request_value.to_request_owned()
+	defer { local_value.release() }
+	mut request_object := local_value.as_object() or {
 		return app.dispatch_psr15_request_object(vphp.PhpObject.invalid())
 	}
+	defer { request_object.release() }
 	return app.dispatch_psr15_request_object(request_object)
 }
 
@@ -125,7 +128,7 @@ fn (app &VSlimApp) dispatch_psr15_request_object(request_object vphp.PhpObject) 
 			middlewarex.MiddlewareTerminalMeta.not_found())
 		ctx := middlewarex.PipelineRequestContext{
 			path:         path
-			payload_ref:  result.payload_ref.owned()
+			payload_ref:  result.payload_ref.to_request_scoped()
 			route_params: map[string]string{}
 		}
 		return app.finalize_response_for_psr(ctx, result.response_ref)
@@ -144,7 +147,7 @@ fn (app &VSlimApp) dispatch_psr15_request_object(request_object vphp.PhpObject) 
 fn route_dispatch_resolution(result middlewarex.PipelineDispatchResult, route_params map[string]string) routex.RouteDispatchResolution {
 	return routex.RouteDispatchResolution{
 		response_ref: result.response_ref
-		payload_ref:  result.payload_ref.owned()
+		payload_ref:  result.payload_ref.to_request_scoped()
 		route_params: httpx.snapshot_string_map(route_params)
 		handled:      true
 	}
@@ -160,11 +163,13 @@ fn (app &VSlimApp) resolve_route_dispatch(req &httpx.VSlimRequest, source_payloa
 			if trace_on {
 				app.trace_mem_log(req, 'route.matched', trace_base)
 			}
-			payload, mut validation_req := httpx.route_dispatch_payload(&dispatch_req, source_payload,
+			mut payload, mut validation_req := httpx.route_dispatch_payload(&dispatch_req, source_payload,
 				resolved_route.route_params)
+			defer { payload.release() }
 			if validation_req.body == '' && (app.max_body_bytes() > 0 || validation_req.is_json_body())
 				&& httpx.is_psr_server_request_payload(payload) {
-				if object := payload.as_object() {
+				if mut object := payload.as_object() {
+					defer { object.release() }
 					if mut normalized := object.to_v_object[httpx.VSlimPsr7ServerRequest]() {
 						validation_req.body = normalized.inspect_dispatch_body()
 					}
@@ -249,7 +254,7 @@ fn (app &VSlimApp) dispatch_routes_psr15(req &httpx.VSlimRequest, request_payloa
 	if resolved.handled {
 		ctx := middlewarex.PipelineRequestContext{
 			path:         path
-			payload_ref:  resolved.payload_ref.owned()
+			payload_ref:  resolved.payload_ref.to_request_scoped()
 			route_params: httpx.snapshot_string_map(resolved.route_params)
 		}
 		return app.finalize_response_for_psr(ctx, resolved.response_ref), true
@@ -267,7 +272,7 @@ fn (app &VSlimApp) dispatch_routes_with_params(req &httpx.VSlimRequest, trace_on
 		}
 		ctx := middlewarex.PipelineRequestContext{
 			path:         path
-			payload_ref:  resolved.payload_ref.owned()
+			payload_ref:  resolved.payload_ref.to_request_scoped()
 			route_params: httpx.snapshot_string_map(resolved.route_params)
 		}
 		res, snapshot := app.finalize_response_with_snapshot(ctx, resolved.response_ref)
@@ -282,7 +287,7 @@ fn (app &VSlimApp) dispatch_routes_worker_with_params(req &httpx.VSlimRequest) (
 	if resolved.handled {
 		ctx := middlewarex.PipelineRequestContext{
 			path:            path
-			payload_ref:     resolved.payload_ref.owned()
+			payload_ref:     resolved.payload_ref.to_request_scoped()
 			route_params:    httpx.snapshot_string_map(resolved.route_params)
 			response_import: worker_response_import
 		}

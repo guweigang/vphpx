@@ -95,7 +95,7 @@ pub fn (ctx PipelineRequestContext) with_current_request(request vphp.PhpValue) 
 pub fn PipelineRequestContext.from_value(path string, payload vphp.PhpValue, route_params map[string]string, options httpx.Psr7ResponseImportOptions) PipelineRequestContext {
 	return PipelineRequestContext{
 		path:            path
-		payload_ref:     payload.owned()
+		payload_ref:     payload.to_request_scoped()
 		route_params:    httpx.snapshot_string_map(route_params)
 		response_import: options
 	}
@@ -104,7 +104,7 @@ pub fn PipelineRequestContext.from_value(path string, payload vphp.PhpValue, rou
 pub fn PipelineRequestContext.from_object(path string, payload vphp.PhpObject, route_params map[string]string) PipelineRequestContext {
 	return PipelineRequestContext{
 		path:         path
-		payload_ref:  payload.owned().to_value()
+		payload_ref:  payload.to_borrowed().to_value().to_request_scoped()
 		route_params: httpx.snapshot_string_map(route_params)
 	}
 }
@@ -112,7 +112,7 @@ pub fn PipelineRequestContext.from_object(path string, payload vphp.PhpObject, r
 pub fn (ctx PipelineRequestContext) with_payload_value(payload vphp.PhpValue) PipelineRequestContext {
 	return PipelineRequestContext{
 		path:            ctx.path
-		payload_ref:     payload.owned()
+		payload_ref:     payload.to_request_scoped()
 		route_params:    httpx.snapshot_string_map(ctx.route_params)
 		response_import: ctx.response_import
 	}
@@ -133,6 +133,6 @@ pub fn PipelineDispatchResult.from(response vphp.PhpValue, payload vphp.PhpValue
 		} else {
 			scoped_response.move_to_request_scope()
 		}
-		payload_ref:  payload.owned()
+		payload_ref:  payload.to_request_scoped()
 	}
 }
